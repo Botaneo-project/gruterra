@@ -1,0 +1,70 @@
+# Botaneo - fichiers à ne pas publier sur GitHub
+
+# Secrets et configuration locale
+_config/
+.env
+.env.*
+!.env.example
+*.local.json
+netatmo_config.json
+netatmo_config.json.bak
+
+# Bases de données locales et journaux réels
+*.db
+*.db-wal
+*.db-shm
+*.sqlite
+*.sqlite3
+_app/data/
+*.log
+
+# Sauvegardes et anciens essais
+_security_backups/
+_historique/
+backup*/
+_app/backup*/
+_app/*backup*
+_app/*.bak
+*.bak
+*.backup*
+
+# Caches Python et fichiers temporaires
+__pycache__/
+*/__pycache__/
+*.pyc
+*.pyo
+*.tmp
+*.lock
+
+# Archives/export locaux
+*.zip
+*.7z
+*.rar
+Backups_Plantes/
+
+# Fichiers système / éditeurs
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Scripts locaux de diagnostic / migration / essais
+_app/test_*.py
+_app/test_*.txt
+_app/diagnostic_*.py
+_app/audit_base.py
+_app/verifier_*.py
+_app/voir_*.py
+_app/corriger_*.py
+_app/migration_*.py
+_app/fusionner_*.py
+_app/importer_*.py
+_app/export_*.py
+_app/enregistrer_arrosage.py
+_app/ajouter_arrosages.py
+_app/ajouter_emplacement.py
+_app/lecture_et_enregistrement.py
+_app/synchronisation.py
+_app/database - Copie.py
+_app/Nouveau Document texte.txt
+_app/archive_conservee_*.json

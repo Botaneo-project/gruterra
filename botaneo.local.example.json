@@ -1,0 +1,21 @@
+{
+  "netatmo_public": {
+    "latitude": 48.000,
+    "longitude": 2.000,
+    "rayon_metres": 500,
+    "rayon_favoris_metres": 2000,
+    "stations_favorites": [
+      "70:ee:50:00:00:00"
+    ]
+  },
+  "previsions_meteo": {
+    "active": false,
+    "source": "open_meteo_meteofrance",
+    "latitude": 48.000,
+    "longitude": 2.000
+  },
+  "collecteurs": {
+    "enabled": false,
+    "devices": {}
+  }
+}

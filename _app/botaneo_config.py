@@ -1,0 +1,76 @@
+"""Configuration locale commune, sans dependance et sans ouverture reseau."""
+import json
+import os
+import tempfile
+from pathlib import Path
+from urllib.parse import urlparse, parse_qs
+
+APP_DIR = Path(__file__).resolve().parent
+CONFIG_DIR = Path(os.environ.get("BOTANEO_CONFIG_DIR", str(APP_DIR.parent / "_config")))
+NETATMO_CONFIG = CONFIG_DIR / "netatmo_config.json"
+LOCAL_CONFIG = CONFIG_DIR / "botaneo.local.json"
+
+
+def normaliser_station_favorite(valeur):
+    """Accepte un identifiant Netatmo ou un lien weathermap complet."""
+
+    texte = str(valeur or "").strip()
+
+    if not texte:
+        return ""
+
+    if "stationid=" in texte or texte.startswith("http://") or texte.startswith("https://"):
+        try:
+            requete = parse_qs(urlparse(texte).query)
+            station_id = requete.get("stationid", [""])[0]
+            if station_id:
+                return station_id.strip()
+        except Exception:
+            pass
+
+    return texte
+
+
+def lire_json(path):
+    try:
+        data = json.loads(Path(path).read_text(encoding="utf-8-sig"))
+    except (OSError, ValueError):
+        raise RuntimeError("Configuration locale absente, inaccessible ou JSON invalide.") from None
+    if not isinstance(data, dict):
+        raise RuntimeError("La configuration locale doit etre un objet JSON.")
+    return data
+
+
+def ecrire_json(path, data):
+    """Remplacement atomique; un echec laisse le fichier precedent intact."""
+    path = Path(path)
+    fd, temporary = tempfile.mkstemp(prefix=path.name + ".", suffix=".tmp", dir=path.parent)
+    try:
+        with os.fdopen(fd, "w", encoding="utf-8") as stream:
+            json.dump(data, stream, ensure_ascii=False, indent=2)
+            stream.flush()
+            os.fsync(stream.fileno())
+        os.replace(temporary, path)
+    except OSError:
+        raise RuntimeError("Ecriture de la configuration locale impossible.") from None
+    finally:
+        if os.path.exists(temporary):
+            os.unlink(temporary)
+
+
+def parametres_netatmo():
+    data = lire_json(LOCAL_CONFIG).get("netatmo_public", {})
+    try:
+        lat, lon = float(data["latitude"]), float(data["longitude"])
+        radius = int(data["rayon_metres"])
+        search = int(data["rayon_favoris_metres"])
+        favorites = data["stations_favorites"]
+        if not (-90 <= lat <= 90 and -180 <= lon <= 180 and radius > 0 and search > 0):
+            raise ValueError()
+        if not isinstance(favorites, list) or not all(isinstance(x, str) for x in favorites):
+            raise ValueError()
+        favorites = [normaliser_station_favorite(x) for x in favorites]
+        favorites = [x for x in favorites if x]
+    except (KeyError, TypeError, ValueError, OverflowError):
+        raise RuntimeError("Parametres locaux Netatmo invalides.") from None
+    return lat, lon, radius, search, set(favorites)

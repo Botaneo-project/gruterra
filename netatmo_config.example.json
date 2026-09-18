@@ -1,0 +1,6 @@
+{
+  "client_id": "votre_client_id_netatmo",
+  "client_secret": "votre_client_secret_netatmo",
+  "access_token": "votre_access_token_netatmo",
+  "refresh_token": "votre_refresh_token_netatmo"
+}
