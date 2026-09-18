@@ -55,6 +55,24 @@ py app.py
 
 Pour un raccourci Windows, utiliser `pythonw.exe` avec `_app\interface.py` comme cible et `_app` comme dossier de démarrage.
 
+## Mode démo
+
+Le mode démo permet de tester l’interface sans capteur Mi Flora, sans compte Netatmo et sans base personnelle. Il crée une base SQLite fictive dans `_app/data/demo/plantes_demo.db`, avec quelques plantes, mesures, arrosages et observations d’exemple.
+
+```powershell
+cd C:\Plantes\_app
+py lancer_demo.py
+```
+
+La base démo est recréable avec :
+
+```powershell
+cd C:\Plantes\_app
+py creer_base_demo.py
+```
+
+Cette base reste locale et n’est pas publiée dans Git. Les données sont volontairement fictives.
+
 ## Structure principale
 
 ```text
@@ -69,6 +87,8 @@ Botaneo/
     ├── interface.py
     ├── app.py
     ├── database.py
+    ├── creer_base_demo.py
+    ├── lancer_demo.py
     ├── mini_base_plantes.py
     ├── previsions_meteo.py
     ├── meteo_cache.py

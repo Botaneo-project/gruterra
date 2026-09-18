@@ -19,6 +19,7 @@ Ce fichier sert à garder une trace claire des idées et des prochaines étapes.
 - Historique brut Mi Flora conservé dans une table séparée avec protection anti-doublon.
 - Ancienne archive locale de 119 entrées historiques reprise : 118 entrées uniques conservées.
 - Bouton manuel `Importer historique Mi Flora` ajouté sur les plantes avec capteur actif.
+- Raccourci historique ajouté : une plante sans mesures explique la situation et propose d’ouvrir une plante qui possède déjà un historique.
 - Import historique manuel corrigé : historique pur, conservation partielle si Windows coupe la connexion.
 - Synchronisation principale branchée sur l’import historique Mi Flora : historique d’abord, mesure directe ensuite.
 - Affichage de la batterie Mi Flora avec seuil configurable.
@@ -35,6 +36,7 @@ Ce fichier sert à garder une trace claire des idées et des prochaines étapes.
 - Synchronisation automatique quotidienne validée : heure, jours, réarmement et date de dernière exécution.
 - Protection contre deux synchronisations lancées exactement en même temps.
 - README initial prévu pour préparer un futur dépôt GitHub.
+- Mode démo ajouté pour tester Botaneo avec une base fictive, sans capteur, token ou données personnelles.
 
 ## Priorité courte
 

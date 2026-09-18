@@ -1464,7 +1464,8 @@ def creer_carte_plante_compacte(parent, plante):
     boutons = tk.Frame(carte, bg=CARD)
     boutons.pack(fill="x", padx=14, pady=(0, 10))
     tk.Button(boutons, text="💧 Arrosage", font=("Segoe UI", 8, "bold"), bg=LIGHT_BLUE, fg=BLUE, relief="flat", cursor="hand2", command=lambda pid=plante_id, n=nom: ouvrir_arrosage_plante(pid, n)).pack(side="left", padx=(0, 8))
-    tk.Button(boutons, text="🔎 Analyse", font=("Segoe UI", 8, "bold"), bg=LIGHT_GREEN, fg=GREEN, relief="flat", cursor="hand2", command=lambda pid=plante_id: afficher_message_analyse(pid)).pack(side="left")
+    tk.Button(boutons, text="🔎 Analyse", font=("Segoe UI", 8, "bold"), bg=LIGHT_GREEN, fg=GREEN, relief="flat", cursor="hand2", command=lambda pid=plante_id: afficher_message_analyse(pid)).pack(side="left", padx=(0, 8))
+    tk.Button(boutons, text="📈 Historique", font=("Segoe UI", 8, "bold"), bg=BG, fg=TEXT, relief="flat", cursor="hand2", command=lambda pid=plante_id: afficher_message_historique(pid)).pack(side="left")
 
 
 def creer_carte_plante(parent, plante):
@@ -1959,14 +1960,23 @@ def creer_carte_plante(parent, plante):
         padx=(0, 8)
     )
 
+    historique_disponible = plante_a_historique_mesures(plante_id)
+    texte_bouton_historique = (
+        "📈 Historique mesures"
+        if historique_disponible
+        else "📈 Historique / raccourci"
+    )
+    fond_bouton_historique = LIGHT_BLUE if historique_disponible else BG
+    couleur_bouton_historique = TEXT if historique_disponible else SECONDARY
+
     tk.Button(
         boutons,
-        text="📈 Historique",
+        text=texte_bouton_historique,
         font=("Segoe UI", 9, "bold"),
-        bg=LIGHT_BLUE,
-        fg=TEXT,
-        activebackground=LIGHT_BLUE,
-        activeforeground=TEXT,
+        bg=fond_bouton_historique,
+        fg=couleur_bouton_historique,
+        activebackground=fond_bouton_historique,
+        activeforeground=couleur_bouton_historique,
         relief="flat",
         cursor="hand2",
         command=lambda pid=plante_id:
@@ -4530,8 +4540,133 @@ def importer_historique_miflora_plante(plante_id, nom_plante):
     ).start()
 
 
+def plante_a_historique_mesures(plante_id):
+    try:
+        return bool(database.get_mesures(plante_id=plante_id, limite=1))
+    except Exception:
+        return False
+
+
+
+def plantes_avec_historique_mesures(exclure_plante_id=None, limite=6):
+    plantes = []
+    try:
+        for plante in database.get_plantes():
+            if exclure_plante_id is not None and plante[0] == exclure_plante_id:
+                continue
+            if plante_a_historique_mesures(plante[0]):
+                plantes.append(plante)
+            if len(plantes) >= limite:
+                break
+    except Exception:
+        pass
+    return plantes
+
+
+
+def afficher_raccourcis_historique(plante_id):
+    plante = database.get_plante(plante_id)
+    nom_plante = plante[1] if plante else "cette plante"
+    raccourcis = plantes_avec_historique_mesures(
+        exclure_plante_id=plante_id
+    )
+
+    fenetre = tk.Toplevel(root)
+    fenetre.title("Historique")
+    fenetre.configure(bg=CARD)
+    fenetre.transient(root)
+    fenetre.grab_set()
+    fenetre.geometry("520x320")
+    fenetre.minsize(480, 260)
+
+    contenu = tk.Frame(fenetre, bg=CARD)
+    contenu.pack(fill="both", expand=True, padx=22, pady=18)
+
+    tk.Label(
+        contenu,
+        text="📈 Historique de mesures",
+        font=("Segoe UI", 15, "bold"),
+        fg=TEXT,
+        bg=CARD,
+        anchor="w"
+    ).pack(fill="x")
+
+    tk.Label(
+        contenu,
+        text=(
+            f"{nom_plante} n'a pas encore de mesures capteur enregistrées. "
+            "C'est normal pour une plante sans capteur actif."
+        ),
+        font=("Segoe UI", 10),
+        fg=SECONDARY,
+        bg=CARD,
+        wraplength=460,
+        justify="left",
+        anchor="w"
+    ).pack(fill="x", pady=(10, 12))
+
+    if raccourcis:
+        tk.Label(
+            contenu,
+            text="Ouvrir un historique disponible :",
+            font=("Segoe UI", 10, "bold"),
+            fg=TEXT,
+            bg=CARD,
+            anchor="w"
+        ).pack(fill="x", pady=(0, 6))
+
+        for plante_historique in raccourcis:
+            nom_historique = plante_historique[1]
+            tk.Button(
+                contenu,
+                text=f"📈 {nom_historique}",
+                font=("Segoe UI", 9, "bold"),
+                bg=LIGHT_GREEN,
+                fg=GREEN,
+                activebackground=LIGHT_GREEN,
+                activeforeground=GREEN,
+                relief="flat",
+                cursor="hand2",
+                command=lambda pid=plante_historique[0]: (
+                    fenetre.destroy(),
+                    ouvrir_historique(root, pid)
+                )
+            ).pack(fill="x", pady=3)
+    else:
+        tk.Label(
+            contenu,
+            text=(
+                "Aucune plante n'a encore d'historique de mesures. "
+                "Après une synchronisation Mi Flora, le bouton ouvrira les graphiques."
+            ),
+            font=("Segoe UI", 10),
+            fg=SECONDARY,
+            bg=CARD,
+            wraplength=460,
+            justify="left",
+            anchor="w"
+        ).pack(fill="x", pady=(0, 10))
+
+    tk.Button(
+        contenu,
+        text="Fermer",
+        font=("Segoe UI", 9, "bold"),
+        bg=BG,
+        fg=TEXT,
+        activebackground=BG,
+        activeforeground=TEXT,
+        relief="flat",
+        cursor="hand2",
+        command=fenetre.destroy
+    ).pack(anchor="e", pady=(12, 0))
+
+
+
 def afficher_message_historique(plante_id):
-    ouvrir_historique(root, plante_id)
+    if plante_a_historique_mesures(plante_id):
+        ouvrir_historique(root, plante_id)
+    else:
+        afficher_raccourcis_historique(plante_id)
 
 
 
