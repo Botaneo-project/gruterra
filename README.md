@@ -102,6 +102,17 @@ Botaneo/
     └── assets/
 ```
 
+## Vérification avant envoi GitHub
+
+Avant de faire un commit ou un push, lancer :
+
+```powershell
+cd C:\Plantes
+py verifier_avant_github.py
+```
+
+Le script affiche les fichiers qui vont partir, bloque si un fichier sensible est suivi ou non ignoré, cherche des mots-clés de secrets dans les fichiers versionnés et vérifie que les fichiers Python compilent.
+
 ## Configuration locale
 
 Les fichiers privés ne doivent pas être publiés.

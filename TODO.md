@@ -37,6 +37,7 @@ Ce fichier sert à garder une trace claire des idées et des prochaines étapes.
 - Protection contre deux synchronisations lancées exactement en même temps.
 - README initial prévu pour préparer un futur dépôt GitHub.
 - Mode démo ajouté pour tester Botaneo avec une base fictive, sans capteur, token ou données personnelles.
+- Script `verifier_avant_github.py` ajouté pour contrôler les fichiers sensibles avant commit ou push.
 
 ## Priorité courte
 
@@ -55,9 +56,9 @@ Ce fichier sert à garder une trace claire des idées et des prochaines étapes.
 
 - Prévoir une vue compacte pour éviter de devoir défiler si on a 30 à 50 plantes.
 - Améliorer plus tard les filtres plantes si besoin : recherche par nom, tri manuel, regroupement par pièce.
-- Garder une zone de décision visible au-dessus des graphiques.
+- Zone de décision visible au-dessus des mesures : déjà en place, à affiner avec plus de données.
 - Permettre à terme de choisir l’ordre des blocs : météo locale, plantes, alertes, graphiques.
-- Continuer à améliorer la lisibilité des graphiques en mode sombre.
+- Historique enrichi avec résumé, tendance et phrase de lecture rapide.
 
 ### 3. Fiches plantes et mini base
 

@@ -4812,6 +4812,40 @@ def afficher_centre_alertes(parent, plantes):
 # ACTUALISATION PLANTES
 # ============================================================
 
+def afficher_titre_section(parent, titre, detail=None):
+    bloc = tk.Frame(parent, bg=BG)
+    bloc.pack(fill="x", padx=20, pady=(18, 6))
+
+    ligne = tk.Frame(bloc, bg=BG)
+    ligne.pack(fill="x")
+
+    tk.Label(
+        ligne,
+        text=titre,
+        font=("Segoe UI", 15, "bold"),
+        fg=TEXT,
+        bg=BG,
+        anchor="w"
+    ).pack(side="left")
+
+    if detail:
+        tk.Label(
+            ligne,
+            text=detail,
+            font=("Segoe UI", 9),
+            fg=SECONDARY,
+            bg=BG,
+            anchor="e"
+        ).pack(side="right")
+
+    tk.Frame(
+        bloc,
+        bg=BORDER,
+        height=1
+    ).pack(fill="x", pady=(6, 0))
+
+
+
 def actualiser_interface():
 
     for widget in content_frame.winfo_children():
@@ -4823,10 +4857,26 @@ def actualiser_interface():
     meteo_en_haut = meteo_affichee_en_haut()
 
     if meteo_en_haut:
-        netatmo_frame.pack(fill="x", padx=20, pady=(10, 15))
+        afficher_titre_section(
+            content_frame,
+            "🌦️ Météo locale",
+            "Netatmo et prévisions proches"
+        )
+        netatmo_frame.pack(fill="x", padx=20, pady=(4, 15))
         afficher_netatmo()
 
+    afficher_titre_section(
+        content_frame,
+        "🔔 À surveiller",
+        "alertes, rappels et points utiles"
+    )
     afficher_centre_alertes(content_frame, plantes)
+
+    afficher_titre_section(
+        content_frame,
+        "🖥️ Suivi système",
+        "état local et contrôles automatiques"
+    )
     suivi_raspberry.card(content_frame, globals())
 
     if not plantes:
@@ -4847,6 +4897,11 @@ def actualiser_interface():
         return
 
     plantes_filtrees = [plante for plante in plantes if plante_passe_filtres(plante)]
+    afficher_titre_section(
+        content_frame,
+        "🌱 Plantes",
+        f"{len(plantes_filtrees)} / {len(plantes)} affichée(s)"
+    )
     afficher_filtres_plantes(content_frame, plantes, plantes_filtrees)
 
     if not plantes_filtrees:
@@ -4872,7 +4927,12 @@ def actualiser_interface():
             )
 
     if not meteo_en_haut:
-        netatmo_frame.pack(fill="x", padx=20, pady=15)
+        afficher_titre_section(
+            content_frame,
+            "🌦️ Météo locale",
+            "Netatmo et prévisions proches"
+        )
+        netatmo_frame.pack(fill="x", padx=20, pady=(4, 15))
         afficher_netatmo()
 
 
