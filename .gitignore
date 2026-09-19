@@ -71,3 +71,6 @@ _app/archive_conservee_*.json
 
 # Runtime dependency of the validated history import
 !_app/importer_historique_miflora.py
+
+# Runtime module for verified Raspberry snapshots
+!_app/raspberry_backup.py

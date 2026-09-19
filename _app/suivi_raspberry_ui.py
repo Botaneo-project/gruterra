@@ -14,6 +14,7 @@ class SuiviRaspberry:
         self.root = root
         self.path = Path(config_dir) / 'raspberry.local.json'
         self.store = Store(Path(data_dir) / 'raspberry_sync_suivi.sqlite3')
+        self.next_attempt = None
         self.last_result = None
         self.busy = False
         self.queue = queue.Queue()
@@ -45,7 +46,8 @@ class SuiviRaspberry:
         except queue.Empty:
             pass
         try:
-            if self.config and not self.busy and not self.runtime_error and is_due(self.config, self.store.read()):
+            if (self.config and self.config['enabled'] and not self.config['away']
+                    and not self.busy and (self.next_attempt is None or now_utc() >= self.next_attempt)):
                 self.check()
             self.render()
         except Exception:
@@ -57,6 +59,7 @@ class SuiviRaspberry:
     def check(self):
         if self.busy or not self.config:
             return
+        self.next_attempt = now_utc() + timedelta(minutes=self.config['retry_minutes'])
         self.busy = True
         self.runtime_error = None
         config = dict(self.config)
@@ -80,13 +83,7 @@ class SuiviRaspberry:
             return
         state = self.store.read()
         self.title.set(self.runtime_error or ('Contrôle en cours…' if self.busy else status(self.config, state)))
-        if state.get('last_error') and state.get('last_attempt'):
-            next_at = local_date((datetime.fromisoformat(state['last_attempt']) + timedelta(minutes=self.config['retry_minutes'])).isoformat())
-        else:
-            next_due = deadline(self.config)
-            if state.get('completed_due', '') >= next_due.isoformat():
-                next_due += timedelta(days=1)
-            next_at = next_due.strftime('%d/%m/%Y %H:%M')
+        next_at = local_date(self.next_attempt.isoformat()) if self.next_attempt else 'Dès l’ouverture'
         if not self.config['enabled'] or self.config['away']:
             next_at = 'Suspendu'
         self.detail.set(
@@ -101,7 +98,7 @@ class SuiviRaspberry:
     def card(self, parent, colors):
         card = tk.Frame(parent, bg=colors['CARD'], highlightbackground=colors['BORDER'], highlightthickness=1)
         card.pack(fill='x', padx=20, pady=(0, 12))
-        tk.Label(card, text='Raspberry Pi · Suivi quotidien', bg=colors['CARD'], fg=colors['TEXT'], font=('Segoe UI', 13, 'bold')).pack(anchor='w', padx=12, pady=(10, 4))
+        tk.Label(card, text='Raspberry Pi · Synchronisation automatique', bg=colors['CARD'], fg=colors['TEXT'], font=('Segoe UI', 13, 'bold')).pack(anchor='w', padx=12, pady=(10, 4))
         tk.Label(card, textvariable=self.title, bg=colors['CARD'], fg=colors['TEXT'], font=('Segoe UI', 10, 'bold')).pack(anchor='w', padx=12)
         tk.Label(card, textvariable=self.detail, bg=colors['CARD'], fg=colors['SECONDARY'], justify='left', anchor='w', wraplength=820).pack(fill='x', padx=12, pady=6)
         bar = tk.Frame(card, bg=colors['CARD'])
@@ -122,15 +119,15 @@ class SuiviRaspberry:
         config = dict(self.config or {})
         enabled = tk.BooleanVar(window, value=config.get('enabled', False))
         away = tk.BooleanVar(window, value=config.get('away', False))
-        tk.Checkbutton(window, text='Activer le contrôle quotidien', variable=enabled).pack(anchor='w', padx=16, pady=6)
+        tk.Checkbutton(window, text='Récupérer à l’ouverture puis périodiquement', variable=enabled).pack(anchor='w', padx=16, pady=6)
         tk.Checkbutton(window, text='Déplacement : suspendre les contrôles et alertes', variable=away).pack(anchor='w', padx=16)
         fields = {}
-        for key, label, default in [('hour', 'Heure locale du PC (HH:MM)', '18:00'), ('retry_minutes', 'Nouvel essai après échec (minutes)', 15), ('grace_minutes', 'Tolérance après échéance (minutes)', 60), ('host', 'Adresse du Raspberry', ''), ('user', 'Utilisateur SSH', 'botaneo'), ('hostname', 'Nom attendu du Raspberry', 'botaneo-pi'), ('key', 'Fichier de clé SSH sur ce PC', '')]:
+        for key, label, default in [('hour', 'Heure de référence des alertes (HH:MM)', '18:00'), ('retry_minutes', 'Intervalle entre récupérations (minutes)', 15), ('grace_minutes', 'Tolérance après échéance (minutes)', 60), ('host', 'Adresse du Raspberry', ''), ('user', 'Utilisateur SSH', 'botaneo'), ('hostname', 'Nom attendu du Raspberry', 'botaneo-pi'), ('key', 'Fichier de clé SSH sur ce PC', '')]:
             tk.Label(window, text=label).pack(anchor='w', padx=16, pady=(6, 0))
             value = tk.StringVar(window, value=str(config.get(key, default)))
             tk.Entry(window, textvariable=value, width=65).pack(fill='x', padx=16)
             fields[key] = value
-        tk.Label(window, text='Ce réglage programme la récupération des mesures du Raspberry.\nBotaneo doit rester ouvert. Aucun e-mail ne sera envoyé.', justify='left').pack(padx=16, pady=10)
+        tk.Label(window, text='Récupération à chaque ouverture, puis à intervalle régulier, même après un succès.\nBotaneo doit rester ouvert. Aucun e-mail ne sera envoyé.', justify='left').pack(padx=16, pady=10)
         def save():
             if self.busy:
                 messagebox.showinfo('Suivi Raspberry', 'Attendez la fin du contrôle en cours.', parent=window)
@@ -144,6 +141,7 @@ class SuiviRaspberry:
                 save_config(self.path, updated)
                 if any(updated.get(key) != config.get(key) for key in ('host', 'user', 'hostname', 'key', 'hour')):
                     self.store.reset()
+                self.next_attempt = None
                 self.config = updated
                 self.config_error = None
                 self.runtime_error = None

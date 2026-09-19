@@ -218,28 +218,16 @@ Le fichier `.gitignore` exclut notamment :
 Aucune licence n’est encore définie. Avant une publication publique, choisir une licence adaptée au niveau de partage souhaité.
 
 
-## Suivi Raspberry sur Windows 11
+## Raspberry Pi : collecte et synchronisation
 
-Une carte « Raspberry Pi · Suivi quotidien » contrôle la disponibilité du Pi par SSH. Les réglages permettent de choisir une heure quotidienne, un délai de nouvel essai, une tolérance et le mode déplacement. Le contrôle est rattrapé à l’ouverture de Botaneo si une échéance a été manquée. Il fonctionne uniquement lorsque l’application est ouverte. Aucun service Windows ni e-mail automatique n’est installé.
+Le Raspberry collecte les Mi Flora environ toutes les huit heures et conserve les mesures localement. Son interface mobile permet de demander une lecture immédiate. Le PC reste actuellement le centre de consultation ; le remplacement du PC par un serveur Raspberry et les collecteurs ESP32 sont des évolutions futures.
 
-La configuration privée est dans `_config/raspberry.local.json` ; l’état et les incidents, bornés à 200, sont dans `_app/data/raspberry_suivi.sqlite3`. La clé privée reste dans le dossier SSH Windows et son contenu n’est jamais lu par l’application. Le contrôle utilise SSH sans mot de passe interactif, vérifie l’identité de l’hôte et n’exécute que `hostname`.
+Botaneo récupère les mesures à chaque ouverture, puis toutes les quinze minutes par défaut tant que l’application est ouverte. Cet intervalle est réglable et ne déclenche pas une nouvelle lecture Bluetooth. Le mode déplacement suspend les transferts. Aucun service Windows permanent n’est nécessaire.
 
-**Un contact réussi n’est pas une synchronisation de mesures.** La collecte Raspberry et le transfert vers la base PC restent à développer. La carte l’indique explicitement. L’absence de réponse ne permet pas de distinguer une panne Wi-Fi d’une coupure électrique. En déplacement sans accès distant, suspendre le suivi automatique. Les délais suivent l’heure locale du PC.
+La réception est confirmée après enregistrement dans la base PC. Les reprises évitent les doublons ; les données sans date fiable restent archivées. Un Raspberry indisponible ne déclenche pas de lecture Bluetooth de secours sur ses capteurs.
 
+Après une récupération réussie, le PC copie la dernière sauvegarde quotidienne disponible du Pi et vérifie sa taille, son empreinte et son intégrité SQLite. Un échec de copie est signalé sans annuler les mesures reçues ; la prochaine synchronisation réessaie. Les copies restent dans `_security_backups/raspberry_daily/`, sans remplacer la base active.
 
-## Synchronisation Raspberry installée — 17 septembre 2026
+La configuration privée est dans `_config/raspberry.local.json`. La clé SSH reste sur le PC ; l’identité du Raspberry est vérifiée. Le suivi est conservé dans `_app/data/raspberry_sync_suivi.sqlite3`. La connexion locale doit être disponible ; aucun port Internet n’est requis pour ce fonctionnement.
 
-Le PC récupère désormais les données du Raspberry en priorité pour ses capteurs, avec confirmation après enregistrement et reprise sans doublons. Aucun basculement Bluetooth automatique si le Pi est absent ; les autres capteurs conservent leur lecture PC directe. Relancer Botaneo pour charger cette version.
-
-La carte Raspberry récupère réellement les mesures. Horaire quotidien existant, reprises après échec et rattrapage à l'ouverture ; application ouverte nécessaire. Le mode déplacement suspend aussi le transfert manuel. Collecte Pi maintenue toutes les huit heures environ.
-
-Validation : 12 tests, interface testée, transfert réel de 121 relevés, deuxième passage sans ajout, intégrité SQLite correcte. L'archive brute a reconnu 61 trames existantes sans les modifier. Sauvegarde : `_security_backups/raspberry_sync_20260917_225607`.
-
-- [x] Transfert Pi prioritaire et conservation des autres collectes PC.
-- [x] Accusé après transaction, reprise et déduplication des historiques.
-- [x] Conservation des trames brutes et de la qualité des dates.
-- [ ] Secours Bluetooth manuel coordonné.
-- [ ] Alerte sur l'ancienneté des mesures, distincte du succès du transfert.
-- [ ] Tests physiques de coupure, retour prolongé et restauration avec remise en attente des données du Pi.
-
-Cette section remplace les anciennes mentions « transfert à développer ».
+Voir [la fiche Raspberry](RASPBERRY.md) pour les limites et les vérifications. Relancer Botaneo après une mise à jour pour charger les nouveaux modules.

@@ -1,0 +1,7 @@
+[Unit]
+Description=Botaneo verified daily SQLite backup
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/python3 %h/botaneo/collector/backup_daily.py
+UMask=0077
+NoNewPrivileges=true

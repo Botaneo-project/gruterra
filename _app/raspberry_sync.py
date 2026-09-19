@@ -149,7 +149,14 @@ def synchronize(config=None, sender=transport, db_path=None):
                     if response.get('confirmed') != len(ack['rows']):
                         raise ValueError('Confirmation du Raspberry incomplète.')
                 if batch['pending'] <= len(batch['rows']):
-                    return {'ok': True, 'message': f"Raspberry : {totals['added']} mesure(s) ajoutée(s), {totals['duplicates']} déjà reçue(s), {totals['undated']} sans date fiable conservée(s).", **totals}
+                    backup_message = ''
+                    if sender is transport and db_path is None:
+                        try:
+                            from raspberry_backup import retrieve
+                            backup_message = retrieve(config, Path(database.DB_PATH).parent.parent / '_security_backups/raspberry_daily')
+                        except Exception:
+                            backup_message = 'Mesures reçues ; sauvegarde Pi non copiée, nouvel essai à la prochaine synchronisation.'
+                    return {'backup_message': backup_message, 'ok': True, 'message': backup_message + ' ' + f"Raspberry : {totals['added']} mesure(s) ajoutée(s), {totals['duplicates']} déjà reçue(s), {totals['undated']} sans date fiable conservée(s).", **totals}
             raise RuntimeError('Transfert partiel conservé ; suite au prochain essai.')
         except Exception as error:
             message = str(error) if isinstance(error, (ValueError, ConnectionError, RuntimeError)) else 'Transfert interrompu ; reprise sans doublons au prochain essai.'

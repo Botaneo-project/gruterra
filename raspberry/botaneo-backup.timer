@@ -1,0 +1,8 @@
+[Unit]
+Description=Botaneo daily backup with missed-run catch-up
+[Timer]
+OnCalendar=*-*-* 04:15:00
+Persistent=true
+RandomizedDelaySec=120
+[Install]
+WantedBy=timers.target

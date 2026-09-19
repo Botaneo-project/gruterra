@@ -202,3 +202,12 @@ Cette section remplace les anciennes mentions « transfert à développer ».
 - [ ] Vérifier une prochaine lecture réelle sur un capteur lu directement par le PC.
 
 Relancer Botaneo pour charger la correction. Les 121 mesures transférées du Pi le 17 septembre restent en place ; cette correction concerne les prochaines lectures Bluetooth directes du PC.
+
+
+## Récupération Raspberry — 19 septembre 2026
+
+Récupération à chaque ouverture de Botanéo, puis toutes les 15 minutes par défaut tant que l’application reste ouverte, après succès comme après échec. Intervalle réglable dans la carte Raspberry. Le mode déplacement et la désactivation suspendent les tentatives. Aucune tâche Windows permanente ajoutée, aucune collecte Bluetooth du Pi déclenchée. Relancer Botanéo pour charger cette version. Huit tests de planification réussis.
+
+- [x] Copie vérifiée de la dernière sauvegarde Pi sur le PC après synchronisation.
+- [ ] Définir une rétention des copies de sauvegarde sur le PC.
+- [ ] Tester le cycle déplacement / nouveau capteur / retour / récupération PC.
