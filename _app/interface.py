@@ -1,3 +1,4 @@
+import os
 from instance_botaneo import exiger_instance_unique
 exiger_instance_unique(graphique=True)
 
@@ -5295,9 +5296,10 @@ netatmo_preferences = charger_preferences_netatmo()
 
 suivi_raspberry = SuiviRaspberry(root, CONFIG_DIR, Path(__file__).resolve().parent / 'data')
 actualiser_interface()
-root.after(1000, suivi_raspberry.start)
-root.after(500, actualiser_netatmo_seul)
-root.after(5000, verifier_sync_auto)
+if os.environ.get("BOTANEO_DEMO") != "1":
+    root.after(1000, suivi_raspberry.start)
+    root.after(500, actualiser_netatmo_seul)
+    root.after(5000, verifier_sync_auto)
 
 root.mainloop()
 

@@ -68,3 +68,6 @@ _app/synchronisation.py
 _app/database - Copie.py
 _app/Nouveau Document texte.txt
 _app/archive_conservee_*.json
+
+# Runtime dependency of the validated history import
+!_app/importer_historique_miflora.py

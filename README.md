@@ -1,5 +1,7 @@
 # Botaneo
 
+Pour découvrir le projet sans matériel : [guide du mode démonstration](GUIDE_DEMO.md).
+
 Botaneo est une application locale de suivi des plantes. Elle centralise les plantes, les capteurs Mi Flora, les mesures enregistrées dans SQLite, les arrosages, les rappels et les données météo Netatmo.
 
 Le projet est prévu d’abord pour un usage local sous Windows. Les données réelles, les tokens et la base SQLite personnelle restent sur le PC de l’utilisateur.

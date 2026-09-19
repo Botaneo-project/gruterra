@@ -190,3 +190,15 @@ Validation : 12 tests, interface testée, transfert réel de 121 relevés, deuxi
 - [ ] Tests physiques de coupure, retour prolongé et restauration avec remise en attente des données du Pi.
 
 Cette section remplace les anciennes mentions « transfert à développer ».
+
+
+## Historique et graphiques — correction du 18 septembre 2026
+
+- [x] Cause identifiée : la synchronisation Bluetooth PC alimentait l'archive brute sans appeler l'importeur des mesures affichées.
+- [x] Raccorder l'importeur existant après archivage, avec validation des horloges et déduplication ; quatre tests réussis.
+- [x] Préserver les lectures partielles dans l'archive et signaler l'absence d'ajout aux graphiques.
+- [ ] Comparer les périodes et lectures partielles pour expliquer les 53 historiques supplémentaires du Pi.
+- [ ] Auditer les anciennes archives sans inventer leurs repères temporels.
+- [ ] Vérifier une prochaine lecture réelle sur un capteur lu directement par le PC.
+
+Relancer Botaneo pour charger la correction. Les 121 mesures transférées du Pi le 17 septembre restent en place ; cette correction concerne les prochaines lectures Bluetooth directes du PC.

@@ -4,6 +4,7 @@ from datetime import datetime, timezone
 
 import database
 import raspberry_sync
+from historique_graphique import alimenter_graphiques
 from capteurs.miflora import lire_mesure, scanner_avec_progression
 from capteurs.historique import lire_historique
 from bleak import BleakClient
@@ -69,13 +70,17 @@ async def importer_historique_capteur(capteur_id=None):
             f"{resume['ajoutees']} nouvelle(s), "
             f"{resume['doublons']} déjà connue(s)."
         )
+        graphiques = alimenter_graphiques(export, database.DB_PATH)
+        resume['graphiques'] = graphiques
+        message += ' ' + graphiques['message']
+
         if export.get('status') == 'partial':
             erreurs = export.get('errors') or []
             if erreurs:
                 message += f" Lecture interrompue à l'entrée {erreurs[0].get('index')}. Les entrées déjà lues ont été conservées."
 
         return {
-            'ok': True,
+            'ok': graphiques['ok'],
             'message': message,
             'resume': resume
         }
