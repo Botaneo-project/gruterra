@@ -733,6 +733,44 @@ def ouvrir_historique(parent, plante_id):
                                anchor="e", fill=couleur_secondaire,
                                font=("Segoe UI", 8))
 
+    def copier_resume_historique():
+        nom_plante = plante[1] if plante else "Plante"
+        lignes = [
+            f"Historique Botaneo — {nom_plante}",
+            f"Période affichée : {periode.get()}",
+            f"Mesure affichée : {serie.get()}",
+            "",
+            "Résumé visible :",
+            f"- Dernière : {resume_vars['dernier'].get()}",
+            f"- Moyenne : {resume_vars['moyenne'].get()}",
+            f"- Minimum : {resume_vars['minimum'].get()}",
+            f"- Maximum : {resume_vars['maximum'].get()}",
+            f"- Tendance : {resume_vars['tendance'].get()}",
+            "",
+            qualite_var.get(),
+            lecture_var.get(),
+            f"Tableau : {bilan.get()}",
+        ]
+
+        selection = table.selection()
+        if selection:
+            valeurs = table.item(selection[0], "values")
+            if valeurs:
+                lignes.extend([
+                    "",
+                    "Ligne sélectionnée :",
+                    f"- Date : {valeurs[0]}",
+                    f"- Humidité : {valeurs[1]} %",
+                    f"- Température : {valeurs[2]} °C",
+                    f"- Lumière : {valeurs[3]} lux",
+                    f"- Conductivité : {valeurs[4]} µS/cm",
+                ])
+
+        fenetre.clipboard_clear()
+        fenetre.clipboard_append("\n".join(lignes).strip())
+        bilan.set(f"{bilan.get()} · résumé copié")
+
+
     def actualiser(event=None):
         nonlocal points, mesures_courantes, arrosages_courants
 
@@ -844,6 +882,7 @@ def ouvrir_historique(parent, plante_id):
         ).pack(side="left", padx=(0, 6))
 
     ttk.Button(barre, text="Ordre normal", command=remettre_ordre_normal).pack(side="right", padx=(8, 0))
+    ttk.Button(barre, text="Copier résumé", command=copier_resume_historique).pack(side="right", padx=(8, 0))
     ttk.Button(barre, text="Actualiser", command=actualiser).pack(side="right")
     choix_periode.bind("<<ComboboxSelected>>", actualiser)
     choix_serie.bind("<<ComboboxSelected>>", actualiser)

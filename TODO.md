@@ -178,6 +178,7 @@ Ce fichier sert à garder une trace claire des idées et des prochaines étapes.
 - [x] Lectures partielles acceptées quand les entrées lues sont valides.
 - [x] Lecture PC en plusieurs passes pour contourner les coupures BLE.
 - [x] Bandeau de qualité des données dans l’écran historique.
+- [x] Fenêtre historique : bouton `Copier résumé` avec période, statistiques, qualité et ligne sélectionnée.
 - [ ] Ajouter un mode historique long séparé si les lectures normales restent limitées.
 - [ ] Auditer les anciennes archives sans inventer leurs repères temporels.
-- [ ] Ajouter une extraction texte intégrée pour envoyer les données utiles à une discussion d’analyse plante.
+- [x] Ajouter une extraction texte intégrée pour envoyer les données utiles à une discussion d’analyse plante.
