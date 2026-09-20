@@ -16,6 +16,7 @@ class SuiviRaspberry:
         self.store = Store(Path(data_dir) / 'raspberry_sync_suivi.sqlite3')
         self.next_attempt = None
         self.last_result = None
+        self.last_pending = None
         self.busy = False
         self.queue = queue.Queue()
         self.detail = tk.StringVar(root)
@@ -70,6 +71,7 @@ class SuiviRaspberry:
                 result = raspberry_sync.synchronize(config)
                 ok, reason = result['ok'], result['message']
                 self.last_result = reason
+                self.last_pending = result.get('pending_remaining')
                 self.store.record(ok, reason, due)
             except Exception:
                 error = 'Impossible d’enregistrer le contrôle. Aucun succès confirmé.'
@@ -86,10 +88,17 @@ class SuiviRaspberry:
         next_at = local_date(self.next_attempt.isoformat()) if self.next_attempt else 'Dès l’ouverture'
         if not self.config['enabled'] or self.config['away']:
             next_at = 'Suspendu'
+        attente = ''
+        if self.last_pending is not None:
+            if self.last_pending > 0:
+                attente = f"Mesures encore en attente sur le Raspberry : {self.last_pending}.\n"
+            else:
+                attente = "Mesures encore en attente sur le Raspberry : aucune connue.\n"
         self.detail.set(
             f"Dernière synchronisation confirmée : {local_date(state.get('last_contact'))} · Prochain contrôle : {next_at}\n"
             f"Dernière tentative : {local_date(state.get('last_attempt'))} · {state.get('last_error') or 'Aucune erreur de contact'}\n"
             f"{self.last_result or 'Les données reçues sont conservées sur le PC et sur le Pi.'}\n"
+            f"{attente}"
             'Synchronisation active quand Botaneo est ouvert. Une synchronisation ne garantit pas une collecte récente.')
         self.buttons = [button for button in self.buttons if button.winfo_exists()]
         for button in self.buttons:

@@ -137,6 +137,7 @@ def synchronize(config=None, sender=transport, db_path=None, collect_now=False, 
         return {'ok': False, 'message': 'Synchronisation Raspberry suspendue dans les réglages.'}
     with LOCK:
         totals = {'added': 0, 'duplicates': 0, 'undated': 0}
+        pending_remaining = None
         collect_message = ''
         collect_status = None
         collect_accepted = None
@@ -163,6 +164,7 @@ def synchronize(config=None, sender=transport, db_path=None, collect_now=False, 
             # Bounded work: remaining batches resume at the next retry.
             for _ in range(20):
                 batch = sender(config, 'export')
+                pending_remaining = max(int(batch.get('pending', 0)) - len(batch.get('rows', [])), 0)
                 counts, ack = import_batch(db_path or database.DB_PATH, batch, config)
                 for key in totals:
                     totals[key] += counts[key]
@@ -178,8 +180,11 @@ def synchronize(config=None, sender=transport, db_path=None, collect_now=False, 
                             backup_message = retrieve(config, Path(database.DB_PATH).parent.parent / '_security_backups/raspberry_daily')
                         except Exception:
                             backup_message = 'Mesures reçues ; sauvegarde Pi non copiée, nouvel essai à la prochaine synchronisation.'
-                    return {'backup_message': backup_message, 'ok': True, 'message': collect_message + backup_message + ' ' + f"Raspberry : {totals['added']} mesure(s) ajoutée(s), {totals['duplicates']} déjà reçue(s), {totals['undated']} sans date fiable conservée(s).", 'collect_status': collect_status, 'collect_accepted': collect_accepted, **totals}
+                    attente_message = ''
+                    if pending_remaining:
+                        attente_message = f" Il reste environ {pending_remaining} mesure(s) en attente sur le Raspberry ; elles seront reprises au prochain passage."
+                    return {'backup_message': backup_message, 'ok': True, 'message': collect_message + backup_message + ' ' + f"Raspberry : {totals['added']} mesure(s) ajoutée(s), {totals['duplicates']} déjà reçue(s), {totals['undated']} sans date fiable conservée(s)." + attente_message, 'collect_status': collect_status, 'collect_accepted': collect_accepted, 'pending_remaining': pending_remaining or 0, **totals}
             raise RuntimeError('Transfert partiel conservé ; suite au prochain essai.')
         except Exception as error:
             message = str(error) if isinstance(error, (ValueError, ConnectionError, RuntimeError)) else 'Transfert interrompu ; reprise sans doublons au prochain essai.'
-            return {'ok': False, 'message': message, 'collect_status': collect_status, 'collect_accepted': collect_accepted, **totals}
+            return {'ok': False, 'message': message, 'collect_status': collect_status, 'collect_accepted': collect_accepted, 'pending_remaining': pending_remaining, **totals}
