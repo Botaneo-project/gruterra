@@ -1106,6 +1106,20 @@ def afficher_besoins_plante(parent, plante_id):
     )
 
 
+def formater_duree_heures(heures):
+    try:
+        heures = float(heures)
+    except (TypeError, ValueError):
+        return "durée inconnue"
+    if heures < 1:
+        minutes = max(1, int(round(heures * 60)))
+        return f"{minutes} min"
+    if heures < 48:
+        return f"{heures:.1f} h"
+    jours = heures / 24
+    return f"{jours:.1f} j"
+
+
 def analyser_apres_arrosage(plante_id):
     """Analyse prudente des mesures qui suivent le dernier arrosage."""
     dernier = database.get_dernier_arrosage(plante_id)
@@ -1194,13 +1208,19 @@ def analyser_apres_arrosage(plante_id):
 
     derniere_date, derniere_humidite = points[-1]
     heures_depuis_derniere = (maintenant - derniere_date).total_seconds() / 3600
+    duree_suivi = max((derniere_date - date_arrosage).total_seconds() / 3600, 0)
+    resume_contexte = (
+        f"{len(points)} mesure(s) après arrosage, "
+        f"suivi sur {formater_duree_heures(duree_suivi)}, "
+        f"dernière mesure {anciennete(derniere_date.isoformat(timespec='seconds'))}"
+    )
 
     if len(points) == 1 or heures_depuis < 12:
         return {
             "niveau": "info",
             "titre": "💧 Suivi post-arrosage lancé",
-            "detail": f"Dernière humidité après arrosage : {derniere_humidite:.0f} %. Il faut encore du recul avant d'interpréter.",
-            "resume": f"Suivi post-arrosage : {derniere_humidite:.0f} %, recul encore court.",
+            "detail": f"Dernière humidité après arrosage : {derniere_humidite:.0f} %. {resume_contexte}. Il faut encore du recul avant d'interpréter.",
+            "resume": f"Suivi post-arrosage : {derniere_humidite:.0f} %, recul encore court · {resume_contexte}.",
             "couleur": BLUE,
             "fond": LIGHT_BLUE
         }
@@ -1214,8 +1234,8 @@ def analyser_apres_arrosage(plante_id):
         return {
             "niveau": "danger",
             "titre": "💧 Humidité persistante après arrosage",
-            "detail": f"{derniere_humidite:.0f} % encore mesurés environ {heures_depuis:.0f} h après l'arrosage. Vérifier le substrat avant tout nouvel arrosage.",
-            "resume": f"Suivi post-arrosage : humidité encore haute ({derniere_humidite:.0f} %) après {heures_depuis:.0f} h.",
+            "detail": f"{derniere_humidite:.0f} % encore mesurés environ {formater_duree_heures(heures_depuis)} après l'arrosage. {resume_contexte}. Vérifier le substrat avant tout nouvel arrosage.",
+            "resume": f"Suivi post-arrosage : humidité encore haute ({derniere_humidite:.0f} %) après {formater_duree_heures(heures_depuis)} · {resume_contexte}.",
             "couleur": RED,
             "fond": LIGHT_RED
         }
@@ -1224,8 +1244,8 @@ def analyser_apres_arrosage(plante_id):
         return {
             "niveau": "attention",
             "titre": "💧 Séchage lent après arrosage",
-            "detail": f"{derniere_humidite:.0f} % après {heures_depuis:.0f} h, tendance {tendance_jour:.1f} point/jour. Surveiller avant de remettre de l'eau.",
-            "resume": f"Suivi post-arrosage : séchage lent ({derniere_humidite:.0f} %, {tendance_jour:.1f} point/jour).",
+            "detail": f"{derniere_humidite:.0f} % après {formater_duree_heures(heures_depuis)}, tendance {tendance_jour:.1f} point/jour. {resume_contexte}. Surveiller avant de remettre de l'eau.",
+            "resume": f"Suivi post-arrosage : séchage lent ({derniere_humidite:.0f} %, {tendance_jour:.1f} point/jour) · {resume_contexte}.",
             "couleur": ORANGE,
             "fond": LIGHT_ORANGE
         }
@@ -1234,8 +1254,8 @@ def analyser_apres_arrosage(plante_id):
         return {
             "niveau": "ok",
             "titre": "💧 Séchage post-arrosage normal",
-            "detail": f"Humidité revenue à {derniere_humidite:.0f} %. Aucune humidité persistante détectée.",
-            "resume": f"Suivi post-arrosage : séchage correct, {derniere_humidite:.0f} %.",
+            "detail": f"Humidité revenue à {derniere_humidite:.0f} %. {resume_contexte}. Aucune humidité persistante détectée.",
+            "resume": f"Suivi post-arrosage : séchage correct, {derniere_humidite:.0f} % · {resume_contexte}.",
             "couleur": GREEN,
             "fond": LIGHT_GREEN
         }
@@ -1243,8 +1263,8 @@ def analyser_apres_arrosage(plante_id):
     return {
         "niveau": "info",
         "titre": "💧 Suivi post-arrosage",
-        "detail": f"Dernière humidité : {derniere_humidite:.0f} %, tendance {tendance_jour:.1f} point/jour. Rien d'inquiétant détecté pour l'instant.",
-        "resume": f"Suivi post-arrosage : {derniere_humidite:.0f} %, tendance {tendance_jour:.1f} point/jour.",
+        "detail": f"Dernière humidité : {derniere_humidite:.0f} %, tendance {tendance_jour:.1f} point/jour. {resume_contexte}. Rien d'inquiétant détecté pour l'instant.",
+        "resume": f"Suivi post-arrosage : {derniere_humidite:.0f} %, tendance {tendance_jour:.1f} point/jour · {resume_contexte}.",
         "couleur": BLUE,
         "fond": LIGHT_BLUE
     }

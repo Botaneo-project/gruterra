@@ -108,6 +108,7 @@ Ce fichier sert à garder une trace claire des idées et des prochaines étapes.
 - [x] Ajouter une zone de décision en haut : `À faire aujourd’hui`, `À surveiller`, `Prévision 48-72 h`.
 - [x] Ajouter une extraction texte pour partager les données utiles avec une discussion d’analyse plante.
 - [x] Afficher des repères post-arrosage dans l’historique.
+- [x] Améliorer le résumé post-arrosage avec le nombre de mesures, la durée de suivi et l’ancienneté de la dernière mesure.
 - [ ] Améliorer la phrase de synthèse globale, par exemple : `Votre Crassula devrait nécessiter une intervention dans les prochaines 24 h.`
 - [ ] Calculer les tendances d’humidité du sol avec plus de recul.
 - [ ] Estimer le prochain arrosage probable quand les données sont suffisantes.
