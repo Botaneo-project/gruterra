@@ -167,7 +167,8 @@ Ce fichier sert à garder une trace claire des idées et des prochaines étapes.
 - [x] Secours Bluetooth PC manuel pour les capteurs normalement gérés par le Raspberry.
 - [x] Afficher plus clairement l’ancienneté des dernières mesures, distincte du succès du transfert.
 - [x] Afficher le nombre de mesures Raspberry en attente quand cette information est disponible.
-- [ ] Définir une rétention des copies de sauvegarde Raspberry sur le PC.
+- [x] Afficher un diagnostic de rétention des copies de sauvegarde Raspberry sur le PC.
+- [ ] Ajouter plus tard un nettoyage manuel ou confirmé des anciennes sauvegardes Raspberry.
 - [ ] Tester le cycle déplacement / nouveau capteur / retour / récupération PC.
 - [ ] Tester une restauration Raspberry avec reprise des mesures déjà confirmées.
 

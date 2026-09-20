@@ -1,6 +1,9 @@
 """Fetch verified daily snapshots; never replace the live PC database."""
 import hashlib,json,os,re,sqlite3,subprocess,tempfile
+from datetime import datetime, timedelta
 from pathlib import Path
+
+RETENTION_JOURS = 14
 
 def verify(path, metadata):
     if path.stat().st_size != metadata['size'] or hashlib.sha256(path.read_bytes()).hexdigest()!=metadata['sha256']:
@@ -13,6 +16,36 @@ def verify(path, metadata):
             db.execute('SELECT COUNT(*) FROM '+table).fetchone()
     finally:
         db.close()
+
+def retention_status(folder, retention_days=RETENTION_JOURS):
+    """Report old Raspberry daily backups without deleting anything."""
+    try:
+        retention_days = max(int(retention_days), 1)
+    except (TypeError, ValueError):
+        retention_days = RETENTION_JOURS
+
+    cutoff = datetime.now().date() - timedelta(days=retention_days)
+    total = 0
+    old = 0
+
+    for file in Path(folder).glob('collector-????-??-??.sqlite3'):
+        match = re.fullmatch(r'collector-(\d{4}-\d{2}-\d{2})\.sqlite3', file.name)
+        if not match:
+            continue
+        try:
+            backup_date = datetime.strptime(match.group(1), '%Y-%m-%d').date()
+        except ValueError:
+            continue
+        total += 1
+        if backup_date < cutoff:
+            old += 1
+
+    if old:
+        return f' Rétention sauvegardes Pi : {total} copie(s), dont {old} ancienne(s) à vérifier plus tard.'
+    if total:
+        return f' Rétention sauvegardes Pi : {total} copie(s), aucune ancienne.'
+    return ''
+
 
 def retrieve(config, folder):
     from suivi_raspberry import validate
@@ -32,7 +65,7 @@ def retrieve(config, folder):
     if target.exists():
         try:
             verify(target,metadata)
-            return 'Sauvegarde Pi déjà vérifiée sur le PC ('+metadata['name'][10:20]+').'
+            return 'Sauvegarde Pi déjà vérifiée sur le PC ('+metadata['name'][10:20]+').' + retention_status(folder)
         except (ValueError,sqlite3.Error):
             pass
     fd,tmp=tempfile.mkstemp(dir=folder,suffix='.part')
@@ -44,7 +77,7 @@ def retrieve(config, folder):
         verify(temporary,metadata)
         with temporary.open('r+b') as stream: os.fsync(stream.fileno())
         os.replace(temporary,target)
-        return 'Sauvegarde Pi copiée et vérifiée sur le PC ('+metadata['name'][10:20]+').'
+        return 'Sauvegarde Pi copiée et vérifiée sur le PC ('+metadata['name'][10:20]+').' + retention_status(folder)
     finally:
         temporary.unlink(missing_ok=True)
 
