@@ -5225,6 +5225,39 @@ def capteurs_actifs_par_plante():
     return capteurs
 
 
+def delai_rappel_arrosage(date_rappel, reference=None):
+    reference = reference or datetime.now()
+    try:
+        if isinstance(date_rappel, str):
+            date_rappel = datetime.fromisoformat(date_rappel)
+        jours = (date_rappel.date() - reference.date()).days
+    except Exception:
+        return "date à vérifier"
+
+    if jours < 0:
+        return f"en retard de {abs(jours)} jour{'s' if abs(jours) != 1 else ''}"
+    if jours == 0:
+        return "aujourd'hui"
+    if jours == 1:
+        return "demain"
+    return f"dans {jours} jours"
+
+
+def rappel_mail_texte(plante_id, date_rappel, reference=None):
+    if not plante_avec_rappel_email(plante_id):
+        return None
+    reference = reference or datetime.now()
+    try:
+        if isinstance(date_rappel, str):
+            date_rappel = datetime.fromisoformat(date_rappel)
+        date_mail = date_rappel - timedelta(days=7)
+    except Exception:
+        return "Mail de rappel prévu : une semaine avant, date à vérifier."
+    if date_mail.date() <= reference.date():
+        return "Mail de rappel : à préparer maintenant, car l’échéance est à moins d’une semaine."
+    return f"Mail de rappel prévu environ le {formater_date(date_mail.isoformat(timespec='seconds'))}."
+
+
 def ajouter_alerte(liste, niveau, titre, detail):
     couleurs = {
         "danger": (RED, LIGHT_RED),
@@ -5255,8 +5288,50 @@ def construire_alertes(plantes):
                 suivi_arrosage["detail"]
             )
 
+        try:
+            rappel = database.get_rappel_arrosage_actif(plante_id)
+        except Exception:
+            rappel = None
+
+        try:
+            dernier_arrosage = database.get_dernier_arrosage(plante_id)
+        except Exception:
+            dernier_arrosage = None
+
         if not capteurs:
-            ajouter_alerte(alertes, "info", f"🌱 {nom} sans capteur actif", "Suivi manuel possible : arrosage, notes et rappel.")
+            details_sans_capteur = ["Suivi manuel actif : arrosage, notes et rappel."]
+            niveau_sans_capteur = "info"
+            titre_sans_capteur = f"🌱 {nom} sans capteur actif"
+
+            if rappel and rappel[9]:
+                try:
+                    date_rappel = datetime.fromisoformat(rappel[9])
+                    delai_txt = delai_rappel_arrosage(date_rappel, maintenant)
+                    details_sans_capteur.append(f"Prochain arrosage : {delai_txt} · {formater_date(rappel[9])}.")
+                    mail_txt = rappel_mail_texte(plante_id, date_rappel, maintenant)
+                    if mail_txt:
+                        details_sans_capteur.append(mail_txt)
+                    if date_rappel.date() <= maintenant.date():
+                        niveau_sans_capteur = "danger"
+                        titre_sans_capteur = f"💧 Arrosage manuel à faire · {nom}"
+                    elif (date_rappel - maintenant).days <= 2:
+                        niveau_sans_capteur = "attention"
+                        titre_sans_capteur = f"💧 Arrosage manuel bientôt · {nom}"
+                except Exception:
+                    details_sans_capteur.append(f"Prochain arrosage : {delai_rappel_arrosage(rappel[9], maintenant)} · {formater_date(rappel[9])}.")
+                    mail_txt = rappel_mail_texte(plante_id, rappel[9], maintenant)
+                    if mail_txt:
+                        details_sans_capteur.append(mail_txt)
+
+            if dernier_arrosage and dernier_arrosage[2]:
+                quantite = dernier_arrosage[3]
+                quantite_txt = f"{quantite:g} ml" if quantite is not None else "quantité non renseignée"
+                details_sans_capteur.append(f"Dernier arrosage manuel : {formater_date(dernier_arrosage[2])} · {quantite_txt}.")
+
+            if not rappel:
+                details_sans_capteur.append("Aucun rappel programmé : utile pour les plantes hors domicile ou sans mesure d'humidité.")
+
+            ajouter_alerte(alertes, niveau_sans_capteur, titre_sans_capteur, " ".join(details_sans_capteur))
         else:
             for capteur in capteurs:
                 adresse = capteur[2]
@@ -5279,18 +5354,23 @@ def construire_alertes(plantes):
                     except Exception:
                         pass
 
-        try:
-            rappel = database.get_rappel_arrosage_actif(plante_id)
-        except Exception:
-            rappel = None
-
-        if rappel and rappel[9]:
+        if capteurs and rappel and rappel[9]:
             try:
                 date_rappel = datetime.fromisoformat(rappel[9])
                 if date_rappel.date() <= maintenant.date():
-                    ajouter_alerte(alertes, "danger", f"💧 Arrosage à faire · {nom}", f"Rappel prévu le {formater_date(rappel[9])}.")
+                    detail = f"Rappel {delai_rappel_arrosage(date_rappel, maintenant)} · {formater_date(rappel[9])}."
+                    mail_txt = rappel_mail_texte(plante_id, date_rappel, maintenant)
+                    if mail_txt:
+                        detail += " " + mail_txt
+                    ajouter_alerte(alertes, "danger", f"💧 Arrosage à faire · {nom}", detail)
                 elif (date_rappel - maintenant).days <= 2:
-                    ajouter_alerte(alertes, "attention", f"💧 Arrosage bientôt · {nom}", f"Rappel prévu le {formater_date(rappel[9])}.")
+                    detail = f"Rappel {delai_rappel_arrosage(date_rappel, maintenant)} · {formater_date(rappel[9])}."
+                    mail_txt = rappel_mail_texte(plante_id, date_rappel, maintenant)
+                    if mail_txt:
+                        detail += " " + mail_txt
+                    ajouter_alerte(alertes, "attention", f"💧 Arrosage bientôt · {nom}", detail)
+                elif plante_avec_rappel_email(plante_id) and (date_rappel - maintenant).days <= 7:
+                    ajouter_alerte(alertes, "info", f"📧 Mail de rappel à prévoir · {nom}", f"Arrosage {delai_rappel_arrosage(date_rappel, maintenant)} · {formater_date(rappel[9])}. {rappel_mail_texte(plante_id, date_rappel, maintenant)}")
             except Exception:
                 pass
 
