@@ -38,6 +38,13 @@ Ce fichier sert à garder une trace claire des idées et des prochaines étapes.
 - README initial prévu pour préparer un futur dépôt GitHub.
 - Mode démo ajouté pour tester Botaneo avec une base fictive, sans capteur, token ou données personnelles.
 - Script `verifier_avant_github.py` ajouté pour contrôler les fichiers sensibles avant commit ou push.
+- Dépôt GitHub privé initialisé et utilisé pour sauvegarder les évolutions validées.
+- Statut de synchronisation copiable depuis l’interface.
+- Lecture historique Mi Flora PC en plusieurs passes, sans effacement, avec reprise partielle et signalement des données manquantes.
+- Synchronisation manuelle : récupération Raspberry en priorité, puis lecture Bluetooth PC de secours si aucune mesure fraîche ne remonte.
+- Raspberry : collecte planifiée quatre fois par jour via `botaneo-collect.timer`.
+- Raspberry : scripts d’installation et de mise à jour disponibles dans `raspberry/install/`.
+- Écran historique enrichi avec résumé, tendance, repères post-arrosage et qualité des données.
 
 ## Priorité courte
 
@@ -82,11 +89,11 @@ Ce fichier sert à garder une trace claire des idées et des prochaines étapes.
 
 ## Historique Mi Flora
 
-- Tester sur le capteur réel le bouton manuel `Importer historique Mi Flora`.
-- Convertir plus tard les entrées historiques brutes en mesures datées quand la reconstruction des dates sera validée.
-- Ne jamais activer l’effacement de la mémoire Mi Flora sans validation claire.
-- Garder les entrées douteuses à part plutôt que remplacer les mesures existantes.
-- Surveiller les prochains essais : si Windows coupe encore la lecture historique, les entrées déjà lues restent conservées.
+- Garder la règle de sécurité : aucune suppression de mémoire Mi Flora sans validation claire.
+- Continuer à surveiller les lectures partielles Windows BLE : les entrées déjà lues doivent rester conservées.
+- Prévoir plus tard un mode `Importer historique long`, séparé de la synchronisation normale, avec plus de passes et une progression dédiée.
+- Améliorer l’affichage de la source des mesures : Raspberry, PC direct, historique importé.
+- Conserver les entrées douteuses à part plutôt que remplacer les mesures existantes.
 
 ## Analyse plante et prévisions 48-72 h
 
@@ -110,11 +117,11 @@ Ce fichier sert à garder une trace claire des idées et des prochaines étapes.
 
 ## GitHub, sauvegarde et sécurité
 
-- Préparer un README propre pour expliquer le projet.
-- Prévoir un dépôt GitHub quand le projet sera assez stable.
-- Ne jamais stocker les tokens Netatmo, Météo-France ou e-mail dans GitHub.
+- Maintenir `README.md`, `RASPBERRY.md` et `TODO.md` à jour après les grosses évolutions.
+- Lancer `py verifier_avant_github.py` avant chaque commit/push.
+- Ne jamais stocker les tokens Netatmo, Météo-France, e-mail, clés SSH ou bases réelles dans GitHub.
 - Garder les secrets dans des fichiers locaux ignorés par Git.
-- Prévoir une sauvegarde simple de la base de données.
+- Définir une rétention des sauvegardes copiées depuis le Raspberry sur le PC.
 - Garder un dossier historique pour les anciens fichiers non utilisés, sans les supprimer trop vite.
 
 
@@ -147,68 +154,30 @@ Ce fichier sert à garder une trace claire des idées et des prochaines étapes.
 - Prévoir plus tard de vraies petites icônes météo locales dans `assets`, plutôt que de dépendre des emojis Windows.
 - Revoir le logo d’en-tête avec une vraie version icône simplifiée, pensée pour une petite taille.
 
+## Raspberry et synchronisation
 
-
-
-## Raspberry : suivi Windows installé le 16 septembre 2026
+État actuel : le PC récupère les données du Raspberry en priorité, confirme les mesures après enregistrement, évite les doublons et copie la dernière sauvegarde quotidienne du Pi. Le Raspberry demande maintenant une collecte Mi Flora quatre fois par jour : 06 h, 12 h, 18 h et 23 h. Le PC peut encore faire une lecture Bluetooth manuelle de secours si le Raspberry ne fournit pas de mesure fraîche.
 
 - [x] Carte de disponibilité Raspberry dans Botaneo, contrôle SSH manuel et quotidien.
-- [x] Heure, délai de nouvel essai et tolérance configurables ; mode déplacement.
-- [x] Dernier contact, dernière tentative, erreur, prochain essai et retour à la normale.
-- [x] Persistance des incidents sans doublons et rattrapage après fermeture du PC.
-- [ ] Développer la collecte autonome et la file locale sur le Pi.
-- [ ] Ajouter la vraie synchronisation des mesures vers le PC avec accusé et déduplication.
-- [ ] Afficher dernière synchronisation confirmée et nombre de mesures en attente.
-- [ ] Prévoir un composant Windows en arrière-plan si un suivi application fermée est souhaité.
-
-Le suivi installé est celui de la disponibilité : aucune réussite SSH ne compte comme mesure synchronisée.
-
-## Synchronisation : Raspberry prioritaire (17 septembre 2026)
-
-- [ ] Pour les capteurs affectés au Raspberry, récupérer ses mesures en priorité lors de la synchronisation PC.
-- [ ] Confirmer leur enregistrement au Pi seulement après validation de la transaction dans la base PC.
-- [ ] Dédupliquer les entrées historiques déjà récupérées directement par le PC, au-delà des seuls identifiants du collecteur ; préserver les trames et tenir compte des réinitialisations de l’horloge du capteur.
-- [ ] Si le Pi est inaccessible, afficher le retard et réessayer plus tard, sans basculement Bluetooth automatique.
-- [ ] Garder la lecture Bluetooth PC en secours manuel pour ces capteurs, avec coordination pour éviter les connexions simultanées.
-- [ ] Conserver la collecte PC directe pour les capteurs non affectés au Raspberry.
-- [ ] Tester un historique commun aux deux machines : aucun doublon ni perte après interruption.
-
-Cette priorité reste à développer. La collecte autonome du Pi et la récupération de son historique sont opérationnelles ; le transfert vers la base Windows ne l’est pas encore.
-
-## Synchronisation Raspberry installée — 17 septembre 2026
-
-Le PC récupère désormais les données du Raspberry en priorité pour ses capteurs, avec confirmation après enregistrement et reprise sans doublons. Aucun basculement Bluetooth automatique si le Pi est absent ; les autres capteurs conservent leur lecture PC directe. Relancer Botaneo pour charger cette version.
-
-La carte Raspberry récupère réellement les mesures. Horaire quotidien existant, reprises après échec et rattrapage à l'ouverture ; application ouverte nécessaire. Le mode déplacement suspend aussi le transfert manuel. Collecte Pi maintenue toutes les huit heures environ.
-
-Validation : 12 tests, interface testée, transfert réel de 121 relevés, deuxième passage sans ajout, intégrité SQLite correcte. L'archive brute a reconnu 61 trames existantes sans les modifier. Sauvegarde : `_security_backups/raspberry_sync_20260917_225607`.
-
-- [x] Transfert Pi prioritaire et conservation des autres collectes PC.
-- [x] Accusé après transaction, reprise et déduplication des historiques.
-- [x] Conservation des trames brutes et de la qualité des dates.
-- [ ] Secours Bluetooth manuel coordonné.
-- [ ] Alerte sur l'ancienneté des mesures, distincte du succès du transfert.
-- [ ] Tests physiques de coupure, retour prolongé et restauration avec remise en attente des données du Pi.
-
-Cette section remplace les anciennes mentions « transfert à développer ».
-
-
-## Historique et graphiques — correction du 18 septembre 2026
-
-- [x] Cause identifiée : la synchronisation Bluetooth PC alimentait l'archive brute sans appeler l'importeur des mesures affichées.
-- [x] Raccorder l'importeur existant après archivage, avec validation des horloges et déduplication ; quatre tests réussis.
-- [x] Préserver les lectures partielles dans l'archive et signaler l'absence d'ajout aux graphiques.
-- [ ] Comparer les périodes et lectures partielles pour expliquer les 53 historiques supplémentaires du Pi.
-- [ ] Auditer les anciennes archives sans inventer leurs repères temporels.
-- [ ] Vérifier une prochaine lecture réelle sur un capteur lu directement par le PC.
-
-Relancer Botaneo pour charger la correction. Les 121 mesures transférées du Pi le 17 septembre restent en place ; cette correction concerne les prochaines lectures Bluetooth directes du PC.
-
-
-## Récupération Raspberry — 19 septembre 2026
-
-Récupération à chaque ouverture de Botanéo, puis toutes les 15 minutes par défaut tant que l’application reste ouverte, après succès comme après échec. Intervalle réglable dans la carte Raspberry. Le mode déplacement et la désactivation suspendent les tentatives. Aucune tâche Windows permanente ajoutée, aucune collecte Bluetooth du Pi déclenchée. Relancer Botanéo pour charger cette version. Huit tests de planification réussis.
-
-- [x] Copie vérifiée de la dernière sauvegarde Pi sur le PC après synchronisation.
-- [ ] Définir une rétention des copies de sauvegarde sur le PC.
+- [x] Récupération prioritaire des mesures Raspberry vers le PC.
+- [x] Accusé après transaction, reprise et déduplication.
+- [x] Sauvegarde quotidienne du Pi copiée et vérifiée côté PC.
+- [x] Collecte Raspberry planifiée 4 fois par jour.
+- [x] Scripts d’installation/mise à jour Raspberry dans `raspberry/install/`.
+- [x] Secours Bluetooth PC manuel pour les capteurs normalement gérés par le Raspberry.
+- [ ] Afficher plus clairement l’ancienneté des dernières mesures, distincte du succès du transfert.
+- [ ] Afficher le nombre de mesures Raspberry en attente quand cette information est disponible.
+- [ ] Définir une rétention des copies de sauvegarde Raspberry sur le PC.
 - [ ] Tester le cycle déplacement / nouveau capteur / retour / récupération PC.
+- [ ] Tester une restauration Raspberry avec reprise des mesures déjà confirmées.
+
+## Historique et graphiques — suivi restant
+
+- [x] Archive brute Mi Flora conservée sans effacement.
+- [x] Import graphique après archivage, avec déduplication.
+- [x] Lectures partielles acceptées quand les entrées lues sont valides.
+- [x] Lecture PC en plusieurs passes pour contourner les coupures BLE.
+- [x] Bandeau de qualité des données dans l’écran historique.
+- [ ] Ajouter un mode historique long séparé si les lectures normales restent limitées.
+- [ ] Auditer les anciennes archives sans inventer leurs repères temporels.
+- [ ] Ajouter une extraction texte intégrée pour envoyer les données utiles à une discussion d’analyse plante.

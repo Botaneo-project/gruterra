@@ -13,7 +13,9 @@ PC éteint ou application fermée : les mesures restent sur le Raspberry et sero
 
 Le Pi demande une collecte Mi Flora à 06 h, 12 h, 18 h et 23 h via `botaneo-collect.timer`. Le script `request_collect.py` ne parle pas directement au Bluetooth : il crée la même demande que le bouton manuel, afin que le collecteur existant reste seul à lire les capteurs.
 
-Le Pi sauvegarde sa base quotidiennement vers 04 h 15 (heure locale), avec rattrapage au démarrage et conservation de quatorze fichiers. Les scripts et unités de sauvegarde sont conservés dans `raspberry/`. Ils supposent le collecteur déjà installé sous `~/botaneo` ; ce dossier ne constitue pas un installateur complet.
+Le Pi sauvegarde sa base quotidiennement vers 04 h 15 (heure locale), avec rattrapage au démarrage et conservation de quatorze fichiers. Les scripts et unités de sauvegarde sont conservés dans `raspberry/`.
+
+Une première base d’installation reproductible existe dans `raspberry/install/`. Elle installe les scripts de collecte/export/sauvegarde, les timers utilisateur et crée une configuration exemple sans secret. Elle ne remplace pas encore une image Raspberry complète prête à flasher.
 
 Le PC copie uniquement la dernière sauvegarde disponible. Ce fichier peut donc être antérieur aux dernières mesures transférées. Les anciennes copies PC ne sont pas supprimées automatiquement. Une sauvegarde sur la même carte SD ne protège pas contre sa panne ; la copie PC apporte un second support.
 
