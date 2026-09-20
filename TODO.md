@@ -165,7 +165,7 @@ Ce fichier sert à garder une trace claire des idées et des prochaines étapes.
 - [x] Collecte Raspberry planifiée 4 fois par jour.
 - [x] Scripts d’installation/mise à jour Raspberry dans `raspberry/install/`.
 - [x] Secours Bluetooth PC manuel pour les capteurs normalement gérés par le Raspberry.
-- [ ] Afficher plus clairement l’ancienneté des dernières mesures, distincte du succès du transfert.
+- [x] Afficher plus clairement l’ancienneté des dernières mesures, distincte du succès du transfert.
 - [ ] Afficher le nombre de mesures Raspberry en attente quand cette information est disponible.
 - [ ] Définir une rétention des copies de sauvegarde Raspberry sur le PC.
 - [ ] Tester le cycle déplacement / nouveau capteur / retour / récupération PC.

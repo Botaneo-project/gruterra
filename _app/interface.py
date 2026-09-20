@@ -629,51 +629,58 @@ def appliquer_theme_interface():
         configurer_widget(widget, bg=LIGHT_BLUE, fg=TEXT)
 
 
-def anciennete(date_heure):
+def age_mesure_minutes(date_heure):
     if not date_heure:
-        return "Aucune donnée"
-
+        return None
     try:
         dt = datetime.fromisoformat(date_heure)
-        maintenant = datetime.now()
-
-        secondes = max(
-            0,
-            int((maintenant - dt).total_seconds())
-        )
-
-        if secondes < 60:
-            return (
-                f"il y a {secondes} seconde"
-                f"{'s' if secondes != 1 else ''}"
-            )
-
-        minutes = secondes // 60
-
-        if minutes < 60:
-            return (
-                f"il y a {minutes} minute"
-                f"{'s' if minutes != 1 else ''}"
-            )
-
-        heures = minutes // 60
-
-        if heures < 24:
-            return (
-                f"il y a {heures} heure"
-                f"{'s' if heures != 1 else ''}"
-            )
-
-        jours = heures // 24
-
-        return (
-            f"il y a {jours} jour"
-            f"{'s' if jours != 1 else ''}"
-        )
-
+        if dt.tzinfo:
+            dt = dt.astimezone().replace(tzinfo=None)
+        return max(0, int((datetime.now() - dt).total_seconds() // 60))
     except Exception:
-        return "Ancienneté inconnue"
+        return None
 
+
+def anciennete(date_heure):
+    minutes_total = age_mesure_minutes(date_heure)
+    if minutes_total is None:
+        return "Aucune donnée" if not date_heure else "Ancienneté inconnue"
+
+    if minutes_total < 1:
+        return "il y a moins d'une minute"
+
+    if minutes_total < 60:
+        return (
+            f"il y a {minutes_total} minute"
+            f"{'s' if minutes_total != 1 else ''}"
+        )
+
+    heures = minutes_total // 60
+
+    if heures < 24:
+        return (
+            f"il y a {heures} heure"
+            f"{'s' if heures != 1 else ''}"
+        )
+
+    jours = heures // 24
+
+    return (
+        f"il y a {jours} jour"
+        f"{'s' if jours != 1 else ''}"
+    )
+
+
+def etat_fraicheur_mesure(date_heure):
+    minutes = age_mesure_minutes(date_heure)
+    texte_age = anciennete(date_heure)
+    if minutes is None:
+        return "⚪ Aucune mesure", SECONDARY, BG
+    if minutes <= 90:
+        return f"🟢 Mesure récente · {texte_age}", GREEN, LIGHT_GREEN
+    if minutes <= 8 * 60:
+        return f"🟠 Mesure à surveiller · {texte_age}", ORANGE, LIGHT_ORANGE
+    return f"🔴 Mesure ancienne · {texte_age}", RED, LIGHT_RED
 
 def obtenir_derniere_mesure(plante_id):
 
@@ -1716,10 +1723,12 @@ def creer_carte_plante_compacte(parent, plante):
         humidite_txt = f"{humidite:.0f} %" if humidite is not None else "—"
         lumiere_txt = f"{luminosite:.0f} lux" if luminosite is not None else "—"
         mesure_txt = anciennete(date_heure)
+        fraicheur_txt, fraicheur_couleur, fraicheur_fond = etat_fraicheur_mesure(date_heure)
     else:
         humidite_txt = "—"
         lumiere_txt = "—"
         mesure_txt = "aucune mesure"
+        fraicheur_txt, fraicheur_couleur, fraicheur_fond = etat_fraicheur_mesure(None)
 
     infos = [
         ("💧 Sol", humidite_txt),
@@ -1737,6 +1746,10 @@ def creer_carte_plante_compacte(parent, plante):
         bloc.pack(side="left", expand=True, fill="x", padx=(0, 6))
         tk.Label(bloc, text=titre, font=("Segoe UI", 8), fg=SECONDARY, bg=BG).pack(pady=(4, 0))
         tk.Label(bloc, text=valeur, font=("Segoe UI", 9, "bold"), fg=TEXT, bg=BG, wraplength=150, justify="center").pack(pady=(0, 5))
+
+    fraicheur_frame = tk.Frame(carte, bg=fraicheur_fond)
+    fraicheur_frame.pack(fill="x", padx=14, pady=(0, 8))
+    tk.Label(fraicheur_frame, text=fraicheur_txt, font=("Segoe UI", 9, "bold"), fg=fraicheur_couleur, bg=fraicheur_fond, anchor="w", wraplength=950, justify="left").pack(fill="x", padx=8, pady=5)
 
     if alerte:
         alerte_frame = tk.Frame(carte, bg=alerte["fond"])
@@ -2086,19 +2099,27 @@ def creer_carte_plante(parent, plante):
 
         if derniere_sync:
 
-            tk.Label(
+            texte_fraicheur, couleur_fraicheur, fond_fraicheur = etat_fraicheur_mesure(derniere_sync)
+            fraicheur_frame = tk.Frame(
                 capteur_frame,
-                text=(
-                    "🟢 Données disponibles · "
-                    f"{anciennete(derniere_sync)}"
-                ),
+                bg=fond_fraicheur
+            )
+            fraicheur_frame.pack(
+                fill="x",
+                pady=(4, 2)
+            )
+
+            tk.Label(
+                fraicheur_frame,
+                text=texte_fraicheur,
                 font=("Segoe UI", 9, "bold"),
-                fg=GREEN,
-                bg=CARD,
+                fg=couleur_fraicheur,
+                bg=fond_fraicheur,
                 anchor="w"
             ).pack(
                 fill="x",
-                pady=(4, 0)
+                padx=10,
+                pady=6
             )
 
             tk.Label(
@@ -2179,20 +2200,23 @@ def creer_carte_plante(parent, plante):
     # Dernière mesure
     # --------------------------------------------------------
 
+    texte_fraicheur_mesure, couleur_fraicheur_mesure, fond_fraicheur_mesure = etat_fraicheur_mesure(date_heure)
+    derniere_mesure_frame = tk.Frame(carte, bg=fond_fraicheur_mesure)
+    derniere_mesure_frame.pack(fill="x", padx=20, pady=(5, 10))
     tk.Label(
-        carte,
+        derniere_mesure_frame,
         text=(
-            f"🕐 Dernière mesure : "
+            f"{texte_fraicheur_mesure} · "
             f"{formater_date(date_heure)}"
         ),
-        font=("Segoe UI", 9),
-        fg=SECONDARY,
-        bg=CARD,
+        font=("Segoe UI", 9, "bold"),
+        fg=couleur_fraicheur_mesure,
+        bg=fond_fraicheur_mesure,
         anchor="w"
     ).pack(
         fill="x",
-        padx=20,
-        pady=(5, 10)
+        padx=10,
+        pady=6
     )
 
     # --------------------------------------------------------
