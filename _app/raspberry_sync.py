@@ -129,7 +129,7 @@ def import_batch(db_path, batch, config):
         db.close()
 
 
-def synchronize(config=None, sender=transport, db_path=None):
+def synchronize(config=None, sender=transport, db_path=None, collect_now=False, reason=None):
     import database
     from suivi_raspberry import load_config
     config = config or load_config(config_path())
@@ -137,7 +137,29 @@ def synchronize(config=None, sender=transport, db_path=None):
         return {'ok': False, 'message': 'Synchronisation Raspberry suspendue dans les réglages.'}
     with LOCK:
         totals = {'added': 0, 'duplicates': 0, 'undated': 0}
+        collect_message = ''
+        collect_status = None
+        collect_accepted = None
         try:
+            if collect_now:
+                try:
+                    request = {'reason': reason or 'manual', 'sensors': config.get('sensors', [])}
+                    collect_response = sender(config, 'collect_now', request)
+                    collect_status = collect_response.get('status')
+                    collect_accepted = collect_response.get('accepted')
+                    if collect_accepted:
+                        collect_prefix = 'Mesure immédiate Raspberry demandée.'
+                    elif collect_status == 'running':
+                        collect_prefix = 'Mesure Raspberry déjà en cours.'
+                    elif collect_status == 'pending':
+                        collect_prefix = 'Mesure Raspberry déjà en attente.'
+                    else:
+                        collect_prefix = 'Réponse Raspberry collect_now reçue.'
+                    collect_message = collect_prefix + ' ' + collect_response.get('message', '') + ' '
+                except Exception as collect_error:
+                    collect_status = 'unavailable'
+                    collect_accepted = False
+                    collect_message = f"Mesure immédiate Raspberry indisponible ({collect_error}). Export uniquement des mesures déjà collectées. "
             # Bounded work: remaining batches resume at the next retry.
             for _ in range(20):
                 batch = sender(config, 'export')
@@ -156,8 +178,8 @@ def synchronize(config=None, sender=transport, db_path=None):
                             backup_message = retrieve(config, Path(database.DB_PATH).parent.parent / '_security_backups/raspberry_daily')
                         except Exception:
                             backup_message = 'Mesures reçues ; sauvegarde Pi non copiée, nouvel essai à la prochaine synchronisation.'
-                    return {'backup_message': backup_message, 'ok': True, 'message': backup_message + ' ' + f"Raspberry : {totals['added']} mesure(s) ajoutée(s), {totals['duplicates']} déjà reçue(s), {totals['undated']} sans date fiable conservée(s).", **totals}
+                    return {'backup_message': backup_message, 'ok': True, 'message': collect_message + backup_message + ' ' + f"Raspberry : {totals['added']} mesure(s) ajoutée(s), {totals['duplicates']} déjà reçue(s), {totals['undated']} sans date fiable conservée(s).", 'collect_status': collect_status, 'collect_accepted': collect_accepted, **totals}
             raise RuntimeError('Transfert partiel conservé ; suite au prochain essai.')
         except Exception as error:
             message = str(error) if isinstance(error, (ValueError, ConnectionError, RuntimeError)) else 'Transfert interrompu ; reprise sans doublons au prochain essai.'
-            return {'ok': False, 'message': message, **totals}
+            return {'ok': False, 'message': message, 'collect_status': collect_status, 'collect_accepted': collect_accepted, **totals}

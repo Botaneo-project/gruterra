@@ -12,11 +12,16 @@ from pathlib import Path
 
 
 def preparer(export):
-    if export.get('status') != 'complete' or export.get('reading_mode', 'count_limited') != 'count_limited':
-        raise ValueError('Export incomplet ou diagnostic : import refuse.')
+    if export.get('reading_mode', 'count_limited') != 'count_limited':
+        raise ValueError('Mode de lecture historique non compatible.')
+    if export.get('status') not in ('complete', 'partial'):
+        raise ValueError('Statut historique non compatible.')
     epochs = []
     device_seconds = None
-    for name in ('clock_before', 'clock_after'):
+    horloges = ['clock_before']
+    if export.get('clock_after'):
+        horloges.append('clock_after')
+    for name in horloges:
         clock = export[name]
         before = datetime.fromisoformat(clock['pc_before_utc'])
         after = datetime.fromisoformat(clock['pc_after_utc'])
@@ -31,7 +36,7 @@ def preparer(export):
         elif seconds < device_seconds:
             raise ValueError('Horloge du capteur remise a zero.')
         epochs.append(before + (after-before)/2 - timedelta(seconds=seconds))
-    if abs((epochs[1]-epochs[0]).total_seconds()) > 15:
+    if len(epochs) > 1 and abs((epochs[1]-epochs[0]).total_seconds()) > 15:
         raise ValueError('Reperes temporels incoherents.')
     epoch = epochs[0]
     rows = []

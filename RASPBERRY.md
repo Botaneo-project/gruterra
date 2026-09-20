@@ -4,12 +4,14 @@ Le Pi actuel est un collecteur autonome. L’interface mobile, la collecte et le
 
 ## Deux rythmes distincts
 
-- Lecture des capteurs : environ trois fois par jour sur le Pi, plus une lecture manuelle depuis son interface.
+- Lecture des capteurs : quatre demandes planifiées par jour sur le Pi, plus une lecture manuelle depuis son interface ou depuis Botaneo PC.
 - Récupération par le PC : à l’ouverture de Botaneo puis toutes les quinze minutes, réglables, sans réveiller les capteurs.
 
 PC éteint ou application fermée : les mesures restent sur le Raspberry et seront récupérées plus tard. Un transfert réussi ne garantit pas qu’une nouvelle mesure vient d’être prise.
 
 ## Sauvegardes
+
+Le Pi demande une collecte Mi Flora à 06 h, 12 h, 18 h et 23 h via `botaneo-collect.timer`. Le script `request_collect.py` ne parle pas directement au Bluetooth : il crée la même demande que le bouton manuel, afin que le collecteur existant reste seul à lire les capteurs.
 
 Le Pi sauvegarde sa base quotidiennement vers 04 h 15 (heure locale), avec rattrapage au démarrage et conservation de quatorze fichiers. Les scripts et unités de sauvegarde sont conservés dans `raspberry/`. Ils supposent le collecteur déjà installé sous `~/botaneo` ; ce dossier ne constitue pas un installateur complet.
 

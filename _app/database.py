@@ -310,6 +310,78 @@ def get_journal_plante(plante_id, limite=20):
 
 
 # ============================================================
+# REPÈRES D'ANALYSE PLANTES
+# ============================================================
+
+REPERES_ANALYSE_DEFAUT = [
+    ("apres_arrosage_10min", "10 min après arrosage", "apres_arrosage", 10, "minutes", 1),
+    ("apres_arrosage_1h", "1 h après arrosage", "apres_arrosage", 1, "heures", 2),
+    ("apres_arrosage_24h", "24 h après arrosage", "apres_arrosage", 24, "heures", 3),
+    ("apres_arrosage_48h", "48 h après arrosage", "apres_arrosage", 48, "heures", 4),
+]
+
+
+def initialiser_reperes_analyse_plantes():
+    """Crée et initialise les repères d'analyse utiles dans l'historique."""
+
+    conn = get_connection()
+
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS reperes_analyse_plantes (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            code TEXT NOT NULL UNIQUE,
+            libelle TEXT NOT NULL,
+            type TEXT NOT NULL,
+            valeur INTEGER NOT NULL,
+            unite TEXT NOT NULL,
+            actif INTEGER NOT NULL DEFAULT 1,
+            ordre INTEGER NOT NULL DEFAULT 0
+        )
+    """)
+
+    for code, libelle, type_repere, valeur, unite, ordre in REPERES_ANALYSE_DEFAUT:
+        conn.execute("""
+            INSERT INTO reperes_analyse_plantes
+            (code, libelle, type, valeur, unite, actif, ordre)
+            VALUES (?, ?, ?, ?, ?, 1, ?)
+            ON CONFLICT(code) DO UPDATE SET
+                libelle = excluded.libelle,
+                type = excluded.type,
+                valeur = excluded.valeur,
+                unite = excluded.unite,
+                ordre = excluded.ordre
+        """, (code, libelle, type_repere, valeur, unite, ordre))
+
+    conn.commit()
+    conn.close()
+
+
+def get_reperes_analyse_actifs():
+    """Retourne les repères d'analyse actifs, dans l'ordre d'affichage."""
+
+    initialiser_reperes_analyse_plantes()
+    conn = get_connection()
+
+    reperes = conn.execute("""
+        SELECT
+            id,
+            code,
+            libelle,
+            type,
+            valeur,
+            unite,
+            actif,
+            ordre
+        FROM reperes_analyse_plantes
+        WHERE actif = 1
+        ORDER BY ordre ASC, id ASC
+    """).fetchall()
+
+    conn.close()
+    return reperes
+
+
+# ============================================================
 # CAPTEURS
 # ============================================================
 
@@ -1080,6 +1152,7 @@ def initialiser_arrosages():
             fertilisant TEXT,
             dosage TEXT,
             commentaire TEXT,
+            type_eau TEXT,
             rappel_date TEXT,
             rappel_fait INTEGER NOT NULL DEFAULT 0,
             FOREIGN KEY (plante_id) REFERENCES plantes(id)
@@ -1087,6 +1160,9 @@ def initialiser_arrosages():
     """)
 
     colonnes = [ligne[1] for ligne in conn.execute("PRAGMA table_info(arrosages)").fetchall()]
+
+    if "type_eau" not in colonnes:
+        conn.execute("ALTER TABLE arrosages ADD COLUMN type_eau TEXT")
 
     if "rappel_date" not in colonnes:
         conn.execute("ALTER TABLE arrosages ADD COLUMN rappel_date TEXT")
@@ -1106,17 +1182,18 @@ def enregistrer_arrosage_plante(
     fertilisant=None,
     dosage=None,
     commentaire=None,
-    rappel_date=None
+    rappel_date=None,
+    type_eau=None
 ):
     """Enregistre un arrosage manuel pour une plante, avec ou sans capteur."""
 
     initialiser_arrosages()
     conn = get_connection()
 
-    conn.execute("""
+    curseur = conn.execute("""
         INSERT INTO arrosages
-        (plante_id, date_heure, quantite_ml, type, fertilisant, dosage, commentaire, rappel_date, rappel_fait)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, 0)
+        (plante_id, date_heure, quantite_ml, type, fertilisant, dosage, commentaire, type_eau, rappel_date, rappel_fait)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 0)
     """, (
         plante_id,
         date_heure,
@@ -1125,11 +1202,14 @@ def enregistrer_arrosage_plante(
         fertilisant,
         dosage,
         commentaire,
+        type_eau,
         rappel_date
     ))
 
+    arrosage_id = curseur.lastrowid
     conn.commit()
     conn.close()
+    return arrosage_id
 
 
 def get_dernier_arrosage(plante_id):
@@ -1148,6 +1228,7 @@ def get_dernier_arrosage(plante_id):
             fertilisant,
             dosage,
             commentaire,
+            type_eau,
             rappel_date,
             rappel_fait
         FROM arrosages
@@ -1176,6 +1257,7 @@ def get_arrosages_plante(plante_id, limite=20):
             fertilisant,
             dosage,
             commentaire,
+            type_eau,
             rappel_date,
             rappel_fait
         FROM arrosages
@@ -1186,6 +1268,108 @@ def get_arrosages_plante(plante_id, limite=20):
 
     conn.close()
     return arrosages
+
+# ============================================================
+# COLLECTES PRIORITAIRES
+# ============================================================
+
+def initialiser_collectes_prioritaires():
+    """Crée la table des demandes de collecte prioritaire."""
+
+    conn = get_connection()
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS collectes_prioritaires (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            plante_id INTEGER NOT NULL,
+            arrosage_id INTEGER,
+            date_creation TEXT NOT NULL,
+            raison TEXT NOT NULL,
+            priorite INTEGER NOT NULL DEFAULT 1,
+            statut TEXT NOT NULL DEFAULT 'en_attente',
+            derniere_tentative TEXT,
+            commentaire TEXT,
+            FOREIGN KEY (plante_id) REFERENCES plantes(id),
+            FOREIGN KEY (arrosage_id) REFERENCES arrosages(id)
+        )
+    """)
+    conn.commit()
+    conn.close()
+
+
+def enregistrer_collecte_prioritaire(
+    plante_id,
+    arrosage_id=None,
+    date_creation=None,
+    raison="post_arrosage",
+    priorite=1,
+    commentaire=None
+):
+    """Mémorise une demande de mesure prioritaire, exploitable par le PC ou le Raspberry."""
+
+    initialiser_collectes_prioritaires()
+    conn = get_connection()
+    date_creation = date_creation or __import__('datetime').datetime.now().isoformat(timespec="seconds")
+
+    curseur = conn.execute("""
+        INSERT INTO collectes_prioritaires
+        (plante_id, arrosage_id, date_creation, raison, priorite, statut, commentaire)
+        VALUES (?, ?, ?, ?, ?, 'en_attente', ?)
+    """, (
+        plante_id,
+        arrosage_id,
+        date_creation,
+        raison,
+        priorite,
+        commentaire
+    ))
+
+    demande_id = curseur.lastrowid
+    conn.commit()
+    conn.close()
+    return demande_id
+
+
+def get_collectes_prioritaires(plante_id=None, statut=None, limite=50):
+    """Retourne les demandes de collecte prioritaire."""
+
+    initialiser_collectes_prioritaires()
+    conn = get_connection()
+    conditions = []
+    valeurs = []
+    if plante_id is not None:
+        conditions.append("plante_id = ?")
+        valeurs.append(plante_id)
+    if statut is not None:
+        conditions.append("statut = ?")
+        valeurs.append(statut)
+    where = " WHERE " + " AND ".join(conditions) if conditions else ""
+    valeurs.append(limite)
+    demandes = conn.execute(f"""
+        SELECT id, plante_id, arrosage_id, date_creation, raison, priorite,
+               statut, derniere_tentative, commentaire
+        FROM collectes_prioritaires
+        {where}
+        ORDER BY priorite DESC, date_creation DESC, id DESC
+        LIMIT ?
+    """, valeurs).fetchall()
+    conn.close()
+    return demandes
+
+
+def marquer_collecte_prioritaire_tentee(demande_id, statut="tentee", commentaire=None):
+    """Met à jour l'état d'une demande prioritaire après tentative."""
+
+    initialiser_collectes_prioritaires()
+    conn = get_connection()
+    date_tentative = __import__('datetime').datetime.now().isoformat(timespec="seconds")
+    conn.execute("""
+        UPDATE collectes_prioritaires
+        SET statut = ?, derniere_tentative = ?, commentaire = COALESCE(?, commentaire)
+        WHERE id = ?
+    """, (statut, date_tentative, commentaire, demande_id))
+    conn.commit()
+    conn.close()
+
 
 def get_rappel_arrosage_actif(plante_id):
     """Retourne le prochain rappel d'arrosage non terminé pour une plante."""
@@ -1203,6 +1387,7 @@ def get_rappel_arrosage_actif(plante_id):
             fertilisant,
             dosage,
             commentaire,
+            type_eau,
             rappel_date,
             rappel_fait
         FROM arrosages

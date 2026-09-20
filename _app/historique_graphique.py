@@ -7,6 +7,9 @@ def alimenter_graphiques(export, db_path):
         return {'ok': True, 'message': 'Aucun historique à ajouter aux graphiques.'}
     try:
         result = importer(export, db_path, appliquer=True, sauvegarder=False)
-    except Exception:
-        return {'ok': False, 'message': 'Historique conservé dans l’archive ; ajout aux graphiques non validé (lecture incomplète, dates, affectation ou stockage à vérifier).'}
-    return {'ok': True, 'message': f"Graphiques : {result['ajoutees']} mesure(s) ajoutée(s), {result['deja_presentes']} déjà présente(s)."}
+    except Exception as erreur:
+        return {'ok': False, 'message': f'Historique conservé dans l’archive ; ajout aux graphiques non validé : {erreur}'}
+    prefixe = 'Graphiques'
+    if export.get('status') == 'partial':
+        prefixe = 'Graphiques depuis lecture partielle'
+    return {'ok': True, 'message': f"{prefixe} : {result['ajoutees']} mesure(s) ajoutée(s), {result['deja_presentes']} déjà présente(s)."}

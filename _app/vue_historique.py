@@ -18,6 +18,7 @@ THEME_CLAIR = {
     "BLUE": "#4677A8",
     "ORANGE": "#D98C32",
     "PURPLE": "#6B55A3",
+    "WATER": "#2C9FD6",
     "GRID": "#E1E7E2"
 }
 
@@ -31,6 +32,7 @@ THEME_SOMBRE = {
     "BLUE": "#8DBAF0",
     "ORANGE": "#F0B35D",
     "PURPLE": "#B8A7F4",
+    "WATER": "#65C7FF",
     "GRID": "#30423A"
 }
 
@@ -270,6 +272,21 @@ def ouvrir_historique(parent, plante_id):
         tk.Label(bloc, text=titre, bg=couleurs["CARD"],
                  fg=couleurs["SECONDARY"], font=("Segoe UI", 8)).pack()
 
+    qualite_var = tk.StringVar(value="Qualité des données : en attente")
+    qualite_label = tk.Label(
+        fenetre,
+        textvariable=qualite_var,
+        bg=couleurs["CARD"],
+        fg=couleurs["SECONDARY"],
+        font=("Segoe UI", 9, "bold"),
+        anchor="w",
+        justify="left",
+        wraplength=980,
+        highlightbackground=couleurs["BORDER"],
+        highlightthickness=1
+    )
+    qualite_label.pack(fill="x", padx=24, pady=(0, 8), ipady=6)
+
     lecture_var = tk.StringVar(value="Sélectionnez une mesure pour lire la tendance.")
     lecture_label = tk.Label(
         fenetre,
@@ -290,20 +307,40 @@ def ouvrir_historique(parent, plante_id):
                        highlightthickness=1, height=300)
     canvas.pack(fill="both", expand=True, padx=24)
 
-    tk.Label(fenetre, text="Choisissez la mesure à afficher. Le tableau conserve toutes les valeurs.",
-             bg=couleurs["BG"], fg=couleurs["SECONDARY"],
-             font=("Segoe UI", 9)).pack(anchor="w", padx=24, pady=(5, 10))
+    outils_table = tk.Frame(fenetre, bg=couleurs["BG"])
+    outils_table.pack(fill="x", padx=24, pady=(6, 8))
+
+    tk.Label(
+        outils_table,
+        text="Repères rapides du tableau",
+        bg=couleurs["BG"],
+        fg=couleurs["SECONDARY"],
+        font=("Segoe UI", 9, "bold")
+    ).pack(side="left", padx=(0, 10))
+
+    outils_post_arrosage = tk.Frame(fenetre, bg=couleurs["BG"])
+    outils_post_arrosage.pack(fill="x", padx=24, pady=(0, 8))
+
+    tk.Label(
+        outils_post_arrosage,
+        text="Après arrosage",
+        bg=couleurs["BG"],
+        fg=couleurs["WATER"],
+        font=("Segoe UI", 9, "bold")
+    ).pack(side="left", padx=(0, 10))
 
     cadre = tk.Frame(fenetre, bg=couleurs["BG"])
     cadre.pack(fill="both", expand=True, padx=24, pady=(0, 18))
 
-    colonnes = ("date", "humidite", "temperature", "lumiere", "conductivite")
+    colonnes = ("date", "humidite", "temperature", "lumiere", "conductivite", "_mesure_id")
     table = ttk.Treeview(cadre, columns=colonnes, show="headings", height=8)
     titres = ("Date et heure", "Humidité (%)", "Température (°C)", "Lumière (lux)", "Conductivité (µS/cm)")
 
-    for nom, titre, largeur in zip(colonnes, titres, (185, 110, 130, 120, 165)):
+    for nom, titre, largeur in zip(colonnes[:5], titres, (185, 110, 130, 120, 165)):
         table.heading(nom, text=titre, command=lambda col=nom: trier_table(col))
         table.column(nom, width=largeur, minwidth=80, anchor="center")
+    table.heading("_mesure_id", text="")
+    table.column("_mesure_id", width=0, minwidth=0, stretch=False)
 
     scroll = ttk.Scrollbar(cadre, orient="vertical", command=table.yview)
     table.configure(yscrollcommand=scroll.set)
@@ -312,6 +349,42 @@ def ouvrir_historique(parent, plante_id):
 
     points = []
     mesures_courantes = []
+    arrosages_courants = []
+
+    def analyser_qualite_donnees(mesures):
+        dates = []
+        for mesure in mesures:
+            try:
+                date = datetime.fromisoformat(mesure[1])
+                if date.tzinfo:
+                    date = date.astimezone().replace(tzinfo=None)
+                dates.append(date)
+            except (TypeError, ValueError):
+                pass
+        dates.sort()
+        if not dates:
+            return "Qualité des données : aucune mesure sur cette période.", "SECONDARY"
+        debut = dates[0]
+        fin = dates[-1]
+        duree_heures = max((fin - debut).total_seconds() / 3600, 0)
+        ecarts = []
+        for avant, apres in zip(dates, dates[1:]):
+            ecarts.append((apres - avant).total_seconds() / 3600)
+        plus_grand_trou = max(ecarts) if ecarts else 0
+        trous_importants = sum(1 for ecart in ecarts if ecart > 1.8)
+        attendu = int(duree_heures) + 1 if duree_heures >= 1 else len(dates)
+        manque_estime = max(attendu - len(dates), 0)
+        couverture = f"{len(dates)}/{attendu}" if attendu else str(len(dates))
+        texte = (
+            f"Qualité des données : {couverture} mesure(s) attendues environ · "
+            f"période {debut.strftime('%d/%m %H:%M')} → {fin.strftime('%d/%m %H:%M')} · "
+            f"plus grand trou {plus_grand_trou:.1f} h"
+        )
+        if manque_estime or trous_importants:
+            texte += f" · ⚠ données probablement incomplètes ({manque_estime} manquante(s) estimée(s), {trous_importants} trou(s) > 1h48). Relancer Synchroniser ou Importer historique peut compléter."
+            return texte, "ORANGE"
+        texte += " · suivi régulier sur cette période."
+        return texte, "GREEN"
 
     def valeur_tri_mesure(mesure, colonne):
         index_par_colonne = {
@@ -360,10 +433,14 @@ def ouvrir_historique(parent, plante_id):
             except (ValueError, TypeError):
                 date = str(mesure[1] or "—")
 
-            table.insert("", "end", values=(date, formater_nombre(mesure[3]),
-                                            formater_nombre(mesure[2]),
-                                            formater_nombre(mesure[4]),
-                                            formater_nombre(mesure[5])))
+            item_id = table.insert("", "end", values=(date, formater_nombre(mesure[3]),
+                                                       formater_nombre(mesure[2]),
+                                                       formater_nombre(mesure[4]),
+                                                       formater_nombre(mesure[5])))
+            try:
+                table.set(item_id, "_mesure_id", mesure[0])
+            except Exception:
+                pass
 
         if mesures and colonne_tri:
             enfants = table.get_children()
@@ -400,6 +477,119 @@ def ouvrir_historique(parent, plante_id):
                 bilan.set(f"{len(mesures_courantes)} mesure(s) · tri : {libelle_tri(colonne)} · {formater_nombre(valeur)} {unite}")
             else:
                 bilan.set(f"{len(mesures_courantes)} mesure(s) · tri : {libelle_tri(colonne)}")
+
+
+    def colonne_serie_actuelle():
+        return {
+            "Humidité": "humidite",
+            "Température": "temperature",
+            "Lumière": "lumiere",
+            "Conductivité": "conductivite"
+        }.get(serie.get(), "humidite")
+
+
+    def selectionner_mesure(mesure, libelle, valeur=None, unite=""):
+        if not mesure:
+            bilan.set(f"{len(mesures_courantes)} mesure(s) · aucun repère disponible")
+            return
+        mesure_id = str(mesure[0])
+        for item in table.get_children():
+            if str(table.set(item, "_mesure_id")) == mesure_id:
+                table.selection_set(item)
+                table.focus(item)
+                table.see(item)
+                break
+        detail = f" · {formater_nombre(valeur)} {unite}" if valeur is not None and math.isfinite(valeur) else ""
+        bilan.set(f"{len(mesures_courantes)} mesure(s) · {libelle}{detail}")
+
+
+    def selectionner_repere(type_repere):
+        colonne = colonne_serie_actuelle()
+        valeurs = []
+        for mesure in mesures_courantes:
+            valeur = valeur_tri_mesure(mesure, colonne)
+            if math.isfinite(valeur):
+                valeurs.append((mesure, valeur))
+        if not valeurs:
+            selectionner_mesure(None, "aucune valeur exploitable")
+            return
+
+        unite = SERIES[serie.get()]["unite"]
+        if type_repere == "max":
+            mesure, valeur = max(valeurs, key=lambda item: item[1])
+            selectionner_mesure(mesure, f"maximum {serie.get().lower()}", valeur, unite)
+        elif type_repere == "min":
+            mesure, valeur = min(valeurs, key=lambda item: item[1])
+            selectionner_mesure(mesure, f"minimum {serie.get().lower()}", valeur, unite)
+        elif type_repere == "moyenne":
+            moyenne = sum(valeur for _, valeur in valeurs) / len(valeurs)
+            mesure, valeur = min(valeurs, key=lambda item: abs(item[1] - moyenne))
+            selectionner_mesure(mesure, f"plus proche de la moyenne {formater_nombre(moyenne)} {unite}", valeur, unite)
+        elif type_repere == "derniere":
+            mesure = max(mesures_courantes, key=lambda item: valeur_tri_mesure(item, "date"))
+            valeur = valeur_tri_mesure(mesure, colonne)
+            selectionner_mesure(mesure, f"dernière mesure {serie.get().lower()}", valeur, unite)
+
+
+    def minutes_repere(repere):
+        valeur = repere[4]
+        unite = repere[5]
+        if unite == "minutes":
+            return valeur
+        if unite == "heures":
+            return valeur * 60
+        if unite == "jours":
+            return valeur * 24 * 60
+        return valeur
+
+
+    def selectionner_apres_arrosage(repere):
+        if not arrosages_courants:
+            selectionner_mesure(None, "aucun arrosage visible sur cette période")
+            return
+        if not mesures_courantes:
+            selectionner_mesure(None, "aucune mesure visible sur cette période")
+            return
+
+        dernier_arrosage = max(
+            arrosages_courants,
+            key=lambda item: valeur_tri_mesure((None, item[2], None, None, None, None), "date")
+        )
+        try:
+            date_arrosage = datetime.fromisoformat(dernier_arrosage[2])
+            if date_arrosage.tzinfo:
+                date_arrosage = date_arrosage.astimezone().replace(tzinfo=None)
+        except (TypeError, ValueError):
+            selectionner_mesure(None, "date d'arrosage inexploitable")
+            return
+
+        cible = date_arrosage + timedelta(minutes=minutes_repere(repere))
+        mesures_apres = []
+        for mesure in mesures_courantes:
+            try:
+                date_mesure = datetime.fromisoformat(mesure[1])
+                if date_mesure.tzinfo:
+                    date_mesure = date_mesure.astimezone().replace(tzinfo=None)
+            except (TypeError, ValueError):
+                continue
+            if date_mesure >= date_arrosage:
+                mesures_apres.append((mesure, date_mesure))
+
+        if not mesures_apres:
+            selectionner_mesure(None, f"aucune mesure après {repere[2]}")
+            return
+
+        mesure, date_mesure = min(mesures_apres, key=lambda item: abs((item[1] - cible).total_seconds()))
+        colonne = colonne_serie_actuelle()
+        valeur = valeur_tri_mesure(mesure, colonne)
+        unite = SERIES[serie.get()]["unite"]
+        ecart_min = abs((date_mesure - cible).total_seconds()) / 60
+        selectionner_mesure(
+            mesure,
+            f"{repere[2]} · mesure la plus proche, écart {ecart_min:.0f} min",
+            valeur,
+            unite
+        )
 
 
     def remettre_ordre_normal():
@@ -444,8 +634,53 @@ def ouvrir_historique(parent, plante_id):
                                font=("Segoe UI", 8))
 
         start, end = points[0][0], points[-1][0]
+        dates_arrosage_visibles = []
+        for arrosage in arrosages_courants:
+            try:
+                date_arrosage = datetime.fromisoformat(arrosage[2])
+                if date_arrosage.tzinfo:
+                    date_arrosage = date_arrosage.astimezone().replace(tzinfo=None)
+                dates_arrosage_visibles.append(date_arrosage)
+            except (TypeError, ValueError):
+                pass
+        if dates_arrosage_visibles:
+            start = min(start, min(dates_arrosage_visibles))
+            end = max(end, max(dates_arrosage_visibles))
         span = (end - start).total_seconds()
         coords = []
+
+        for arrosage in arrosages_courants:
+            try:
+                date_arrosage = datetime.fromisoformat(arrosage[2])
+                if date_arrosage.tzinfo:
+                    date_arrosage = date_arrosage.astimezone().replace(tzinfo=None)
+            except (TypeError, ValueError):
+                continue
+            if not (start <= date_arrosage <= end):
+                continue
+            x_arrosage = x0 + (x1 - x0) * (date_arrosage - start).total_seconds() / span if span else (x0 + x1) / 2
+            quantite = arrosage[3]
+            quantite_txt = f"{quantite:g} ml" if quantite is not None else "arrosage"
+            canvas.create_line(
+                x_arrosage, y0, x_arrosage, y1,
+                fill=couleurs["WATER"],
+                width=2,
+                dash=(5, 4)
+            )
+            canvas.create_oval(
+                x_arrosage - 6, y0 - 2, x_arrosage + 6, y0 + 10,
+                fill=couleurs["WATER"],
+                outline=couleurs["CARD"],
+                width=2
+            )
+            canvas.create_text(
+                x_arrosage + 8,
+                y0 + 14,
+                text=f"💧 {quantite_txt}",
+                anchor="w",
+                fill=couleurs["WATER"],
+                font=("Segoe UI", 8, "bold")
+            )
 
         for date, valeur in points:
             x = x0 + (x1 - x0) * (date - start).total_seconds() / span if span else (x0 + x1) / 2
@@ -499,13 +734,18 @@ def ouvrir_historique(parent, plante_id):
                                font=("Segoe UI", 8))
 
     def actualiser(event=None):
-        nonlocal points, mesures_courantes
+        nonlocal points, mesures_courantes, arrosages_courants
 
         try:
             mesures = database.get_mesures(plante_id=plante_id, limite=-1)
         except Exception:
             bilan.set("Impossible de lire les mesures. Réessayez.")
             return
+
+        try:
+            arrosages = database.get_arrosages_plante(plante_id, limite=200)
+        except Exception:
+            arrosages = []
 
         jours = {"24 heures": 1, "7 jours": 7}.get(periode.get())
 
@@ -522,6 +762,20 @@ def ouvrir_historique(parent, plante_id):
                 except (ValueError, TypeError):
                     pass
             mesures = filtre
+
+            arrosages_filtres = []
+            for arrosage in arrosages:
+                try:
+                    date = datetime.fromisoformat(arrosage[2])
+                    if date.tzinfo:
+                        date = date.astimezone().replace(tzinfo=None)
+                    if limite <= date <= datetime.now():
+                        arrosages_filtres.append(arrosage)
+                except (ValueError, TypeError):
+                    pass
+            arrosages = arrosages_filtres
+
+        arrosages_courants = list(arrosages)
 
         mesures_courantes = list(mesures)
         if tri_table["colonne"]:
@@ -551,13 +805,43 @@ def ouvrir_historique(parent, plante_id):
             for variable in resume_vars.values():
                 variable.set("—")
 
+        qualite_texte, qualite_couleur = analyser_qualite_donnees(mesures)
+        qualite_var.set(qualite_texte)
+        qualite_label.configure(fg=couleurs.get(qualite_couleur, couleurs["SECONDARY"]))
+
         lecture_var.set(analyse["lecture"])
         lecture_label.configure(fg=couleurs.get(analyse["couleur"], couleurs["TEXT"]))
+        suffixe_arrosage = f" · {len(arrosages_courants)} arrosage(s)" if arrosages_courants else ""
         if tri_table["colonne"]:
-            bilan.set(f"{len(mesures)} mesure(s) · tri : {libelle_tri(tri_table['colonne'])}")
+            bilan.set(f"{len(mesures)} mesure(s){suffixe_arrosage} · tri : {libelle_tri(tri_table['colonne'])}")
         else:
-            bilan.set(f"{len(mesures)} mesure(s)")
+            bilan.set(f"{len(mesures)} mesure(s){suffixe_arrosage}")
         dessiner()
+
+    for texte, repere in (
+            ("Max", "max"),
+            ("Min", "min"),
+            ("Moyenne proche", "moyenne"),
+            ("Dernière", "derniere")):
+        ttk.Button(
+            outils_table,
+            text=texte,
+            command=lambda r=repere: selectionner_repere(r)
+        ).pack(side="left", padx=(0, 6))
+
+    try:
+        reperes_analyse = database.get_reperes_analyse_actifs()
+    except Exception:
+        reperes_analyse = []
+
+    for repere in reperes_analyse:
+        if repere[3] != "apres_arrosage":
+            continue
+        ttk.Button(
+            outils_post_arrosage,
+            text=repere[2],
+            command=lambda r=repere: selectionner_apres_arrosage(r)
+        ).pack(side="left", padx=(0, 6))
 
     ttk.Button(barre, text="Ordre normal", command=remettre_ordre_normal).pack(side="right", padx=(8, 0))
     ttk.Button(barre, text="Actualiser", command=actualiser).pack(side="right")

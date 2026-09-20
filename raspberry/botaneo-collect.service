@@ -1,0 +1,8 @@
+[Unit]
+Description=Botaneo scheduled Mi Flora collection request
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/python3 %h/botaneo/collector/request_collect.py
+UMask=0077
+NoNewPrivileges=true

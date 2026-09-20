@@ -19,7 +19,7 @@ def decoder_entree_historique(raw):
     if len(raw) != 16:
         raise ValueError('Entrée historique trop courte ou trop longue')
 
-    if raw == b'\xff' * 16:
+    if raw == bytes([0xff]) * 16:
         raise ValueError('Entrée historique vide')
 
     timestamp_capteur = struct.unpack('<I', raw[0:4])[0]
@@ -71,7 +71,7 @@ def reconstruire_date_mesure(timestamp_capteur, horloge_reference):
     return (pc_dt - timedelta(seconds=age_secondes)).astimezone(timezone.utc).isoformat(timespec='seconds')
 
 
-async def lire_historique(client, adresse):
+async def lire_historique(client, adresse, start_index=0, max_entries=None, history_count=None, clock_reference=None):
     # A appeler au début d'une connexion, avant la mesure directe.
     async def horloge():
         before = datetime.now(timezone.utc).isoformat(timespec='seconds')
@@ -87,24 +87,42 @@ async def lire_historique(client, adresse):
             'device_seconds': secondes
         }
 
-    export = {'address': adresse, 'entries': [], 'reading_mode': 'count_limited'}
-    export['clock_before'] = await horloge()
-    await client.write_gatt_char(CONTROL, bytes([0xA0, 0, 0]), response=True)
-    await asyncio.sleep(.3)
-    raw_count = await client.read_gatt_char(DATA)
-    if len(raw_count) < 2:
-        raise ValueError('Compteur historique invalide')
-    count = int.from_bytes(raw_count[:2], 'little')
+    export = {
+        'address': adresse,
+        'entries': [],
+        'reading_mode': 'count_limited',
+        'batch_size': 10,
+        'start_index': start_index,
+        'max_entries': max_entries
+    }
+    export['clock_before'] = clock_reference or await horloge()
+
+    count = history_count
+    if count is None:
+        await client.write_gatt_char(CONTROL, bytes([0xA0, 0, 0]), response=True)
+        await asyncio.sleep(.5)
+        raw_count = await client.read_gatt_char(DATA)
+        if len(raw_count) < 2:
+            raise ValueError('Compteur historique invalide')
+        count = int.from_bytes(raw_count[:2], 'little')
     if count > 2000:
         raise ValueError('Compteur historique inattendu')
     export['history_count'] = count
+
+    end_index = count
+    if max_entries is not None:
+        end_index = min(count, start_index + max_entries)
+    export['end_index'] = end_index
+
     erreurs = []
-    for index in range(count):
+    for index in range(start_index, end_index):
         try:
+            if index > start_index and (index - start_index) % 10 == 0:
+                await asyncio.sleep(1.5)
             await client.write_gatt_char(CONTROL, bytes([0xA1, index & 255, index >> 8]), response=True)
-            await asyncio.sleep(.15)
+            await asyncio.sleep(.35)
             raw = await client.read_gatt_char(DATA)
-            if len(raw) != 16 or raw == b'\xff' * 16:
+            if len(raw) != 16 or raw == bytes([0xff]) * 16:
                 raise ValueError(f'Entrée historique {index} invalide')
             entree = decoder_entree_historique(raw)
             entree['index'] = index
@@ -130,5 +148,5 @@ async def lire_historique(client, adresse):
         }
 
     export['errors'] = erreurs
-    export['status'] = 'complete' if not erreurs else 'partial'
+    export['status'] = 'complete' if not erreurs and end_index >= count else 'partial'
     return export

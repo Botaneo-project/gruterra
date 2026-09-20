@@ -101,6 +101,33 @@ sync_var = tk.StringVar(
 
 sync_detail_var = tk.StringVar(value="")
 sync_progress_var = tk.StringVar(value="")
+sync_detail_text = None
+
+
+def texte_synchronisation_copiable():
+    morceaux = [
+        sync_var.get().strip(),
+        sync_detail_var.get().strip(),
+        sync_progress_var.get().strip(),
+    ]
+    return "\n".join(m for m in morceaux if m)
+
+
+def copier_statut_synchronisation():
+    texte = texte_synchronisation_copiable()
+    root.clipboard_clear()
+    root.clipboard_append(texte)
+    status_var.set("Statut de synchronisation copié dans le presse-papiers")
+
+
+def rafraichir_texte_synchronisation(*_):
+    if sync_detail_text is None:
+        return
+    sync_detail_text.configure(state="normal")
+    sync_detail_text.delete("1.0", "end")
+    sync_detail_text.insert("1.0", texte_synchronisation_copiable())
+    sync_detail_text.configure(state="disabled")
+
 
 auto_sync_var = tk.StringVar(value="Auto 18:00 en attente")
 
@@ -1072,11 +1099,157 @@ def afficher_besoins_plante(parent, plante_id):
     )
 
 
+def analyser_apres_arrosage(plante_id):
+    """Analyse prudente des mesures qui suivent le dernier arrosage."""
+    dernier = database.get_dernier_arrosage(plante_id)
+    if not dernier or not dernier[2]:
+        return None
+
+    try:
+        date_arrosage = datetime.fromisoformat(dernier[2])
+    except (TypeError, ValueError):
+        return None
+
+    maintenant = datetime.now()
+    heures_depuis = (maintenant - date_arrosage).total_seconds() / 3600
+    if heures_depuis < 0 or heures_depuis > 10 * 24:
+        return None
+
+    mesures = database.get_mesures(plante_id=plante_id, limite=200)
+    points = []
+    for mesure in mesures:
+        date_heure = mesure[1]
+        humidite = mesure[3]
+        if humidite is None:
+            continue
+        try:
+            date_mesure = datetime.fromisoformat(date_heure)
+            if date_mesure.tzinfo:
+                date_mesure = date_mesure.astimezone().replace(tzinfo=None)
+        except (TypeError, ValueError):
+            continue
+        if date_mesure >= date_arrosage:
+            try:
+                points.append((date_mesure, float(humidite)))
+            except (TypeError, ValueError):
+                pass
+
+    points = sorted(points, key=lambda item: item[0])
+    quantite = dernier[3]
+    quantite_txt = f"{quantite:g} ml" if quantite is not None else "quantité non renseignée"
+    type_eau = dernier[8] if len(dernier) > 8 else None
+    eau_txt = f" · eau : {type_eau}" if type_eau else ""
+    arrosage_txt = f"{quantite_txt}{eau_txt}"
+
+    if not points:
+        derniere_avant = None
+        for mesure in mesures:
+            date_heure = mesure[1]
+            humidite = mesure[3]
+            if humidite is None:
+                continue
+            try:
+                date_mesure = datetime.fromisoformat(date_heure)
+                if date_mesure.tzinfo:
+                    date_mesure = date_mesure.astimezone().replace(tzinfo=None)
+            except (TypeError, ValueError):
+                continue
+            if date_mesure < date_arrosage:
+                if derniere_avant is None or date_mesure > derniere_avant[0]:
+                    try:
+                        derniere_avant = (date_mesure, float(humidite))
+                    except (TypeError, ValueError):
+                        pass
+
+        if derniere_avant:
+            ecart_heures = (date_arrosage - derniere_avant[0]).total_seconds() / 3600
+            resume = (
+                f"Suivi post-arrosage : aucune mesure après l'arrosage. "
+                f"Dernière avant : {derniere_avant[1]:.0f} %, {ecart_heures:.1f} h avant."
+            )
+            detail = (
+                f"Arrosage du {formater_date(dernier[2])} · {arrosage_txt}. "
+                f"Aucune mesure Mi Flora enregistrée depuis. Dernière mesure avant arrosage : "
+                f"{derniere_avant[1]:.0f} %, {ecart_heures:.1f} h avant. Relancer une mesure directe pour démarrer le suivi."
+            )
+        else:
+            resume = "Suivi post-arrosage : en attente de la prochaine mesure."
+            detail = f"Arrosage du {formater_date(dernier[2])} · {arrosage_txt}. Aucune mesure Mi Flora enregistrée depuis."
+
+        return {
+            "niveau": "info",
+            "titre": "💧 Suivi post-arrosage en attente",
+            "detail": detail,
+            "resume": resume,
+            "couleur": BLUE,
+            "fond": LIGHT_BLUE
+        }
+
+    derniere_date, derniere_humidite = points[-1]
+    heures_depuis_derniere = (maintenant - derniere_date).total_seconds() / 3600
+
+    if len(points) == 1 or heures_depuis < 12:
+        return {
+            "niveau": "info",
+            "titre": "💧 Suivi post-arrosage lancé",
+            "detail": f"Dernière humidité après arrosage : {derniere_humidite:.0f} %. Il faut encore du recul avant d'interpréter.",
+            "resume": f"Suivi post-arrosage : {derniere_humidite:.0f} %, recul encore court.",
+            "couleur": BLUE,
+            "fond": LIGHT_BLUE
+        }
+
+    premiere_humidite = points[0][1]
+    variation = derniere_humidite - premiere_humidite
+    duree_jours = max((points[-1][0] - points[0][0]).total_seconds() / 86400, 0.05)
+    tendance_jour = variation / duree_jours
+
+    if heures_depuis >= 72 and derniere_humidite >= 40:
+        return {
+            "niveau": "danger",
+            "titre": "💧 Humidité persistante après arrosage",
+            "detail": f"{derniere_humidite:.0f} % encore mesurés environ {heures_depuis:.0f} h après l'arrosage. Vérifier le substrat avant tout nouvel arrosage.",
+            "resume": f"Suivi post-arrosage : humidité encore haute ({derniere_humidite:.0f} %) après {heures_depuis:.0f} h.",
+            "couleur": RED,
+            "fond": LIGHT_RED
+        }
+
+    if heures_depuis >= 48 and derniere_humidite >= 35 and tendance_jour > -3:
+        return {
+            "niveau": "attention",
+            "titre": "💧 Séchage lent après arrosage",
+            "detail": f"{derniere_humidite:.0f} % après {heures_depuis:.0f} h, tendance {tendance_jour:.1f} point/jour. Surveiller avant de remettre de l'eau.",
+            "resume": f"Suivi post-arrosage : séchage lent ({derniere_humidite:.0f} %, {tendance_jour:.1f} point/jour).",
+            "couleur": ORANGE,
+            "fond": LIGHT_ORANGE
+        }
+
+    if derniere_humidite < 25 and heures_depuis >= 24:
+        return {
+            "niveau": "ok",
+            "titre": "💧 Séchage post-arrosage normal",
+            "detail": f"Humidité revenue à {derniere_humidite:.0f} %. Aucune humidité persistante détectée.",
+            "resume": f"Suivi post-arrosage : séchage correct, {derniere_humidite:.0f} %.",
+            "couleur": GREEN,
+            "fond": LIGHT_GREEN
+        }
+
+    return {
+        "niveau": "info",
+        "titre": "💧 Suivi post-arrosage",
+        "detail": f"Dernière humidité : {derniere_humidite:.0f} %, tendance {tendance_jour:.1f} point/jour. Rien d'inquiétant détecté pour l'instant.",
+        "resume": f"Suivi post-arrosage : {derniere_humidite:.0f} %, tendance {tendance_jour:.1f} point/jour.",
+        "couleur": BLUE,
+        "fond": LIGHT_BLUE
+    }
+
+
+
 def afficher_resume_arrosage(parent, plante_id):
     dernier = database.get_dernier_arrosage(plante_id)
     rappel = database.get_rappel_arrosage_actif(plante_id)
+    suivi = analyser_apres_arrosage(plante_id)
 
-    if not dernier and not rappel:
+    if not dernier and not rappel and not suivi:
         return
 
     lignes = []
@@ -1084,10 +1257,15 @@ def afficher_resume_arrosage(parent, plante_id):
     if dernier:
         quantite = dernier[3]
         quantite_txt = f"{quantite:g} ml" if quantite is not None else "quantité non renseignée"
-        lignes.append(f"Dernier arrosage : {formater_date(dernier[2])} · {quantite_txt}")
+        type_eau = dernier[8] if len(dernier) > 8 else None
+        eau_txt = f" · eau : {type_eau}" if type_eau else ""
+        lignes.append(f"Dernier arrosage : {formater_date(dernier[2])} · {quantite_txt}{eau_txt}")
+
+    if suivi:
+        lignes.append(suivi["resume"])
 
     if rappel:
-        texte_rappel = f"Rappel prévu : {formater_date(rappel[8])}"
+        texte_rappel = f"Rappel prévu : {formater_date(rappel[9])}"
         if plante_avec_rappel_email(plante_id):
             texte_rappel += " · mail prévu quand l'envoi sera configuré"
         lignes.append(texte_rappel)
@@ -1115,6 +1293,55 @@ def afficher_resume_arrosage(parent, plante_id):
     ).pack(fill="x", padx=12, pady=(3, 8))
 
 
+def lancer_collecte_prioritaire_apres_arrosage(plante_id, demande_id=None, delai_ms=1000):
+    """Demande une collecte prioritaire au collecteur responsable du capteur."""
+
+    def lancer():
+        try:
+            capteur = obtenir_capteur_plante(plante_id)
+            if capteur is None:
+                status_var.set("Arrosage enregistré · aucune collecte prioritaire : pas de capteur actif")
+                return
+
+            status_var.set("Arrosage enregistré · collecte prioritaire demandée")
+
+            def arriere_plan():
+                try:
+                    resultat = sync_miflora.synchroniser_capteur_prioritaire_sync(
+                        capteur[0],
+                        reason="post_arrosage"
+                    )
+                except Exception as erreur:
+                    resultat = {
+                        "ok": False,
+                        "message": f"Collecte prioritaire impossible : {erreur}"
+                    }
+
+                def terminer():
+                    message = resultat.get("message", "Collecte prioritaire terminée.")
+                    collecteur = resultat.get("collecteur")
+                    prefixe = "Raspberry" if collecteur == "raspberry" else "PC"
+                    if demande_id:
+                        try:
+                            database.marquer_collecte_prioritaire_tentee(
+                                demande_id,
+                                statut="reussie" if resultat.get("ok") else "echec",
+                                commentaire=message
+                            )
+                        except Exception:
+                            pass
+                    status_var.set(f"Collecte post-arrosage {prefixe} : {message}")
+                    actualiser_interface()
+
+                root.after(0, terminer)
+
+            threading.Thread(target=arriere_plan, daemon=True).start()
+        except Exception:
+            status_var.set("Arrosage enregistré · collecte prioritaire non lancée")
+
+    root.after(delai_ms, lancer)
+
+
 def ouvrir_arrosage_plante(plante_id, nom_plante):
     fenetre = tk.Toplevel(root)
     fenetre.title("Arrosage")
@@ -1139,6 +1366,25 @@ def ouvrir_arrosage_plante(plante_id, nom_plante):
     type_combo = ttk.Combobox(fenetre, state="readonly", values=["normal", "fertilisant"], width=39)
     type_combo.pack(fill="x", padx=20)
     type_combo.current(0)
+
+    tk.Label(fenetre, text="Type d'eau", bg=CARD, fg=TEXT, font=("Segoe UI", 9, "bold")).pack(anchor="w", padx=20, pady=(10, 3))
+    type_eau_combo = ttk.Combobox(
+        fenetre,
+        state="readonly",
+        values=[
+            "Non renseigné",
+            "Eau du robinet",
+            "Eau reposée",
+            "Eau filtrée",
+            "Eau de pluie",
+            "Eau minérale",
+            "Volvic",
+            "Autre"
+        ],
+        width=39
+    )
+    type_eau_combo.pack(fill="x", padx=20)
+    type_eau_combo.current(0)
 
     tk.Label(fenetre, text="Commentaire", bg=CARD, fg=TEXT, font=("Segoe UI", 9, "bold")).pack(anchor="w", padx=20, pady=(10, 3))
     commentaire_entry = tk.Entry(fenetre, width=42, bg=BG, fg=TEXT, insertbackground=TEXT)
@@ -1191,15 +1437,46 @@ def ouvrir_arrosage_plante(plante_id, nom_plante):
                 return
 
         commentaire = commentaire_entry.get().strip() or None
+        type_eau = type_eau_combo.get().strip()
+        if type_eau == "Non renseigné":
+            type_eau = None
 
+        confirmation = [
+            f"Plante : {nom_plante}",
+            f"Quantité : {quantite:g} ml" if quantite is not None else "Quantité : non renseignée",
+            f"Type : {type_combo.get()}",
+            f"Type d'eau : {type_eau or 'non renseigné'}",
+        ]
+        if rappel_date:
+            confirmation.append(f"Rappel : {formater_date(rappel_date)}")
+        if commentaire:
+            confirmation.append(f"Commentaire : {commentaire}")
+
+        if not messagebox.askyesno(
+            "Confirmer l'arrosage",
+            "Confirmer cet arrosage ?\n\n" + "\n".join(confirmation),
+            parent=fenetre
+        ):
+            return
+
+        date_arrosage = datetime.now().isoformat(timespec="seconds")
         try:
-            database.enregistrer_arrosage_plante(
+            arrosage_id = database.enregistrer_arrosage_plante(
                 plante_id,
-                datetime.now().isoformat(timespec="seconds"),
+                date_arrosage,
                 quantite_ml=quantite,
                 type_arrosage=type_combo.get(),
                 commentaire=commentaire,
-                rappel_date=rappel_date
+                rappel_date=rappel_date,
+                type_eau=type_eau
+            )
+            demande_id = database.enregistrer_collecte_prioritaire(
+                plante_id,
+                arrosage_id=arrosage_id,
+                date_creation=date_arrosage,
+                raison="post_arrosage",
+                priorite=10,
+                commentaire="Collecte prioritaire déclenchée après validation d'arrosage."
             )
         except Exception:
             erreur.set("Impossible d'enregistrer l'arrosage.")
@@ -1207,10 +1484,14 @@ def ouvrir_arrosage_plante(plante_id, nom_plante):
 
         fenetre.destroy()
         actualiser_interface()
+        suivi = analyser_apres_arrosage(plante_id)
+        suffixe_suivi = " · suivi post-arrosage lancé" if suivi else ""
         if rappel_date:
-            status_var.set(f"Arrosage enregistré · rappel prévu le {formater_date(rappel_date)}")
+            status_var.set(f"Arrosage enregistré · rappel prévu le {formater_date(rappel_date)}{suffixe_suivi}")
         else:
-            status_var.set("Arrosage enregistré.")
+            status_var.set(f"Arrosage enregistré{suffixe_suivi}.")
+        lancer_collecte_prioritaire_apres_arrosage(plante_id, demande_id, 1000)
+        lancer_collecte_prioritaire_apres_arrosage(plante_id, demande_id, 10 * 60 * 1000)
 
     boutons = tk.Frame(fenetre, bg=CARD)
     boutons.pack(fill="x", padx=20, pady=(0, 15))
@@ -1448,8 +1729,8 @@ def creer_carte_plante_compacte(parent, plante):
 
     if dernier:
         infos.append(("💦 Arrosage", formater_date(dernier[2])))
-    if rappel and rappel[8]:
-        infos.append(("🔔 Rappel", formater_date(rappel[8])))
+    if rappel and rappel[9]:
+        infos.append(("🔔 Rappel", formater_date(rappel[9])))
 
     for titre, valeur in infos:
         bloc = tk.Frame(ligne2, bg=BG, highlightbackground=BORDER, highlightthickness=1)
@@ -4501,7 +4782,7 @@ def importer_historique_miflora_plante(plante_id, nom_plante):
     def arriere_plan():
         global import_historique_en_cours
         try:
-            resultat = sync_miflora.importer_historique_capteur_sync(capteur[0])
+            resultat = sync_miflora.importer_historique_capteur_sync(capteur[0], force_pc=True)
         except Exception as erreur:
             resultat = {
                 "ok": False,
@@ -4705,6 +4986,15 @@ def construire_alertes(plantes):
         nom = plante[1]
         capteurs = capteurs_par_plante.get(plante_id, [])
 
+        suivi_arrosage = analyser_apres_arrosage(plante_id)
+        if suivi_arrosage and suivi_arrosage["niveau"] in ("danger", "attention"):
+            ajouter_alerte(
+                alertes,
+                suivi_arrosage["niveau"],
+                f"{suivi_arrosage['titre']} · {nom}",
+                suivi_arrosage["detail"]
+            )
+
         if not capteurs:
             ajouter_alerte(alertes, "info", f"🌱 {nom} sans capteur actif", "Suivi manuel possible : arrosage, notes et rappel.")
         else:
@@ -4734,13 +5024,13 @@ def construire_alertes(plantes):
         except Exception:
             rappel = None
 
-        if rappel and rappel[8]:
+        if rappel and rappel[9]:
             try:
-                date_rappel = datetime.fromisoformat(rappel[8])
+                date_rappel = datetime.fromisoformat(rappel[9])
                 if date_rappel.date() <= maintenant.date():
-                    ajouter_alerte(alertes, "danger", f"💧 Arrosage à faire · {nom}", f"Rappel prévu le {formater_date(rappel[8])}.")
+                    ajouter_alerte(alertes, "danger", f"💧 Arrosage à faire · {nom}", f"Rappel prévu le {formater_date(rappel[9])}.")
                 elif (date_rappel - maintenant).days <= 2:
-                    ajouter_alerte(alertes, "attention", f"💧 Arrosage bientôt · {nom}", f"Rappel prévu le {formater_date(rappel[8])}.")
+                    ajouter_alerte(alertes, "attention", f"💧 Arrosage bientôt · {nom}", f"Rappel prévu le {formater_date(rappel[9])}.")
             except Exception:
                 pass
 
@@ -5139,17 +5429,48 @@ tk.Label(
 )
 
 
+sync_detail_header = tk.Frame(sync_frame, bg=LIGHT_BLUE)
+sync_detail_header.pack(fill="x", padx=15)
+
+tk.Button(
+    sync_detail_header,
+    text="📋 Copier le statut",
+    font=("Segoe UI", 8, "bold"),
+    bg=CARD,
+    fg=BLUE,
+    activebackground=CARD,
+    relief="flat",
+    cursor="hand2",
+    command=copier_statut_synchronisation
+).pack(side="right")
+
 tk.Label(
+    sync_detail_header,
+    text="Statut copiable",
+    font=("Segoe UI", 8, "bold"),
+    fg=SECONDARY,
+    bg=LIGHT_BLUE,
+    anchor="w"
+).pack(side="left")
+
+sync_detail_text = tk.Text(
     sync_frame,
-    textvariable=sync_detail_var,
+    height=3,
+    wrap="word",
     font=("Segoe UI", 9),
     fg=TEXT,
     bg=LIGHT_BLUE,
-    anchor="w"
-).pack(
-    fill="x",
-    padx=15
+    relief="flat",
+    borderwidth=0,
+    highlightthickness=0,
+    cursor="xterm"
 )
+sync_detail_text.pack(fill="x", padx=15, pady=(2, 0))
+sync_detail_text.configure(state="disabled")
+sync_var.trace_add("write", rafraichir_texte_synchronisation)
+sync_detail_var.trace_add("write", rafraichir_texte_synchronisation)
+sync_progress_var.trace_add("write", rafraichir_texte_synchronisation)
+rafraichir_texte_synchronisation()
 
 
 tk.Label(
