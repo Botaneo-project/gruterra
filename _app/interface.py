@@ -1747,6 +1747,7 @@ def creer_carte_plante_compacte(parent, plante):
     boutons.pack(fill="x", padx=14, pady=(0, 10))
     tk.Button(boutons, text="💧 Arrosage", font=("Segoe UI", 8, "bold"), bg=LIGHT_BLUE, fg=BLUE, relief="flat", cursor="hand2", command=lambda pid=plante_id, n=nom: ouvrir_arrosage_plante(pid, n)).pack(side="left", padx=(0, 8))
     tk.Button(boutons, text="🔎 Analyse", font=("Segoe UI", 8, "bold"), bg=LIGHT_GREEN, fg=GREEN, relief="flat", cursor="hand2", command=lambda pid=plante_id: afficher_message_analyse(pid)).pack(side="left", padx=(0, 8))
+    tk.Button(boutons, text="📋 Copier analyse", font=("Segoe UI", 8, "bold"), bg=BG, fg=BLUE, relief="flat", cursor="hand2", command=lambda pid=plante_id: copier_analyse_plante(pid)).pack(side="left", padx=(0, 8))
     tk.Button(boutons, text="📈 Historique", font=("Segoe UI", 8, "bold"), bg=BG, fg=TEXT, relief="flat", cursor="hand2", command=lambda pid=plante_id: afficher_message_historique(pid)).pack(side="left")
 
 
@@ -2220,6 +2221,23 @@ def creer_carte_plante(parent, plante):
         cursor="hand2",
         command=lambda pid=plante_id:
             afficher_message_analyse(pid)
+    ).pack(
+        side="left",
+        padx=(0, 8)
+    )
+
+    tk.Button(
+        boutons,
+        text="📋 Copier analyse plante",
+        font=("Segoe UI", 9, "bold"),
+        bg=BG,
+        fg=BLUE,
+        activebackground=BG,
+        activeforeground=BLUE,
+        relief="flat",
+        cursor="hand2",
+        command=lambda pid=plante_id:
+            copier_analyse_plante(pid)
     ).pack(
         side="left",
         padx=(0, 8)
@@ -4696,6 +4714,204 @@ def ouvrir_ajout_capteur():
               activebackground=LIGHT_GREEN, activeforeground=TEXT).pack(side='right', padx=20, pady=15)
     tk.Button(fenetre, text="Annuler", command=fenetre.destroy, bg=BG, fg=TEXT).pack(side='left', padx=20, pady=15)
     champs[0].focus_set()
+
+
+def _date_locale_depuis_mesure(valeur):
+    try:
+        date = datetime.fromisoformat(valeur)
+        if date.tzinfo:
+            date = date.astimezone().replace(tzinfo=None)
+        return date
+    except Exception:
+        return None
+
+
+def _resume_mesures_export(mesures, debut):
+    points = []
+    for mesure in mesures:
+        date = _date_locale_depuis_mesure(mesure[1])
+        if date and date >= debut:
+            points.append((date, mesure))
+    points.sort(key=lambda item: item[0])
+    if not points:
+        return None
+    resume = {"count": len(points), "first": points[0], "last": points[-1]}
+    for nom, index in (("temperature", 2), ("humidite", 3), ("luminosite", 4), ("conductivite", 5)):
+        valeurs = [item[1][index] for item in points if item[1][index] is not None]
+        if valeurs:
+            resume[nom] = {
+                "min": min(valeurs),
+                "max": max(valeurs),
+                "moy": sum(valeurs) / len(valeurs),
+                "dernier": valeurs[-1]
+            }
+    if len(points) > 1:
+        ecarts = [(b[0] - a[0]).total_seconds() / 3600 for a, b in zip(points, points[1:])]
+        resume["plus_grand_trou"] = max(ecarts)
+        resume["trous_importants"] = sum(1 for ecart in ecarts if ecart > 1.8)
+    else:
+        resume["plus_grand_trou"] = 0
+        resume["trous_importants"] = 0
+    return resume
+
+
+def _ligne_stat(label, data, unite=""):
+    if not data:
+        return None
+    suffixe = f" {unite}" if unite else ""
+    return f"- {label} : min {data['min']:.1f}{suffixe}, max {data['max']:.1f}{suffixe}, moyenne {data['moy']:.1f}{suffixe}, dernière {data['dernier']:.1f}{suffixe}."
+
+
+def _format_export_valeur(valeur, unite="", decimales=0):
+    if valeur is None:
+        return "non disponible"
+    try:
+        nombre = float(valeur)
+    except (TypeError, ValueError):
+        return str(valeur)
+    suffixe = f" {unite}" if unite else ""
+    return f"{nombre:.{decimales}f}{suffixe}"
+
+
+def _ajouter_resume_export(lignes, titre, resume):
+    lignes.append(f"{titre} :")
+    if not resume:
+        lignes.append("- Aucune mesure disponible.")
+        lignes.append("")
+        return
+    lignes.append(f"- {resume['count']} mesure(s).")
+    for label, cle, unite in (
+        ("Humidité", "humidite", "%"),
+        ("Lumière", "luminosite", "lux"),
+        ("Température", "temperature", "°C"),
+        ("Conductivité", "conductivite", "µS/cm"),
+    ):
+        ligne = _ligne_stat(label, resume.get(cle), unite)
+        if ligne:
+            lignes.append(ligne)
+    lignes.append(f"- Plus grand trou entre deux mesures : {resume.get('plus_grand_trou', 0):.1f} h.")
+    if resume.get("trous_importants"):
+        lignes.append(f"- Qualité : {resume['trous_importants']} trou(s) supérieur(s) à environ 1 h 48.")
+    lignes.append("")
+
+
+def generer_texte_analyse_plante(plante_id):
+    plante = database.get_plante(plante_id)
+    if not plante:
+        return "Plante introuvable dans Botaneo."
+    _, nom, espece, emplacement, zone = plante
+    capteur = obtenir_capteur_plante(plante_id)
+    mesures = database.get_mesures(plante_id=plante_id, limite=-1)
+    mesures = sorted(mesures, key=lambda item: item[1] or "")
+    dernier_arrosage = database.get_dernier_arrosage(plante_id)
+    arrosages = database.get_arrosages_plante(plante_id, limite=10)
+
+    lignes = []
+    details = []
+    if espece:
+        details.append(espece)
+    if emplacement:
+        details.append(emplacement)
+    if zone:
+        details.append(zone)
+    lignes.append(f"Plante suivie : {nom}" + (f" / {' · '.join(details)}" if details else ""))
+    if capteur:
+        lignes.append(f"Capteur actif : {capteur[1]} `{capteur[2]}`.")
+    else:
+        lignes.append("Capteur actif : aucun.")
+    lignes.append("")
+
+    if dernier_arrosage:
+        quantite = dernier_arrosage[3]
+        quantite_txt = f"{quantite:g} ml" if quantite is not None else "quantité non renseignée"
+        type_eau = dernier_arrosage[8] if len(dernier_arrosage) > 8 else None
+        commentaire = dernier_arrosage[7] if len(dernier_arrosage) > 7 else None
+        lignes.append("Dernier arrosage :")
+        ligne = f"- {formater_date(dernier_arrosage[2])} : {quantite_txt}"
+        if type_eau:
+            ligne += f", eau : {type_eau}"
+        if commentaire:
+            ligne += f", commentaire : {commentaire}"
+        lignes.append(ligne + ".")
+        lignes.append("")
+
+    if arrosages:
+        lignes.append("Arrosages récents :")
+        for arrosage in arrosages[:5]:
+            quantite = arrosage[3]
+            quantite_txt = f"{quantite:g} ml" if quantite is not None else "quantité non renseignée"
+            lignes.append(f"- {formater_date(arrosage[2])} : {quantite_txt}.")
+        lignes.append("")
+
+    try:
+        evenements = database.get_journal_plante(plante_id, limite=8)
+    except Exception:
+        evenements = []
+    if evenements:
+        lignes.append("Événements / observations notés :")
+        for evenement in evenements:
+            type_evenement = evenement[3] if len(evenement) > 3 else "observation"
+            titre = evenement[4] if len(evenement) > 4 and evenement[4] else "Observation"
+            commentaire = evenement[5] if len(evenement) > 5 else None
+            date = evenement[2] if len(evenement) > 2 else ""
+            texte = f"- {formater_date(date)} : {titre}"
+            if type_evenement and type_evenement != titre:
+                texte += f" ({type_evenement})"
+            if commentaire:
+                texte += f" — {commentaire}"
+            lignes.append(texte)
+        lignes.append("")
+
+    maintenant = datetime.now()
+    for titre, debut in (
+        ("Résumé 24 h", maintenant - timedelta(days=1)),
+        ("Résumé 48 h", maintenant - timedelta(days=2)),
+        ("Résumé 7 jours", maintenant - timedelta(days=7)),
+    ):
+        _ajouter_resume_export(lignes, titre, _resume_mesures_export(mesures, debut))
+
+    if dernier_arrosage:
+        date_arrosage = _date_locale_depuis_mesure(dernier_arrosage[2])
+        if date_arrosage:
+            _ajouter_resume_export(lignes, "Résumé depuis le dernier arrosage", _resume_mesures_export(mesures, date_arrosage))
+            autour = []
+            for mesure in mesures:
+                date = _date_locale_depuis_mesure(mesure[1])
+                if date and date_arrosage - timedelta(hours=8) <= date <= date_arrosage + timedelta(hours=6):
+                    autour.append((date, mesure))
+            if autour:
+                lignes.append("Mesures autour du dernier arrosage :")
+                for date, mesure in autour[-18:]:
+                    lignes.append(
+                        f"- {date.strftime('%d/%m %H:%M')} : "
+                        f"humidité {_format_export_valeur(mesure[3], '%')}, "
+                        f"lumière {_format_export_valeur(mesure[4], 'lux')}, "
+                        f"température {_format_export_valeur(mesure[2], '°C', 1)}, "
+                        f"conductivité {_format_export_valeur(mesure[5], 'µS/cm')}."
+                    )
+                lignes.append("")
+
+    suivi = analyser_apres_arrosage(plante_id)
+    if suivi:
+        lignes.append("Lecture Botaneo :")
+        lignes.append(f"- {suivi['titre']} : {suivi['detail']}")
+        lignes.append("")
+
+    lignes.append("Point à discuter :")
+    lignes.append("- Comparer l’évolution de l’humidité après arrosage avec l’état réel des feuilles et de la tige.")
+    lignes.append("- Vérifier si la lumière moyenne reste insuffisante pour une Crassula, même lorsque quelques pics lumineux apparaissent.")
+    return "\n".join(lignes).strip()
+
+
+def copier_analyse_plante(plante_id):
+    try:
+        texte = generer_texte_analyse_plante(plante_id)
+    except Exception as erreur:
+        status_var.set(f"Analyse plante impossible : {erreur}")
+        return
+    root.clipboard_clear()
+    root.clipboard_append(texte)
+    status_var.set("Analyse plante copiée dans le presse-papiers")
 
 
 def afficher_message_analyse(plante_id):
