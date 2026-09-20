@@ -46,6 +46,12 @@ Ce fichier sert à garder une trace claire des idées et des prochaines étapes.
 - Raspberry : scripts d’installation et de mise à jour disponibles dans `raspberry/install/`.
 - Écran historique enrichi avec résumé, tendance, repères post-arrosage et qualité des données.
 
+## Prochaine suite recommandée
+
+- Stabiliser l’analyse plante autour de l’arrosage : phrase courte, repères 10 min / 1 h / 24 h / 48 h et comparaison avant/après.
+- Garder le Bluetooth et la synchronisation Raspberry en observation pendant quelques cycles avant de modifier encore la collecte.
+- Reprendre ensuite l’interface des alertes, sans envoyer de mails automatiquement.
+
 ## Priorité courte
 
 ### 1. Finaliser les alertes
@@ -65,7 +71,7 @@ Ce fichier sert à garder une trace claire des idées et des prochaines étapes.
 - Améliorer plus tard les filtres plantes si besoin : recherche par nom, tri manuel, regroupement par pièce.
 - Zone de décision visible au-dessus des mesures : déjà en place, à affiner avec plus de données.
 - Permettre à terme de choisir l’ordre des blocs : météo locale, plantes, alertes, graphiques.
-- Historique enrichi avec résumé, tendance et phrase de lecture rapide.
+- Historique enrichi avec résumé, tendance, repères post-arrosage et copie du résumé.
 
 ### 3. Fiches plantes et mini base
 
@@ -97,16 +103,18 @@ Ce fichier sert à garder une trace claire des idées et des prochaines étapes.
 
 ## Analyse plante et prévisions 48-72 h
 
-À faire quand il y aura assez d’historique fiable.
+État actuel : la zone de décision existe déjà (`À faire aujourd’hui`, `À surveiller`, `Prévision 48-72 h`) et l’analyse post-arrosage commence à exploiter les mesures réelles. La suite doit rester prudente tant que l’historique n’est pas assez dense.
 
-- Ajouter une zone de décision en haut : `À faire aujourd’hui`, `À surveiller`, `Prévision 48-72 h`.
-- Exemple : `Votre Crassula devrait nécessiter une intervention dans les prochaines 24 h.`
-- Calculer les tendances d’humidité du sol.
-- Estimer le prochain arrosage probable.
-- Détecter une baisse de luminosité sur plusieurs jours.
-- Comparer la température actuelle avec la moyenne récente.
-- Interpréter prudemment la conductivité, sans alerte trop agressive.
-- Croiser les besoins de base de la plante avec les mesures réelles.
+- [x] Ajouter une zone de décision en haut : `À faire aujourd’hui`, `À surveiller`, `Prévision 48-72 h`.
+- [x] Ajouter une extraction texte pour partager les données utiles avec une discussion d’analyse plante.
+- [x] Afficher des repères post-arrosage dans l’historique.
+- [ ] Améliorer la phrase de synthèse globale, par exemple : `Votre Crassula devrait nécessiter une intervention dans les prochaines 24 h.`
+- [ ] Calculer les tendances d’humidité du sol avec plus de recul.
+- [ ] Estimer le prochain arrosage probable quand les données sont suffisantes.
+- [ ] Détecter une baisse de luminosité sur plusieurs jours.
+- [ ] Comparer la température actuelle avec la moyenne récente.
+- [ ] Interpréter prudemment la conductivité, sans alerte trop agressive.
+- [ ] Croiser les besoins de base de la plante avec les mesures réelles.
 
 ## Journal d’événements plante
 
@@ -121,7 +129,7 @@ Ce fichier sert à garder une trace claire des idées et des prochaines étapes.
 - Lancer `py verifier_avant_github.py` avant chaque commit/push.
 - Ne jamais stocker les tokens Netatmo, Météo-France, e-mail, clés SSH ou bases réelles dans GitHub.
 - Garder les secrets dans des fichiers locaux ignorés par Git.
-- Définir une rétention des sauvegardes copiées depuis le Raspberry sur le PC.
+- Suivre le diagnostic de rétention des sauvegardes Raspberry ; ne nettoyer les anciennes copies qu’après validation manuelle.
 - Garder un dossier historique pour les anciens fichiers non utilisés, sans les supprimer trop vite.
 
 
