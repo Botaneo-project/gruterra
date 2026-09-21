@@ -209,8 +209,14 @@ async def importer_historique_capteur_direct_pc(capteur, on_progress=None):
         message += ' ' + graphiques['message']
 
         manque = max((total_annonce or 0) - total_lues, 0)
-        if manque:
-            message += f" ⚠ Historique incomplet : {manque} entrée(s) encore non récupérée(s) sur ce passage. Relancer Importer historique ou Synchroniser peut en récupérer davantage."
+        historique_complet = bool(total_annonce) and manque == 0 and export.get('status') == 'complete'
+        historique_etat = 'complet' if historique_complet else 'incomplet'
+        if historique_complet:
+            message += f" ✅ Historique complet : {total_lues}/{total_annonce} entrée(s) récupérée(s)."
+        elif total_annonce:
+            message += f" ⚠ Historique encore à récupérer : {total_lues}/{total_annonce} entrée(s), {manque} restante(s). Les entrées déjà lues sont conservées ; le Raspberry et le PC pourront compléter aux prochains passages."
+        else:
+            message += " ⚠ Historique : total annoncé inconnu, conservation des entrées récupérées."
 
         if export.get('status') == 'partial':
             erreurs = export.get('errors') or []
@@ -223,7 +229,14 @@ async def importer_historique_capteur_direct_pc(capteur, on_progress=None):
             'ok': graphiques['ok'],
             'message': message,
             'resume': resume,
-            'collecteur': 'pc'
+            'collecteur': 'pc',
+            'historique_etat': historique_etat,
+            'historique_complet': historique_complet,
+            'historique_total_lues': total_lues,
+            'historique_total_annonce': total_annonce,
+            'historique_manque': manque,
+            'historique_passes': len(export.get('passes', [])),
+            'historique_passes_max': max_passes,
         }
 
     except Exception as erreur:
@@ -252,7 +265,9 @@ async def importer_historique_capteur(capteur_id=None, force_pc=False, on_progre
     if raspberry_sync.owned(capteur[2]) and not force_pc:
         if on_progress:
             on_progress({'phase': 'historique_raspberry', 'message': 'Récupération historique via Raspberry'})
-        return await asyncio.to_thread(raspberry_sync.synchronize)
+        resultat = await asyncio.to_thread(raspberry_sync.synchronize)
+        resultat.setdefault('historique_etat', 'raspberry')
+        return resultat
 
     return await importer_historique_capteur_direct_pc(capteur, on_progress=on_progress)
 
@@ -468,6 +483,13 @@ async def synchroniser_tous_avec_historique(on_progress=None):
             'historique_ok': bool(historique.get('ok')),
             'historique_message': historique.get('message', ''),
             'historique_resume': historique.get('resume'),
+            'historique_etat': historique.get('historique_etat'),
+            'historique_complet': historique.get('historique_complet'),
+            'historique_total_lues': historique.get('historique_total_lues'),
+            'historique_total_annonce': historique.get('historique_total_annonce'),
+            'historique_manque': historique.get('historique_manque'),
+            'historique_passes': historique.get('historique_passes'),
+            'historique_passes_max': historique.get('historique_passes_max'),
             'mesure': mesure.get('mesure'),
             'capteur_id': capteur[0],
             'nom': capteur[1]
@@ -479,6 +501,14 @@ async def synchroniser_tous_avec_historique(on_progress=None):
 
     succes_mesures = sum(bool(r['ok']) for r in resultats)
     succes_historiques = sum(bool(r.get('historique_ok')) for r in resultats)
+    historiques_incomplets = [
+        r for r in resultats
+        if r.get('historique_total_annonce') and r.get('historique_manque', 0) > 0
+    ]
+    historiques_complets = [
+        r for r in resultats
+        if r.get('historique_total_annonce') and r.get('historique_manque', 0) == 0
+    ]
 
     lignes = []
     for resultat in resultats:
@@ -495,12 +525,24 @@ async def synchroniser_tous_avec_historique(on_progress=None):
             f'{succes_mesures}/{len(resultats)} capteur(s) synchronisé(s), '
             f'{succes_historiques}/{len(resultats)} historique(s) importé(s).'
         )
+        if historiques_incomplets:
+            morceaux = []
+            for resultat in historiques_incomplets:
+                morceaux.append(
+                    f"{resultat['nom']} : {resultat.get('historique_total_lues', 0)}/{resultat.get('historique_total_annonce', '?')} "
+                    f"récupérée(s), {resultat.get('historique_manque', 0)} restante(s)"
+                )
+            message += ' Historique encore à récupérer · ' + ' ; '.join(morceaux) + '.'
+        elif historiques_complets:
+            message += ' Historique complet.'
 
     return {
         'ok': bool(resultats) and succes_mesures == len(resultats),
         'message': message,
         'resultats': resultats,
-        'detail': "\n".join(lignes)
+        'detail': "\n".join(lignes),
+        'historiques_incomplets': historiques_incomplets,
+        'historiques_complets': historiques_complets,
     }
 
 

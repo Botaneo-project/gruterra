@@ -4160,11 +4160,29 @@ def synchronisation_terminee(resultat_miflora, resultats_meteo):
         + f"{datetime.now().strftime('%d/%m/%Y à %H:%M:%S')}"
     )
 
-    sync_detail_var.set(
-        resultat_miflora.get("message", "Synchronisation Mi Flora terminée")
-        + ("\n" + resultat_miflora['detail'] if resultat_miflora.get('detail') else "")
-        + (" · À vérifier : " + ", ".join(sources_en_echec) if sources_en_echec else "")
-    )
+    lignes_detail = [resultat_miflora.get("message", "Synchronisation Mi Flora terminée")]
+
+    historiques_incomplets = resultat_miflora.get("historiques_incomplets") or []
+    historiques_complets = resultat_miflora.get("historiques_complets") or []
+    if historiques_incomplets:
+        lignes_detail.append("⚠ Historique encore à récupérer :")
+        for historique in historiques_incomplets:
+            lignes_detail.append(
+                f"- {historique.get('nom')} : "
+                f"{historique.get('historique_total_lues', 0)}/{historique.get('historique_total_annonce', '?')} récupérée(s), "
+                f"{historique.get('historique_manque', 0)} restante(s). "
+                f"Passes terminées : {historique.get('historique_passes', '?')}/{historique.get('historique_passes_max', '?')}."
+            )
+        lignes_detail.append("Les données déjà récupérées sont conservées. Le Raspberry et le PC pourront compléter aux prochains passages.")
+    elif historiques_complets:
+        lignes_detail.append("✅ Historique complet pour les capteurs lus sur ce passage.")
+
+    if resultat_miflora.get('detail'):
+        lignes_detail.append(resultat_miflora['detail'])
+    if sources_en_echec:
+        lignes_detail.append("À vérifier : " + ", ".join(sources_en_echec))
+
+    sync_detail_var.set("\n".join(lignes_detail))
 
     sync_progress_var.set(
         "Progression : 100%"
