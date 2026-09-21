@@ -40,6 +40,7 @@ Ce fichier sert à garder une trace claire des idées et des prochaines étapes.
 - Script `verifier_avant_github.py` ajouté pour contrôler les fichiers sensibles avant commit ou push.
 - Dépôt GitHub privé initialisé et utilisé pour sauvegarder les évolutions validées.
 - Statut de synchronisation copiable depuis l’interface.
+- Synchronisation : sous-étapes détaillées pendant les phases longues.
 - Lecture historique Mi Flora PC en plusieurs passes, sans effacement, avec reprise partielle et signalement des données manquantes.
 - Synchronisation manuelle : récupération Raspberry en priorité, puis lecture Bluetooth PC de secours si aucune mesure fraîche ne remonte.
 - Raspberry : collecte planifiée quatre fois par jour via `botaneo-collect.timer`.
@@ -200,6 +201,7 @@ Ce fichier sert à garder une trace claire des idées et des prochaines étapes.
 - [x] Import graphique après archivage, avec déduplication.
 - [x] Lectures partielles acceptées quand les entrées lues sont valides.
 - [x] Lecture PC en plusieurs passes pour contourner les coupures BLE.
+- [x] Synchronisation : afficher des sous-étapes détaillées pendant les phases longues.
 - [x] Bandeau de qualité des données dans l’écran historique.
 - [x] Fenêtre historique : bouton `Copier résumé` avec période, statistiques, qualité et ligne sélectionnée.
 - [ ] Ajouter un mode historique long séparé si les lectures normales restent limitées.

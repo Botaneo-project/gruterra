@@ -25,7 +25,7 @@ def message_erreur_historique(erreur):
     return f"Historique Mi Flora impossible : {nom} · {texte}"
 
 
-async def importer_historique_capteur_direct_pc(capteur):
+async def importer_historique_capteur_direct_pc(capteur, on_progress=None):
     """Lit la mémoire historique Mi Flora depuis le Bluetooth du PC, sans effacement.
 
     La lecture est faite en plusieurs passes courtes. Certains Mi Flora ou Windows BLE
@@ -49,8 +49,28 @@ async def importer_historique_capteur_direct_pc(capteur):
         max_passes = 5
 
         for passe in range(1, max_passes + 1):
+            if on_progress:
+                on_progress({
+                    'phase': 'historique_scan',
+                    'passe': passe,
+                    'max_passes': max_passes,
+                    'index_depart': index_depart,
+                    'total_lues': len(export['entries']),
+                    'history_count': history_count,
+                })
             appareil = None
             for tentative in range(1, 4):
+                if on_progress:
+                    on_progress({
+                        'phase': 'historique_scan_tentative',
+                        'passe': passe,
+                        'max_passes': max_passes,
+                        'tentative': tentative,
+                        'tentatives': 3,
+                        'index_depart': index_depart,
+                        'total_lues': len(export['entries']),
+                        'history_count': history_count,
+                    })
                 appareil = await scanner_avec_progression(capteur[2], duree=20, silencieux=True)
                 if appareil is not None:
                     break
@@ -64,8 +84,27 @@ async def importer_historique_capteur_direct_pc(capteur):
                 }
                 break
 
+            if on_progress:
+                on_progress({
+                    'phase': 'historique_connexion',
+                    'passe': passe,
+                    'max_passes': max_passes,
+                    'index_depart': index_depart,
+                    'total_lues': len(export['entries']),
+                    'history_count': history_count,
+                })
+
             async with BleakClient(appareil, timeout=45) as client:
                 await asyncio.sleep(1.2)
+                if on_progress:
+                    on_progress({
+                        'phase': 'historique_lecture',
+                        'passe': passe,
+                        'max_passes': max_passes,
+                        'index_depart': index_depart,
+                        'total_lues': len(export['entries']),
+                        'history_count': history_count,
+                    })
                 part = await lire_historique(
                     client,
                     capteur[2],
@@ -78,6 +117,17 @@ async def importer_historique_capteur_direct_pc(capteur):
             if history_count is None:
                 history_count = part.get('history_count')
                 export['history_count'] = history_count
+            if on_progress:
+                on_progress({
+                    'phase': 'historique_passe_finie',
+                    'passe': passe,
+                    'max_passes': max_passes,
+                    'index_depart': index_depart,
+                    'total_lues': len(export['entries']) + len(part.get('entries', [])),
+                    'history_count': history_count,
+                    'entries_passe': len(part.get('entries', [])),
+                    'status': part.get('status'),
+                })
             if clock_reference is None:
                 clock_reference = part.get('clock_before')
                 export['clock_before'] = clock_reference
@@ -130,6 +180,13 @@ async def importer_historique_capteur_direct_pc(capteur):
         else:
             export['errors'] = []
 
+        if on_progress:
+            on_progress({
+                'phase': 'historique_enregistrement',
+                'total_lues': len(export['entries']),
+                'history_count': history_count,
+                'passes': len(export.get('passes', [])),
+            })
         import_date = datetime.now(timezone.utc).isoformat(timespec='seconds')
         resume = database.enregistrer_entrees_historique_miflora(
             capteur[0],
@@ -177,7 +234,7 @@ async def importer_historique_capteur_direct_pc(capteur):
         }
 
 
-async def importer_historique_capteur(capteur_id=None, force_pc=False):
+async def importer_historique_capteur(capteur_id=None, force_pc=False, on_progress=None):
     """Lit la mémoire historique Mi Flora et conserve les entrées brutes sans effacement."""
 
     if capteur_id is None:
@@ -193,13 +250,15 @@ async def importer_historique_capteur(capteur_id=None, force_pc=False):
         return {'ok': False, 'message': "Le capteur n'a pas d'adresse Bluetooth."}
 
     if raspberry_sync.owned(capteur[2]) and not force_pc:
+        if on_progress:
+            on_progress({'phase': 'historique_raspberry', 'message': 'Récupération historique via Raspberry'})
         return await asyncio.to_thread(raspberry_sync.synchronize)
 
-    return await importer_historique_capteur_direct_pc(capteur)
+    return await importer_historique_capteur_direct_pc(capteur, on_progress=on_progress)
 
 
-def importer_historique_capteur_sync(capteur_id=None, force_pc=False):
-    return asyncio.run(importer_historique_capteur(capteur_id, force_pc=force_pc))
+def importer_historique_capteur_sync(capteur_id=None, force_pc=False, on_progress=None):
+    return asyncio.run(importer_historique_capteur(capteur_id, force_pc=force_pc, on_progress=on_progress))
 
 
 async def synchroniser_capteur(capteur_id=None):
@@ -372,7 +431,15 @@ async def synchroniser_tous_avec_historique(on_progress=None):
             on_progress(index, len(capteurs), capteur[1], "historique")
 
         try:
-            historique = await importer_historique_capteur(capteur[0], force_pc=raspberry_sync.owned(capteur[2]))
+            def historique_progress(info, capteur=capteur, index=index, total=len(capteurs)):
+                if on_progress:
+                    on_progress(index, total, capteur[1], "historique_detail", info)
+
+            historique = await importer_historique_capteur(
+                capteur[0],
+                force_pc=raspberry_sync.owned(capteur[2]),
+                on_progress=historique_progress
+            )
         except Exception as erreur:
             historique = {
                 'ok': False,

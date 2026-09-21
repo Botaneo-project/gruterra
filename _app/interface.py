@@ -4038,12 +4038,54 @@ def synchroniser_arriere_plan():
             5
         )
 
-        def progression_miflora(index, total, nom, etape="mesure"):
-            if etape == "historique":
-                texte = f"📥 Historique Mi Flora {index}/{total} : {nom}"
+        def progression_miflora(index, total, nom, etape="mesure", info=None):
+            info = info or {}
+            if etape == "historique_detail":
+                phase = info.get("phase")
+                passe = info.get("passe")
+                max_passes = info.get("max_passes")
+                index_depart = info.get("index_depart", 0)
+                total_lues = info.get("total_lues", 0)
+                history_count = info.get("history_count")
+                compteur = f"{total_lues}/{history_count}" if history_count else f"{total_lues}"
+                progression = 10 + int(18 * (min(passe or 1, max_passes or 5) - 1) / max(max_passes or 5, 1))
+
+                if phase == "historique_scan_tentative":
+                    texte = (
+                        f"📥 Historique Mi Flora {index}/{total} : {nom} · "
+                        f"scan passe {passe}/{max_passes}, tentative {info.get('tentative')}/{info.get('tentatives')} "
+                        f"depuis l’entrée {index_depart} · {compteur} récupérée(s)"
+                    )
+                elif phase == "historique_connexion":
+                    texte = (
+                        f"📥 Historique Mi Flora {index}/{total} : {nom} · "
+                        f"connexion Bluetooth, passe {passe}/{max_passes} · {compteur} récupérée(s)"
+                    )
+                elif phase == "historique_lecture":
+                    texte = (
+                        f"📥 Historique Mi Flora {index}/{total} : {nom} · "
+                        f"lecture mémoire depuis l’entrée {index_depart}, passe {passe}/{max_passes} · {compteur} récupérée(s)"
+                    )
+                elif phase == "historique_passe_finie":
+                    texte = (
+                        f"📥 Historique Mi Flora {index}/{total} : {nom} · "
+                        f"passe {passe}/{max_passes} terminée, {info.get('entries_passe', 0)} entrée(s) lue(s) · {compteur} récupérée(s)"
+                    )
+                elif phase == "historique_enregistrement":
+                    progression = 28
+                    texte = (
+                        f"📥 Historique Mi Flora {index}/{total} : {nom} · "
+                        f"enregistrement local, {compteur} entrée(s) récupérée(s), {info.get('passes', 0)} passe(s)"
+                    )
+                elif phase == "historique_raspberry":
+                    texte = f"📥 Historique Mi Flora {index}/{total} : {nom} · récupération via Raspberry"
+                else:
+                    texte = f"📥 Historique Mi Flora {index}/{total} : {nom} · traitement en cours"
+            elif etape == "historique":
+                texte = f"📥 Historique Mi Flora {index}/{total} : {nom} · préparation"
                 progression = 8 + int(22 * (index - 1) / max(total, 1))
             else:
-                texte = f"🌱 Mesure Mi Flora {index}/{total} : {nom}"
+                texte = f"🌱 Mesure Mi Flora {index}/{total} : {nom} · mesure directe ou Raspberry"
                 progression = 30 + int(20 * (index - 1) / max(total, 1))
             root.after(0, afficher_etape_netatmo, texte, progression)
 
@@ -4062,8 +4104,9 @@ def synchroniser_arriere_plan():
 
     # --------------------------------------------------------
     # Netatmo : lectures et dates independantes.
-    root.after(0, afficher_etape_netatmo, "Lecture des stations météo...", 55)
+    root.after(0, afficher_etape_netatmo, "🌦️ Netatmo : lecture des stations privées et publiques...", 55)
     resultats_meteo = recuperer_sources(netatmo)
+    root.after(0, afficher_etape_netatmo, "🌦️ Prévision locale +2 h : récupération météo...", 70)
     recuperer_prevision_2h_avec_cache()
     root.after(0, synchronisation_terminee, resultat_miflora, resultats_meteo)
 
