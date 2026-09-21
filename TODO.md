@@ -126,6 +126,15 @@ Ce fichier sert à garder une trace claire des idées et des prochaines étapes.
 - Afficher ces événements dans la fiche plante.
 - Utiliser ces événements pour mieux interpréter les courbes.
 
+## Installation, mises à jour et distribution
+
+- [ ] Prévoir un système d’auto-upgrade pour les utilisateurs ayant déjà téléchargé Botaneo.
+- [ ] Avant toute mise à jour automatique, sauvegarder la base locale, la configuration et les fichiers de secrets ignorés par Git.
+- [ ] Distinguer mise à jour du programme et conservation des données personnelles : base réelle, tokens Netatmo, favoris, paramètres Raspberry, alertes.
+- [ ] Prévoir un mode simple : vérifier la version disponible sur GitHub, proposer la mise à jour, puis appliquer seulement après validation.
+- [ ] Prévoir un mode avancé plus tard : script de mise à jour Windows et script de mise à jour Raspberry.
+- [ ] Afficher clairement la version installée et la dernière version disponible dans l’interface.
+
 ## GitHub, sauvegarde et sécurité
 
 - Maintenir `README.md`, `RASPBERRY.md` et `TODO.md` à jour après les grosses évolutions.
