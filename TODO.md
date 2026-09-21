@@ -131,6 +131,8 @@ Ce fichier sert à garder une trace claire des idées et des prochaines étapes.
 - [ ] Prévoir un système d’auto-upgrade pour les utilisateurs ayant déjà téléchargé Botaneo.
 - [ ] Avant toute mise à jour automatique, sauvegarder la base locale, la configuration et les fichiers de secrets ignorés par Git.
 - [ ] Distinguer mise à jour du programme et conservation des données personnelles : base réelle, tokens Netatmo, favoris, paramètres Raspberry, alertes.
+- [ ] Garantir que le dossier personnel de l’utilisateur reste conservé pendant les mises à jour : données, configuration locale, favoris, secrets, sauvegardes et éventuelles images/cache local.
+- [ ] Séparer clairement le dossier programme du dossier utilisateur pour faciliter les mises à jour sans perte de données.
 - [ ] Prévoir un mode simple : vérifier la version disponible sur GitHub, proposer la mise à jour, puis appliquer seulement après validation.
 - [ ] Prévoir un mode avancé plus tard : script de mise à jour Windows et script de mise à jour Raspberry.
 - [ ] Afficher clairement la version installée et la dernière version disponible dans l’interface.
