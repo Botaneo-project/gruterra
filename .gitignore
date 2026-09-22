@@ -77,3 +77,6 @@ _app/archive_conservee_*.json
 
 # Contexte privé local pour reprise agent
 CONTEXTE_AGENT_BOTANEO.md
+
+# Fiche privée locale de commandes Botaneo
+COMMANDES_UTILES_BOTANEO.md
