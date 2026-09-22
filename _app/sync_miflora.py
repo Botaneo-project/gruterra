@@ -267,6 +267,13 @@ async def importer_historique_capteur(capteur_id=None, force_pc=False, on_progre
             on_progress({'phase': 'historique_raspberry', 'message': 'Récupération historique via Raspberry'})
         resultat = await asyncio.to_thread(raspberry_sync.synchronize)
         resultat.setdefault('historique_etat', 'raspberry')
+        resultat['historique_message_simplifie'] = (
+            f"Historique simplifié via Raspberry : {resultat.get('history_added', 0)} ajoutée(s), "
+            f"{resultat.get('history_duplicates', 0)} déjà reçue(s), "
+            f"{resultat.get('history_undated', 0)} sans date fiable."
+        )
+        if resultat.get('history_added', 0) or resultat.get('history_duplicates', 0):
+            resultat['message'] = resultat['historique_message_simplifie'] + ' ' + resultat.get('message', '')
         return resultat
 
     return await importer_historique_capteur_direct_pc(capteur, on_progress=on_progress)
@@ -452,7 +459,7 @@ async def synchroniser_tous_avec_historique(on_progress=None):
 
             historique = await importer_historique_capteur(
                 capteur[0],
-                force_pc=raspberry_sync.owned(capteur[2]),
+                force_pc=False,
                 on_progress=historique_progress
             )
         except Exception as erreur:

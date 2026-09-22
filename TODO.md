@@ -202,9 +202,10 @@ Ce fichier sert à garder une trace claire des idées et des prochaines étapes.
 - [x] Lectures partielles acceptées quand les entrées lues sont valides.
 - [x] Lecture PC en plusieurs passes pour contourner les coupures BLE.
 - [x] Synchronisation : afficher des sous-étapes détaillées pendant les phases longues.
+- [x] Import historique simplifié : récupérer d’abord les historiques déjà collectés par le Raspberry.
 - [ ] Améliorer encore le bouton Synchroniser avec deux lectures séparées : progression globale et progression historique Mi Flora.
 - [x] À la fin d’une synchronisation, afficher clairement `Historique complet` ou `Historique encore à récupérer`, avec le nombre d’entrées récupérées / annoncées.
-- [ ] Clarifier la reprise historique : le Raspberry peut collecter plusieurs fois par jour, le PC récupère d’abord le Pi, puis peut compléter ponctuellement depuis le Bluetooth PC.
+- [x] Clarifier la reprise historique : le Raspberry peut collecter plusieurs fois par jour, le PC récupère d’abord le Pi, puis peut compléter ponctuellement depuis le Bluetooth PC.
 - [x] Afficher quand toutes les passes prévues sont terminées, même si l’historique reste incomplet à cause du Bluetooth.
 - [x] Bandeau de qualité des données dans l’écran historique.
 - [x] Fenêtre historique : bouton `Copier résumé` avec période, statistiques, qualité et ligne sélectionnée.

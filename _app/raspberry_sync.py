@@ -45,7 +45,7 @@ def transport(config, operation, request=None):
 def import_batch(db_path, batch, config):
     if batch.get('version') != 1 or batch.get('device_id') != config['device_id'] or len(batch['rows']) > 500:
         raise ValueError('Identité ou format du collecteur incorrect.')
-    counts = {'added': 0, 'duplicates': 0, 'undated': 0}
+    counts = {'added': 0, 'duplicates': 0, 'undated': 0, 'history_added': 0, 'history_duplicates': 0, 'history_undated': 0, 'current_added': 0, 'current_duplicates': 0, 'current_undated': 0}
     ack = []
     db = sqlite3.connect(Path(db_path).resolve().as_uri()+'?mode=rw', uri=True, timeout=30)
     try:
@@ -116,6 +116,7 @@ def import_batch(db_path, batch, config):
                             conductivite,donnees_brutes,capteur_id) VALUES (?,?,?,?,?,?,?)''',
                             (date, *values, raw, sensors[0][0]))
                 counts[disposition] += 1
+                counts[row['kind'] + '_' + disposition] += 1
                 db.execute('INSERT INTO raspberry_receipts VALUES (?,?,?,?,?,?)',
                            (row['device_id'], row['measurement_id'], checksum, json.dumps(row),
                             datetime.now(timezone.utc).isoformat(), disposition))
@@ -136,7 +137,7 @@ def synchronize(config=None, sender=transport, db_path=None, collect_now=False, 
     if config.get('away') or not config.get('enabled'):
         return {'ok': False, 'message': 'Synchronisation Raspberry suspendue dans les réglages.'}
     with LOCK:
-        totals = {'added': 0, 'duplicates': 0, 'undated': 0}
+        totals = {'added': 0, 'duplicates': 0, 'undated': 0, 'history_added': 0, 'history_duplicates': 0, 'history_undated': 0, 'current_added': 0, 'current_duplicates': 0, 'current_undated': 0}
         pending_remaining = None
         collect_message = ''
         collect_status = None
@@ -183,7 +184,12 @@ def synchronize(config=None, sender=transport, db_path=None, collect_now=False, 
                     attente_message = ''
                     if pending_remaining:
                         attente_message = f" Il reste environ {pending_remaining} mesure(s) en attente sur le Raspberry ; elles seront reprises au prochain passage."
-                    return {'backup_message': backup_message, 'ok': True, 'message': collect_message + backup_message + ' ' + f"Raspberry : {totals['added']} mesure(s) ajoutée(s), {totals['duplicates']} déjà reçue(s), {totals['undated']} sans date fiable conservée(s)." + attente_message, 'collect_status': collect_status, 'collect_accepted': collect_accepted, 'pending_remaining': pending_remaining or 0, **totals}
+                    history_message = (
+                        f" Historique Pi : {totals['history_added']} ajoutée(s), "
+                        f"{totals['history_duplicates']} déjà reçue(s), "
+                        f"{totals['history_undated']} sans date fiable."
+                    )
+                    return {'backup_message': backup_message, 'ok': True, 'message': collect_message + backup_message + ' ' + f"Raspberry : {totals['added']} mesure(s) ajoutée(s), {totals['duplicates']} déjà reçue(s), {totals['undated']} sans date fiable conservée(s)." + history_message + attente_message, 'collect_status': collect_status, 'collect_accepted': collect_accepted, 'pending_remaining': pending_remaining or 0, **totals}
             raise RuntimeError('Transfert partiel conservé ; suite au prochain essai.')
         except Exception as error:
             message = str(error) if isinstance(error, (ValueError, ConnectionError, RuntimeError)) else 'Transfert interrompu ; reprise sans doublons au prochain essai.'

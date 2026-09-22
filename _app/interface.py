@@ -2333,7 +2333,7 @@ def creer_carte_plante(parent, plante):
 
         tk.Button(
             boutons,
-            text="📥 Importer historique Mi Flora",
+            text="📥 Importer historique simplifié",
             font=("Segoe UI", 9, "bold"),
             bg=LIGHT_GREEN,
             fg=GREEN,
@@ -5103,7 +5103,7 @@ def importer_historique_miflora_plante(plante_id, nom_plante):
     def arriere_plan():
         global import_historique_en_cours
         try:
-            resultat = sync_miflora.importer_historique_capteur_sync(capteur[0], force_pc=True)
+            resultat = sync_miflora.importer_historique_capteur_sync(capteur[0], force_pc=False)
         except Exception as erreur:
             resultat = {
                 "ok": False,
