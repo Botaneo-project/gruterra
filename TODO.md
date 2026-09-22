@@ -46,9 +46,12 @@ Ce fichier sert à garder une trace claire des idées et des prochaines étapes.
 - Raspberry : collecte planifiée quatre fois par jour via `botaneo-collect.timer`.
 - Raspberry : scripts d’installation et de mise à jour disponibles dans `raspberry/install/`.
 - Écran historique enrichi avec résumé, tendance, repères post-arrosage et qualité des données.
+- Document de reprise agent créé : `CONTEXTE_AGENT_BOTANEO.md` avec architecture, Raspberry, secrets, process GitHub, Plante de Jade et priorités.
 
 ## Prochaine suite recommandée
 
+- Priorité réelle : démarrer l’analyse par cycle d’arrosage en version simple, sans surinterpréter les données.
+- Pour chaque cycle : repérer l’humidité avant arrosage, le pic observé, la baisse après pic et la qualité des mesures disponibles.
 - Stabiliser l’analyse plante autour de l’arrosage : phrase courte, repères 10 min / 1 h / 24 h / 48 h et comparaison avant/après.
 - Garder le Bluetooth et la synchronisation Raspberry en observation pendant quelques cycles avant de modifier encore la collecte.
 - Reprendre ensuite l’interface des alertes, sans envoyer de mails automatiquement.
@@ -148,10 +151,13 @@ Ce fichier sert à garder une trace claire des idées et des prochaines étapes.
 
 ## GitHub, sauvegarde et sécurité
 
-- Maintenir `README.md`, `RASPBERRY.md` et `TODO.md` à jour après les grosses évolutions.
+- Maintenir `README.md`, `RASPBERRY.md`, `TODO.md` et `CONTEXTE_AGENT_BOTANEO.md` à jour après les grosses évolutions.
 - Lancer `py verifier_avant_github.py` avant chaque commit/push.
 - Ne jamais stocker les tokens Netatmo, Météo-France, e-mail, clés SSH ou bases réelles dans GitHub.
-- Garder les secrets dans des fichiers locaux ignorés par Git.
+- Garder les secrets dans des fichiers locaux ignorés par Git, surtout `_config/`.
+- Garder uniquement des fichiers `.example.json` anonymes dans GitHub.
+- Lire la liste des fichiers modifiés avant chaque envoi GitHub, même si le dépôt est privé.
+- Ne pas pousser un fichier de contexte interne détaillé sans validation explicite si le contrôle automatique le juge sensible.
 - Suivre le diagnostic de rétention des sauvegardes Raspberry ; ne nettoyer les anciennes copies qu’après validation manuelle.
 - Garder un dossier historique pour les anciens fichiers non utilisés, sans les supprimer trop vite.
 
@@ -202,6 +208,7 @@ Ce fichier sert à garder une trace claire des idées et des prochaines étapes.
 - [ ] Ajouter plus tard un nettoyage manuel ou confirmé des anciennes sauvegardes Raspberry.
 - [ ] Tester le cycle déplacement / nouveau capteur / retour / récupération PC.
 - [ ] Tester une restauration Raspberry avec reprise des mesures déjà confirmées.
+- [ ] Documenter plus précisément la reprise Wi-Fi après déplacement : retour réseau, contrôle SSH, récupération PC, sauvegarde copiée.
 
 ## Historique et graphiques — suivi restant
 
@@ -221,6 +228,7 @@ Ce fichier sert à garder une trace claire des idées et des prochaines étapes.
 - [x] Historique : conserver les humidités à 0 % suspectes mais les exclure des statistiques/graphique.
 - [x] Synchronisation : programmer une relecture de contrôle quand une mesure actuelle d’humidité vaut 0 %.
 - [ ] Conserver la raison d’exclusion d’une mesure suspecte pour pouvoir la réexaminer plus tard.
+- [ ] Afficher dans l’historique quand une valeur est exclue des statistiques mais conservée dans le tableau.
 - [ ] Distinguer clairement donnée brute, mesure logique et mesure retenue pour une analyse donnée.
 - [ ] Renforcer la déduplication sans confondre deux mesures identiques à des heures différentes avec un doublon réel.
 - [ ] Garder la récupération de l’historique interne Mi Flora comme rattrapage même si le Raspberry collecte régulièrement.
