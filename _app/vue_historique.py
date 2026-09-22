@@ -181,7 +181,7 @@ def analyser_points(points, nom_serie):
             lecture = "Substrat encore humide : éviter d'arroser trop vite."
             couleur = "BLUE"
         else:
-            lecture = "Humidité sans signal fort sur la période affichée."
+            lecture = "Aucune tendance globale suffisamment fiable sur la période affichée. Les réponses aux arrosages doivent être comparées séparément."
     elif nom_serie == "Lumière":
         valeurs = [valeur for _, valeur in points]
         moyenne = sum(valeurs) / len(valeurs)
@@ -204,6 +204,45 @@ def analyser_points(points, nom_serie):
         "lecture": lecture,
         "couleur": couleur
     }
+
+
+def ids_humidite_zero_suspects(mesures):
+    points = []
+    for mesure in mesures:
+        try:
+            date = datetime.fromisoformat(mesure[1])
+            if date.tzinfo:
+                date = date.astimezone().replace(tzinfo=None)
+            humidite = float(mesure[3])
+            points.append((date, mesure, humidite))
+        except (TypeError, ValueError):
+            continue
+
+    points.sort(key=lambda item: item[0])
+    suspects = set()
+
+    for index, (date, mesure, humidite) in enumerate(points):
+        if humidite != 0:
+            continue
+        avant = next((item for item in reversed(points[:index]) if item[2] > 0), None)
+        apres = next((item for item in points[index + 1:] if item[2] > 0), None)
+        if not avant or not apres:
+            continue
+        ecart_avant_h = (date - avant[0]).total_seconds() / 3600
+        ecart_apres_h = (apres[0] - date).total_seconds() / 3600
+        if ecart_avant_h <= 3 and ecart_apres_h <= 3 and avant[2] >= 5 and apres[2] >= 5:
+            suspects.add(mesure[0])
+
+    return suspects
+
+
+def filtrer_mesures_pour_serie(mesures, nom_serie):
+    if nom_serie != "Humidité":
+        return list(mesures), set()
+    suspects = ids_humidite_zero_suspects(mesures)
+    if not suspects:
+        return list(mesures), suspects
+    return [mesure for mesure in mesures if mesure[0] not in suspects], suspects
 
 
 def ouvrir_historique(parent, plante_id):
@@ -828,7 +867,8 @@ def ouvrir_historique(parent, plante_id):
         else:
             afficher_mesures_table(mesures_courantes)
 
-        points = extraire_points(mesures, serie.get())
+        mesures_stats, mesures_suspectes_ids = filtrer_mesures_pour_serie(mesures, serie.get())
+        points = extraire_points(mesures_stats, serie.get())
         config = SERIES[serie.get()]
 
         analyse = analyser_points(points, serie.get())
@@ -844,6 +884,12 @@ def ouvrir_historique(parent, plante_id):
                 variable.set("—")
 
         qualite_texte, qualite_couleur = analyser_qualite_donnees(mesures)
+        if mesures_suspectes_ids:
+            qualite_texte += (
+                f" · ⚠ {len(mesures_suspectes_ids)} humidité à 0 % isolée(s) conservée(s) "
+                "dans le tableau, exclue(s) du graphique et des statistiques."
+            )
+            qualite_couleur = "ORANGE"
         qualite_var.set(qualite_texte)
         qualite_label.configure(fg=couleurs.get(qualite_couleur, couleurs["SECONDARY"]))
 

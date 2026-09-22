@@ -76,9 +76,9 @@ class Handler(BaseHTTPRequestHandler):
     def authenticated(self):
         try:
             scheme, encoded = self.headers.get('Authorization', '').split(' ', 1)
-            user, password = base64.b64decode(encoded, validate=True).decode().split(':', 1)
+            user, auth_secret = base64.b64decode(encoded, validate=True).decode().split(':', 1)
             config = self.server.auth
-            hashed = hashlib.pbkdf2_hmac('sha256', password.encode(), bytes.fromhex(config['salt']), 200000).hex()
+            hashed = hashlib.pbkdf2_hmac('sha256', auth_secret.encode(), bytes.fromhex(config['salt']), 200000).hex()
             allowed = scheme.lower() == 'basic' and hmac.compare_digest(user, config['user']) and hmac.compare_digest(hashed, config['hash'])
         except (ValueError, UnicodeError):
             allowed = False

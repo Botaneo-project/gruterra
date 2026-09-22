@@ -114,6 +114,7 @@ Ce fichier sert à garder une trace claire des idées et des prochaines étapes.
 - [x] Centre d’alertes : afficher le délai lisible du prochain arrosage et préparer le rappel mail une semaine avant.
 - [ ] Améliorer la phrase de synthèse globale, par exemple : `Votre Crassula devrait nécessiter une intervention dans les prochaines 24 h.`
 - [ ] Calculer les tendances d’humidité du sol avec plus de recul.
+- [ ] Distinguer tendance globale, vitesse de séchage entre arrosages et réponse à l’arrosage.
 - [ ] Estimer le prochain arrosage probable quand les données sont suffisantes.
 - [ ] Détecter une baisse de luminosité sur plusieurs jours.
 - [ ] Comparer la température actuelle avec la moyenne récente.
@@ -210,6 +211,8 @@ Ce fichier sert à garder une trace claire des idées et des prochaines étapes.
 - [x] Afficher quand toutes les passes prévues sont terminées, même si l’historique reste incomplet à cause du Bluetooth.
 - [x] Bandeau de qualité des données dans l’écran historique.
 - [x] Fenêtre historique : bouton `Copier résumé` avec période, statistiques, qualité et ligne sélectionnée.
+- [x] Historique : conserver les humidités à 0 % suspectes mais les exclure des statistiques/graphique.
+- [x] Synchronisation : programmer une relecture de contrôle quand une mesure actuelle d’humidité vaut 0 %.
 - [ ] Ajouter un mode historique long séparé si les lectures normales restent limitées.
 - [ ] Auditer les anciennes archives sans inventer leurs repères temporels.
 - [x] Ajouter une extraction texte intégrée pour envoyer les données utiles à une discussion d’analyse plante.

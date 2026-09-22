@@ -1320,23 +1320,31 @@ def afficher_resume_arrosage(parent, plante_id):
     ).pack(fill="x", padx=12, pady=(3, 8))
 
 
-def lancer_collecte_prioritaire_apres_arrosage(plante_id, demande_id=None, delai_ms=1000):
+def lancer_collecte_prioritaire(
+    plante_id,
+    reason="controle",
+    libelle="contrôle",
+    delai_ms=1000,
+    demande_id=None,
+    message_sans_capteur="Aucune collecte prioritaire : pas de capteur actif",
+    message_lancement="Collecte prioritaire demandée"
+):
     """Demande une collecte prioritaire au collecteur responsable du capteur."""
 
     def lancer():
         try:
             capteur = obtenir_capteur_plante(plante_id)
             if capteur is None:
-                status_var.set("Arrosage enregistré · aucune collecte prioritaire : pas de capteur actif")
+                status_var.set(message_sans_capteur)
                 return
 
-            status_var.set("Arrosage enregistré · collecte prioritaire demandée")
+            status_var.set(message_lancement)
 
             def arriere_plan():
                 try:
                     resultat = sync_miflora.synchroniser_capteur_prioritaire_sync(
                         capteur[0],
-                        reason="post_arrosage"
+                        reason=reason
                     )
                 except Exception as erreur:
                     resultat = {
@@ -1357,16 +1365,39 @@ def lancer_collecte_prioritaire_apres_arrosage(plante_id, demande_id=None, delai
                             )
                         except Exception:
                             pass
-                    status_var.set(f"Collecte post-arrosage {prefixe} : {message}")
+                    status_var.set(f"Collecte {libelle} {prefixe} : {message}")
                     actualiser_interface()
 
                 root.after(0, terminer)
 
             threading.Thread(target=arriere_plan, daemon=True).start()
         except Exception:
-            status_var.set("Arrosage enregistré · collecte prioritaire non lancée")
+            status_var.set(f"Collecte {libelle} non lancée")
 
     root.after(delai_ms, lancer)
+
+
+def lancer_collecte_prioritaire_apres_arrosage(plante_id, demande_id=None, delai_ms=1000):
+    lancer_collecte_prioritaire(
+        plante_id,
+        reason="post_arrosage",
+        libelle="post-arrosage",
+        delai_ms=delai_ms,
+        demande_id=demande_id,
+        message_sans_capteur="Arrosage enregistré · aucune collecte prioritaire : pas de capteur actif",
+        message_lancement="Arrosage enregistré · collecte prioritaire demandée"
+    )
+
+
+def lancer_controle_humidite_zero(plante_id, delai_ms=10 * 60 * 1000):
+    lancer_collecte_prioritaire(
+        plante_id,
+        reason="controle_humidite_zero",
+        libelle="contrôle humidité 0 %",
+        delai_ms=delai_ms,
+        message_sans_capteur="Humidité 0 % détectée · aucun contrôle : pas de capteur actif",
+        message_lancement="Humidité 0 % détectée · contrôle programmé lancé"
+    )
 
 
 def ouvrir_arrosage_plante(plante_id, nom_plante):
@@ -4111,6 +4142,31 @@ def synchroniser_arriere_plan():
     root.after(0, synchronisation_terminee, resultat_miflora, resultats_meteo)
 
 
+def controles_humidite_zero_a_programmer(resultat_miflora):
+    controles = []
+    deja_vus = set()
+    for resultat in resultat_miflora.get("resultats", []) or []:
+        mesure = resultat.get("mesure") or {}
+        try:
+            humidite = float(mesure.get("humidite"))
+        except (TypeError, ValueError):
+            continue
+        if humidite != 0:
+            continue
+        plante_id = mesure.get("plante_id")
+        capteur_id = resultat.get("capteur_id") or mesure.get("capteur_id")
+        cle = (plante_id, capteur_id)
+        if cle in deja_vus:
+            continue
+        deja_vus.add(cle)
+        controles.append({
+            "plante_id": plante_id,
+            "nom": resultat.get("nom") or mesure.get("capteur") or "Mi Flora",
+            "date": mesure.get("date_heure")
+        })
+    return controles
+
+
 def synchronisation_terminee(resultat_miflora, resultats_meteo):
     global auto_sync_en_cours
 
@@ -4176,6 +4232,15 @@ def synchronisation_terminee(resultat_miflora, resultats_meteo):
         lignes_detail.append("Les données déjà récupérées sont conservées. Le Raspberry et le PC pourront compléter aux prochains passages.")
     elif historiques_complets:
         lignes_detail.append("✅ Historique complet pour les capteurs lus sur ce passage.")
+
+    controles_zero = controles_humidite_zero_a_programmer(resultat_miflora)
+    for controle in controles_zero:
+        if controle.get("plante_id"):
+            lancer_controle_humidite_zero(controle["plante_id"])
+        lignes_detail.append(
+            f"⚠ {controle.get('nom')} : humidité 0 % détectée sur une mesure fraîche. "
+            "Valeur conservée ; relecture de contrôle programmée dans 10 min."
+        )
 
     if resultat_miflora.get('detail'):
         lignes_detail.append(resultat_miflora['detail'])
