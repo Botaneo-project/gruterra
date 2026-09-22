@@ -5117,11 +5117,17 @@ def importer_historique_miflora_plante(plante_id, nom_plante):
             sauvegarder_resultat_import_historique(capteur[0], resultat)
 
             if resultat.get("ok"):
-                status_var.set("Historique Mi Flora importé.")
+                action = resultat.get("historique_action")
+                if action == "rien_de_nouveau":
+                    status_var.set("Historique Mi Flora : rien de nouveau côté Raspberry.")
+                    titre_message = "Historique Mi Flora · rien de nouveau"
+                else:
+                    status_var.set("Historique Mi Flora importé.")
+                    titre_message = "Historique Mi Flora"
                 sync_detail_var.set(resultat.get("message", "Historique importé."))
                 actualiser_interface()
                 messagebox.showinfo(
-                    "Historique Mi Flora",
+                    titre_message,
                     resultat.get("message", "Historique importé."),
                     parent=root
                 )

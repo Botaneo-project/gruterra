@@ -267,13 +267,25 @@ async def importer_historique_capteur(capteur_id=None, force_pc=False, on_progre
             on_progress({'phase': 'historique_raspberry', 'message': 'Récupération historique via Raspberry'})
         resultat = await asyncio.to_thread(raspberry_sync.synchronize)
         resultat.setdefault('historique_etat', 'raspberry')
-        resultat['historique_message_simplifie'] = (
-            f"Historique simplifié via Raspberry : {resultat.get('history_added', 0)} ajoutée(s), "
-            f"{resultat.get('history_duplicates', 0)} déjà reçue(s), "
-            f"{resultat.get('history_undated', 0)} sans date fiable."
-        )
-        if resultat.get('history_added', 0) or resultat.get('history_duplicates', 0):
+        history_added = resultat.get('history_added', 0) or 0
+        history_duplicates = resultat.get('history_duplicates', 0) or 0
+        history_undated = resultat.get('history_undated', 0) or 0
+        if history_added or history_duplicates or history_undated:
+            resultat['historique_message_simplifie'] = (
+                f"Historique simplifié via Raspberry : {history_added} ajoutée(s), "
+                f"{history_duplicates} déjà reçue(s), "
+                f"{history_undated} sans date fiable."
+            )
             resultat['message'] = resultat['historique_message_simplifie'] + ' ' + resultat.get('message', '')
+            resultat['historique_action'] = 'donnees_recues'
+        else:
+            resultat['historique_message_simplifie'] = (
+                "Historique simplifié via Raspberry : aucune nouvelle entrée historique disponible pour l’instant. "
+                "Le Raspberry n’a rien de plus à transmettre sur ce passage. "
+                "Attendez une prochaine collecte Raspberry, ou lancez un import PC long si vous voulez tenter de compléter directement par Bluetooth."
+            )
+            resultat['message'] = resultat['historique_message_simplifie'] + ' ' + resultat.get('message', '')
+            resultat['historique_action'] = 'rien_de_nouveau'
         return resultat
 
     return await importer_historique_capteur_direct_pc(capteur, on_progress=on_progress)
