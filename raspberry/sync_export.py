@@ -29,6 +29,29 @@ def export(db, device):
     return {'version': 1, 'device_id': device, 'rows': rows, 'pending': pending}
 
 
+
+def export_history_recent(db, device, request=None):
+    request = request if isinstance(request, dict) else {}
+    limit = request.get('limit', 500)
+    try:
+        limit = int(limit)
+    except (TypeError, ValueError):
+        limit = 500
+    limit = max(1, min(limit, 500))
+    sensors = request.get('sensors')
+    params = []
+    where = ''
+    if sensors:
+        sensors = [str(sensor).upper() for sensor in sensors]
+        where = 'WHERE UPPER(sensor_id) IN (%s)' % ','.join('?' for _ in sensors)
+        params.extend(sensors)
+    rows = [payload(r, 'history') for r in db.execute(
+        f"SELECT * FROM history_measurements {where} ORDER BY received_at DESC, rowid DESC LIMIT ?",
+        (*params, limit)
+    )]
+    total = db.execute('SELECT COUNT(*) FROM history_measurements').fetchone()[0]
+    return {'version': 1, 'device_id': device, 'rows': rows, 'pending': len(rows), 'mode': 'history_recent', 'history_total': total}
+
 def collect_now(base, request):
     """Queue the existing collector; never open a second Bluetooth reader."""
     if not isinstance(request, dict):
@@ -69,6 +92,9 @@ if __name__ == '__main__':
     try:
         if sys.argv[1:] == ['export']:
             result = export(db, device)
+        elif sys.argv[1:] == ['export_history_recent']:
+            payload_text = sys.stdin.read(250001)
+            result = export_history_recent(db, device, json.loads(payload_text) if payload_text.strip() else {})
         elif sys.argv[1:] == ['collect_now']:
             result = collect_now(base, json.loads(sys.stdin.read(250001)))
         elif sys.argv[1:] == ['ack']:

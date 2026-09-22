@@ -71,6 +71,7 @@ def import_batch(db_path, batch, config):
                 if previous[0] != checksum:
                     raise ValueError('Identifiant réutilisé avec un contenu différent.')
                 counts['duplicates'] += 1
+                counts[row['kind'] + '_duplicates'] += 1
             else:
                 sensors = db.execute('SELECT id,plante_id,actif FROM capteurs WHERE UPPER(adresse_ble)=?',
                                      (row['sensor_id'].upper(),)).fetchall()
@@ -194,3 +195,32 @@ def synchronize(config=None, sender=transport, db_path=None, collect_now=False, 
         except Exception as error:
             message = str(error) if isinstance(error, (ValueError, ConnectionError, RuntimeError)) else 'Transfert interrompu ; reprise sans doublons au prochain essai.'
             return {'ok': False, 'message': message, 'collect_status': collect_status, 'collect_accepted': collect_accepted, 'pending_remaining': pending_remaining, **totals}
+
+
+def replay_recent_history(config=None, sender=transport, db_path=None, limit=500):
+    """Re-import recent Raspberry history rows, including rows already confirmed on the Pi."""
+    import database
+    from suivi_raspberry import load_config
+    config = config or load_config(config_path())
+    if config.get('away') or not config.get('enabled'):
+        return {'ok': False, 'message': 'Synchronisation Raspberry suspendue dans les réglages.'}
+    with LOCK:
+        try:
+            request = {'limit': limit, 'sensors': config.get('sensors', [])}
+            batch = sender(config, 'export_history_recent', request)
+            counts, ack = import_batch(db_path or database.DB_PATH, batch, config)
+            if ack['rows']:
+                response = sender(config, 'ack', ack)
+                if response.get('confirmed') != len(ack['rows']):
+                    raise ValueError('Confirmation du Raspberry incomplète.')
+            message = (
+                f"Relecture historique Raspberry : {counts['history_added']} ajoutée(s), "
+                f"{counts['history_duplicates']} déjà présente(s), "
+                f"{counts['history_undated']} sans date fiable."
+            )
+            if not ack['rows']:
+                message += ' Aucune entrée historique disponible sur le Raspberry.'
+            return {'ok': True, 'message': message, 'mode': 'history_recent', **counts}
+        except Exception as error:
+            message = str(error) if isinstance(error, (ValueError, ConnectionError, RuntimeError)) else 'Relecture historique Raspberry interrompue.'
+            return {'ok': False, 'message': message, 'mode': 'history_recent'}

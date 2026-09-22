@@ -265,8 +265,13 @@ async def importer_historique_capteur(capteur_id=None, force_pc=False, on_progre
     if raspberry_sync.owned(capteur[2]) and not force_pc:
         if on_progress:
             on_progress({'phase': 'historique_raspberry', 'message': 'Récupération historique via Raspberry'})
-        resultat = await asyncio.to_thread(raspberry_sync.synchronize)
-        resultat.setdefault('historique_etat', 'raspberry')
+        resultat = await asyncio.to_thread(raspberry_sync.replay_recent_history)
+        resultat.setdefault('historique_etat', 'raspberry_replay')
+        if resultat.get('ok') and not resultat.get('history_added', 0):
+            export_resultat = await asyncio.to_thread(raspberry_sync.synchronize)
+            resultat['message'] = resultat.get('message', '') + ' ' + export_resultat.get('message', '')
+            for cle in ('history_added', 'history_duplicates', 'history_undated'):
+                resultat[cle] = (resultat.get(cle, 0) or 0) + (export_resultat.get(cle, 0) or 0)
         history_added = resultat.get('history_added', 0) or 0
         history_duplicates = resultat.get('history_duplicates', 0) or 0
         history_undated = resultat.get('history_undated', 0) or 0
