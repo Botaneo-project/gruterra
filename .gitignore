@@ -74,3 +74,6 @@ _app/archive_conservee_*.json
 
 # Runtime module for verified Raspberry snapshots
 !_app/raspberry_backup.py
+
+# Contexte privé local pour reprise agent
+CONTEXTE_AGENT_BOTANEO.md
