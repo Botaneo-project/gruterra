@@ -115,6 +115,13 @@ Ce fichier sert à garder une trace claire des idées et des prochaines étapes.
 - [ ] Améliorer la phrase de synthèse globale, par exemple : `Votre Crassula devrait nécessiter une intervention dans les prochaines 24 h.`
 - [ ] Calculer les tendances d’humidité du sol avec plus de recul.
 - [ ] Distinguer tendance globale, vitesse de séchage entre arrosages et réponse à l’arrosage.
+- [ ] Construire une analyse par cycle d’arrosage : humidité initiale, réponse à l’arrosage, pic observé, phase de séchage, retour au niveau initial.
+- [ ] Calculer la vitesse moyenne de séchage en points d’humidité par jour entre le pic confirmé et la fin du cycle.
+- [ ] Ajouter une vitesse glissante sur 24 h pour repérer un ralentissement ou une accélération du séchage.
+- [ ] Attribuer une qualité à chaque cycle selon les trous de mesure : régulier, manque léger, prudence, interruption longue.
+- [ ] Éviter d’interpréter précisément un cycle si le pic ou le retour au niveau initial tombe dans une interruption longue.
+- [ ] Comparer les cycles seulement quand les conditions sont proches : quantité d’eau, type d’eau, emplacement, lumière, température, substrat.
+- [ ] Construire progressivement une référence propre à chaque plante après plusieurs cycles documentés.
 - [ ] Estimer le prochain arrosage probable quand les données sont suffisantes.
 - [ ] Détecter une baisse de luminosité sur plusieurs jours.
 - [ ] Comparer la température actuelle avec la moyenne récente.
@@ -213,6 +220,10 @@ Ce fichier sert à garder une trace claire des idées et des prochaines étapes.
 - [x] Fenêtre historique : bouton `Copier résumé` avec période, statistiques, qualité et ligne sélectionnée.
 - [x] Historique : conserver les humidités à 0 % suspectes mais les exclure des statistiques/graphique.
 - [x] Synchronisation : programmer une relecture de contrôle quand une mesure actuelle d’humidité vaut 0 %.
+- [ ] Conserver la raison d’exclusion d’une mesure suspecte pour pouvoir la réexaminer plus tard.
+- [ ] Distinguer clairement donnée brute, mesure logique et mesure retenue pour une analyse donnée.
+- [ ] Renforcer la déduplication sans confondre deux mesures identiques à des heures différentes avec un doublon réel.
+- [ ] Garder la récupération de l’historique interne Mi Flora comme rattrapage même si le Raspberry collecte régulièrement.
 - [ ] Ajouter un mode historique long séparé si les lectures normales restent limitées.
 - [ ] Auditer les anciennes archives sans inventer leurs repères temporels.
 - [x] Ajouter une extraction texte intégrée pour envoyer les données utiles à une discussion d’analyse plante.
