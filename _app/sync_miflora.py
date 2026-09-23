@@ -25,6 +25,16 @@ def message_erreur_historique(erreur):
     return f"Historique Mi Flora impossible : {nom} · {texte}"
 
 
+def message_erreur_mesure_bluetooth(erreur):
+    nom = type(erreur).__name__
+    texte = str(erreur).strip()
+    if texte:
+        return f"{nom} · {texte}"
+    if nom in {"TimeoutError", "CancelledError"}:
+        return f"{nom} · délai Bluetooth dépassé ou connexion interrompue. Le Raspberry reste prioritaire ; réessayez après quelques minutes si une mesure PC est nécessaire."
+    return f"{nom} · aucun détail fourni par Windows/Bleak. Le Raspberry reste prioritaire ; réessayez après quelques minutes si une mesure PC est nécessaire."
+
+
 async def importer_historique_capteur_direct_pc(capteur, on_progress=None):
     """Lit la mémoire historique Mi Flora depuis le Bluetooth du PC, sans effacement.
 
@@ -319,7 +329,7 @@ async def synchroniser_capteur(capteur_id=None):
             capteur[2], silencieux=True
         )
     except Exception as erreur:
-        return {'ok': False, 'message': f'Erreur Bluetooth : {erreur}'}
+        return {'ok': False, 'message': f"Erreur Bluetooth : {message_erreur_mesure_bluetooth(erreur)}"}
     date = datetime.now().isoformat(timespec='seconds')
     try:
         database.enregistrer_mesure(capteur[0], date, temperature, humidite,
@@ -344,7 +354,7 @@ async def synchroniser_capteur_direct_pc(capteur):
             capteur[2], silencieux=True
         )
     except Exception as erreur:
-        return {'ok': False, 'message': f'Mesure Bluetooth PC impossible : {erreur}'}
+        return {'ok': False, 'message': f"Mesure Bluetooth PC impossible : {message_erreur_mesure_bluetooth(erreur)}"}
     date = datetime.now().isoformat(timespec='seconds')
     try:
         database.enregistrer_mesure(capteur[0], date, temperature, humidite,
