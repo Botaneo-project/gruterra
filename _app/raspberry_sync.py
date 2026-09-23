@@ -23,7 +23,16 @@ def config_path():
 
 def owned(address):
     # Keep ownership independent of availability/away: no surprise BLE fallback.
-    config = json.loads(config_path().read_text(encoding='utf-8-sig'))
+    # If Raspberry is not configured on this installation, Botaneo must behave like a PC-only app.
+    try:
+        path = config_path()
+        if not path.exists():
+            return False
+        config = json.loads(path.read_text(encoding='utf-8-sig'))
+    except (OSError, json.JSONDecodeError):
+        return False
+    if not config.get('enabled', False):
+        return False
     return str(address).upper() in [s.upper() for s in config.get('sensors', [])]
 
 
