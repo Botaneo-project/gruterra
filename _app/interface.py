@@ -9,6 +9,7 @@ from meteo_cache import CacheMeteo, recuperer_sources
 from datetime import datetime, timedelta
 import threading
 import json
+import subprocess
 from pathlib import Path
 
 import database
@@ -27,6 +28,8 @@ from botaneo_config import CONFIG_DIR
 # ============================================================
 # CONFIGURATION
 # ============================================================
+
+APP_VERSION = "0.1.0-dev"
 
 root = tk.Tk()
 
@@ -592,6 +595,7 @@ def appliquer_theme_interface():
     configurer_widget(add_plant_button, bg=CARD, fg=TEXT, activebackground=CARD, activeforeground=TEXT)
     configurer_widget(add_sensor_button, bg=CARD, fg=TEXT, activebackground=CARD, activeforeground=TEXT)
     configurer_widget(settings_button, bg=CARD, fg=TEXT, activebackground=CARD, activeforeground=TEXT)
+    configurer_widget(about_button, bg=CARD, fg=TEXT, activebackground=CARD, activeforeground=TEXT)
     configurer_widget(auto_sync_label, bg=BG, fg=SECONDARY)
     configurer_widget(header, bg=CARD, highlightbackground=BORDER)
     configurer_widget(footer, bg=CARD, highlightbackground=BORDER)
@@ -4338,6 +4342,135 @@ def afficher_synchronisation_visible():
 
 
 
+def git_revision_courte():
+    try:
+        resultat = subprocess.run(
+            ["git", "rev-parse", "--short", "HEAD"],
+            cwd=Path(__file__).resolve().parent.parent,
+            capture_output=True,
+            text=True,
+            timeout=3,
+            creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0)
+        )
+        if resultat.returncode == 0:
+            return resultat.stdout.strip()
+    except Exception:
+        pass
+    return "non disponible"
+
+
+def etat_raspberry_a_propos():
+    try:
+        chemin = CONFIG_DIR / "raspberry.local.json"
+        if not chemin.exists():
+            return "Non configuré sur ce poste"
+        config = lire_json(chemin)
+        if not config.get("enabled", False):
+            return "Configuration présente, mais Raspberry désactivé"
+        capteurs = len(config.get("sensors", []) or [])
+        return f"Activé · {capteurs} capteur(s) déclaré(s)"
+    except Exception:
+        return "Configuration présente, à vérifier"
+
+
+def texte_a_propos():
+    racine = Path(__file__).resolve().parent.parent
+    lignes = [
+        "Botaneo",
+        f"Version locale : {APP_VERSION}",
+        f"Révision Git : {git_revision_courte()}",
+        "",
+        "Dossiers principaux :",
+        f"- Projet : {racine}",
+        f"- Application : {Path(__file__).resolve().parent}",
+        f"- Base locale : {database.DB_PATH}",
+        f"- Configuration privée : {CONFIG_DIR}",
+        "",
+        "Fonctions principales :",
+        "- suivi de plantes avec ou sans capteur",
+        "- Mi Flora : mesure directe, historique et batterie",
+        "- Raspberry optionnel : collecte et rattrapage",
+        "- Netatmo privé/public et météo locale",
+        "- arrosage manuel, rappels et alertes locales",
+        "- historique graphique avec qualité des données",
+        "",
+        f"Raspberry : {etat_raspberry_a_propos()}",
+        "",
+        "Sécurité :",
+        "- les tokens, bases réelles, sauvegardes et fichiers _config restent locaux",
+        "- lancer py verifier_avant_github.py avant tout envoi GitHub",
+        "- les documents privés de passation ne sont pas publiés",
+    ]
+    return "\n".join(lignes)
+
+
+def ouvrir_a_propos():
+    fenetre = tk.Toplevel(root)
+    fenetre.title("À propos de Botaneo")
+    fenetre.configure(bg=CARD)
+    fenetre.resizable(False, False)
+    fenetre.transient(root)
+
+    tk.Label(
+        fenetre,
+        text="🌿 Botaneo",
+        font=("Segoe UI", 18, "bold"),
+        fg=GREEN,
+        bg=CARD
+    ).pack(anchor="w", padx=20, pady=(18, 4))
+
+    tk.Label(
+        fenetre,
+        text="Application locale de suivi des plantes",
+        font=("Segoe UI", 10),
+        fg=SECONDARY,
+        bg=CARD
+    ).pack(anchor="w", padx=20, pady=(0, 12))
+
+    zone = tk.Text(
+        fenetre,
+        width=86,
+        height=25,
+        wrap="word",
+        bg=BG,
+        fg=TEXT,
+        relief="flat",
+        font=("Segoe UI", 9)
+    )
+    zone.pack(fill="both", expand=True, padx=20, pady=(0, 12))
+    zone.insert("1.0", texte_a_propos())
+    zone.configure(state="disabled")
+
+    boutons = tk.Frame(fenetre, bg=CARD)
+    boutons.pack(fill="x", padx=20, pady=(0, 16))
+
+    def copier():
+        root.clipboard_clear()
+        root.clipboard_append(texte_a_propos())
+        status_var.set("Informations À propos copiées dans le presse-papiers")
+
+    tk.Button(
+        boutons,
+        text="📋 Copier",
+        command=copier,
+        bg=LIGHT_BLUE,
+        fg=BLUE,
+        activebackground=LIGHT_BLUE,
+        relief="flat",
+        cursor="hand2"
+    ).pack(side="left")
+
+    tk.Button(
+        boutons,
+        text="Fermer",
+        command=fenetre.destroy,
+        bg=BG,
+        fg=TEXT,
+        relief="flat",
+        cursor="hand2"
+    ).pack(side="right")
+
+
 def ouvrir_parametres():
     fenetre = tk.Toplevel(root)
     fenetre.title("Paramètres Botaneo")
@@ -5923,6 +6056,21 @@ theme_button = tk.Button(
 theme_button.pack(
     side="right"
 )
+
+
+about_button = tk.Button(
+    toolbar,
+    text="ℹ À propos",
+    command=ouvrir_a_propos,
+    font=("Segoe UI", 9, "bold"),
+    bg=CARD,
+    fg=TEXT,
+    activebackground=CARD,
+    activeforeground=TEXT,
+    relief="flat",
+    cursor="hand2"
+)
+about_button.pack(side="right", padx=(8, 0))
 
 
 # ============================================================

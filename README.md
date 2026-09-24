@@ -23,6 +23,7 @@ Le projet est prévu d’abord pour un usage local sous Windows. Les données r�
 - Synthèse météo locale à partir des meilleures données disponibles.
 - Prévision locale à environ +2 h.
 - Mode sombre et options d’affichage.
+- Fenêtre `À propos` avec version locale, chemins utiles, état Raspberry et rappel sécurité.
 - Sauvegarde locale du projet vers un ou plusieurs disques.
 
 ## Installation

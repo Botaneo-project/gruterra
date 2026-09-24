@@ -46,6 +46,7 @@ Ce fichier sert à garder une trace claire des idées et des prochaines étapes.
 - Raspberry : collecte planifiée quatre fois par jour via `botaneo-collect.timer`.
 - Raspberry : scripts d’installation et de mise à jour disponibles dans `raspberry/install/`.
 - Écran historique enrichi avec résumé, tendance, repères post-arrosage et qualité des données.
+- Fenêtre `À propos` ajoutée : version locale, révision Git, chemins utiles, état Raspberry et rappel sécurité.
 - Document de reprise agent créé : `CONTEXTE_AGENT_BOTANEO.md` avec architecture, Raspberry, secrets, process GitHub, Plante de Jade et priorités.
 
 ## Prochaine suite recommandée
