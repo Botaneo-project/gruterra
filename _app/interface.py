@@ -18,6 +18,7 @@ from botaneo_config import LOCAL_CONFIG, lire_json, ecrire_json, normaliser_stat
 from ui_preferences import charger_theme_sombre, sauvegarder_theme_sombre
 from vue_historique import ouvrir_historique
 import sync_miflora
+import raspberry_sync
 from capteurs import netatmo
 import previsions_meteo
 from suivi_raspberry_ui import SuiviRaspberry
@@ -4142,6 +4143,48 @@ def synchroniser_arriere_plan():
     root.after(0, synchronisation_terminee, resultat_miflora, resultats_meteo)
 
 
+def controle_raspberry_a_programmer(resultat_miflora):
+    for resultat in resultat_miflora.get("resultats", []) or []:
+        raspberry_resultat = resultat.get("raspberry_result") or {}
+        if not raspberry_resultat:
+            # Quand le Raspberry suffit, ses champs sont directement dans le résultat capteur.
+            raspberry_resultat = resultat
+        if raspberry_resultat.get("collect_accepted") is not True:
+            continue
+        if (raspberry_resultat.get("current_added", 0) or 0) > 0:
+            continue
+        return True
+    return False
+
+
+def programmer_controle_raspberry(delai_ms=2 * 60 * 1000):
+    def lancer():
+        if str(sync_button['state']) == 'disabled':
+            root.after(60 * 1000, lancer)
+            return
+        status_var.set("Raspberry : contrôle automatique des nouvelles mesures")
+
+        def arriere_plan():
+            try:
+                resultat = raspberry_sync.synchronize(collect_now=False)
+            except Exception as erreur:
+                resultat = {"ok": False, "message": f"Contrôle Raspberry impossible : {erreur}"}
+
+            def terminer():
+                message = resultat.get("message", "Contrôle Raspberry terminé.")
+                if resultat.get("ok"):
+                    status_var.set(f"Contrôle Raspberry terminé : {message}")
+                    actualiser_interface()
+                else:
+                    status_var.set(message)
+
+            root.after(0, terminer)
+
+        threading.Thread(target=arriere_plan, daemon=True).start()
+
+    root.after(delai_ms, lancer)
+
+
 def controles_humidite_zero_a_programmer(resultat_miflora):
     controles = []
     deja_vus = set()
@@ -4232,6 +4275,12 @@ def synchronisation_terminee(resultat_miflora, resultats_meteo):
         lignes_detail.append("Les données déjà récupérées sont conservées. Le Raspberry et le PC pourront compléter aux prochains passages.")
     elif historiques_complets:
         lignes_detail.append("✅ Historique complet pour les capteurs lus sur ce passage.")
+
+    if controle_raspberry_a_programmer(resultat_miflora):
+        programmer_controle_raspberry()
+        lignes_detail.append(
+            "ℹ Mesure Raspberry demandée mais pas encore rapatriée : contrôle automatique prévu dans environ 2 min."
+        )
 
     controles_zero = controles_humidite_zero_a_programmer(resultat_miflora)
     for controle in controles_zero:
