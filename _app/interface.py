@@ -1158,6 +1158,102 @@ def formater_duree_heures(heures):
     return f"{jours:.1f} j"
 
 
+def analyser_cycle_arrosage(plante_id):
+    dernier = database.get_dernier_arrosage(plante_id)
+    if not dernier or not dernier[2]:
+        return None
+    try:
+        date_arrosage = datetime.fromisoformat(dernier[2])
+    except (TypeError, ValueError):
+        return None
+
+    date_arrosage_suivant = None
+    for arrosage in database.get_arrosages_plante(plante_id, limite=50):
+        if arrosage[2] == dernier[2] and arrosage[0] == dernier[0]:
+            continue
+        try:
+            date_candidate = datetime.fromisoformat(arrosage[2])
+        except (TypeError, ValueError):
+            continue
+        if date_candidate > date_arrosage and (date_arrosage_suivant is None or date_candidate < date_arrosage_suivant):
+            date_arrosage_suivant = date_candidate
+
+    mesures = database.get_mesures(plante_id=plante_id, limite=-1)
+    points_avant = []
+    points_apres = []
+    for mesure in mesures:
+        date_mesure = _date_locale_depuis_mesure(mesure[1])
+        if not date_mesure or mesure[3] is None:
+            continue
+        try:
+            humidite = float(mesure[3])
+        except (TypeError, ValueError):
+            continue
+        if date_mesure < date_arrosage:
+            points_avant.append((date_mesure, humidite))
+        elif date_arrosage_suivant is None or date_mesure < date_arrosage_suivant:
+            points_apres.append((date_mesure, humidite))
+
+    points_avant.sort(key=lambda item: item[0])
+    points_apres.sort(key=lambda item: item[0])
+    if not points_apres:
+        return None
+
+    avant = points_avant[-1] if points_avant else None
+    premiere = points_apres[0]
+    pic = max(points_apres, key=lambda item: item[1])
+    derniere = points_apres[-1]
+    duree_suivi_h = max((derniere[0] - date_arrosage).total_seconds() / 3600, 0)
+    vitesse_baisse = None
+    if derniere[0] > pic[0] and derniere[1] < pic[1]:
+        jours = max((derniere[0] - pic[0]).total_seconds() / 86400, 0.05)
+        vitesse_baisse = (pic[1] - derniere[1]) / jours
+
+    ecarts = [(b[0] - a[0]).total_seconds() / 3600 for a, b in zip(points_apres, points_apres[1:])]
+    plus_grand_trou = max(ecarts) if ecarts else 0
+    if plus_grand_trou > 6:
+        qualite = f"prudence : trou de mesure jusqu’à {plus_grand_trou:.1f} h"
+    elif plus_grand_trou > 1.8:
+        qualite = f"correcte avec quelques trous, maximum {plus_grand_trou:.1f} h"
+    else:
+        qualite = "bonne sur les mesures disponibles"
+
+    quantite = dernier[3]
+    quantite_txt = f"{quantite:g} ml" if quantite is not None else "quantité non renseignée"
+    type_eau = dernier[8] if len(dernier) > 8 else None
+    eau_txt = f" · {type_eau}" if type_eau else ""
+    contexte = dernier[7] if len(dernier) > 7 else None
+
+    lignes = [
+        f"Cycle du {formater_date(dernier[2])} · {quantite_txt}{eau_txt}",
+    ]
+    if avant:
+        ecart_avant = (date_arrosage - avant[0]).total_seconds() / 3600
+        lignes.append(f"Avant arrosage : {avant[1]:.0f} %, {formater_duree_heures(ecart_avant)} avant.")
+    else:
+        lignes.append("Avant arrosage : aucune mesure exploitable juste avant.")
+    lignes.append(f"Première mesure après : {premiere[1]:.0f} %.")
+    lignes.append(f"Pic observé : {pic[1]:.0f} %.")
+    lignes.append(f"Dernière mesure du cycle : {derniere[1]:.0f} %, suivi sur {formater_duree_heures(duree_suivi_h)}.")
+    if date_arrosage_suivant:
+        lignes.append(f"Cycle borné par l’arrosage suivant du {formater_date(date_arrosage_suivant.isoformat(timespec='seconds'))}.")
+    if vitesse_baisse is not None:
+        lignes.append(f"Vitesse de baisse observée après le pic : environ {vitesse_baisse:.1f} point(s)/jour.")
+    else:
+        lignes.append("Vitesse de baisse : recul insuffisant ou pas de baisse nette après le pic.")
+    lignes.append(f"Qualité des données : {qualite}.")
+    lignes.append("Lecture prudente : ces valeurs décrivent la zone du capteur, pas forcément toute la motte.")
+    if contexte:
+        lignes.append(f"Contexte noté : {contexte}")
+
+    return {
+        "titre": "💧 Cycle d’arrosage",
+        "resume": " ".join(lignes),
+        "lignes": lignes,
+        "qualite": qualite,
+    }
+
+
 def analyser_apres_arrosage(plante_id):
     """Analyse prudente des mesures qui suivent le dernier arrosage."""
     dernier = database.get_dernier_arrosage(plante_id)
@@ -1313,8 +1409,9 @@ def afficher_resume_arrosage(parent, plante_id):
     dernier = database.get_dernier_arrosage(plante_id)
     rappel = database.get_rappel_arrosage_actif(plante_id)
     suivi = analyser_apres_arrosage(plante_id)
+    cycle = analyser_cycle_arrosage(plante_id)
 
-    if not dernier and not rappel and not suivi:
+    if not dernier and not rappel and not suivi and not cycle:
         return
 
     lignes = []
@@ -1328,6 +1425,9 @@ def afficher_resume_arrosage(parent, plante_id):
 
     if suivi:
         lignes.append(suivi["resume"])
+
+    if cycle:
+        lignes.append(cycle["resume"])
 
     if rappel:
         texte_rappel = f"Rappel prévu : {formater_date(rappel[9])}"
