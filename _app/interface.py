@@ -5314,7 +5314,14 @@ def generer_texte_analyse_plante(plante_id):
         for arrosage in arrosages[:5]:
             quantite = arrosage[3]
             quantite_txt = f"{quantite:g} ml" if quantite is not None else "quantité non renseignée"
-            lignes.append(f"- {formater_date(arrosage[2])} : {quantite_txt}.")
+            type_eau = arrosage[8] if len(arrosage) > 8 else None
+            commentaire = arrosage[7] if len(arrosage) > 7 else None
+            morceaux = [quantite_txt]
+            if type_eau:
+                morceaux.append(f"eau : {type_eau}")
+            if commentaire:
+                morceaux.append(f"contexte : {commentaire}")
+            lignes.append(f"- {formater_date(arrosage[2])} : " + ", ".join(morceaux) + ".")
         lignes.append("")
 
     try:
