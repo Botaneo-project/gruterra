@@ -204,6 +204,19 @@ Ce fichier sert à garder une trace claire des idées et des prochaines étapes.
 - Prévoir plus tard de vraies petites icônes météo locales dans `assets`, plutôt que de dépendre des emojis Windows.
 - Revoir le logo d’en-tête avec une vraie version icône simplifiée, pensée pour une petite taille.
 
+
+## Piste Bluetooth passif Mi Flora
+
+- [ ] Étudier le décodage des annonces Bluetooth passives Mi Flora / Xiaomi BLE, inspiré de la méthode Home Assistant.
+- [ ] Repères trouvés : intégration Home Assistant `xiaomi_ble`, bibliothèque `Bluetooth-Devices/xiaomi-ble`, service MiBeacon `0xFE95`, modèle Mi Flora / Flower Care `HHCCJCY01`, type appareil `0x0098`.
+- [ ] Objets utiles à tester : température, humidité, luminosité, conductivité ; batterie à garder en lecture active car elle nécessite une connexion.
+- [ ] Objectif : récupérer les mesures courantes sans connexion active quand le capteur diffuse déjà température, humidité, luminosité et conductivité.
+- [ ] Garder la connexion active pour batterie, historique interne, firmware et diagnostics.
+- [ ] Tester d’abord sur Raspberry, plus adapté à l’écoute régulière que le PC Windows.
+- [ ] Vérifier que les mesures passives contiennent bien toutes les valeurs utiles selon le firmware du capteur ; Home Assistant indique qu’un firmware trop ancien peut ne pas diffuser les bons beacons.
+- [ ] Prévoir un prototype isolé : scan BLE passif, journalisation des service data bruts par adresse, puis décodage hors base avant tout enregistrement automatique.
+- [ ] Éviter de dépendre de Home Assistant comme source directe : s’inspirer de sa méthode, mais garder Botaneo autonome.
+
 ## Raspberry et synchronisation
 
 État actuel : le PC récupère les données du Raspberry en priorité, confirme les mesures après enregistrement, évite les doublons et copie la dernière sauvegarde quotidienne du Pi. Le Raspberry demande maintenant une collecte Mi Flora quatre fois par jour : 06 h, 12 h, 18 h et 23 h. Le PC peut encore faire une lecture Bluetooth manuelle de secours si le Raspberry ne fournit pas de mesure fraîche.
