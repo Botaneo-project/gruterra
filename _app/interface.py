@@ -1291,9 +1291,9 @@ def analyser_apres_arrosage(plante_id):
     if derniere_humidite < 25 and heures_depuis >= 24:
         return {
             "niveau": "ok",
-            "titre": "💧 Séchage post-arrosage normal",
-            "detail": f"Humidité revenue à {derniere_humidite:.0f} %. {resume_contexte}. Aucune humidité persistante détectée.",
-            "resume": f"Suivi post-arrosage : séchage correct, {derniere_humidite:.0f} % · {resume_contexte}.",
+            "titre": "💧 Retour au niveau initial détecté",
+            "detail": f"Humidité revenue à {derniere_humidite:.0f} % dans la zone du capteur. {resume_contexte}. Le Mi Flora ne permet pas de confirmer le séchage complet de toute la motte.",
+            "resume": f"Suivi post-arrosage : retour au niveau initial dans la zone du capteur, {derniere_humidite:.0f} % · {resume_contexte}.",
             "couleur": GREEN,
             "fond": LIGHT_GREEN
         }
