@@ -16,7 +16,7 @@ from bleak import BleakScanner
 
 from collector import BASE, initialize, record
 
-SERVICE_MIBEACON = "0000fe95-0000-1000-8000-00805f9b34fb"
+BASE = Path.home() / "botaneo"`n`nSERVICE_MIBEACON = "0000fe95-0000-1000-8000-00805f9b34fb"
 SERVICE_MIBEACON_SHORT = "0000fe95"
 PRODUCT_FLOWER_CARE = 0x0098
 
