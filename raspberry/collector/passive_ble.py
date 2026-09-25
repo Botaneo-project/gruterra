@@ -14,9 +14,9 @@ from pathlib import Path
 
 from bleak import BleakScanner
 
-from collector import BASE, initialize, record
+BASE = Path.home() / "botaneo"
 
-BASE = Path.home() / "botaneo"`n`nSERVICE_MIBEACON = "0000fe95-0000-1000-8000-00805f9b34fb"
+SERVICE_MIBEACON = "0000fe95-0000-1000-8000-00805f9b34fb"
 SERVICE_MIBEACON_SHORT = "0000fe95"
 PRODUCT_FLOWER_CARE = 0x0098
 
@@ -40,12 +40,7 @@ def uint_le(data):
 
 
 def decode_mibeacon(data):
-    """Decode les objets utiles d'une trame MiBeacon Flower Care.
-
-    Retourne None si le paquet n'est pas un paquet Flower Care exploitable.
-    Les valeurs absentes ne sont pas inventées : le capteur diffuse souvent un seul
-    type de mesure par annonce.
-    """
+    """Decode les objets utiles d'une trame MiBeacon Flower Care."""
     raw = bytes(data)
     if len(raw) < 12:
         return None
@@ -147,9 +142,6 @@ class PassiveCollector:
     def results(self):
         return list(self.snapshots.values())
 
-    def complete_results(self):
-        return [snapshot for snapshot in self.results() if snapshot["complete"]]
-
 
 async def listen(sensors, duration):
     collector = PassiveCollector(sensors)
@@ -163,6 +155,8 @@ async def listen(sensors, duration):
 
 
 def store_complete(path, device_id, snapshots):
+    from collector import initialize, record
+
     initialize(path)
     stored = []
     for snapshot in snapshots:
