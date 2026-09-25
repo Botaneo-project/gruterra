@@ -46,6 +46,7 @@ Ce fichier sert à garder une trace claire des idées et des prochaines étapes.
 - Raspberry : collecte planifiée quatre fois par jour via `botaneo-collect.timer`.
 - Raspberry : scripts d’installation et de mise à jour disponibles dans `raspberry/install/`.
 - Écran historique enrichi avec résumé, tendance, repères post-arrosage et qualité des données.
+- Historique : sélection d’une journée avec moyennes, minimums/maximums et pic lumineux du jour.
 - Fenêtre `À propos` ajoutée : version locale, révision Git, chemins utiles, état Raspberry et rappel sécurité.
 - Document de reprise agent créé : `CONTEXTE_AGENT_BOTANEO.md` avec architecture, Raspberry, secrets, process GitHub, Plante de Jade et priorités.
 
@@ -120,6 +121,9 @@ Ce fichier sert à garder une trace claire des idées et des prochaines étapes.
 - [ ] Calculer les tendances d’humidité du sol avec plus de recul.
 - [ ] Distinguer tendance globale, vitesse de séchage entre arrosages et réponse à l’arrosage.
 - [ ] Construire une analyse par cycle d’arrosage : humidité initiale, réponse à l’arrosage, pic observé, phase de séchage, retour au niveau initial.
+- [ ] Reformuler l’analyse post-arrosage pour éviter de confondre zone du capteur et motte complète : `Retour au niveau d’humidité initial détecté dans la zone du capteur. Le Mi Flora ne permet pas de confirmer le séchage complet de la motte.`
+- [ ] Ajouter aux événements d’arrosage des champs facultatifs : volume total, type d’eau, méthode de répartition, écoulement observé, eau stagnante dans le cache-pot, état visuel du substrat et commentaire libre.
+- [ ] Ne pas imposer automatiquement 80 ml : garder la comparabilité des cycles sans empêcher d’adapter l’arrosage aux besoins réels.
 - [ ] Calculer la vitesse moyenne de séchage en points d’humidité par jour entre le pic confirmé et la fin du cycle.
 - [ ] Ajouter une vitesse glissante sur 24 h pour repérer un ralentissement ou une accélération du séchage.
 - [ ] Attribuer une qualité à chaque cycle selon les trous de mesure : régulier, manque léger, prudence, interruption longue.
@@ -128,6 +132,12 @@ Ce fichier sert à garder une trace claire des idées et des prochaines étapes.
 - [ ] Construire progressivement une référence propre à chaque plante après plusieurs cycles documentés.
 - [ ] Estimer le prochain arrosage probable quand les données sont suffisantes.
 - [ ] Détecter une baisse de luminosité sur plusieurs jours.
+- [ ] Ajouter les événements `Sortie sur le balcon` et `Retour à l’intérieur` dans le journal plante.
+- [ ] Distinguer les journées entièrement en intérieur des journées avec exposition extérieure.
+- [ ] Calculer les durées d’exposition par plages de luminosité, au lieu de se limiter au maximum du jour.
+- [ ] Calculer une exposition lumineuse cumulée quotidienne en tenant compte des intervalles entre mesures.
+- [ ] Éviter qu’un pic lumineux ponctuel masque une journée globalement sombre.
+- [ ] Préparer la comparaison entre lumière naturelle extérieure ponctuelle et lampe horticole.
 - [ ] Comparer la température actuelle avec la moyenne récente.
 - [ ] Interpréter prudemment la conductivité, sans alerte trop agressive.
 - [ ] Croiser les besoins de base de la plante avec les mesures réelles.
@@ -210,6 +220,8 @@ Ce fichier sert à garder une trace claire des idées et des prochaines étapes.
 - [ ] Tester le cycle déplacement / nouveau capteur / retour / récupération PC.
 - [ ] Tester une restauration Raspberry avec reprise des mesures déjà confirmées.
 - [ ] Documenter plus précisément la reprise Wi-Fi après déplacement : retour réseau, contrôle SSH, récupération PC, sauvegarde copiée.
+- [ ] Distinguer clairement dans l’interface `Synchronisation terminée` et `Nouvelle mesure effectivement acquise`.
+- [ ] Vérifier le chemin complet d’une mesure immédiate Raspberry : demande reçue, lecture Bluetooth effectuée, horodatage, délai avant récupération PC et éventuelle concurrence Bluetooth PC/Pi.
 
 ## Historique et graphiques — suivi restant
 

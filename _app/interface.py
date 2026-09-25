@@ -13,6 +13,7 @@ import subprocess
 from pathlib import Path
 
 import database
+from evolutions_lumiere import lire_evolutions
 import mini_base_plantes
 from capteur_infos import lire_infos, resume_infos, details_infos
 from botaneo_config import LOCAL_CONFIG, lire_json, ecrire_json, normaliser_station_favorite
@@ -1035,6 +1036,32 @@ def afficher_zone_decision(parent, plante_id, mesure, analyse_lumiere):
             padx=10,
             pady=(2, 8)
         )
+
+
+    historique = tk.Frame(parent, bg=CARD)
+    historique.pack(fill="x", padx=20, pady=(0, 10))
+    tk.Label(historique, text="Évolutions de lumière · 7 derniers jours terminés",
+             font=("Segoe UI", 10, "bold"), fg=TEXT, bg=CARD,
+             anchor="w").pack(fill="x", padx=10, pady=(8, 4))
+    try:
+        evenements = lire_evolutions(database, plante_id)
+        vide = "Aucune variation marquée détectée sur les journées comparables. Si les relevés sont insuffisants, aucune conclusion n’est tirée."
+    except Exception:
+        evenements = []
+        vide = "Historique lumineux indisponible : actualisez le panneau pour réessayer."
+    for evenement in evenements:
+        couleur = GREEN if evenement["sens"] == "hausse" else ORANGE
+        tk.Label(historique, text=evenement["titre"], fg=couleur, bg=CARD,
+                 font=("Segoe UI", 9, "bold"), anchor="w",
+                 justify="left", wraplength=780).pack(fill="x", padx=10, pady=(6, 0))
+        tk.Label(historique, text=evenement["detail"], fg=TEXT, bg=CARD,
+                 font=("Segoe UI", 9), anchor="w", justify="left",
+                 wraplength=780).pack(fill="x", padx=10)
+    note = ("Une hausse ne garantit pas que les besoins de la plante sont couverts. "
+            "Les mesures seules ne permettent pas de déduire une sortie dehors ni sa durée.") if evenements else vide
+    tk.Label(historique, text=note, fg=SECONDARY, bg=CARD,
+             font=("Segoe UI", 9), anchor="w", justify="left",
+             wraplength=780).pack(fill="x", padx=10, pady=(6, 8))
 
 
 def afficher_besoins_plante(parent, plante_id):

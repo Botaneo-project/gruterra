@@ -245,14 +245,121 @@ def filtrer_mesures_pour_serie(mesures, nom_serie):
     return [mesure for mesure in mesures if mesure[0] not in suspects], suspects
 
 
+def date_locale_depuis_iso(valeur):
+    try:
+        date = datetime.fromisoformat(valeur)
+        if date.tzinfo:
+            date = date.astimezone().replace(tzinfo=None)
+        return date
+    except (TypeError, ValueError):
+        return None
+
+
+def libelle_jour(date_jour):
+    return date_jour.strftime("%d/%m/%Y")
+
+
+def jours_disponibles_mesures(mesures):
+    jours = set()
+    for mesure in mesures:
+        date = date_locale_depuis_iso(mesure[1])
+        if date:
+            jours.add(date.date())
+    return sorted(jours, reverse=True)
+
+
+def filtrer_mesures_jour(mesures, jour):
+    resultat = []
+    for mesure in mesures:
+        date = date_locale_depuis_iso(mesure[1])
+        if date and date.date() == jour:
+            resultat.append(mesure)
+    return resultat
+
+
+def filtrer_arrosages_jour(arrosages, jour):
+    resultat = []
+    for arrosage in arrosages:
+        date = date_locale_depuis_iso(arrosage[2])
+        if date and date.date() == jour:
+            resultat.append(arrosage)
+    return resultat
+
+
+def valeurs_colonne(mesures, index):
+    valeurs = []
+    for mesure in mesures:
+        try:
+            valeur = float(mesure[index])
+            if math.isfinite(valeur):
+                valeurs.append(valeur)
+        except (TypeError, ValueError):
+            pass
+    return valeurs
+
+
+def moyenne_colonne(mesures, index):
+    valeurs = valeurs_colonne(mesures, index)
+    if not valeurs:
+        return None
+    return sum(valeurs) / len(valeurs)
+
+
+def statistiques_colonne(mesures, index):
+    valeurs = valeurs_colonne(mesures, index)
+    if not valeurs:
+        return None
+    return {
+        "moyenne": sum(valeurs) / len(valeurs),
+        "minimum": min(valeurs),
+        "maximum": max(valeurs),
+    }
+
+
+def resume_moyennes_jour(mesures, jour):
+    if not jour:
+        return "Journée : aucune date sélectionnée."
+    if not mesures:
+        return f"Journée {libelle_jour(jour)} : aucune mesure enregistrée."
+
+    humidite = statistiques_colonne(mesures, 3)
+    temperature = statistiques_colonne(mesures, 2)
+    lumiere = statistiques_colonne(mesures, 4)
+    conductivite = statistiques_colonne(mesures, 5)
+    morceaux = [f"Journée {libelle_jour(jour)} · {len(mesures)} mesure(s)"]
+    valeurs = []
+    if humidite:
+        valeurs.append(
+            f"humidité moy. {formater_nombre(humidite['moyenne'])} % "
+            f"(min {formater_nombre(humidite['minimum'])}, max {formater_nombre(humidite['maximum'])})"
+        )
+    if temperature:
+        valeurs.append(
+            f"temp. moy. {formater_nombre(temperature['moyenne'])} °C "
+            f"(min {formater_nombre(temperature['minimum'])}, max {formater_nombre(temperature['maximum'])})"
+        )
+    if lumiere:
+        valeurs.append(
+            f"lumière moy. {formater_nombre(lumiere['moyenne'])} lux "
+            f"(pic {formater_nombre(lumiere['maximum'])})"
+        )
+    if conductivite:
+        valeurs.append(f"conductivité moy. {formater_nombre(conductivite['moyenne'])} µS/cm")
+    if valeurs:
+        morceaux.append(" · ".join(valeurs))
+    return " · ".join(morceaux)
+
+
 def ouvrir_historique(parent, plante_id):
     couleurs = theme_actuel()
     plante = database.get_plante(plante_id)
 
     fenetre = tk.Toplevel(parent)
     fenetre.title("Historique — " + (plante[1] if plante else "Plante"))
-    fenetre.geometry("1080x760")
-    fenetre.minsize(820, 580)
+    largeur_fenetre = min(1080, max(900, fenetre.winfo_screenwidth() - 90))
+    hauteur_fenetre = min(740, max(620, fenetre.winfo_screenheight() - 120))
+    fenetre.geometry(f"{largeur_fenetre}x{hauteur_fenetre}+40+30")
+    fenetre.minsize(860, 600)
     fenetre.configure(bg=couleurs["BG"])
 
     tk.Label(fenetre, text=plante[1] if plante else "Plante introuvable",
@@ -267,15 +374,23 @@ def ouvrir_historique(parent, plante_id):
 
     periode = tk.StringVar(value="Tout")
     serie = tk.StringVar(value="Humidité")
+    jour_selectionne = tk.StringVar(value="")
     bilan = tk.StringVar()
     tri_table = {"colonne": None}
+    jours_par_libelle = {}
 
     tk.Label(barre, text="Période", bg=couleurs["BG"],
              fg=couleurs["TEXT"]).pack(side="left", padx=(0, 8))
     choix_periode = ttk.Combobox(barre, textvariable=periode,
-                                 values=("24 heures", "7 jours", "Tout"),
+                                 values=("Journée", "24 heures", "7 jours", "Tout"),
                                  state="readonly", width=14)
     choix_periode.pack(side="left")
+
+    tk.Label(barre, text="Jour", bg=couleurs["BG"],
+             fg=couleurs["TEXT"]).pack(side="left", padx=(18, 8))
+    choix_jour = ttk.Combobox(barre, textvariable=jour_selectionne,
+                              values=(), state="disabled", width=12, height=12)
+    choix_jour.pack(side="left")
 
     tk.Label(barre, text="Mesure", bg=couleurs["BG"],
              fg=couleurs["TEXT"]).pack(side="left", padx=(18, 8))
@@ -311,6 +426,19 @@ def ouvrir_historique(parent, plante_id):
         tk.Label(bloc, text=titre, bg=couleurs["CARD"],
                  fg=couleurs["SECONDARY"], font=("Segoe UI", 8)).pack()
 
+    jour_resume_var = tk.StringVar(value="Sélectionnez la période Journée pour afficher les moyennes d'un jour précis.")
+    jour_resume_label = tk.Label(
+        fenetre,
+        textvariable=jour_resume_var,
+        bg=couleurs["CARD"],
+        fg=couleurs["TEXT"],
+        font=("Segoe UI", 9, "bold"),
+        anchor="w",
+        justify="left",
+        wraplength=980,
+        highlightbackground=couleurs["BORDER"],
+        highlightthickness=1
+    )
     qualite_var = tk.StringVar(value="Qualité des données : en attente")
     qualite_label = tk.Label(
         fenetre,
@@ -343,7 +471,7 @@ def ouvrir_historique(parent, plante_id):
 
     canvas = tk.Canvas(fenetre, bg=couleurs["CARD"],
                        highlightbackground=couleurs["BORDER"],
-                       highlightthickness=1, height=300)
+                       highlightthickness=1, height=240)
     canvas.pack(fill="both", expand=True, padx=24)
 
     outils_table = tk.Frame(fenetre, bg=couleurs["BG"])
@@ -372,7 +500,7 @@ def ouvrir_historique(parent, plante_id):
     cadre.pack(fill="both", expand=True, padx=24, pady=(0, 18))
 
     colonnes = ("date", "humidite", "temperature", "lumiere", "conductivite", "_mesure_id")
-    table = ttk.Treeview(cadre, columns=colonnes, show="headings", height=8)
+    table = ttk.Treeview(cadre, columns=colonnes, show="headings", height=7)
     titres = ("Date et heure", "Humidité (%)", "Température (°C)", "Lumière (lux)", "Conductivité (µS/cm)")
 
     for nom, titre, largeur in zip(colonnes[:5], titres, (185, 110, 130, 120, 165)):
@@ -390,7 +518,7 @@ def ouvrir_historique(parent, plante_id):
     mesures_courantes = []
     arrosages_courants = []
 
-    def analyser_qualite_donnees(mesures):
+    def analyser_qualite_donnees(mesures, periode_affichee):
         dates = []
         for mesure in mesures:
             try:
@@ -405,6 +533,13 @@ def ouvrir_historique(parent, plante_id):
             return "Qualité des données : aucune mesure sur cette période.", "SECONDARY"
         debut = dates[0]
         fin = dates[-1]
+        if periode_affichee == "Tout":
+            return (
+                f"Données disponibles : {len(dates)} mesure(s) conservée(s) · "
+                f"période {debut.strftime('%d/%m %H:%M')} au {fin.strftime('%d/%m %H:%M')}. "
+                "Les trous ne sont pas estimés en vue complète.",
+                "SECONDARY"
+            )
         duree_heures = max((fin - debut).total_seconds() / 3600, 0)
         ecarts = []
         for avant, apres in zip(dates, dates[1:]):
@@ -416,7 +551,7 @@ def ouvrir_historique(parent, plante_id):
         couverture = f"{len(dates)}/{attendu}" if attendu else str(len(dates))
         texte = (
             f"Qualité des données : {couverture} mesure(s) attendues environ · "
-            f"période {debut.strftime('%d/%m %H:%M')} → {fin.strftime('%d/%m %H:%M')} · "
+            f"période {debut.strftime('%d/%m %H:%M')} au {fin.strftime('%d/%m %H:%M')} · "
             f"plus grand trou {plus_grand_trou:.1f} h"
         )
         if manque_estime or trous_importants:
@@ -786,6 +921,7 @@ def ouvrir_historique(parent, plante_id):
             f"- Maximum : {resume_vars['maximum'].get()}",
             f"- Tendance : {resume_vars['tendance'].get()}",
             "",
+            jour_resume_var.get(),
             qualite_var.get(),
             lecture_var.get(),
             f"Tableau : {bilan.get()}",
@@ -811,7 +947,7 @@ def ouvrir_historique(parent, plante_id):
 
 
     def actualiser(event=None):
-        nonlocal points, mesures_courantes, arrosages_courants
+        nonlocal points, mesures_courantes, arrosages_courants, jours_par_libelle
 
         try:
             mesures = database.get_mesures(plante_id=plante_id, limite=-1)
@@ -824,32 +960,49 @@ def ouvrir_historique(parent, plante_id):
         except Exception:
             arrosages = []
 
+        jours_disponibles = jours_disponibles_mesures(mesures)
+        jours_par_libelle = {libelle_jour(jour): jour for jour in jours_disponibles}
+        libelles_jours = tuple(jours_par_libelle.keys())
+        choix_jour.configure(values=libelles_jours)
+        if libelles_jours and jour_selectionne.get() not in jours_par_libelle:
+            jour_selectionne.set(libelles_jours[0])
+
+        if periode.get() == "Journée":
+            if not jour_resume_label.winfo_ismapped():
+                jour_resume_label.pack(fill="x", padx=24, pady=(0, 8), ipady=6, before=qualite_label)
+            choix_jour.configure(state="readonly" if libelles_jours else "disabled")
+            jour = jours_par_libelle.get(jour_selectionne.get())
+            if jour:
+                mesures = filtrer_mesures_jour(mesures, jour)
+                arrosages = filtrer_arrosages_jour(arrosages, jour)
+                jour_resume_var.set(resume_moyennes_jour(mesures, jour))
+                jour_resume_label.configure(fg=couleurs["TEXT"])
+            else:
+                mesures = []
+                arrosages = []
+                jour_resume_var.set("Journée : aucune date disponible pour cette plante.")
+                jour_resume_label.configure(fg=couleurs["SECONDARY"])
+        else:
+            choix_jour.configure(state="disabled")
+            jour_resume_label.pack_forget()
+
         jours = {"24 heures": 1, "7 jours": 7}.get(periode.get())
 
         if jours:
             limite = datetime.now() - timedelta(days=jours)
+            maintenant = datetime.now()
             filtre = []
             for mesure in mesures:
-                try:
-                    date = datetime.fromisoformat(mesure[1])
-                    if date.tzinfo:
-                        date = date.astimezone().replace(tzinfo=None)
-                    if limite <= date <= datetime.now():
-                        filtre.append(mesure)
-                except (ValueError, TypeError):
-                    pass
+                date = date_locale_depuis_iso(mesure[1])
+                if date and limite <= date <= maintenant:
+                    filtre.append(mesure)
             mesures = filtre
 
             arrosages_filtres = []
             for arrosage in arrosages:
-                try:
-                    date = datetime.fromisoformat(arrosage[2])
-                    if date.tzinfo:
-                        date = date.astimezone().replace(tzinfo=None)
-                    if limite <= date <= datetime.now():
-                        arrosages_filtres.append(arrosage)
-                except (ValueError, TypeError):
-                    pass
+                date = date_locale_depuis_iso(arrosage[2])
+                if date and limite <= date <= maintenant:
+                    arrosages_filtres.append(arrosage)
             arrosages = arrosages_filtres
 
         arrosages_courants = list(arrosages)
@@ -883,7 +1036,7 @@ def ouvrir_historique(parent, plante_id):
             for variable in resume_vars.values():
                 variable.set("—")
 
-        qualite_texte, qualite_couleur = analyser_qualite_donnees(mesures)
+        qualite_texte, qualite_couleur = analyser_qualite_donnees(mesures, periode.get())
         if mesures_suspectes_ids:
             qualite_texte += (
                 f" · ⚠ {len(mesures_suspectes_ids)} humidité à 0 % isolée(s) conservée(s) "
@@ -931,6 +1084,7 @@ def ouvrir_historique(parent, plante_id):
     ttk.Button(barre, text="Copier résumé", command=copier_resume_historique).pack(side="right", padx=(8, 0))
     ttk.Button(barre, text="Actualiser", command=actualiser).pack(side="right")
     choix_periode.bind("<<ComboboxSelected>>", actualiser)
+    choix_jour.bind("<<ComboboxSelected>>", actualiser)
     choix_serie.bind("<<ComboboxSelected>>", actualiser)
     canvas.bind("<Configure>", dessiner)
     actualiser()
