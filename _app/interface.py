@@ -4051,6 +4051,34 @@ def afficher_etape_netatmo(texte, progression=None):
     root.update_idletasks()
 
 
+def resume_acquisition_miflora(resultat_miflora):
+    resultats = resultat_miflora.get("resultats") or []
+    if not resultats:
+        return None
+
+    nouvelles_pc = sum(1 for resultat in resultats if resultat.get("mesure"))
+    nouvelles_pi = sum(resultat.get("raspberry_current_added", 0) or 0 for resultat in resultats)
+    historiques_pi = sum(resultat.get("raspberry_added", 0) or 0 for resultat in resultats)
+    attente_pi = sum(1 for resultat in resultats if resultat.get("collect_accepted") is True and not resultat.get("raspberry_current_added", 0) and not resultat.get("mesure"))
+
+    lignes = []
+    if nouvelles_pc or nouvelles_pi:
+        morceaux = []
+        if nouvelles_pi:
+            morceaux.append(f"{nouvelles_pi} via Raspberry")
+        if nouvelles_pc:
+            morceaux.append(f"{nouvelles_pc} via PC")
+        lignes.append("✅ Nouvelle mesure effectivement acquise : " + ", ".join(morceaux) + ".")
+    else:
+        lignes.append("ℹ Aucune nouvelle mesure immédiate acquise sur ce passage.")
+
+    if historiques_pi:
+        lignes.append(f"Historique récupéré : {historiques_pi} mesure(s) ajoutée(s) depuis le Raspberry.")
+    if attente_pi:
+        lignes.append("Mesure Raspberry demandée : résultat attendu lors du prochain contrôle automatique ou de la prochaine synchronisation.")
+    return "\n".join(lignes)
+
+
 def synchroniser():
     if netatmo_loading or str(sync_button['state']) == 'disabled':
         return
@@ -4291,6 +4319,9 @@ def synchronisation_terminee(resultat_miflora, resultats_meteo):
     )
 
     lignes_detail = [resultat_miflora.get("message", "Synchronisation Mi Flora terminée")]
+    acquisition_miflora = resume_acquisition_miflora(resultat_miflora)
+    if acquisition_miflora:
+        lignes_detail.append(acquisition_miflora)
 
     historiques_incomplets = resultat_miflora.get("historiques_incomplets") or []
     historiques_complets = resultat_miflora.get("historiques_complets") or []

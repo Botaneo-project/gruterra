@@ -525,6 +525,13 @@ async def synchroniser_tous_avec_historique(on_progress=None):
             'historique_passes': historique.get('historique_passes'),
             'historique_passes_max': historique.get('historique_passes_max'),
             'mesure': mesure.get('mesure'),
+            'collecteur': mesure.get('collecteur'),
+            'raspberry_current_added': mesure.get('current_added', 0) or 0,
+            'raspberry_current_duplicates': mesure.get('current_duplicates', 0) or 0,
+            'raspberry_added': mesure.get('added', 0) or 0,
+            'raspberry_duplicates': mesure.get('duplicates', 0) or 0,
+            'collect_accepted': mesure.get('collect_accepted'),
+            'pending_remaining': mesure.get('pending_remaining'),
             'capteur_id': capteur[0],
             'nom': capteur[1]
         }

@@ -220,7 +220,7 @@ Ce fichier sert à garder une trace claire des idées et des prochaines étapes.
 - [ ] Tester le cycle déplacement / nouveau capteur / retour / récupération PC.
 - [ ] Tester une restauration Raspberry avec reprise des mesures déjà confirmées.
 - [ ] Documenter plus précisément la reprise Wi-Fi après déplacement : retour réseau, contrôle SSH, récupération PC, sauvegarde copiée.
-- [ ] Distinguer clairement dans l’interface `Synchronisation terminée` et `Nouvelle mesure effectivement acquise`.
+- [x] Distinguer clairement dans l’interface `Synchronisation terminée` et `Nouvelle mesure effectivement acquise`.
 - [ ] Vérifier le chemin complet d’une mesure immédiate Raspberry : demande reçue, lecture Bluetooth effectuée, horodatage, délai avant récupération PC et éventuelle concurrence Bluetooth PC/Pi.
 
 ## Historique et graphiques — suivi restant
