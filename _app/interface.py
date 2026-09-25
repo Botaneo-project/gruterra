@@ -358,7 +358,8 @@ def texte_dernier_import_historique(capteur_id):
 def charger_layout_interface():
     config = {
         "meteo_en_haut": False,
-        "vue_compacte_plantes": False
+        "vue_compacte_plantes": False,
+        "plantes_sur_accueil": True
     }
     try:
         if INTERFACE_LAYOUT_CONFIG.exists():
@@ -370,6 +371,7 @@ def charger_layout_interface():
 
     config["meteo_en_haut"] = bool(config.get("meteo_en_haut", False))
     config["vue_compacte_plantes"] = bool(config.get("vue_compacte_plantes", False))
+    config["plantes_sur_accueil"] = bool(config.get("plantes_sur_accueil", True))
     return config
 
 
@@ -387,6 +389,10 @@ def meteo_affichee_en_haut():
 
 def vue_compacte_plantes_active():
     return bool(interface_layout_config.get("vue_compacte_plantes", False))
+
+
+def plantes_affichees_sur_accueil():
+    return bool(interface_layout_config.get("plantes_sur_accueil", True))
 
 
 def charger_config_sync_auto():
@@ -4632,6 +4638,18 @@ def ouvrir_parametres():
         selectcolor=CARD
     ).pack(anchor="w", padx=12, pady=(0, 10))
 
+    plantes_accueil_var = tk.BooleanVar(value=plantes_affichees_sur_accueil())
+    tk.Checkbutton(
+        affichage_bloc,
+        text="Afficher les plantes sur l'accueil",
+        variable=plantes_accueil_var,
+        bg=LIGHT_GREEN,
+        fg=TEXT,
+        activebackground=LIGHT_GREEN,
+        activeforeground=TEXT,
+        selectcolor=CARD
+    ).pack(anchor="w", padx=12, pady=(0, 8))
+
     vue_compacte_var = tk.BooleanVar(value=vue_compacte_plantes_active())
     tk.Checkbutton(
         affichage_bloc,
@@ -4840,6 +4858,7 @@ def ouvrir_parametres():
                 return
 
         interface_layout_config["meteo_en_haut"] = bool(meteo_haut_var.get())
+        interface_layout_config["plantes_sur_accueil"] = bool(plantes_accueil_var.get())
         interface_layout_config["vue_compacte_plantes"] = bool(vue_compacte_var.get())
         destinataire = email_destinataire_var.get().strip()
         if email_var.get() and not destinataire:
@@ -5969,35 +5988,52 @@ def actualiser_interface():
             afficher_netatmo()
         return
 
-    plantes_filtrees = [plante for plante in plantes if plante_passe_filtres(plante)]
-    afficher_titre_section(
-        content_frame,
-        "🌱 Plantes",
-        f"{len(plantes_filtrees)} / {len(plantes)} affichée(s)"
-    )
-    afficher_filtres_plantes(content_frame, plantes, plantes_filtrees)
+    if plantes_affichees_sur_accueil():
+        plantes_filtrees = [plante for plante in plantes if plante_passe_filtres(plante)]
+        afficher_titre_section(
+            content_frame,
+            "🌱 Plantes",
+            f"{len(plantes_filtrees)} / {len(plantes)} affichée(s)"
+        )
+        afficher_filtres_plantes(content_frame, plantes, plantes_filtrees)
 
-    if not plantes_filtrees:
+        if not plantes_filtrees:
+            tk.Label(
+                content_frame,
+                text="Aucune plante ne correspond aux filtres actuels.",
+                font=("Segoe UI", 11, "bold"),
+                fg=SECONDARY,
+                bg=BG
+            ).pack(pady=25)
+
+        for plante in plantes_filtrees:
+
+            if vue_compacte_plantes_active():
+                creer_carte_plante_compacte(
+                    content_frame,
+                    plante
+                )
+            else:
+                creer_carte_plante(
+                    content_frame,
+                    plante
+                )
+    else:
+        afficher_titre_section(
+            content_frame,
+            "🌱 Plantes",
+            f"{len(plantes)} plante(s) masquée(s) sur l'accueil"
+        )
         tk.Label(
             content_frame,
-            text="Aucune plante ne correspond aux filtres actuels.",
-            font=("Segoe UI", 11, "bold"),
+            text="Les plantes sont masquées sur l'accueil. Vous pouvez les réafficher depuis Paramètres > Affichage.",
+            font=("Segoe UI", 10),
             fg=SECONDARY,
-            bg=BG
-        ).pack(pady=25)
-
-    for plante in plantes_filtrees:
-
-        if vue_compacte_plantes_active():
-            creer_carte_plante_compacte(
-                content_frame,
-                plante
-            )
-        else:
-            creer_carte_plante(
-                content_frame,
-                plante
-            )
+            bg=BG,
+            anchor="w",
+            justify="left",
+            wraplength=900
+        ).pack(fill="x", padx=20, pady=(0, 12))
 
     if not meteo_en_haut:
         afficher_titre_section(

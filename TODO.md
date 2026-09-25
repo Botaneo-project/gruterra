@@ -77,6 +77,7 @@ Ce fichier sert à garder une trace claire des idées et des prochaines étapes.
 - Améliorer plus tard les filtres plantes si besoin : recherche par nom, tri manuel, regroupement par pièce.
 - Zone de décision visible au-dessus des mesures : déjà en place, à affiner avec plus de données.
 - Permettre à terme de choisir l’ordre des blocs : météo locale, plantes, alertes, graphiques.
+- [x] Permettre de masquer les plantes sur l’accueil pour préparer une organisation par onglets ou sections dédiées.
 - Historique enrichi avec résumé, tendance, repères post-arrosage et copie du résumé.
 
 ### 3. Fiches plantes et mini base
