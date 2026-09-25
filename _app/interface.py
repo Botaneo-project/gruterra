@@ -1753,12 +1753,15 @@ def plante_passe_filtres(plante):
     return True
 
 
-def reinitialiser_filtres_plantes():
+def reinitialiser_filtres_plantes(commande=None):
     filtre_zone_var.set("Toutes")
     filtre_piece_var.set("Toutes")
     filtre_capteur_var.set("Toutes")
     filtre_attention_var.set("Toutes")
-    actualiser_interface()
+    if commande:
+        commande()
+    else:
+        actualiser_interface()
 
 
 def creer_menu_filtre(parent, titre, variable, valeurs, commande=None):
@@ -1825,7 +1828,7 @@ def afficher_filtres_plantes(parent, plantes, plantes_filtrees, commande=None):
     tk.Button(
         ligne,
         text="Réinitialiser",
-        command=lambda: (reinitialiser_filtres_plantes(), action()),
+        command=lambda: reinitialiser_filtres_plantes(action),
         bg=BG,
         fg=TEXT,
         activebackground=LIGHT_GREEN,
