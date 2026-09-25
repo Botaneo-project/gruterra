@@ -263,3 +263,16 @@ Ce fichier sert à garder une trace claire des idées et des prochaines étapes.
 - [ ] Ajouter un mode historique long séparé si les lectures normales restent limitées.
 - [ ] Auditer les anciennes archives sans inventer leurs repères temporels.
 - [x] Ajouter une extraction texte intégrée pour envoyer les données utiles à une discussion d’analyse plante.
+
+## Collecte Mi Flora passive BLE
+
+État actuel : un prototype Raspberry existe dans `raspberry/collector/passive_ble.py`. Il écoute les annonces MiBeacon `FE95` sans connexion active au capteur. Les premiers tests PC ont confirmé que le Mi Flora diffuse des valeurs décodables : température, luminosité et conductivité observées.
+
+- [x] Créer un prototype d'écoute passive BLE Mi Flora.
+- [x] Décoder les objets MiBeacon utiles : température, humidité sol, luminosité, conductivité, batterie si diffusée.
+- [x] Prévoir un mode affichage seul, sans écriture en base.
+- [x] Prévoir un mode `--store` expérimental qui n'enregistre qu'une mesure complète.
+- [ ] Tester sur Raspberry pendant plusieurs fenêtres de 3 à 5 minutes.
+- [ ] Vérifier si l'humidité sol est bien diffusée régulièrement sur le capteur actuel.
+- [ ] Comparer les mesures passives avec les mesures actives et l'historique interne.
+- [ ] Décider ensuite si un timer passif séparé est utile, sans remplacer l'import historique.

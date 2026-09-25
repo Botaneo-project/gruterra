@@ -45,6 +45,13 @@ for file in sync_export.py backup_daily.py backup_manifest.py request_collect.py
   chmod 700 "$COLLECTOR_DIR/$file"
 done
 
+for file in passive_ble.py; do
+  echo "Installation $file"
+  backup_if_exists "$COLLECTOR_DIR/$file"
+  download "raspberry/collector/$file" "$COLLECTOR_DIR/$file"
+  chmod 700 "$COLLECTOR_DIR/$file"
+done
+
 for unit in botaneo-collect.service botaneo-collect.timer botaneo-backup.service botaneo-backup.timer; do
   echo "Installation $unit"
   backup_if_exists "$SYSTEMD_USER_DIR/$unit"

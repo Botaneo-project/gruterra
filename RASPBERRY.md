@@ -34,3 +34,23 @@ Les sauvegardes contiennent l’état de confirmation des transferts. Leur resta
 - Essai de restauration avec reprise des mesures déjà confirmées.
 - Alerte spécifique si les mesures sont anciennes malgré un transfert réussi.
 - Futur serveur central permanent et ESP32 : conception distincte, pas encore installée.
+
+## Prototype BLE passif Mi Flora
+
+Un prototype expérimental existe dans `raspberry/collector/passive_ble.py`. Il écoute les annonces BLE `FE95` du Mi Flora / Flower Care sans connexion active au capteur. Il peut afficher les valeurs décodées et, avec l'option `--store`, enregistrer une mesure complète uniquement si température, humidité, luminosité et conductivité ont toutes été reçues pendant la fenêtre d'écoute.
+
+Commande de test sur le Raspberry :
+
+```bash
+cd ~/botaneo/collector
+python3 passive_ble.py --duration 180 --verbose
+```
+
+Commande avec enregistrement expérimental :
+
+```bash
+cd ~/botaneo/collector
+python3 passive_ble.py --duration 300 --store
+```
+
+Cette collecte passive n'est pas encore activée par timer. Elle doit d'abord être observée sur plusieurs passages, car les annonces sont intermittentes et chaque paquet ne contient pas forcément toutes les mesures. La lecture active et l'import historique restent nécessaires pour la batterie, les diagnostics et le rattrapage des trous.
