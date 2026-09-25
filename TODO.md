@@ -78,6 +78,7 @@ Ce fichier sert à garder une trace claire des idées et des prochaines étapes.
 - Zone de décision visible au-dessus des mesures : déjà en place, à affiner avec plus de données.
 - Permettre à terme de choisir l’ordre des blocs : météo locale, plantes, alertes, graphiques.
 - [x] Permettre de masquer les plantes sur l’accueil pour préparer une organisation par onglets ou sections dédiées.
+- [x] Ajouter une vue dédiée `Plantes` accessible depuis la barre d’actions, utile quand les plantes sont masquées sur l’accueil.
 - Historique enrichi avec résumé, tendance, repères post-arrosage et copie du résumé.
 
 ### 3. Fiches plantes et mini base

@@ -1761,7 +1761,7 @@ def reinitialiser_filtres_plantes():
     actualiser_interface()
 
 
-def creer_menu_filtre(parent, titre, variable, valeurs):
+def creer_menu_filtre(parent, titre, variable, valeurs, commande=None):
     bloc = tk.Frame(parent, bg=CARD)
     bloc.pack(side="left", padx=(0, 10), pady=(0, 8))
 
@@ -1773,7 +1773,8 @@ def creer_menu_filtre(parent, titre, variable, valeurs):
         font=("Segoe UI", 8, "bold")
     ).pack(anchor="w")
 
-    menu = tk.OptionMenu(bloc, variable, *valeurs, command=lambda _=None: actualiser_interface())
+    action = commande or actualiser_interface
+    menu = tk.OptionMenu(bloc, variable, *valeurs, command=lambda _=None: action())
     menu.configure(
         bg=BG,
         fg=TEXT,
@@ -1789,7 +1790,7 @@ def creer_menu_filtre(parent, titre, variable, valeurs):
     menu.pack(anchor="w")
 
 
-def afficher_filtres_plantes(parent, plantes, plantes_filtrees):
+def afficher_filtres_plantes(parent, plantes, plantes_filtrees, commande=None):
     bloc = tk.Frame(parent, bg=CARD, highlightbackground=BORDER, highlightthickness=1)
     bloc.pack(fill="x", padx=20, pady=(0, 10))
 
@@ -1815,15 +1816,16 @@ def afficher_filtres_plantes(parent, plantes, plantes_filtrees):
     ligne = tk.Frame(bloc, bg=CARD)
     ligne.pack(fill="x", padx=14, pady=(0, 8))
 
-    creer_menu_filtre(ligne, "Zone", filtre_zone_var, options_filtre_plantes(plantes, 4))
-    creer_menu_filtre(ligne, "Pièce", filtre_piece_var, options_filtre_plantes(plantes, 3))
-    creer_menu_filtre(ligne, "Capteur", filtre_capteur_var, ["Toutes", "Avec capteur", "Sans capteur"])
-    creer_menu_filtre(ligne, "État", filtre_attention_var, ["Toutes", "À surveiller"])
+    action = commande or actualiser_interface
+    creer_menu_filtre(ligne, "Zone", filtre_zone_var, options_filtre_plantes(plantes, 4), action)
+    creer_menu_filtre(ligne, "Pièce", filtre_piece_var, options_filtre_plantes(plantes, 3), action)
+    creer_menu_filtre(ligne, "Capteur", filtre_capteur_var, ["Toutes", "Avec capteur", "Sans capteur"], action)
+    creer_menu_filtre(ligne, "État", filtre_attention_var, ["Toutes", "À surveiller"], action)
 
     tk.Button(
         ligne,
         text="Réinitialiser",
-        command=reinitialiser_filtres_plantes,
+        command=lambda: (reinitialiser_filtres_plantes(), action()),
         bg=BG,
         fg=TEXT,
         activebackground=LIGHT_GREEN,
@@ -6024,16 +6026,27 @@ def actualiser_interface():
             "🌱 Plantes",
             f"{len(plantes)} plante(s) masquée(s) sur l'accueil"
         )
+        bloc_plantes_masquees = tk.Frame(content_frame, bg=CARD, highlightbackground=BORDER, highlightthickness=1)
+        bloc_plantes_masquees.pack(fill="x", padx=20, pady=(0, 12))
         tk.Label(
-            content_frame,
-            text="Les plantes sont masquées sur l'accueil. Vous pouvez les réafficher depuis Paramètres > Affichage.",
+            bloc_plantes_masquees,
+            text="Les plantes sont masquées sur l'accueil. Vous pouvez les consulter dans une vue dédiée ou les réafficher depuis Paramètres > Affichage.",
             font=("Segoe UI", 10),
             fg=SECONDARY,
-            bg=BG,
+            bg=CARD,
             anchor="w",
             justify="left",
             wraplength=900
-        ).pack(fill="x", padx=20, pady=(0, 12))
+        ).pack(fill="x", padx=12, pady=(10, 6))
+        tk.Button(
+            bloc_plantes_masquees,
+            text="Ouvrir la vue Plantes",
+            command=ouvrir_vue_plantes,
+            bg=LIGHT_GREEN,
+            fg=GREEN,
+            relief="flat",
+            cursor="hand2"
+        ).pack(anchor="w", padx=12, pady=(0, 10))
 
     if not meteo_en_haut:
         afficher_titre_section(
@@ -6043,6 +6056,83 @@ def actualiser_interface():
         )
         netatmo_frame.pack(fill="x", padx=20, pady=(4, 15))
         afficher_netatmo()
+
+
+def ouvrir_vue_plantes():
+    fenetre = tk.Toplevel(root)
+    fenetre.title("Plantes — Botaneo")
+    largeur = min(1040, max(860, fenetre.winfo_screenwidth() - 120))
+    hauteur = min(760, max(620, fenetre.winfo_screenheight() - 140))
+    fenetre.geometry(f"{largeur}x{hauteur}+60+45")
+    fenetre.minsize(820, 560)
+    fenetre.configure(bg=BG)
+
+    entete = tk.Frame(fenetre, bg=CARD, highlightbackground=BORDER, highlightthickness=1)
+    entete.pack(fill="x")
+    tk.Label(entete, text="🌱 Plantes", font=("Segoe UI", 18, "bold"), fg=GREEN, bg=CARD).pack(side="left", padx=18, pady=14)
+    tk.Button(entete, text="Actualiser", command=lambda: remplir(), bg=BG, fg=TEXT, relief="flat", cursor="hand2").pack(side="right", padx=(0, 18), pady=12)
+
+    conteneur = tk.Frame(fenetre, bg=BG)
+    conteneur.pack(fill="both", expand=True)
+    zone_canvas = tk.Canvas(conteneur, bg=BG, highlightthickness=0)
+    barre = tk.Scrollbar(conteneur, orient="vertical", command=zone_canvas.yview)
+    zone_canvas.configure(yscrollcommand=barre.set)
+    barre.pack(side="right", fill="y")
+    zone_canvas.pack(side="left", fill="both", expand=True)
+
+    interieur = tk.Frame(zone_canvas, bg=BG)
+    fenetre_canvas = zone_canvas.create_window((0, 0), window=interieur, anchor="nw")
+
+    def ajuster_scroll(_event=None):
+        zone_canvas.configure(scrollregion=zone_canvas.bbox("all"))
+
+    def ajuster_largeur(event):
+        zone_canvas.itemconfig(fenetre_canvas, width=event.width)
+
+    interieur.bind("<Configure>", ajuster_scroll)
+    zone_canvas.bind("<Configure>", ajuster_largeur)
+
+    def defiler(event):
+        if zone_canvas.yview() == (0.0, 1.0):
+            return
+        if getattr(event, "num", None) == 4:
+            zone_canvas.yview_scroll(-3, "units")
+        elif getattr(event, "num", None) == 5:
+            zone_canvas.yview_scroll(3, "units")
+        elif event.delta:
+            zone_canvas.yview_scroll(-int(event.delta / 120) * 3, "units")
+
+    fenetre.bind("<MouseWheel>", defiler)
+    fenetre.bind("<Button-4>", defiler)
+    fenetre.bind("<Button-5>", defiler)
+
+    def remplir():
+        for widget in interieur.winfo_children():
+            widget.destroy()
+        plantes = database.get_plantes()
+        plantes_filtrees = [plante for plante in plantes if plante_passe_filtres(plante)]
+        afficher_titre_section(
+            interieur,
+            "🌱 Toutes les plantes",
+            f"{len(plantes_filtrees)} / {len(plantes)} affichée(s)"
+        )
+        afficher_filtres_plantes(interieur, plantes, plantes_filtrees, remplir)
+        if not plantes_filtrees:
+            tk.Label(
+                interieur,
+                text="Aucune plante ne correspond aux filtres actuels.",
+                font=("Segoe UI", 11, "bold"),
+                fg=SECONDARY,
+                bg=BG
+            ).pack(pady=25)
+            return
+        for plante in plantes_filtrees:
+            if vue_compacte_plantes_active():
+                creer_carte_plante_compacte(interieur, plante)
+            else:
+                creer_carte_plante(interieur, plante)
+
+    remplir()
 
 
 # ============================================================
@@ -6180,6 +6270,11 @@ add_sensor_button = tk.Button(toolbar, text="＋ Ajouter un capteur", command=ou
                               font=("Segoe UI", 9, "bold"), bg=CARD, fg=TEXT,
                               activebackground=CARD, activeforeground=TEXT, relief="flat", cursor="hand2")
 add_sensor_button.pack(side="left", padx=8)
+
+plants_view_button = tk.Button(toolbar, text="🌱 Plantes", command=ouvrir_vue_plantes,
+                               font=("Segoe UI", 9, "bold"), bg=CARD, fg=TEXT,
+                               activebackground=CARD, activeforeground=TEXT, relief="flat", cursor="hand2")
+plants_view_button.pack(side="left", padx=(0, 8))
 
 
 settings_button = tk.Button(
