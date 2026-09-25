@@ -46,3 +46,21 @@ systemctl --user status botaneo-backup.timer
 ## Notes
 
 Les scripts n’installent pas encore un système complet depuis zéro. Ils supposent que Python, systemd utilisateur et la base du collecteur Botaneo existent ou peuvent être créés. L’objectif est de rendre la partie Raspberry reproductible sans inclure de secrets.
+
+## Test passif Mi Flora
+
+Le fichier `botaneo-passive-test.service` est installé mais n'est pas activé automatiquement. Il sert à tester l'écoute passive BLE pendant cinq minutes et à enregistrer une mesure uniquement si elle est complète.
+
+Lancer un test manuel :
+
+```bash
+systemctl --user start botaneo-passive-test.service
+```
+
+Consulter le résultat :
+
+```bash
+journalctl --user -u botaneo-passive-test.service -n 80 --no-pager
+```
+
+Ce test utilise la base Raspberry existante. Il ne crée pas de base séparée et ne remplace pas la collecte active ni l'import historique.

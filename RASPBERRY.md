@@ -54,3 +54,13 @@ python3 passive_ble.py --duration 300 --store
 ```
 
 Cette collecte passive n'est pas encore activée par timer. Elle doit d'abord être observée sur plusieurs passages, car les annonces sont intermittentes et chaque paquet ne contient pas forcément toutes les mesures. La lecture active et l'import historique restent nécessaires pour la batterie, les diagnostics et le rattrapage des trous.
+
+### Service manuel de test passif
+
+Le service `botaneo-passive-test.service` est installé avec les scripts Raspberry mais n'est pas activé par timer. Il lance :
+
+```bash
+python3 ~/botaneo/collector/passive_ble.py --duration 300 --store
+```
+
+Il écrit dans la table `measurements` existante seulement si une mesure complète est reçue. La source est conservée dans le champ brut avec `source=passive_mibeacon`, ce qui permettra ensuite de distinguer ces mesures dans Botaneo.

@@ -1,0 +1,9 @@
+[Unit]
+Description=Botaneo passive Mi Flora BLE test
+After=bluetooth.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/python3 %h/botaneo/collector/passive_ble.py --duration 300 --store
+UMask=0077
+NoNewPrivileges=true

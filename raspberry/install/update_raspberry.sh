@@ -30,7 +30,7 @@ for file in passive_ble.py; do
   chmod 700 "$COLLECTOR_DIR/$file"
 done
 
-for unit in botaneo-collect.service botaneo-collect.timer botaneo-backup.service botaneo-backup.timer; do
+for unit in botaneo-collect.service botaneo-collect.timer botaneo-backup.service botaneo-backup.timer botaneo-passive-test.service; do
   echo "Mise à jour $unit"
   download "raspberry/$unit" "$SYSTEMD_USER_DIR/$unit"
   chmod 600 "$SYSTEMD_USER_DIR/$unit"

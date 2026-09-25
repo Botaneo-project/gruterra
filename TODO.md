@@ -272,7 +272,9 @@ Ce fichier sert à garder une trace claire des idées et des prochaines étapes.
 - [x] Décoder les objets MiBeacon utiles : température, humidité sol, luminosité, conductivité, batterie si diffusée.
 - [x] Prévoir un mode affichage seul, sans écriture en base.
 - [x] Prévoir un mode `--store` expérimental qui n'enregistre qu'une mesure complète.
-- [x] Tester le prototype en local PC sans écriture : une mesure complète a été reçue passivement en 90 s.\n- [ ] Tester sur Raspberry pendant plusieurs fenêtres de 3 à 5 minutes.
+- [x] Tester le prototype en local PC sans écriture : une mesure complète a été reçue passivement en 90 s.
+- [x] Ajouter un service manuel Raspberry `botaneo-passive-test.service`, non planifié automatiquement.
+- [ ] Tester sur Raspberry pendant plusieurs fenêtres de 3 à 5 minutes.
 - [ ] Vérifier si l'humidité sol est bien diffusée régulièrement sur le capteur actuel.
 - [ ] Comparer les mesures passives avec les mesures actives et l'historique interne.
 - [ ] Décider ensuite si un timer passif séparé est utile, sans remplacer l'import historique.
