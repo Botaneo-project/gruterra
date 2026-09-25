@@ -1476,6 +1476,53 @@ def ouvrir_arrosage_plante(plante_id, nom_plante):
     type_eau_combo.pack(fill="x", padx=20)
     type_eau_combo.current(0)
 
+    contexte_frame = tk.Frame(fenetre, bg=CARD)
+    contexte_frame.pack(fill="x", padx=20, pady=(10, 0))
+
+    tk.Label(contexte_frame, text="Contexte facultatif", bg=CARD, fg=TEXT, font=("Segoe UI", 9, "bold")).grid(row=0, column=0, columnspan=2, sticky="w", pady=(0, 3))
+
+    tk.Label(contexte_frame, text="Répartition", bg=CARD, fg=SECONDARY, font=("Segoe UI", 8)).grid(row=1, column=0, sticky="w")
+    repartition_combo = ttk.Combobox(
+        contexte_frame,
+        state="readonly",
+        values=["Non renseigné", "Surface répartie", "Un côté du pot", "Centre du pot", "Bords du pot", "Autre"],
+        width=18
+    )
+    repartition_combo.grid(row=2, column=0, sticky="ew", padx=(0, 8))
+    repartition_combo.current(0)
+
+    tk.Label(contexte_frame, text="Écoulement", bg=CARD, fg=SECONDARY, font=("Segoe UI", 8)).grid(row=1, column=1, sticky="w")
+    ecoulement_combo = ttk.Combobox(
+        contexte_frame,
+        state="readonly",
+        values=["Non renseigné", "Aucun écoulement observé", "Écoulement léger", "Écoulement net", "Non vérifié"],
+        width=20
+    )
+    ecoulement_combo.grid(row=2, column=1, sticky="ew")
+    ecoulement_combo.current(0)
+
+    tk.Label(contexte_frame, text="Cache-pot", bg=CARD, fg=SECONDARY, font=("Segoe UI", 8)).grid(row=3, column=0, sticky="w", pady=(6, 0))
+    cachepot_combo = ttk.Combobox(
+        contexte_frame,
+        state="readonly",
+        values=["Non renseigné", "Pas d'eau stagnante", "Eau stagnante retirée", "Eau stagnante présente", "Pas de cache-pot"],
+        width=18
+    )
+    cachepot_combo.grid(row=4, column=0, sticky="ew", padx=(0, 8))
+    cachepot_combo.current(0)
+
+    tk.Label(contexte_frame, text="Substrat", bg=CARD, fg=SECONDARY, font=("Segoe UI", 8)).grid(row=3, column=1, sticky="w", pady=(6, 0))
+    substrat_combo = ttk.Combobox(
+        contexte_frame,
+        state="readonly",
+        values=["Non renseigné", "Sec en surface", "Légèrement humide", "Humide", "Très humide", "Non vérifié"],
+        width=20
+    )
+    substrat_combo.grid(row=4, column=1, sticky="ew")
+    substrat_combo.current(0)
+    contexte_frame.columnconfigure(0, weight=1)
+    contexte_frame.columnconfigure(1, weight=1)
+
     tk.Label(fenetre, text="Commentaire", bg=CARD, fg=TEXT, font=("Segoe UI", 9, "bold")).pack(anchor="w", padx=20, pady=(10, 3))
     commentaire_entry = tk.Entry(fenetre, width=42, bg=BG, fg=TEXT, insertbackground=TEXT)
     commentaire_entry.pack(fill="x", padx=20)
@@ -1526,10 +1573,26 @@ def ouvrir_arrosage_plante(plante_id, nom_plante):
                 erreur.set("Nombre de jours invalide pour le rappel.")
                 return
 
-        commentaire = commentaire_entry.get().strip() or None
+        commentaire_libre = commentaire_entry.get().strip()
         type_eau = type_eau_combo.get().strip()
         if type_eau == "Non renseigné":
             type_eau = None
+
+        contexte_arrosage = []
+        for libelle, combo in (
+                ("Répartition", repartition_combo),
+                ("Écoulement", ecoulement_combo),
+                ("Cache-pot", cachepot_combo),
+                ("Substrat", substrat_combo)):
+            valeur = combo.get().strip()
+            if valeur and valeur != "Non renseigné":
+                contexte_arrosage.append(f"{libelle} : {valeur}")
+
+        commentaire_lignes = []
+        if commentaire_libre:
+            commentaire_lignes.append(commentaire_libre)
+        commentaire_lignes.extend(contexte_arrosage)
+        commentaire = " | ".join(commentaire_lignes) or None
 
         confirmation = [
             f"Plante : {nom_plante}",
@@ -1537,10 +1600,11 @@ def ouvrir_arrosage_plante(plante_id, nom_plante):
             f"Type : {type_combo.get()}",
             f"Type d'eau : {type_eau or 'non renseigné'}",
         ]
+        confirmation.extend(contexte_arrosage)
         if rappel_date:
             confirmation.append(f"Rappel : {formater_date(rappel_date)}")
-        if commentaire:
-            confirmation.append(f"Commentaire : {commentaire}")
+        if commentaire_libre:
+            confirmation.append(f"Commentaire : {commentaire_libre}")
 
         if not messagebox.askyesno(
             "Confirmer l'arrosage",

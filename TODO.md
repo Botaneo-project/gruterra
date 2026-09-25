@@ -122,7 +122,7 @@ Ce fichier sert à garder une trace claire des idées et des prochaines étapes.
 - [ ] Distinguer tendance globale, vitesse de séchage entre arrosages et réponse à l’arrosage.
 - [ ] Construire une analyse par cycle d’arrosage : humidité initiale, réponse à l’arrosage, pic observé, phase de séchage, retour au niveau initial.
 - [ ] Reformuler l’analyse post-arrosage pour éviter de confondre zone du capteur et motte complète : `Retour au niveau d’humidité initial détecté dans la zone du capteur. Le Mi Flora ne permet pas de confirmer le séchage complet de la motte.`
-- [ ] Ajouter aux événements d’arrosage des champs facultatifs : volume total, type d’eau, méthode de répartition, écoulement observé, eau stagnante dans le cache-pot, état visuel du substrat et commentaire libre.
+- [x] Ajouter aux événements d’arrosage des champs facultatifs : volume total, type d’eau, méthode de répartition, écoulement observé, eau stagnante dans le cache-pot, état visuel du substrat et commentaire libre.
 - [ ] Ne pas imposer automatiquement 80 ml : garder la comparabilité des cycles sans empêcher d’adapter l’arrosage aux besoins réels.
 - [ ] Calculer la vitesse moyenne de séchage en points d’humidité par jour entre le pic confirmé et la fin du cycle.
 - [ ] Ajouter une vitesse glissante sur 24 h pour repérer un ralentissement ou une accélération du séchage.
