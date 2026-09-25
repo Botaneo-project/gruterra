@@ -186,13 +186,19 @@ def load_config():
 
 
 async def main_async(args):
-    config = load_config()
-    sensors = args.sensor or config.get("sensors", [])
+    config = None
+    if args.sensor and not args.store:
+        sensors = args.sensor
+    else:
+        config = load_config()
+        sensors = args.sensor or config.get("sensors", [])
     if not sensors:
         raise ValueError("Aucun capteur configuré")
     results = await listen(sensors, args.duration)
     stored = []
     if args.store:
+        if config is None:
+            config = load_config()
         stored = store_complete(BASE / "data/collector.sqlite3", config["device_id"], results)
     print(json.dumps({
         "ok": True,
@@ -215,3 +221,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
