@@ -4791,6 +4791,7 @@ def ouvrir_maintenance():
     scrollbar_syntheses = ttk.Scrollbar(tableau_frame, orient="vertical", command=tableau_syntheses.yview)
     scrollbar_syntheses.pack(side="right", fill="y")
     tableau_syntheses.configure(yscrollcommand=scrollbar_syntheses.set)
+    tableau_syntheses.bind("<Double-1>", lambda _event: ouvrir_detail_synthese())
 
     def rafraichir():
         zone.configure(state="normal")
@@ -4819,6 +4820,69 @@ def ouvrir_maintenance():
         root.clipboard_append(texte)
         status_var.set("Diagnostic maintenance copié dans le presse-papiers")
 
+    def ouvrir_detail_synthese():
+        selection = tableau_syntheses.selection()
+        if not selection:
+            messagebox.showinfo("Synthèse", "Sélectionnez une synthèse dans le tableau.", parent=fenetre)
+            return
+        valeurs = tableau_syntheses.item(selection[0], "values")
+        if not valeurs:
+            return
+        jour = valeurs[0]
+        capteur_id = int(valeurs[1])
+        syntheses = database.lister_syntheses_journalieres(capteur_id=capteur_id, limite=500)
+        synthese = None
+        for row in syntheses:
+            if row[2] == jour:
+                synthese = row
+                break
+        if synthese is None:
+            messagebox.showwarning("Synthèse", "Synthèse introuvable ou déjà modifiée.", parent=fenetre)
+            return
+
+        detail = tk.Toplevel(fenetre)
+        detail.title(f"Synthèse {jour}")
+        detail.configure(bg=CARD)
+        detail.resizable(False, False)
+        detail.transient(fenetre)
+
+        lignes = [
+            f"Jour : {synthese[2]}",
+            f"Capteur ID : {synthese[1]}",
+            f"Première mesure : {synthese[3]}",
+            f"Dernière mesure : {synthese[4]}",
+            f"Nombre de mesures : {synthese[5]}",
+            "",
+            f"Température : min {synthese[6]} °C · max {synthese[7]} °C · moyenne {synthese[8]:.2f} °C",
+            f"Humidité : min {synthese[9]} % · max {synthese[10]} % · moyenne {synthese[11]:.2f} %",
+            f"Luminosité : min {synthese[12]} lux · max {synthese[13]} lux · moyenne {synthese[14]:.2f} lux",
+            f"Conductivité : min {synthese[15]} µS/cm · max {synthese[16]} µS/cm · moyenne {synthese[17]:.2f} µS/cm",
+            "",
+            f"Sources : {synthese[18]}",
+            f"Créée le : {synthese[19]}",
+            f"Statut : {synthese[20]}",
+            "",
+            "Cette synthèse est informative. Les mesures brutes sont conservées.",
+        ]
+        texte_detail = "\n".join(lignes)
+
+        tk.Label(detail, text="📊 Détail de synthèse", font=("Segoe UI", 16, "bold"), fg=GREEN, bg=CARD).pack(anchor="w", padx=18, pady=(16, 4))
+        zone_detail = tk.Text(detail, width=82, height=21, wrap="word", bg=BG, fg=TEXT, relief="flat", font=("Segoe UI", 9))
+        zone_detail.pack(fill="both", expand=True, padx=18, pady=(0, 12))
+        zone_detail.insert("1.0", texte_detail)
+        zone_detail.configure(state="disabled")
+
+        boutons_detail = tk.Frame(detail, bg=CARD)
+        boutons_detail.pack(fill="x", padx=18, pady=(0, 14))
+
+        def copier_detail():
+            root.clipboard_clear()
+            root.clipboard_append(texte_detail)
+            status_var.set("Détail de synthèse copié dans le presse-papiers")
+
+        tk.Button(boutons_detail, text="📋 Copier", command=copier_detail, bg=LIGHT_BLUE, fg=BLUE, activebackground=LIGHT_BLUE, relief="flat", cursor="hand2").pack(side="left")
+        tk.Button(boutons_detail, text="Fermer", command=detail.destroy, bg=BG, fg=TEXT, relief="flat", cursor="hand2").pack(side="right")
+
     def preparer_syntheses():
         if not messagebox.askyesno(
             "Préparer les synthèses",
@@ -4843,7 +4907,8 @@ def ouvrir_maintenance():
     boutons.pack(fill="x", padx=20, pady=(0, 16))
     tk.Button(boutons, text="⟳ Rafraîchir", command=rafraichir, bg=LIGHT_GREEN, fg=GREEN, activebackground=LIGHT_GREEN, relief="flat", cursor="hand2").pack(side="left", padx=(0, 8))
     tk.Button(boutons, text="📋 Copier", command=copier, bg=LIGHT_BLUE, fg=BLUE, activebackground=LIGHT_BLUE, relief="flat", cursor="hand2").pack(side="left", padx=(0, 8))
-    tk.Button(boutons, text="Préparer les synthèses", command=preparer_syntheses, bg=LIGHT_ORANGE, fg=ORANGE, activebackground=LIGHT_ORANGE, relief="flat", cursor="hand2").pack(side="left")
+    tk.Button(boutons, text="Préparer les synthèses", command=preparer_syntheses, bg=LIGHT_ORANGE, fg=ORANGE, activebackground=LIGHT_ORANGE, relief="flat", cursor="hand2").pack(side="left", padx=(0, 8))
+    tk.Button(boutons, text="Détail synthèse", command=ouvrir_detail_synthese, bg=BG, fg=TEXT, activebackground=BG, relief="flat", cursor="hand2").pack(side="left")
     tk.Button(boutons, text="Fermer", command=fenetre.destroy, bg=BG, fg=TEXT, relief="flat", cursor="hand2").pack(side="right")
 
 def ouvrir_parametres():
