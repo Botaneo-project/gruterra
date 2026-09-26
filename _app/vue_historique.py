@@ -325,6 +325,107 @@ def formater_statistique_jour(nom, stats, unite):
     )
 
 
+def formater_date_courte(date):
+    if not date:
+        return "date inconnue"
+    return date.strftime("%d/%m/%Y %H:%M")
+
+
+def mesurer_cycle_arrosage(arrosage, prochain_arrosage, mesures):
+    date_arrosage = date_locale_depuis_iso(arrosage[2])
+    if not date_arrosage:
+        return None
+    date_fin = date_locale_depuis_iso(prochain_arrosage[2]) if prochain_arrosage else None
+    mesures_cycle = []
+    for mesure in mesures:
+        date_mesure = date_locale_depuis_iso(mesure[1])
+        if not date_mesure or date_mesure < date_arrosage:
+            continue
+        if date_fin and date_mesure >= date_fin:
+            continue
+        mesures_cycle.append(mesure)
+    mesures_cycle.sort(key=lambda mesure: mesure[1] or "")
+    if not mesures_cycle:
+        return {
+            "date": date_arrosage,
+            "fin": date_fin,
+            "arrosage": arrosage,
+            "mesures": [],
+            "texte": f"{formater_date_courte(date_arrosage)} · aucune mesure après arrosage",
+        }
+
+    humidites = [(date_locale_depuis_iso(m[1]), float(m[3])) for m in mesures_cycle if m[3] is not None]
+    humidites = [(date, valeur) for date, valeur in humidites if date is not None and math.isfinite(valeur)]
+    if not humidites:
+        return {
+            "date": date_arrosage,
+            "fin": date_fin,
+            "arrosage": arrosage,
+            "mesures": mesures_cycle,
+            "texte": f"{formater_date_courte(date_arrosage)} · {len(mesures_cycle)} mesure(s), humidité inexploitable",
+        }
+
+    premiere_date, premiere_humidite = humidites[0]
+    pic_date, pic_humidite = max(humidites, key=lambda item: item[1])
+    derniere_date, derniere_humidite = humidites[-1]
+    duree_heures = max((derniere_date - premiere_date).total_seconds() / 3600, 0)
+    sechage = None
+    if derniere_date > pic_date and pic_humidite != derniere_humidite:
+        heures_depuis_pic = (derniere_date - pic_date).total_seconds() / 3600
+        if heures_depuis_pic > 0:
+            sechage = (derniere_humidite - pic_humidite) / heures_depuis_pic * 24
+    quantite = f"{formater_nombre(arrosage[3])} ml" if arrosage[3] is not None else "quantité non notée"
+    texte = (
+        f"{formater_date_courte(date_arrosage)} · {quantite} · {len(mesures_cycle)} mesure(s) · "
+        f"humidité {formater_nombre(premiere_humidite)} → pic {formater_nombre(pic_humidite)} → fin {formater_nombre(derniere_humidite)} %"
+    )
+    if sechage is not None:
+        texte += f" · séchage {formater_nombre(sechage)} point/jour après pic"
+    else:
+        texte += " · séchage non calculable"
+    if date_fin:
+        texte += f" · prochain arrosage {formater_date_courte(date_fin)}"
+    elif duree_heures:
+        texte += f" · suivi {formater_nombre(duree_heures / 24)} jour(s)"
+    return {
+        "date": date_arrosage,
+        "fin": date_fin,
+        "arrosage": arrosage,
+        "mesures": mesures_cycle,
+        "texte": texte,
+        "sechage": sechage,
+        "premiere_humidite": premiere_humidite,
+        "pic_humidite": pic_humidite,
+        "derniere_humidite": derniere_humidite,
+    }
+
+
+def resumer_cycles_arrosage(mesures, arrosages, limite=6):
+    arrosages_dates = []
+    for arrosage in arrosages:
+        date_arrosage = date_locale_depuis_iso(arrosage[2])
+        if date_arrosage:
+            arrosages_dates.append((date_arrosage, arrosage))
+    arrosages_dates.sort(key=lambda item: item[0])
+    cycles = []
+    for index, (_date, arrosage) in enumerate(arrosages_dates):
+        prochain = arrosages_dates[index + 1][1] if index + 1 < len(arrosages_dates) else None
+        cycle = mesurer_cycle_arrosage(arrosage, prochain, mesures)
+        if cycle:
+            cycles.append(cycle)
+    cycles = cycles[-limite:]
+    if not cycles:
+        return "Cycles d’arrosage : aucun arrosage exploitable avec les données actuelles."
+    lignes = ["Cycles d’arrosage détectés", ""]
+    for cycle in reversed(cycles):
+        lignes.append("- " + cycle["texte"])
+    lignes.extend([
+        "",
+        "Lecture prudente : le Mi Flora mesure une zone du pot. La vitesse de séchage décrit la zone du capteur, pas forcément toute la motte.",
+    ])
+    return "\n".join(lignes)
+
+
 def resume_moyennes_jour(mesures, jour, arrosages=None):
     if not jour:
         return "Journée : aucune date sélectionnée."
@@ -931,6 +1032,36 @@ def ouvrir_historique(parent, plante_id):
                                anchor="e", fill=couleur_secondaire,
                                font=("Segoe UI", 8))
 
+    def ouvrir_cycles_arrosage():
+        try:
+            toutes_mesures = database.get_mesures(plante_id=plante_id, limite=-1)
+        except Exception:
+            toutes_mesures = []
+        try:
+            tous_arrosages = database.get_arrosages_plante(plante_id, limite=200)
+        except Exception:
+            tous_arrosages = []
+        texte = resumer_cycles_arrosage(toutes_mesures, tous_arrosages)
+        detail = tk.Toplevel(fenetre)
+        detail.title("Cycles d’arrosage")
+        detail.configure(bg=couleurs["CARD"])
+        detail.transient(fenetre)
+        detail.geometry("760x420+80+80")
+        tk.Label(detail, text="💧 Cycles d’arrosage", bg=couleurs["CARD"], fg=couleurs["WATER"], font=("Segoe UI", 16, "bold")).pack(anchor="w", padx=18, pady=(16, 4))
+        zone = tk.Text(detail, wrap="word", bg=couleurs["BG"], fg=couleurs["TEXT"], relief="flat", font=("Segoe UI", 10))
+        zone.pack(fill="both", expand=True, padx=18, pady=(8, 12))
+        zone.insert("1.0", texte)
+        zone.configure(state="disabled")
+        boutons = tk.Frame(detail, bg=couleurs["CARD"])
+        boutons.pack(fill="x", padx=18, pady=(0, 14))
+        def copier_cycles():
+            detail.clipboard_clear()
+            detail.clipboard_append(texte)
+            bilan.set(f"{bilan.get()} · cycles copiés")
+        ttk.Button(boutons, text="Copier", command=copier_cycles).pack(side="left")
+        ttk.Button(boutons, text="Fermer", command=detail.destroy).pack(side="right")
+
+
     def copier_journee():
         nom_plante = plante[1] if plante else "Plante"
         texte_jour = bilan_jour_courant.get("texte") or ""
@@ -1131,6 +1262,7 @@ def ouvrir_historique(parent, plante_id):
 
     ttk.Button(barre, text="Ordre normal", command=remettre_ordre_normal).pack(side="right", padx=(8, 0))
     ttk.Button(barre, text="Copier résumé", command=copier_resume_historique).pack(side="right", padx=(8, 0))
+    ttk.Button(barre, text="Cycles", command=ouvrir_cycles_arrosage).pack(side="right", padx=(8, 0))
     ttk.Button(barre, text="Copier journée", command=copier_journee).pack(side="right", padx=(8, 0))
     ttk.Button(barre, text="Actualiser", command=actualiser).pack(side="right")
     choix_periode.bind("<<ComboboxSelected>>", actualiser)
