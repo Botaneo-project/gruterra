@@ -4935,8 +4935,36 @@ def format_duree_courte(secondes):
     return f"{minutes} min"
 
 
-def lignes_sante_raspberry():
-    etat = raspberry_sync.health_status()
+def resume_sante_raspberry(etat=None):
+    etat = etat if etat is not None else raspberry_sync.health_status()
+    if not etat.get("ok"):
+        return {
+            "etat": etat,
+            "texte": f"Raspberry indisponible · {etat.get('message', 'aucun détail')}",
+            "couleur": RED,
+            "fond": LIGHT_RED,
+        }
+    disque = etat.get("disk") or {}
+    memoire = etat.get("memory") or {}
+    statut = etat.get("status") or "ok"
+    alertes = etat.get("warnings") or []
+    libelle = "OK" if statut == "ok" and not alertes else "à surveiller"
+    texte = (
+        f"Raspberry {libelle} · {etat.get('hostname', 'Raspberry')} · "
+        f"{etat.get('temperature_c', 'n/d')} °C · "
+        f"disque libre {disque.get('free_percent', 'n/d')} % · "
+        f"mémoire {memoire.get('available_percent', 'n/d')} %"
+    )
+    return {
+        "etat": etat,
+        "texte": texte,
+        "couleur": GREEN if libelle == "OK" else ORANGE,
+        "fond": LIGHT_GREEN if libelle == "OK" else LIGHT_ORANGE,
+    }
+
+
+def lignes_sante_raspberry(etat=None):
+    etat = etat if etat is not None else raspberry_sync.health_status()
     lignes = ["Raspberry :"]
     if not etat.get("ok"):
         lignes.append(f"- Indisponible ou désactivé : {etat.get('message', 'aucun détail')}")
@@ -4968,7 +4996,7 @@ def lignes_sante_raspberry():
     return lignes
 
 
-def texte_sante_systeme():
+def texte_sante_systeme(etat_raspberry=None):
     diagnostic = database.get_diagnostic_global()
     base = diagnostic["base"]
     syntheses = diagnostic["syntheses"]
@@ -4982,7 +5010,7 @@ def texte_sante_systeme():
         f"Compactage conseillé : {'oui' if base.get('compactage_conseille') else 'non'}",
         "",
     ]
-    lignes.extend(lignes_sante_raspberry())
+    lignes.extend(lignes_sante_raspberry(etat_raspberry))
     lignes.extend(["", "Capteurs :"])
     for capteur in diagnostic["capteurs"]:
         lignes.append(
@@ -5002,6 +5030,20 @@ def ouvrir_sante_systeme():
 
     tk.Label(fenetre, text="🩺 Santé du système", font=("Segoe UI", 18, "bold"), fg=GREEN, bg=CARD).pack(anchor="w", padx=20, pady=(18, 4))
     tk.Label(fenetre, text="Vue globale des mesures, capteurs, Raspberry passif et base locale", font=("Segoe UI", 10), fg=SECONDARY, bg=CARD).pack(anchor="w", padx=20, pady=(0, 12))
+
+    resume_raspberry_var = tk.StringVar(value="Raspberry : contrôle en cours…")
+    resume_raspberry = tk.Label(
+        fenetre,
+        textvariable=resume_raspberry_var,
+        font=("Segoe UI", 10, "bold"),
+        fg=GREEN,
+        bg=LIGHT_GREEN,
+        anchor="w",
+        padx=12,
+        pady=8,
+        relief="flat",
+    )
+    resume_raspberry.pack(fill="x", padx=20, pady=(0, 12))
 
     zone = tk.Text(fenetre, width=104, height=17, wrap="word", bg=BG, fg=TEXT, relief="flat", font=("Segoe UI", 9))
     zone.pack(fill="both", expand=True, padx=20, pady=(0, 12))
@@ -5026,9 +5068,12 @@ def ouvrir_sante_systeme():
     tableau_capteurs.configure(yscrollcommand=scrollbar_capteurs.set)
 
     def rafraichir():
+        resume = resume_sante_raspberry()
+        resume_raspberry_var.set(resume["texte"])
+        resume_raspberry.configure(fg=resume["couleur"], bg=resume["fond"])
         zone.configure(state="normal")
         zone.delete("1.0", "end")
-        zone.insert("1.0", texte_sante_systeme())
+        zone.insert("1.0", texte_sante_systeme(resume["etat"]))
         zone.configure(state="disabled")
         for item in tableau_capteurs.get_children():
             tableau_capteurs.delete(item)
