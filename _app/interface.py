@@ -4727,9 +4727,11 @@ def texte_maintenance():
     except Exception:
         nombre_mesures = "indisponible"
     try:
-        syntheses = database.lister_syntheses_journalieres(limite=1)
-        syntheses_info = "présente" if syntheses else "aucune synthèse calculée"
+        syntheses = database.lister_syntheses_journalieres(limite=8)
+        toutes_syntheses = database.lister_syntheses_journalieres(limite=100000)
+        syntheses_info = f"{len(toutes_syntheses)} synthèse(s) calculée(s)" if toutes_syntheses else "aucune synthèse calculée"
     except Exception:
+        syntheses = []
         syntheses_info = "table non initialisée"
 
     etat = "compactage à envisager" if diagnostic.get("compactage_conseille") else "aucune action nécessaire"
@@ -4751,6 +4753,16 @@ def texte_maintenance():
         "",
         "Prochaine étape future : afficher et valider les synthèses avant d'alléger les anciennes mesures.",
     ]
+    if syntheses:
+        lignes.extend([
+            "",
+            "Dernières synthèses préparées :",
+        ])
+        for row in syntheses:
+            lignes.append(
+                f"- {row[2]} · capteur {row[1]} · {row[5]} mesure(s) · "
+                f"humidité {row[9]}–{row[10]} % · lumière max {row[13]} lux · sources {row[18]}"
+            )
     return "\n".join(lignes)
 
 
