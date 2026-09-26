@@ -305,3 +305,12 @@ Ce fichier sert à garder une trace claire des idées et des prochaines étapes.
 - [x] Afficher le nom de plante et le capteur dans les synthèses de Maintenance.
 - [ ] Valider visuellement les synthèses avant toute suppression de mesures anciennes.
 - [ ] Définir une politique de conservation : mesures brutes récentes, données autour des arrosages, événements importants et synthèses anciennes.
+
+
+## Santé du système
+
+- [x] Ajouter un diagnostic global local : base, synthèses, mesures par capteur.
+- [x] Ajouter une fenêtre Santé système avec résumé copiable.
+- [x] Afficher un tableau des capteurs avec dernière mesure, mesures passives et historiques.
+- [ ] Ajouter plus tard un état visuel clair : OK, à surveiller, action conseillée.
+- [ ] Ajouter plus tard les erreurs récentes de synchronisation si elles sont historisées.

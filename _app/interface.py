@@ -4918,6 +4918,94 @@ def ouvrir_maintenance():
     tk.Button(boutons, text="Détail synthèse", command=ouvrir_detail_synthese, bg=BG, fg=TEXT, activebackground=BG, relief="flat", cursor="hand2").pack(side="left")
     tk.Button(boutons, text="Fermer", command=fenetre.destroy, bg=BG, fg=TEXT, relief="flat", cursor="hand2").pack(side="right")
 
+def texte_sante_systeme():
+    diagnostic = database.get_diagnostic_global()
+    base = diagnostic["base"]
+    syntheses = diagnostic["syntheses"]
+    lignes = [
+        "Santé du système Botaneo",
+        "",
+        f"Base : {database.DB_PATH}",
+        f"Taille base : {format_octets(base.get('taille_octets'))} / seuil {format_octets(base.get('seuil_octets'))}",
+        f"Mesures brutes : {diagnostic['nombre_mesures']}",
+        f"Synthèses : {syntheses['nombre']} ({syntheses['premier_jour']} → {syntheses['dernier_jour']})",
+        f"Compactage conseillé : {'oui' if base.get('compactage_conseille') else 'non'}",
+        "",
+        "Capteurs :",
+    ]
+    for capteur in diagnostic["capteurs"]:
+        lignes.append(
+            f"- {capteur[3] or 'Sans plante'} · {capteur[1] or 'Capteur'} · "
+            f"{capteur[4]} mesure(s), dernière {capteur[5] or 'jamais'}, "
+            f"passif {capteur[6] or 0}, historique {capteur[8] or 0}"
+        )
+    return "\n".join(lignes)
+
+
+def ouvrir_sante_systeme():
+    fenetre = tk.Toplevel(root)
+    fenetre.title("Santé du système Botaneo")
+    fenetre.configure(bg=CARD)
+    fenetre.resizable(False, False)
+    fenetre.transient(root)
+
+    tk.Label(fenetre, text="🩺 Santé du système", font=("Segoe UI", 18, "bold"), fg=GREEN, bg=CARD).pack(anchor="w", padx=20, pady=(18, 4))
+    tk.Label(fenetre, text="Vue globale des mesures, capteurs, Raspberry passif et base locale", font=("Segoe UI", 10), fg=SECONDARY, bg=CARD).pack(anchor="w", padx=20, pady=(0, 12))
+
+    zone = tk.Text(fenetre, width=96, height=10, wrap="word", bg=BG, fg=TEXT, relief="flat", font=("Segoe UI", 9))
+    zone.pack(fill="both", expand=True, padx=20, pady=(0, 12))
+
+    tableau_frame = tk.Frame(fenetre, bg=CARD)
+    tableau_frame.pack(fill="both", expand=False, padx=20, pady=(0, 12))
+    colonnes = ("plante", "capteur", "mesures", "derniere", "passif", "historique")
+    tableau_capteurs = ttk.Treeview(tableau_frame, columns=colonnes, show="headings", height=7)
+    for colonne, titre, largeur, ancre in [
+        ("plante", "Plante", 140, "w"),
+        ("capteur", "Capteur", 130, "w"),
+        ("mesures", "Mesures", 80, "center"),
+        ("derniere", "Dernière mesure", 150, "center"),
+        ("passif", "Passif", 70, "center"),
+        ("historique", "Historique", 80, "center"),
+    ]:
+        tableau_capteurs.heading(colonne, text=titre)
+        tableau_capteurs.column(colonne, width=largeur, anchor=ancre)
+    tableau_capteurs.pack(side="left", fill="both", expand=True)
+    scrollbar_capteurs = ttk.Scrollbar(tableau_frame, orient="vertical", command=tableau_capteurs.yview)
+    scrollbar_capteurs.pack(side="right", fill="y")
+    tableau_capteurs.configure(yscrollcommand=scrollbar_capteurs.set)
+
+    def rafraichir():
+        zone.configure(state="normal")
+        zone.delete("1.0", "end")
+        zone.insert("1.0", texte_sante_systeme())
+        zone.configure(state="disabled")
+        for item in tableau_capteurs.get_children():
+            tableau_capteurs.delete(item)
+        diagnostic = database.get_diagnostic_global()
+        for capteur in diagnostic["capteurs"]:
+            tableau_capteurs.insert("", "end", values=(
+                capteur[3] or "Sans plante",
+                capteur[1] or f"Capteur {capteur[0]}",
+                capteur[4] or 0,
+                capteur[5] or "jamais",
+                capteur[6] or 0,
+                capteur[8] or 0,
+            ))
+
+    def copier():
+        texte = texte_sante_systeme()
+        root.clipboard_clear()
+        root.clipboard_append(texte)
+        status_var.set("Santé du système copiée dans le presse-papiers")
+
+    rafraichir()
+
+    boutons = tk.Frame(fenetre, bg=CARD)
+    boutons.pack(fill="x", padx=20, pady=(0, 16))
+    tk.Button(boutons, text="⟳ Rafraîchir", command=rafraichir, bg=LIGHT_GREEN, fg=GREEN, activebackground=LIGHT_GREEN, relief="flat", cursor="hand2").pack(side="left", padx=(0, 8))
+    tk.Button(boutons, text="📋 Copier", command=copier, bg=LIGHT_BLUE, fg=BLUE, activebackground=LIGHT_BLUE, relief="flat", cursor="hand2").pack(side="left")
+    tk.Button(boutons, text="Fermer", command=fenetre.destroy, bg=BG, fg=TEXT, relief="flat", cursor="hand2").pack(side="right")
+
 def ouvrir_parametres():
     fenetre = tk.Toplevel(root)
     fenetre.title("Paramètres Botaneo")
@@ -6649,6 +6737,19 @@ about_button = tk.Button(
 )
 about_button.pack(side="right", padx=(8, 0))
 
+health_button = tk.Button(
+    toolbar,
+    text="🩺 Santé système",
+    command=ouvrir_sante_systeme,
+    font=("Segoe UI", 9, "bold"),
+    bg=CARD,
+    fg=TEXT,
+    activebackground=CARD,
+    activeforeground=TEXT,
+    relief="flat",
+    cursor="hand2"
+)
+health_button.pack(side="right", padx=(8, 0))
 maintenance_button = tk.Button(
     toolbar,
     text="🧰 Maintenance",
@@ -6942,3 +7043,4 @@ if os.environ.get("BOTANEO_DEMO") != "1":
     root.after(5000, verifier_sync_auto)
 
 root.mainloop()
+

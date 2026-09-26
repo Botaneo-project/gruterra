@@ -1688,3 +1688,61 @@ def compactage_mesures_anciennes_non_implemente():
     raise RuntimeError(
         "Compactage destructeur non implémenté : créer et valider les synthèses avant toute suppression."
     )
+
+# ============================================================
+# DIAGNOSTIC GLOBAL / SANTE SYSTEME
+# ============================================================
+
+
+def get_diagnostic_mesures_par_capteur():
+    """Retourne un résumé des mesures par capteur pour la santé système."""
+    conn = get_connection()
+    rows = conn.execute("""
+        SELECT
+            c.id,
+            c.nom,
+            c.adresse_ble,
+            p.nom AS plante_nom,
+            COUNT(m.id) AS nombre_mesures,
+            MAX(m.date_heure) AS derniere_mesure,
+            SUM(CASE WHEN m.donnees_brutes LIKE '%passive_mibeacon%' THEN 1 ELSE 0 END) AS mesures_passives,
+            MAX(CASE WHEN m.donnees_brutes LIKE '%passive_mibeacon%' THEN m.date_heure ELSE NULL END) AS derniere_passive,
+            SUM(CASE WHEN length(trim(COALESCE(m.donnees_brutes, ''))) = 32 THEN 1 ELSE 0 END) AS mesures_historiques,
+            MAX(CASE WHEN length(trim(COALESCE(m.donnees_brutes, ''))) = 32 THEN m.date_heure ELSE NULL END) AS derniere_historique
+        FROM capteurs c
+        LEFT JOIN plantes p ON p.id = c.plante_id
+        LEFT JOIN mesures m ON m.capteur_id = c.id
+        GROUP BY c.id, c.nom, c.adresse_ble, p.nom
+        ORDER BY c.id
+    """).fetchall()
+    conn.close()
+    return rows
+
+
+def get_diagnostic_syntheses():
+    """Retourne un résumé compact de l'état des synthèses journalières."""
+    initialiser_syntheses_mesures_journalieres()
+    conn = get_connection()
+    row = conn.execute("""
+        SELECT COUNT(*), MIN(jour), MAX(jour)
+        FROM syntheses_mesures_journalieres
+    """).fetchone()
+    conn.close()
+    return {
+        "nombre": row[0] or 0,
+        "premier_jour": row[1],
+        "dernier_jour": row[2],
+    }
+
+
+def get_diagnostic_global():
+    """Construit un diagnostic global local, sans connexion réseau ni action."""
+    compactage = diagnostic_compactage_mesures()
+    syntheses = get_diagnostic_syntheses()
+    capteurs = get_diagnostic_mesures_par_capteur()
+    return {
+        "base": compactage,
+        "nombre_mesures": get_nombre_mesures(),
+        "syntheses": syntheses,
+        "capteurs": capteurs,
+    }
