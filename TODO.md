@@ -48,6 +48,7 @@ Ce fichier sert à garder une trace claire des idées et des prochaines étapes.
 - Écran historique enrichi avec résumé, tendance, repères post-arrosage et qualité des données.
 - Historique : sélection d’une journée avec moyennes, minimums/maximums et pic lumineux du jour.
 - Fenêtre `À propos` ajoutée : version locale, révision Git, chemins utiles, état Raspberry et rappel sécurité.
+- Fenêtre `Santé système` enrichie avec un diagnostic Raspberry : température, disque libre, mémoire, sauvegardes locales, écriture et erreurs disque récentes.
 - Document de reprise agent créé : `CONTEXTE_AGENT_BOTANEO.md` avec architecture, Raspberry, secrets, process GitHub, Plante de Jade et priorités.
 
 ## Prochaine suite recommandée

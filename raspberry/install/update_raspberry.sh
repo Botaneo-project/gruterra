@@ -18,7 +18,7 @@ download() {
 
 mkdir -p "$COLLECTOR_DIR" "$SYSTEMD_USER_DIR"
 
-for file in sync_export.py backup_daily.py backup_manifest.py request_collect.py; do
+for file in sync_export.py backup_daily.py backup_manifest.py request_collect.py health_status.py; do
   echo "Mise à jour $file"
   download "raspberry/$file" "$COLLECTOR_DIR/$file"
   chmod 700 "$COLLECTOR_DIR/$file"

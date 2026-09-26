@@ -247,3 +247,13 @@ def replay_recent_history(config=None, sender=transport, db_path=None, limit=500
         except Exception as error:
             message = str(error) if isinstance(error, (ValueError, ConnectionError, RuntimeError)) else 'Relecture historique Raspberry interrompue.'
             return {'ok': False, 'message': message, 'mode': 'history_recent'}
+def health_status(config=None, sender=transport):
+    """Retourne le diagnostic santé Raspberry si la configuration est disponible."""
+    from suivi_raspberry import load_config
+    config = config or load_config(config_path())
+    if config.get('away') or not config.get('enabled'):
+        return {'ok': False, 'message': 'Raspberry suspendu dans les réglages.'}
+    try:
+        return sender(config, 'health_status')
+    except Exception as error:
+        return {'ok': False, 'message': str(error)}

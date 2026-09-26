@@ -95,6 +95,9 @@ if __name__ == '__main__':
         elif sys.argv[1:] == ['export_history_recent']:
             payload_text = sys.stdin.read(250001)
             result = export_history_recent(db, device, json.loads(payload_text) if payload_text.strip() else {})
+        elif sys.argv[1:] == ['health_status']:
+            import health_status
+            result = health_status.main_payload()
         elif sys.argv[1:] == ['collect_now']:
             result = collect_now(base, json.loads(sys.stdin.read(250001)))
         elif sys.argv[1:] == ['ack']:

@@ -4918,6 +4918,56 @@ def ouvrir_maintenance():
     tk.Button(boutons, text="Détail synthèse", command=ouvrir_detail_synthese, bg=BG, fg=TEXT, activebackground=BG, relief="flat", cursor="hand2").pack(side="left")
     tk.Button(boutons, text="Fermer", command=fenetre.destroy, bg=BG, fg=TEXT, relief="flat", cursor="hand2").pack(side="right")
 
+def format_duree_courte(secondes):
+    if secondes is None:
+        return "inconnue"
+    try:
+        secondes = int(secondes)
+    except (TypeError, ValueError):
+        return "inconnue"
+    jours, reste = divmod(max(secondes, 0), 86400)
+    heures, reste = divmod(reste, 3600)
+    minutes = reste // 60
+    if jours:
+        return f"{jours} j {heures} h"
+    if heures:
+        return f"{heures} h {minutes} min"
+    return f"{minutes} min"
+
+
+def lignes_sante_raspberry():
+    etat = raspberry_sync.health_status()
+    lignes = ["Raspberry :"]
+    if not etat.get("ok"):
+        lignes.append(f"- Indisponible ou désactivé : {etat.get('message', 'aucun détail')}")
+        return lignes
+
+    disque = etat.get("disk") or {}
+    memoire = etat.get("memory") or {}
+    charge = etat.get("load_average") or {}
+    statut = etat.get("status") or "ok"
+    libelle_statut = "OK" if statut == "ok" else "à surveiller"
+    lignes.extend([
+        f"- État : {libelle_statut} · {etat.get('hostname', 'Raspberry')}",
+        f"- Température : {etat.get('temperature_c', 'n/d')} °C",
+        f"- Disque libre : {disque.get('free_percent', 'n/d')} % ({format_octets(disque.get('free_bytes'))} libres)",
+        f"- Mémoire disponible : {memoire.get('available_percent', 'n/d')} % ({format_octets(memoire.get('available_bytes'))})",
+        f"- Charge : {charge.get('1m', 'n/d')} / {charge.get('5m', 'n/d')} / {charge.get('15m', 'n/d')}",
+        f"- Dossier Botaneo inscriptible : {'oui' if etat.get('writable') else 'non'}",
+        f"- Sauvegardes locales Raspberry : {etat.get('backup_files', 0)} fichier(s)",
+        f"- Fonctionne depuis : {format_duree_courte(etat.get('uptime_seconds'))}",
+    ])
+    alertes = etat.get("warnings") or []
+    erreurs_disque = etat.get("disk_errors") or []
+    if alertes:
+        lignes.append("- Alertes : " + "; ".join(str(alerte) for alerte in alertes))
+    if erreurs_disque:
+        lignes.append(f"- Erreurs disque récentes détectées : {len(erreurs_disque)} ligne(s)")
+    else:
+        lignes.append("- Erreurs disque récentes : aucune détectée")
+    return lignes
+
+
 def texte_sante_systeme():
     diagnostic = database.get_diagnostic_global()
     base = diagnostic["base"]
@@ -4931,8 +4981,9 @@ def texte_sante_systeme():
         f"Synthèses : {syntheses['nombre']} ({syntheses['premier_jour']} → {syntheses['dernier_jour']})",
         f"Compactage conseillé : {'oui' if base.get('compactage_conseille') else 'non'}",
         "",
-        "Capteurs :",
     ]
+    lignes.extend(lignes_sante_raspberry())
+    lignes.extend(["", "Capteurs :"])
     for capteur in diagnostic["capteurs"]:
         lignes.append(
             f"- {capteur[3] or 'Sans plante'} · {capteur[1] or 'Capteur'} · "
@@ -4946,13 +4997,13 @@ def ouvrir_sante_systeme():
     fenetre = tk.Toplevel(root)
     fenetre.title("Santé du système Botaneo")
     fenetre.configure(bg=CARD)
-    fenetre.resizable(False, False)
+    fenetre.resizable(True, True)
     fenetre.transient(root)
 
     tk.Label(fenetre, text="🩺 Santé du système", font=("Segoe UI", 18, "bold"), fg=GREEN, bg=CARD).pack(anchor="w", padx=20, pady=(18, 4))
     tk.Label(fenetre, text="Vue globale des mesures, capteurs, Raspberry passif et base locale", font=("Segoe UI", 10), fg=SECONDARY, bg=CARD).pack(anchor="w", padx=20, pady=(0, 12))
 
-    zone = tk.Text(fenetre, width=96, height=10, wrap="word", bg=BG, fg=TEXT, relief="flat", font=("Segoe UI", 9))
+    zone = tk.Text(fenetre, width=104, height=17, wrap="word", bg=BG, fg=TEXT, relief="flat", font=("Segoe UI", 9))
     zone.pack(fill="both", expand=True, padx=20, pady=(0, 12))
 
     tableau_frame = tk.Frame(fenetre, bg=CARD)
@@ -7043,4 +7094,3 @@ if os.environ.get("BOTANEO_DEMO") != "1":
     root.after(5000, verifier_sync_auto)
 
 root.mainloop()
-
