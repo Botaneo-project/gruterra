@@ -298,6 +298,6 @@ Ce fichier sert à garder une trace claire des idées et des prochaines étapes.
 - [x] Calculer min/max/moyenne par jour pour température, humidité, luminosité et conductivité.
 - [x] Conserver le nombre de mesures, première/dernière mesure et les sources détectées.
 - [x] Ajouter un garde-fou qui bloque tout compactage destructeur.
-- [ ] Ajouter plus tard une interface de maintenance indiquant la taille de la base et l'état des synthèses.
+- [x] Ajouter une fenêtre Maintenance indiquant la taille de la base, le seuil 5 Go, le nombre de mesures et l'état des synthèses.
 - [ ] Valider visuellement les synthèses avant toute suppression de mesures anciennes.
 - [ ] Définir une politique de conservation : mesures brutes récentes, données autour des arrosages, événements importants et synthèses anciennes.
