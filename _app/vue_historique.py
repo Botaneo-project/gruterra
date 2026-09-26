@@ -416,11 +416,41 @@ def calculer_cycles_arrosage(mesures, arrosages, limite=6):
     return cycles[-limite:]
 
 
+def analyser_cycles_arrosage(cycles):
+    cycles_sechage = [cycle for cycle in cycles if cycle.get("sechage") is not None]
+    if len(cycles_sechage) < 2:
+        return "Analyse cycles : comparaison encore limitée, moins de deux cycles avec vitesse de séchage calculable."
+    precedent = cycles_sechage[-2]
+    recent = cycles_sechage[-1]
+    sechage_precedent = precedent["sechage"]
+    sechage_recent = recent["sechage"]
+    difference = sechage_recent - sechage_precedent
+    if abs(difference) < 0.4:
+        tendance = "vitesse de séchage proche du cycle précédent"
+    elif difference < 0:
+        tendance = "séchage plus rapide que le cycle précédent"
+    else:
+        tendance = "séchage plus lent que le cycle précédent"
+    reponse_recent = None
+    if recent.get("pic_humidite") is not None and recent.get("premiere_humidite") is not None:
+        reponse_recent = recent["pic_humidite"] - recent["premiere_humidite"]
+    reponse_precedent = None
+    if precedent.get("pic_humidite") is not None and precedent.get("premiere_humidite") is not None:
+        reponse_precedent = precedent["pic_humidite"] - precedent["premiere_humidite"]
+    phrase_reponse = ""
+    if reponse_recent is not None and reponse_precedent is not None:
+        phrase_reponse = f" · hausse observée récente +{formater_nombre(reponse_recent)} pt, précédente +{formater_nombre(reponse_precedent)} pt"
+    return (
+        f"Analyse cycles : {tendance} "
+        f"({formater_nombre(sechage_recent)} contre {formater_nombre(sechage_precedent)} pt/j){phrase_reponse}."
+    )
+
+
 def resumer_cycles_arrosage(mesures, arrosages, limite=6):
     cycles = calculer_cycles_arrosage(mesures, arrosages, limite=limite)
     if not cycles:
         return "Cycles d’arrosage : aucun arrosage exploitable avec les données actuelles."
-    lignes = ["Cycles d’arrosage détectés", ""]
+    lignes = ["Cycles d’arrosage détectés", "", analyser_cycles_arrosage(cycles), ""]
     for cycle in reversed(cycles):
         lignes.append("- " + cycle["texte"])
     lignes.extend([
@@ -1053,7 +1083,9 @@ def ouvrir_historique(parent, plante_id):
         detail.transient(fenetre)
         detail.geometry("920x500+80+80")
         tk.Label(detail, text="💧 Cycles d’arrosage", bg=couleurs["CARD"], fg=couleurs["WATER"], font=("Segoe UI", 16, "bold")).pack(anchor="w", padx=18, pady=(16, 4))
-        tk.Label(detail, text="Comparaison des réponses à l’arrosage, calculée sur la zone mesurée par le Mi Flora.", bg=couleurs["CARD"], fg=couleurs["SECONDARY"], font=("Segoe UI", 9)).pack(anchor="w", padx=18, pady=(0, 10))
+        tk.Label(detail, text="Comparaison des réponses à l’arrosage, calculée sur la zone mesurée par le Mi Flora.", bg=couleurs["CARD"], fg=couleurs["SECONDARY"], font=("Segoe UI", 9)).pack(anchor="w", padx=18, pady=(0, 6))
+        analyse_cycles_var = tk.StringVar(value=analyser_cycles_arrosage(cycles))
+        tk.Label(detail, textvariable=analyse_cycles_var, bg=couleurs["LIGHT_BLUE"], fg=couleurs["BLUE"], font=("Segoe UI", 9, "bold"), anchor="w", justify="left", wraplength=860, padx=10, pady=7).pack(fill="x", padx=18, pady=(0, 10))
 
         colonnes_cycles = ("date", "quantite", "mesures", "depart", "pic", "fin", "sechage", "suivi")
         tableau = ttk.Treeview(detail, columns=colonnes_cycles, show="headings", height=6)
