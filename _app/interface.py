@@ -4560,6 +4560,7 @@ def synchronisation_terminee(resultat_miflora, resultats_meteo):
         actualiser_affichage_sync_auto()
 
 
+
 # ============================================================
 # PANNEAU SYNCHRONISATION
 # ============================================================
@@ -4703,6 +4704,88 @@ def ouvrir_a_propos():
         cursor="hand2"
     ).pack(side="right")
 
+
+def format_octets(nombre):
+    try:
+        valeur = float(nombre)
+    except (TypeError, ValueError):
+        valeur = 0
+    unites = ["o", "Ko", "Mo", "Go", "To"]
+    index = 0
+    while valeur >= 1024 and index < len(unites) - 1:
+        valeur /= 1024
+        index += 1
+    if index == 0:
+        return f"{int(valeur)} {unites[index]}"
+    return f"{valeur:.2f} {unites[index]}"
+
+
+def texte_maintenance():
+    diagnostic = database.diagnostic_compactage_mesures()
+    try:
+        nombre_mesures = database.get_nombre_mesures()
+    except Exception:
+        nombre_mesures = "indisponible"
+    try:
+        syntheses = database.lister_syntheses_journalieres(limite=1)
+        syntheses_info = "présente" if syntheses else "aucune synthèse calculée"
+    except Exception:
+        syntheses_info = "table non initialisée"
+
+    etat = "compactage à envisager" if diagnostic.get("compactage_conseille") else "aucune action nécessaire"
+    lignes = [
+        "Maintenance Botaneo",
+        "",
+        f"Base active : {database.DB_PATH}",
+        f"Taille actuelle : {format_octets(diagnostic.get('taille_octets'))}",
+        f"Seuil de compactage conseillé : {format_octets(diagnostic.get('seuil_octets'))}",
+        f"État : {etat}",
+        f"Nombre de mesures brutes : {nombre_mesures}",
+        f"Synthèses journalières : {syntheses_info}",
+        "",
+        "Règles actuelles :",
+        "- aucune suppression automatique de mesures brutes",
+        "- aucune compaction automatique",
+        "- les synthèses journalières sont une préparation technique",
+        "- le compactage destructeur reste bloqué par garde-fou",
+        "",
+        "Prochaine étape future : afficher et valider les synthèses avant d'alléger les anciennes mesures.",
+    ]
+    return "\n".join(lignes)
+
+
+def ouvrir_maintenance():
+    fenetre = tk.Toplevel(root)
+    fenetre.title("Maintenance Botaneo")
+    fenetre.configure(bg=CARD)
+    fenetre.resizable(False, False)
+    fenetre.transient(root)
+
+    tk.Label(fenetre, text="🧰 Maintenance", font=("Segoe UI", 18, "bold"), fg=GREEN, bg=CARD).pack(anchor="w", padx=20, pady=(18, 4))
+    tk.Label(fenetre, text="Diagnostic de taille de base et synthèses futures", font=("Segoe UI", 10), fg=SECONDARY, bg=CARD).pack(anchor="w", padx=20, pady=(0, 12))
+
+    zone = tk.Text(fenetre, width=86, height=20, wrap="word", bg=BG, fg=TEXT, relief="flat", font=("Segoe UI", 9))
+    zone.pack(fill="both", expand=True, padx=20, pady=(0, 12))
+
+    def rafraichir():
+        zone.configure(state="normal")
+        zone.delete("1.0", "end")
+        zone.insert("1.0", texte_maintenance())
+        zone.configure(state="disabled")
+
+    def copier():
+        texte = texte_maintenance()
+        root.clipboard_clear()
+        root.clipboard_append(texte)
+        status_var.set("Diagnostic maintenance copié dans le presse-papiers")
+
+    rafraichir()
+
+    boutons = tk.Frame(fenetre, bg=CARD)
+    boutons.pack(fill="x", padx=20, pady=(0, 16))
+    tk.Button(boutons, text="⟳ Rafraîchir", command=rafraichir, bg=LIGHT_GREEN, fg=GREEN, activebackground=LIGHT_GREEN, relief="flat", cursor="hand2").pack(side="left", padx=(0, 8))
+    tk.Button(boutons, text="📋 Copier", command=copier, bg=LIGHT_BLUE, fg=BLUE, activebackground=LIGHT_BLUE, relief="flat", cursor="hand2").pack(side="left")
+    tk.Button(boutons, text="Fermer", command=fenetre.destroy, bg=BG, fg=TEXT, relief="flat", cursor="hand2").pack(side="right")
 
 def ouvrir_parametres():
     fenetre = tk.Toplevel(root)
@@ -6435,6 +6518,19 @@ about_button = tk.Button(
 )
 about_button.pack(side="right", padx=(8, 0))
 
+maintenance_button = tk.Button(
+    toolbar,
+    text="🧰 Maintenance",
+    command=ouvrir_maintenance,
+    font=("Segoe UI", 9, "bold"),
+    bg=CARD,
+    fg=TEXT,
+    activebackground=CARD,
+    activeforeground=TEXT,
+    relief="flat",
+    cursor="hand2"
+)
+maintenance_button.pack(side="right", padx=(8, 0))
 
 # ============================================================
 # PANNEAU SYNCHRONISATION
@@ -6715,8 +6811,4 @@ if os.environ.get("BOTANEO_DEMO") != "1":
     root.after(5000, verifier_sync_auto)
 
 root.mainloop()
-
-
-
-
 
