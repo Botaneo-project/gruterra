@@ -540,6 +540,7 @@ def ouvrir_historique(parent, plante_id):
     points = []
     mesures_courantes = []
     arrosages_courants = []
+    bilan_jour_courant = {"texte": "", "jour": ""}
 
     def analyser_qualite_donnees(mesures, periode_affichee):
         dates = []
@@ -930,6 +931,24 @@ def ouvrir_historique(parent, plante_id):
                                anchor="e", fill=couleur_secondaire,
                                font=("Segoe UI", 8))
 
+    def copier_journee():
+        nom_plante = plante[1] if plante else "Plante"
+        texte_jour = bilan_jour_courant.get("texte") or ""
+        if periode.get() != "Journée" or not texte_jour:
+            bilan.set(f"{bilan.get()} · aucune journée sélectionnée à copier")
+            return
+        lignes = [
+            f"Botaneo — Bilan journalier {nom_plante}",
+            "",
+            texte_jour,
+            "",
+            qualite_var.get(),
+        ]
+        fenetre.clipboard_clear()
+        fenetre.clipboard_append("\n".join(lignes).strip())
+        bilan.set(f"{bilan.get()} · journée copiée")
+
+
     def copier_resume_historique():
         nom_plante = plante[1] if plante else "Plante"
         lignes = [
@@ -998,15 +1017,22 @@ def ouvrir_historique(parent, plante_id):
             if jour:
                 mesures = filtrer_mesures_jour(mesures, jour)
                 arrosages = filtrer_arrosages_jour(arrosages, jour)
-                jour_resume_var.set(resume_moyennes_jour(mesures, jour, arrosages))
+                texte_jour = resume_moyennes_jour(mesures, jour, arrosages)
+                jour_resume_var.set(texte_jour)
+                bilan_jour_courant["texte"] = texte_jour
+                bilan_jour_courant["jour"] = libelle_jour(jour)
                 jour_resume_label.configure(fg=couleurs["TEXT"])
             else:
                 mesures = []
                 arrosages = []
                 jour_resume_var.set("Journée : aucune date disponible pour cette plante.")
+                bilan_jour_courant["texte"] = ""
+                bilan_jour_courant["jour"] = ""
                 jour_resume_label.configure(fg=couleurs["SECONDARY"])
         else:
             choix_jour.configure(state="disabled")
+            bilan_jour_courant["texte"] = ""
+            bilan_jour_courant["jour"] = ""
             jour_resume_label.pack_forget()
 
         jours = {"24 heures": 1, "7 jours": 7}.get(periode.get())
@@ -1105,6 +1131,7 @@ def ouvrir_historique(parent, plante_id):
 
     ttk.Button(barre, text="Ordre normal", command=remettre_ordre_normal).pack(side="right", padx=(8, 0))
     ttk.Button(barre, text="Copier résumé", command=copier_resume_historique).pack(side="right", padx=(8, 0))
+    ttk.Button(barre, text="Copier journée", command=copier_journee).pack(side="right", padx=(8, 0))
     ttk.Button(barre, text="Actualiser", command=actualiser).pack(side="right")
     choix_periode.bind("<<ComboboxSelected>>", actualiser)
     choix_jour.bind("<<ComboboxSelected>>", actualiser)
