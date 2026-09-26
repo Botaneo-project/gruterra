@@ -280,3 +280,10 @@ Ce fichier sert à garder une trace claire des idées et des prochaines étapes.
 - [x] Vérifier que le PC importe les mesures passives courantes dont le brut est en JSON.
 - [ ] Comparer les mesures passives avec les mesures actives et l'historique interne.
 - [ ] Décider ensuite si un timer passif séparé est utile, sans remplacer l'import historique.
+
+### Déduplication passive
+
+- [x] Ajouter une déduplication avant insertion Raspberry pour les mesures passives quasi identiques reçues dans une fenêtre courte.
+- [x] Ne jamais supprimer rétroactivement l'historique Mi Flora ni les mesures déjà synchronisées.
+- [x] Conserver une nouvelle mesure si une valeur utile change, par exemple la lumière ou la conductivité.
+- [ ] Observer plusieurs passages pour ajuster les seuils si la base reçoit encore trop de mesures passives répétitives.

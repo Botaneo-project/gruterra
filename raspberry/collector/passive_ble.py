@@ -154,15 +154,60 @@ async def listen(sensors, duration):
     return collector.results()
 
 
-def store_complete(path, device_id, snapshots):
-    from collector import initialize, record
+def values_close(previous, values):
+    return (
+        abs(float(previous["temperature_c"]) - float(values["temperature_c"])) <= 0.1
+        and int(previous["moisture_percent"]) == int(values["moisture_percent"])
+        and int(previous["conductivity_us_cm"]) == int(values["conductivity_us_cm"])
+        and abs(int(previous["illuminance_lux"]) - int(values["illuminance_lux"])) <= 10
+    )
+
+
+def recent_passive_duplicate(db, sensor_id, values, window_minutes):
+    cutoff = datetime.now(timezone.utc).timestamp() - (window_minutes * 60)
+    rows = db.execute('''
+        SELECT measured_at, temperature_c, moisture_percent, illuminance_lux, conductivity_us_cm
+        FROM measurements
+        WHERE sensor_id=?
+          AND raw LIKE '%"source":"passive_mibeacon"%'
+        ORDER BY measured_at DESC
+        LIMIT 20
+    ''', (sensor_id,)).fetchall()
+    for measured_at, temperature_c, moisture_percent, illuminance_lux, conductivity_us_cm in rows:
+        try:
+            instant = datetime.fromisoformat(measured_at)
+            if instant.tzinfo is None:
+                instant = instant.replace(tzinfo=timezone.utc)
+        except (TypeError, ValueError):
+            continue
+        if instant.timestamp() < cutoff:
+            continue
+        previous = {
+            "temperature_c": temperature_c,
+            "moisture_percent": moisture_percent,
+            "illuminance_lux": illuminance_lux,
+            "conductivity_us_cm": conductivity_us_cm,
+        }
+        if values_close(previous, values):
+            return True
+    return False
+
+
+def store_complete(path, device_id, snapshots, dedupe_minutes=15):
+    from collector import connect, initialize, record
 
     initialize(path)
     stored = []
+    skipped = []
     for snapshot in snapshots:
         if not snapshot.get("complete"):
             continue
         values = snapshot["values"]
+        if dedupe_minutes > 0:
+            with connect(path) as db:
+                if recent_passive_duplicate(db, snapshot["sensor_id"], values, dedupe_minutes):
+                    skipped.append({"sensor_id": snapshot["sensor_id"], "reason": "recent_passive_duplicate"})
+                    continue
         raw = json.dumps({
             "source": "passive_mibeacon",
             "received_at": snapshot.get("received_at"),
@@ -178,7 +223,7 @@ def store_complete(path, device_id, snapshots):
             raw,
         ))
         stored.append({"sensor_id": snapshot["sensor_id"], "measurement_id": measurement_id})
-    return stored
+    return stored, skipped
 
 
 def load_config():
@@ -196,14 +241,16 @@ async def main_async(args):
         raise ValueError("Aucun capteur configuré")
     results = await listen(sensors, args.duration)
     stored = []
+    skipped = []
     if args.store:
         if config is None:
             config = load_config()
-        stored = store_complete(BASE / "data/collector.sqlite3", config["device_id"], results)
+        stored, skipped = store_complete(BASE / "data/collector.sqlite3", config["device_id"], results, args.dedupe_minutes)
     print(json.dumps({
         "ok": True,
         "duration": args.duration,
         "stored": stored,
+        "skipped": skipped,
         "results": results,
     }, ensure_ascii=False, indent=2))
 
@@ -213,6 +260,7 @@ def main():
     parser.add_argument("--duration", type=int, default=120, help="Durée d'écoute en secondes")
     parser.add_argument("--sensor", action="append", help="Adresse d'un capteur à écouter ; par défaut, capteurs de collector.json")
     parser.add_argument("--store", action="store_true", help="Enregistrer les mesures complètes dans la base Raspberry")
+    parser.add_argument("--dedupe-minutes", type=int, default=15, help="Ignorer une mesure passive quasi identique déjà stockée récemment")
     parser.add_argument("--verbose", action="store_true", help="Afficher les annonces décodées pendant l'écoute")
     args = parser.parse_args()
     logging.basicConfig(level=logging.INFO if args.verbose else logging.WARNING, format="%(asctime)s %(levelname)s %(message)s")
@@ -221,4 +269,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
