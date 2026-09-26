@@ -287,3 +287,17 @@ Ce fichier sert à garder une trace claire des idées et des prochaines étapes.
 - [x] Ne jamais supprimer rétroactivement l'historique Mi Flora ni les mesures déjà synchronisées.
 - [x] Conserver une nouvelle mesure si une valeur utile change, par exemple la lumière ou la conductivité.
 - [ ] Observer plusieurs passages pour ajuster les seuils si la base reçoit encore trop de mesures passives répétitives.
+
+## Synthèse journalière et compactage futur
+
+État actuel : base technique dormante ajoutée dans `database.py`. Elle permet de diagnostiquer la taille de la base, de créer une table de synthèse journalière et de calculer/enregistrer des synthèses par capteur et par jour. Rien n'est exécuté automatiquement et aucune mesure brute n'est supprimée.
+
+- [x] Définir un seuil de compactage conseillé à 5 Go.
+- [x] Ajouter un diagnostic passif de taille de base.
+- [x] Préparer une table `syntheses_mesures_journalieres`.
+- [x] Calculer min/max/moyenne par jour pour température, humidité, luminosité et conductivité.
+- [x] Conserver le nombre de mesures, première/dernière mesure et les sources détectées.
+- [x] Ajouter un garde-fou qui bloque tout compactage destructeur.
+- [ ] Ajouter plus tard une interface de maintenance indiquant la taille de la base et l'état des synthèses.
+- [ ] Valider visuellement les synthèses avant toute suppression de mesures anciennes.
+- [ ] Définir une politique de conservation : mesures brutes récentes, données autour des arrosages, événements importants et synthèses anciennes.

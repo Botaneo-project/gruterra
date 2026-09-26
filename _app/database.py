@@ -1401,3 +1401,226 @@ def get_rappel_arrosage_actif(plante_id):
     conn.close()
     return rappel
 
+
+# ============================================================
+# SYNTHESES JOURNALIERES / COMPACTAGE FUTUR
+# ============================================================
+
+SEUIL_COMPACTAGE_OCTETS = 5 * 1024 * 1024 * 1024
+
+
+def get_taille_base_octets():
+    """Retourne la taille du fichier SQLite principal, sans déclencher d'action."""
+    try:
+        return DB_PATH.stat().st_size
+    except OSError:
+        return 0
+
+
+def diagnostic_compactage_mesures(seuil_octets=SEUIL_COMPACTAGE_OCTETS):
+    """Indique si une synthèse/compaction devrait être envisagée.
+
+    Cette fonction est volontairement passive : elle ne supprime rien et ne crée
+    aucune synthèse seule. Elle sert à informer l'interface ou un futur outil de
+    maintenance.
+    """
+    taille = get_taille_base_octets()
+    return {
+        "taille_octets": taille,
+        "seuil_octets": seuil_octets,
+        "compactage_conseille": taille >= seuil_octets,
+    }
+
+
+def initialiser_syntheses_mesures_journalieres():
+    """Crée la table de synthèse journalière, sans compacter les mesures brutes."""
+    conn = get_connection()
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS syntheses_mesures_journalieres (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            capteur_id INTEGER NOT NULL,
+            jour TEXT NOT NULL,
+            premiere_mesure TEXT,
+            derniere_mesure TEXT,
+            nombre_mesures INTEGER NOT NULL,
+            temperature_min REAL,
+            temperature_max REAL,
+            temperature_moy REAL,
+            humidite_min REAL,
+            humidite_max REAL,
+            humidite_moy REAL,
+            luminosite_min REAL,
+            luminosite_max REAL,
+            luminosite_moy REAL,
+            conductivite_min REAL,
+            conductivite_max REAL,
+            conductivite_moy REAL,
+            sources TEXT,
+            cree_le TEXT NOT NULL,
+            statut TEXT NOT NULL DEFAULT 'synthese_seule',
+            UNIQUE(capteur_id, jour)
+        )
+    """)
+    conn.execute("""
+        CREATE INDEX IF NOT EXISTS idx_syntheses_mesures_jour
+        ON syntheses_mesures_journalieres(jour, capteur_id)
+    """)
+    conn.commit()
+    conn.close()
+
+
+def _source_mesure(donnees_brutes):
+    texte = str(donnees_brutes or "")
+    if "passive_mibeacon" in texte:
+        return "raspberry_passif"
+    if len(texte.strip()) == 32:
+        return "historique_miflora"
+    return "mesure_directe"
+
+
+def calculer_synthese_journaliere(capteur_id, jour):
+    """Calcule une synthèse journalière en mémoire, sans écrire ni supprimer."""
+    conn = get_connection()
+    rows = conn.execute("""
+        SELECT
+            date_heure,
+            temperature,
+            humidite,
+            luminosite,
+            conductivite,
+            donnees_brutes
+        FROM mesures
+        WHERE capteur_id = ?
+          AND substr(date_heure, 1, 10) = ?
+        ORDER BY date_heure ASC
+    """, (capteur_id, jour)).fetchall()
+    conn.close()
+
+    if not rows:
+        return None
+
+    temperatures = [row[1] for row in rows if row[1] is not None]
+    humidites = [row[2] for row in rows if row[2] is not None]
+    luminosites = [row[3] for row in rows if row[3] is not None]
+    conductivites = [row[4] for row in rows if row[4] is not None]
+    sources = sorted({_source_mesure(row[5]) for row in rows})
+
+    def stats(valeurs):
+        if not valeurs:
+            return None, None, None
+        return min(valeurs), max(valeurs), sum(valeurs) / len(valeurs)
+
+    temperature_min, temperature_max, temperature_moy = stats(temperatures)
+    humidite_min, humidite_max, humidite_moy = stats(humidites)
+    luminosite_min, luminosite_max, luminosite_moy = stats(luminosites)
+    conductivite_min, conductivite_max, conductivite_moy = stats(conductivites)
+
+    return {
+        "capteur_id": capteur_id,
+        "jour": jour,
+        "premiere_mesure": rows[0][0],
+        "derniere_mesure": rows[-1][0],
+        "nombre_mesures": len(rows),
+        "temperature_min": temperature_min,
+        "temperature_max": temperature_max,
+        "temperature_moy": temperature_moy,
+        "humidite_min": humidite_min,
+        "humidite_max": humidite_max,
+        "humidite_moy": humidite_moy,
+        "luminosite_min": luminosite_min,
+        "luminosite_max": luminosite_max,
+        "luminosite_moy": luminosite_moy,
+        "conductivite_min": conductivite_min,
+        "conductivite_max": conductivite_max,
+        "conductivite_moy": conductivite_moy,
+        "sources": ",".join(sources),
+    }
+
+
+def enregistrer_synthese_journaliere(capteur_id, jour):
+    """Enregistre ou met à jour une synthèse journalière, sans supprimer les mesures."""
+    initialiser_syntheses_mesures_journalieres()
+    synthese = calculer_synthese_journaliere(capteur_id, jour)
+    if synthese is None:
+        return None
+
+    conn = get_connection()
+    conn.execute("""
+        INSERT INTO syntheses_mesures_journalieres (
+            capteur_id, jour, premiere_mesure, derniere_mesure, nombre_mesures,
+            temperature_min, temperature_max, temperature_moy,
+            humidite_min, humidite_max, humidite_moy,
+            luminosite_min, luminosite_max, luminosite_moy,
+            conductivite_min, conductivite_max, conductivite_moy,
+            sources, cree_le, statut
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'), 'synthese_seule')
+        ON CONFLICT(capteur_id, jour) DO UPDATE SET
+            premiere_mesure=excluded.premiere_mesure,
+            derniere_mesure=excluded.derniere_mesure,
+            nombre_mesures=excluded.nombre_mesures,
+            temperature_min=excluded.temperature_min,
+            temperature_max=excluded.temperature_max,
+            temperature_moy=excluded.temperature_moy,
+            humidite_min=excluded.humidite_min,
+            humidite_max=excluded.humidite_max,
+            humidite_moy=excluded.humidite_moy,
+            luminosite_min=excluded.luminosite_min,
+            luminosite_max=excluded.luminosite_max,
+            luminosite_moy=excluded.luminosite_moy,
+            conductivite_min=excluded.conductivite_min,
+            conductivite_max=excluded.conductivite_max,
+            conductivite_moy=excluded.conductivite_moy,
+            sources=excluded.sources,
+            cree_le=excluded.cree_le,
+            statut='synthese_seule'
+    """, (
+        synthese["capteur_id"],
+        synthese["jour"],
+        synthese["premiere_mesure"],
+        synthese["derniere_mesure"],
+        synthese["nombre_mesures"],
+        synthese["temperature_min"],
+        synthese["temperature_max"],
+        synthese["temperature_moy"],
+        synthese["humidite_min"],
+        synthese["humidite_max"],
+        synthese["humidite_moy"],
+        synthese["luminosite_min"],
+        synthese["luminosite_max"],
+        synthese["luminosite_moy"],
+        synthese["conductivite_min"],
+        synthese["conductivite_max"],
+        synthese["conductivite_moy"],
+        synthese["sources"],
+    ))
+    conn.commit()
+    conn.close()
+    return synthese
+
+
+def lister_syntheses_journalieres(capteur_id=None, limite=90):
+    """Retourne les synthèses déjà calculées, sans créer de nouvelle synthèse."""
+    initialiser_syntheses_mesures_journalieres()
+    conn = get_connection()
+    if capteur_id is None:
+        rows = conn.execute("""
+            SELECT * FROM syntheses_mesures_journalieres
+            ORDER BY jour DESC, capteur_id
+            LIMIT ?
+        """, (limite,)).fetchall()
+    else:
+        rows = conn.execute("""
+            SELECT * FROM syntheses_mesures_journalieres
+            WHERE capteur_id = ?
+            ORDER BY jour DESC
+            LIMIT ?
+        """, (capteur_id, limite)).fetchall()
+    conn.close()
+    return rows
+
+
+def compactage_mesures_anciennes_non_implemente():
+    """Garde-fou : la suppression/compaction destructrice n'est pas encore active."""
+    raise RuntimeError(
+        "Compactage destructeur non implémenté : créer et valider les synthèses avant toute suppression."
+    )
