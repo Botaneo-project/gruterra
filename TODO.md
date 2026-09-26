@@ -302,5 +302,6 @@ Ce fichier sert à garder une trace claire des idées et des prochaines étapes.
 - [x] Ajouter un bouton manuel `Préparer les synthèses`, sans suppression de mesures brutes.
 - [x] Afficher les dernières synthèses préparées dans un tableau Maintenance.
 - [x] Ajouter une fenêtre de détail pour consulter une synthèse journalière.
+- [x] Afficher le nom de plante et le capteur dans les synthèses de Maintenance.
 - [ ] Valider visuellement les synthèses avant toute suppression de mesures anciennes.
 - [ ] Définir une politique de conservation : mesures brutes récentes, données autour des arrosages, événements importants et synthèses anciennes.

@@ -1651,6 +1651,37 @@ def preparer_syntheses_journalieres(limite_jours=None):
         "jours_ignores": ignorees,
         "couples_capteur_jour": len(couples),
     }
+def get_infos_capteur_pour_synthese(capteur_id):
+    """Retourne les noms utiles pour afficher une synthèse de manière lisible."""
+    conn = get_connection()
+    row = conn.execute("""
+        SELECT
+            c.id,
+            c.nom,
+            c.adresse_ble,
+            p.nom AS plante_nom
+        FROM capteurs c
+        LEFT JOIN plantes p ON p.id = c.plante_id
+        WHERE c.id = ?
+    """, (capteur_id,)).fetchone()
+    conn.close()
+    if row is None:
+        return {
+            "capteur_id": capteur_id,
+            "capteur_nom": f"Capteur {capteur_id}",
+            "adresse_ble": "",
+            "plante_nom": "Plante inconnue",
+            "libelle": f"Capteur {capteur_id}",
+        }
+    capteur_nom = row[1] or f"Capteur {row[0]}"
+    plante_nom = row[3] or "Sans plante"
+    return {
+        "capteur_id": row[0],
+        "capteur_nom": capteur_nom,
+        "adresse_ble": row[2] or "",
+        "plante_nom": plante_nom,
+        "libelle": f"{plante_nom} · {capteur_nom}",
+    }
 
 def compactage_mesures_anciennes_non_implemente():
     """Garde-fou : la suppression/compaction destructrice n'est pas encore active."""

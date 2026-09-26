@@ -4773,20 +4773,22 @@ def ouvrir_maintenance():
     tk.Label(fenetre, text="Dernières synthèses préparées", font=("Segoe UI", 10, "bold"), fg=TEXT, bg=CARD).pack(anchor="w", padx=20, pady=(0, 6))
     tableau_frame = tk.Frame(fenetre, bg=CARD)
     tableau_frame.pack(fill="both", expand=False, padx=20, pady=(0, 12))
-    colonnes = ("jour", "capteur", "mesures", "humidite", "lumiere", "sources")
+    colonnes = ("jour", "plante", "capteur", "mesures", "humidite", "lumiere", "sources")
     tableau_syntheses = ttk.Treeview(tableau_frame, columns=colonnes, show="headings", height=6)
     tableau_syntheses.heading("jour", text="Jour")
+    tableau_syntheses.heading("plante", text="Plante")
     tableau_syntheses.heading("capteur", text="Capteur")
     tableau_syntheses.heading("mesures", text="Mesures")
     tableau_syntheses.heading("humidite", text="Humidité")
     tableau_syntheses.heading("lumiere", text="Lumière max")
     tableau_syntheses.heading("sources", text="Sources")
     tableau_syntheses.column("jour", width=95, anchor="center")
-    tableau_syntheses.column("capteur", width=70, anchor="center")
+    tableau_syntheses.column("plante", width=130, anchor="w")
+    tableau_syntheses.column("capteur", width=110, anchor="w")
     tableau_syntheses.column("mesures", width=80, anchor="center")
     tableau_syntheses.column("humidite", width=95, anchor="center")
     tableau_syntheses.column("lumiere", width=105, anchor="center")
-    tableau_syntheses.column("sources", width=250, anchor="w")
+    tableau_syntheses.column("sources", width=190, anchor="w")
     tableau_syntheses.pack(side="left", fill="both", expand=True)
     scrollbar_syntheses = ttk.Scrollbar(tableau_frame, orient="vertical", command=tableau_syntheses.yview)
     scrollbar_syntheses.pack(side="right", fill="y")
@@ -4805,8 +4807,10 @@ def ouvrir_maintenance():
         except Exception:
             syntheses = []
         for row in syntheses:
+            infos_capteur = database.get_infos_capteur_pour_synthese(row[1])
             tableau_syntheses.insert("", "end", values=(
                 row[2],
+                infos_capteur["plante_nom"],
                 row[1],
                 row[5],
                 f"{row[9]}–{row[10]} %",
@@ -4829,7 +4833,7 @@ def ouvrir_maintenance():
         if not valeurs:
             return
         jour = valeurs[0]
-        capteur_id = int(valeurs[1])
+        capteur_id = int(valeurs[2])
         syntheses = database.lister_syntheses_journalieres(capteur_id=capteur_id, limite=500)
         synthese = None
         for row in syntheses:
@@ -4846,9 +4850,12 @@ def ouvrir_maintenance():
         detail.resizable(False, False)
         detail.transient(fenetre)
 
+        infos_capteur = database.get_infos_capteur_pour_synthese(capteur_id)
         lignes = [
             f"Jour : {synthese[2]}",
-            f"Capteur ID : {synthese[1]}",
+            f"Plante : {infos_capteur['plante_nom']}",
+            f"Capteur : {infos_capteur['capteur_nom']} (ID {synthese[1]})",
+            f"Adresse BLE : {infos_capteur['adresse_ble']}",
             f"Première mesure : {synthese[3]}",
             f"Dernière mesure : {synthese[4]}",
             f"Nombre de mesures : {synthese[5]}",
