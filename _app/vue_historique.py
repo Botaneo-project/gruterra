@@ -316,38 +316,61 @@ def statistiques_colonne(mesures, index):
     }
 
 
-def resume_moyennes_jour(mesures, jour):
+def formater_statistique_jour(nom, stats, unite):
+    if not stats:
+        return f"- {nom} : —"
+    return (
+        f"- {nom} : moyenne {formater_nombre(stats['moyenne'])} {unite} · "
+        f"min {formater_nombre(stats['minimum'])} · max {formater_nombre(stats['maximum'])}"
+    )
+
+
+def resume_moyennes_jour(mesures, jour, arrosages=None):
     if not jour:
         return "Journée : aucune date sélectionnée."
+    arrosages = arrosages or []
     if not mesures:
+        if arrosages:
+            details = []
+            for arrosage in arrosages:
+                quantite = f"{formater_nombre(arrosage[3])} ml" if arrosage[3] is not None else "quantité non notée"
+                details.append(quantite)
+            return f"Journée {libelle_jour(jour)} : aucune mesure enregistrée · arrosage(s) : {', '.join(details)}."
         return f"Journée {libelle_jour(jour)} : aucune mesure enregistrée."
 
+    mesures_ordonnees = sorted(mesures, key=lambda mesure: mesure[1] or "")
+    premiere = date_locale_depuis_iso(mesures_ordonnees[0][1])
+    derniere = date_locale_depuis_iso(mesures_ordonnees[-1][1])
     humidite = statistiques_colonne(mesures, 3)
     temperature = statistiques_colonne(mesures, 2)
     lumiere = statistiques_colonne(mesures, 4)
     conductivite = statistiques_colonne(mesures, 5)
-    morceaux = [f"Journée {libelle_jour(jour)} · {len(mesures)} mesure(s)"]
-    valeurs = []
-    if humidite:
-        valeurs.append(
-            f"humidité moy. {formater_nombre(humidite['moyenne'])} % "
-            f"(min {formater_nombre(humidite['minimum'])}, max {formater_nombre(humidite['maximum'])})"
-        )
-    if temperature:
-        valeurs.append(
-            f"temp. moy. {formater_nombre(temperature['moyenne'])} °C "
-            f"(min {formater_nombre(temperature['minimum'])}, max {formater_nombre(temperature['maximum'])})"
-        )
-    if lumiere:
-        valeurs.append(
-            f"lumière moy. {formater_nombre(lumiere['moyenne'])} lux "
-            f"(pic {formater_nombre(lumiere['maximum'])})"
-        )
-    if conductivite:
-        valeurs.append(f"conductivité moy. {formater_nombre(conductivite['moyenne'])} µS/cm")
-    if valeurs:
-        morceaux.append(" · ".join(valeurs))
-    return " · ".join(morceaux)
+
+    lignes = [f"Journée {libelle_jour(jour)} · {len(mesures)} mesure(s)"]
+    if premiere and derniere:
+        lignes.append(f"Plage mesurée : {premiere.strftime('%H:%M')} → {derniere.strftime('%H:%M')}")
+    if arrosages:
+        details = []
+        for arrosage in arrosages:
+            heure = date_locale_depuis_iso(arrosage[2])
+            heure_txt = heure.strftime('%H:%M') if heure else "heure inconnue"
+            quantite = f"{formater_nombre(arrosage[3])} ml" if arrosage[3] is not None else "quantité non notée"
+            eau = f" · {arrosage[8]}" if len(arrosage) > 8 and arrosage[8] else ""
+            details.append(f"{heure_txt} : {quantite}{eau}")
+        lignes.append("Arrosage(s) : " + " ; ".join(details))
+    else:
+        lignes.append("Arrosage : aucun enregistré ce jour")
+
+    lignes.extend([
+        formater_statistique_jour("Humidité", humidite, "%"),
+        formater_statistique_jour("Température", temperature, "°C"),
+        formater_statistique_jour("Lumière", lumiere, "lux"),
+        formater_statistique_jour("Conductivité", conductivite, "µS/cm"),
+    ])
+
+    if len(mesures) < 6:
+        lignes.append("⚠ Peu de mesures sur cette journée : interprétation prudente.")
+    return "\n".join(lignes)
 
 
 def ouvrir_historique(parent, plante_id):
@@ -432,7 +455,7 @@ def ouvrir_historique(parent, plante_id):
         textvariable=jour_resume_var,
         bg=couleurs["CARD"],
         fg=couleurs["TEXT"],
-        font=("Segoe UI", 9, "bold"),
+        font=("Segoe UI", 9),
         anchor="w",
         justify="left",
         wraplength=980,
@@ -969,13 +992,13 @@ def ouvrir_historique(parent, plante_id):
 
         if periode.get() == "Journée":
             if not jour_resume_label.winfo_ismapped():
-                jour_resume_label.pack(fill="x", padx=24, pady=(0, 8), ipady=6, before=qualite_label)
+                jour_resume_label.pack(fill="x", padx=24, pady=(0, 8), ipady=8, before=qualite_label)
             choix_jour.configure(state="readonly" if libelles_jours else "disabled")
             jour = jours_par_libelle.get(jour_selectionne.get())
             if jour:
                 mesures = filtrer_mesures_jour(mesures, jour)
                 arrosages = filtrer_arrosages_jour(arrosages, jour)
-                jour_resume_var.set(resume_moyennes_jour(mesures, jour))
+                jour_resume_var.set(resume_moyennes_jour(mesures, jour, arrosages))
                 jour_resume_label.configure(fg=couleurs["TEXT"])
             else:
                 mesures = []
