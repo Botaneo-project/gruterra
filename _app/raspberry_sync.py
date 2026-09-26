@@ -90,8 +90,8 @@ def import_batch(db_path, batch, config):
                 values = [row[k] for k in ('temperature_c', 'moisture_percent', 'illuminance_lux', 'conductivity_us_cm')]
                 if not all(isinstance(v, (int, float)) and math.isfinite(v) for v in values) or not -20 <= values[0] <= 60 or not 0 <= values[1] <= 100 or min(values[2:]) < 0:
                     raise ValueError('Valeurs invalides.')
-                raw = bytes.fromhex(row['raw']).hex()
                 if row['kind'] == 'history':
+                    raw = bytes.fromhex(row['raw']).hex()
                     frame = bytes.fromhex(raw)
                     if len(frame) != 16 or int.from_bytes(frame[:4], 'little') != row['sensor_seconds']:
                         raise ValueError('Historique brut invalide.')
@@ -108,6 +108,11 @@ def import_batch(db_path, batch, config):
                         (sensors[0][0], row['sensor_seconds'],
                          row['measured_at'] if row['time_quality'] == 'estimated_from_sensor_clock' else None,
                          *values, raw, datetime.now(timezone.utc).isoformat(), 'raspberry_'+row['time_quality']))
+                else:
+                    try:
+                        raw = bytes.fromhex(row['raw']).hex()
+                    except (TypeError, ValueError):
+                        raw = str(row['raw'])
                 disposition = 'undated'
                 quality = 'estimated_from_sensor_clock' if row['kind'] == 'history' else 'ntp'
                 if row['measured_at'] and row['time_quality'] == quality:

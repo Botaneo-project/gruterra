@@ -274,9 +274,9 @@ Ce fichier sert à garder une trace claire des idées et des prochaines étapes.
 - [x] Prévoir un mode `--store` expérimental qui n'enregistre qu'une mesure complète.
 - [x] Tester le prototype en local PC sans écriture : mesures complètes reçues passivement en 90 s puis en 5 min.
 - [x] Ajouter un service manuel Raspberry `botaneo-passive-test.service`, non planifié automatiquement.
-- [ ] Tester sur Raspberry pendant plusieurs fenêtres de 3 à 5 minutes.
+- [x] Tester sur Raspberry : service manuel 5 min validé, mesure complète enregistrée puis récupérée par le PC.
+- [ ] Répéter le test Raspberry sur plusieurs fenêtres de 3 à 5 minutes.
 - [ ] Vérifier si l'humidité sol est bien diffusée régulièrement sur le capteur actuel.
+- [x] Vérifier que le PC importe les mesures passives courantes dont le brut est en JSON.
 - [ ] Comparer les mesures passives avec les mesures actives et l'historique interne.
 - [ ] Décider ensuite si un timer passif séparé est utile, sans remplacer l'import historique.
-
-
