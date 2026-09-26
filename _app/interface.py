@@ -4753,16 +4753,7 @@ def texte_maintenance():
         "",
         "Prochaine étape future : afficher et valider les synthèses avant d'alléger les anciennes mesures.",
     ]
-    if syntheses:
-        lignes.extend([
-            "",
-            "Dernières synthèses préparées :",
-        ])
-        for row in syntheses:
-            lignes.append(
-                f"- {row[2]} · capteur {row[1]} · {row[5]} mesure(s) · "
-                f"humidité {row[9]}–{row[10]} % · lumière max {row[13]} lux · sources {row[18]}"
-            )
+
     return "\n".join(lignes)
 
 
@@ -4776,14 +4767,51 @@ def ouvrir_maintenance():
     tk.Label(fenetre, text="🧰 Maintenance", font=("Segoe UI", 18, "bold"), fg=GREEN, bg=CARD).pack(anchor="w", padx=20, pady=(18, 4))
     tk.Label(fenetre, text="Diagnostic de taille de base et synthèses futures", font=("Segoe UI", 10), fg=SECONDARY, bg=CARD).pack(anchor="w", padx=20, pady=(0, 12))
 
-    zone = tk.Text(fenetre, width=86, height=20, wrap="word", bg=BG, fg=TEXT, relief="flat", font=("Segoe UI", 9))
+    zone = tk.Text(fenetre, width=86, height=14, wrap="word", bg=BG, fg=TEXT, relief="flat", font=("Segoe UI", 9))
     zone.pack(fill="both", expand=True, padx=20, pady=(0, 12))
+
+    tk.Label(fenetre, text="Dernières synthèses préparées", font=("Segoe UI", 10, "bold"), fg=TEXT, bg=CARD).pack(anchor="w", padx=20, pady=(0, 6))
+    tableau_frame = tk.Frame(fenetre, bg=CARD)
+    tableau_frame.pack(fill="both", expand=False, padx=20, pady=(0, 12))
+    colonnes = ("jour", "capteur", "mesures", "humidite", "lumiere", "sources")
+    tableau_syntheses = ttk.Treeview(tableau_frame, columns=colonnes, show="headings", height=6)
+    tableau_syntheses.heading("jour", text="Jour")
+    tableau_syntheses.heading("capteur", text="Capteur")
+    tableau_syntheses.heading("mesures", text="Mesures")
+    tableau_syntheses.heading("humidite", text="Humidité")
+    tableau_syntheses.heading("lumiere", text="Lumière max")
+    tableau_syntheses.heading("sources", text="Sources")
+    tableau_syntheses.column("jour", width=95, anchor="center")
+    tableau_syntheses.column("capteur", width=70, anchor="center")
+    tableau_syntheses.column("mesures", width=80, anchor="center")
+    tableau_syntheses.column("humidite", width=95, anchor="center")
+    tableau_syntheses.column("lumiere", width=105, anchor="center")
+    tableau_syntheses.column("sources", width=250, anchor="w")
+    tableau_syntheses.pack(side="left", fill="both", expand=True)
+    scrollbar_syntheses = ttk.Scrollbar(tableau_frame, orient="vertical", command=tableau_syntheses.yview)
+    scrollbar_syntheses.pack(side="right", fill="y")
+    tableau_syntheses.configure(yscrollcommand=scrollbar_syntheses.set)
 
     def rafraichir():
         zone.configure(state="normal")
         zone.delete("1.0", "end")
         zone.insert("1.0", texte_maintenance())
         zone.configure(state="disabled")
+        for item in tableau_syntheses.get_children():
+            tableau_syntheses.delete(item)
+        try:
+            syntheses = database.lister_syntheses_journalieres(limite=50)
+        except Exception:
+            syntheses = []
+        for row in syntheses:
+            tableau_syntheses.insert("", "end", values=(
+                row[2],
+                row[1],
+                row[5],
+                f"{row[9]}–{row[10]} %",
+                f"{row[13]} lux",
+                row[18],
+            ))
 
     def copier():
         texte = texte_maintenance()
