@@ -1478,6 +1478,37 @@ def _source_mesure(donnees_brutes):
     return "mesure_directe"
 
 
+def synthese_journaliere_exploitable(synthese):
+    """Écarte les synthèses techniques vides ou issues d'une mesure brute manifestement suspecte.
+
+    Les données brutes restent conservées. Ce filtre sert seulement à éviter d'afficher
+    comme synthèse fiable une journée contenant une seule mesure entièrement à zéro.
+    """
+    if synthese is None:
+        return False
+    if isinstance(synthese, dict):
+        nombre = synthese.get("nombre_mesures") or 0
+        valeurs = [
+            synthese.get("temperature_min"), synthese.get("temperature_max"), synthese.get("temperature_moy"),
+            synthese.get("humidite_min"), synthese.get("humidite_max"), synthese.get("humidite_moy"),
+            synthese.get("luminosite_min"), synthese.get("luminosite_max"), synthese.get("luminosite_moy"),
+            synthese.get("conductivite_min"), synthese.get("conductivite_max"), synthese.get("conductivite_moy"),
+        ]
+    else:
+        nombre = synthese[5] or 0
+        valeurs = [synthese[i] for i in range(6, 18)]
+    if nombre <= 0:
+        return False
+    valeurs_connues = [v for v in valeurs if v is not None]
+    if not valeurs_connues:
+        return False
+    if nombre == 1 and all(float(v) == 0.0 for v in valeurs_connues):
+        return False
+    return True
+
+
+
+
 def calculer_synthese_journaliere(capteur_id, jour):
     """Calcule une synthèse journalière en mémoire, sans écrire ni supprimer."""
     conn = get_connection()
@@ -1515,7 +1546,7 @@ def calculer_synthese_journaliere(capteur_id, jour):
     luminosite_min, luminosite_max, luminosite_moy = stats(luminosites)
     conductivite_min, conductivite_max, conductivite_moy = stats(conductivites)
 
-    return {
+    synthese = {
         "capteur_id": capteur_id,
         "jour": jour,
         "premiere_mesure": rows[0][0],
@@ -1535,6 +1566,9 @@ def calculer_synthese_journaliere(capteur_id, jour):
         "conductivite_moy": conductivite_moy,
         "sources": ",".join(sources),
     }
+    if not synthese_journaliere_exploitable(synthese):
+        return None
+    return synthese
 
 
 def enregistrer_synthese_journaliere(capteur_id, jour):
@@ -1616,7 +1650,7 @@ def lister_syntheses_journalieres(capteur_id=None, limite=90):
             LIMIT ?
         """, (capteur_id, limite)).fetchall()
     conn.close()
-    return rows
+    return [row for row in rows if synthese_journaliere_exploitable(row)]
 
 def lister_jours_mesures_a_synthetiser():
     """Liste les couples capteur/jour présents dans les mesures brutes."""

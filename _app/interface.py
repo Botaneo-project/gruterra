@@ -4720,6 +4720,30 @@ def format_octets(nombre):
     return f"{valeur:.2f} {unites[index]}"
 
 
+def format_valeur_synthese(valeur, suffixe="", decimales=0):
+    if valeur is None:
+        return "—"
+    try:
+        nombre = float(valeur)
+    except (TypeError, ValueError):
+        return "—"
+    if decimales:
+        texte = f"{nombre:.{decimales}f}"
+    elif nombre.is_integer():
+        texte = str(int(nombre))
+    else:
+        texte = f"{nombre:.1f}"
+    return f"{texte}{suffixe}"
+
+
+def format_plage_synthese(minimum, maximum, suffixe=""):
+    if minimum is None and maximum is None:
+        return "—"
+    if minimum == maximum:
+        return format_valeur_synthese(minimum, suffixe)
+    return f"{format_valeur_synthese(minimum)}–{format_valeur_synthese(maximum, suffixe)}"
+
+
 def texte_maintenance():
     diagnostic = database.diagnostic_compactage_mesures()
     try:
@@ -4807,15 +4831,17 @@ def ouvrir_maintenance():
         except Exception:
             syntheses = []
         for row in syntheses:
+            if hasattr(database, "synthese_journaliere_exploitable") and not database.synthese_journaliere_exploitable(row):
+                continue
             infos_capteur = database.get_infos_capteur_pour_synthese(row[1])
             tableau_syntheses.insert("", "end", values=(
                 row[2],
                 infos_capteur["plante_nom"],
                 row[1],
                 row[5],
-                f"{row[9]}–{row[10]} %",
-                f"{row[13]} lux",
-                row[18],
+                format_plage_synthese(row[9], row[10], " %"),
+                format_valeur_synthese(row[13], " lux"),
+                row[18] or "—",
             ))
 
     def copier():

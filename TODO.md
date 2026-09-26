@@ -53,6 +53,7 @@ Ce fichier sert à garder une trace claire des idées et des prochaines étapes.
 
 ## Prochaine suite recommandée
 
+- Dans 3 à 4 jours : vérifier qu’aucune nouvelle mesure entièrement à zéro ne réapparaît dans les mesures ou les synthèses.
 - Priorité réelle : démarrer l’analyse par cycle d’arrosage en version simple, sans surinterpréter les données.
 - Pour chaque cycle : repérer l’humidité avant arrosage, le pic observé, la baisse après pic et la qualité des mesures disponibles.
 - Stabiliser l’analyse plante autour de l’arrosage : phrase courte, repères 10 min / 1 h / 24 h / 48 h et comparaison avant/après.
