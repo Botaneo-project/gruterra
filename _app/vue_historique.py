@@ -400,7 +400,7 @@ def mesurer_cycle_arrosage(arrosage, prochain_arrosage, mesures):
     }
 
 
-def resumer_cycles_arrosage(mesures, arrosages, limite=6):
+def calculer_cycles_arrosage(mesures, arrosages, limite=6):
     arrosages_dates = []
     for arrosage in arrosages:
         date_arrosage = date_locale_depuis_iso(arrosage[2])
@@ -413,7 +413,11 @@ def resumer_cycles_arrosage(mesures, arrosages, limite=6):
         cycle = mesurer_cycle_arrosage(arrosage, prochain, mesures)
         if cycle:
             cycles.append(cycle)
-    cycles = cycles[-limite:]
+    return cycles[-limite:]
+
+
+def resumer_cycles_arrosage(mesures, arrosages, limite=6):
+    cycles = calculer_cycles_arrosage(mesures, arrosages, limite=limite)
     if not cycles:
         return "Cycles d’arrosage : aucun arrosage exploitable avec les données actuelles."
     lignes = ["Cycles d’arrosage détectés", ""]
@@ -1041,15 +1045,61 @@ def ouvrir_historique(parent, plante_id):
             tous_arrosages = database.get_arrosages_plante(plante_id, limite=200)
         except Exception:
             tous_arrosages = []
+        cycles = calculer_cycles_arrosage(toutes_mesures, tous_arrosages)
         texte = resumer_cycles_arrosage(toutes_mesures, tous_arrosages)
         detail = tk.Toplevel(fenetre)
         detail.title("Cycles d’arrosage")
         detail.configure(bg=couleurs["CARD"])
         detail.transient(fenetre)
-        detail.geometry("760x420+80+80")
+        detail.geometry("920x500+80+80")
         tk.Label(detail, text="💧 Cycles d’arrosage", bg=couleurs["CARD"], fg=couleurs["WATER"], font=("Segoe UI", 16, "bold")).pack(anchor="w", padx=18, pady=(16, 4))
-        zone = tk.Text(detail, wrap="word", bg=couleurs["BG"], fg=couleurs["TEXT"], relief="flat", font=("Segoe UI", 10))
-        zone.pack(fill="both", expand=True, padx=18, pady=(8, 12))
+        tk.Label(detail, text="Comparaison des réponses à l’arrosage, calculée sur la zone mesurée par le Mi Flora.", bg=couleurs["CARD"], fg=couleurs["SECONDARY"], font=("Segoe UI", 9)).pack(anchor="w", padx=18, pady=(0, 10))
+
+        colonnes_cycles = ("date", "quantite", "mesures", "depart", "pic", "fin", "sechage", "suivi")
+        tableau = ttk.Treeview(detail, columns=colonnes_cycles, show="headings", height=6)
+        titres_cycles = {
+            "date": "Arrosage",
+            "quantite": "Quantité",
+            "mesures": "Mesures",
+            "depart": "Départ",
+            "pic": "Pic",
+            "fin": "Fin",
+            "sechage": "Séchage",
+            "suivi": "Suivi",
+        }
+        largeurs_cycles = {
+            "date": 135,
+            "quantite": 80,
+            "mesures": 75,
+            "depart": 70,
+            "pic": 70,
+            "fin": 70,
+            "sechage": 125,
+            "suivi": 150,
+        }
+        for colonne in colonnes_cycles:
+            tableau.heading(colonne, text=titres_cycles[colonne])
+            tableau.column(colonne, width=largeurs_cycles[colonne], anchor="center")
+        tableau.pack(fill="x", padx=18, pady=(0, 10))
+
+        cycles_affiches = list(reversed(cycles))
+        for cycle in cycles_affiches:
+            arrosage = cycle.get("arrosage")
+            quantite = f"{formater_nombre(arrosage[3])} ml" if arrosage and arrosage[3] is not None else "—"
+            suivi = f"→ {formater_date_courte(cycle.get('fin'))}" if cycle.get("fin") else "cycle en cours"
+            tableau.insert("", "end", values=(
+                formater_date_courte(cycle.get("date")),
+                quantite,
+                len(cycle.get("mesures") or []),
+                formater_nombre(cycle.get("premiere_humidite")) if cycle.get("premiere_humidite") is not None else "—",
+                formater_nombre(cycle.get("pic_humidite")) if cycle.get("pic_humidite") is not None else "—",
+                formater_nombre(cycle.get("derniere_humidite")) if cycle.get("derniere_humidite") is not None else "—",
+                f"{formater_nombre(cycle.get('sechage'))} pt/j" if cycle.get("sechage") is not None else "—",
+                suivi,
+            ))
+
+        zone = tk.Text(detail, height=8, wrap="word", bg=couleurs["BG"], fg=couleurs["TEXT"], relief="flat", font=("Segoe UI", 9))
+        zone.pack(fill="both", expand=True, padx=18, pady=(0, 12))
         zone.insert("1.0", texte)
         zone.configure(state="disabled")
         boutons = tk.Frame(detail, bg=couleurs["CARD"])
