@@ -299,5 +299,6 @@ Ce fichier sert à garder une trace claire des idées et des prochaines étapes.
 - [x] Conserver le nombre de mesures, première/dernière mesure et les sources détectées.
 - [x] Ajouter un garde-fou qui bloque tout compactage destructeur.
 - [x] Ajouter une fenêtre Maintenance indiquant la taille de la base, le seuil 5 Go, le nombre de mesures et l'état des synthèses.
+- [x] Ajouter un bouton manuel `Préparer les synthèses`, sans suppression de mesures brutes.
 - [ ] Valider visuellement les synthèses avant toute suppression de mesures anciennes.
 - [ ] Définir une politique de conservation : mesures brutes récentes, données autour des arrosages, événements importants et synthèses anciennes.

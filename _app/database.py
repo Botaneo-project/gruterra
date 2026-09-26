@@ -1618,6 +1618,39 @@ def lister_syntheses_journalieres(capteur_id=None, limite=90):
     conn.close()
     return rows
 
+def lister_jours_mesures_a_synthetiser():
+    """Liste les couples capteur/jour présents dans les mesures brutes."""
+    conn = get_connection()
+    rows = conn.execute("""
+        SELECT capteur_id, substr(date_heure, 1, 10) AS jour, COUNT(*) AS nombre
+        FROM mesures
+        WHERE date_heure IS NOT NULL
+          AND capteur_id IS NOT NULL
+        GROUP BY capteur_id, jour
+        ORDER BY jour DESC, capteur_id
+    """).fetchall()
+    conn.close()
+    return rows
+
+
+def preparer_syntheses_journalieres(limite_jours=None):
+    """Calcule les synthèses existantes, sans supprimer les mesures brutes."""
+    initialiser_syntheses_mesures_journalieres()
+    couples = lister_jours_mesures_a_synthetiser()
+    if limite_jours is not None:
+        couples = couples[:limite_jours]
+    creees = 0
+    ignorees = 0
+    for capteur_id, jour, _nombre in couples:
+        if enregistrer_synthese_journaliere(capteur_id, jour) is None:
+            ignorees += 1
+        else:
+            creees += 1
+    return {
+        "syntheses_preparees": creees,
+        "jours_ignores": ignorees,
+        "couples_capteur_jour": len(couples),
+    }
 
 def compactage_mesures_anciennes_non_implemente():
     """Garde-fou : la suppression/compaction destructrice n'est pas encore active."""

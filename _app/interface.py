@@ -4779,12 +4779,31 @@ def ouvrir_maintenance():
         root.clipboard_append(texte)
         status_var.set("Diagnostic maintenance copié dans le presse-papiers")
 
+    def preparer_syntheses():
+        if not messagebox.askyesno(
+            "Préparer les synthèses",
+            "Préparer les synthèses journalières existantes ?\n\nAucune mesure brute ne sera supprimée.",
+            parent=fenetre
+        ):
+            return
+        resultat = database.preparer_syntheses_journalieres()
+        rafraichir()
+        messagebox.showinfo(
+            "Synthèses préparées",
+            f"{resultat['syntheses_preparees']} synthèse(s) préparée(s).\n"
+            f"{resultat['jours_ignores']} jour(s) ignoré(s).\n\n"
+            "Aucune mesure brute n'a été supprimée.",
+            parent=fenetre
+        )
+        status_var.set("Synthèses journalières préparées sans suppression")
+
     rafraichir()
 
     boutons = tk.Frame(fenetre, bg=CARD)
     boutons.pack(fill="x", padx=20, pady=(0, 16))
     tk.Button(boutons, text="⟳ Rafraîchir", command=rafraichir, bg=LIGHT_GREEN, fg=GREEN, activebackground=LIGHT_GREEN, relief="flat", cursor="hand2").pack(side="left", padx=(0, 8))
-    tk.Button(boutons, text="📋 Copier", command=copier, bg=LIGHT_BLUE, fg=BLUE, activebackground=LIGHT_BLUE, relief="flat", cursor="hand2").pack(side="left")
+    tk.Button(boutons, text="📋 Copier", command=copier, bg=LIGHT_BLUE, fg=BLUE, activebackground=LIGHT_BLUE, relief="flat", cursor="hand2").pack(side="left", padx=(0, 8))
+    tk.Button(boutons, text="Préparer les synthèses", command=preparer_syntheses, bg=LIGHT_ORANGE, fg=ORANGE, activebackground=LIGHT_ORANGE, relief="flat", cursor="hand2").pack(side="left")
     tk.Button(boutons, text="Fermer", command=fenetre.destroy, bg=BG, fg=TEXT, relief="flat", cursor="hand2").pack(side="right")
 
 def ouvrir_parametres():
@@ -6811,4 +6830,3 @@ if os.environ.get("BOTANEO_DEMO") != "1":
     root.after(5000, verifier_sync_auto)
 
 root.mainloop()
-
