@@ -4760,7 +4760,7 @@ def texte_maintenance():
 
     etat = "compactage à envisager" if diagnostic.get("compactage_conseille") else "aucune action nécessaire"
     lignes = [
-        "Maintenance Botaneo",
+        "Base & synthèses Botaneo",
         "",
         f"Base active : {database.DB_PATH}",
         f"Taille actuelle : {format_octets(diagnostic.get('taille_octets'))}",
@@ -4783,13 +4783,13 @@ def texte_maintenance():
 
 def ouvrir_maintenance():
     fenetre = tk.Toplevel(root)
-    fenetre.title("Maintenance Botaneo")
+    fenetre.title("Base & synthèses Botaneo")
     fenetre.configure(bg=CARD)
     fenetre.resizable(False, False)
     fenetre.transient(root)
 
-    tk.Label(fenetre, text="🧰 Maintenance", font=("Segoe UI", 18, "bold"), fg=GREEN, bg=CARD).pack(anchor="w", padx=20, pady=(18, 4))
-    tk.Label(fenetre, text="Diagnostic de taille de base et synthèses futures", font=("Segoe UI", 10), fg=SECONDARY, bg=CARD).pack(anchor="w", padx=20, pady=(0, 12))
+    tk.Label(fenetre, text="🧰 Base & synthèses", font=("Segoe UI", 18, "bold"), fg=GREEN, bg=CARD).pack(anchor="w", padx=20, pady=(18, 4))
+    tk.Label(fenetre, text="Suivi de la taille de la base, des mesures brutes et des synthèses journalières", font=("Segoe UI", 10), fg=SECONDARY, bg=CARD).pack(anchor="w", padx=20, pady=(0, 12))
 
     zone = tk.Text(fenetre, width=86, height=14, wrap="word", bg=BG, fg=TEXT, relief="flat", font=("Segoe UI", 9))
     zone.pack(fill="both", expand=True, padx=20, pady=(0, 12))
@@ -4848,7 +4848,7 @@ def ouvrir_maintenance():
         texte = texte_maintenance()
         root.clipboard_clear()
         root.clipboard_append(texte)
-        status_var.set("Diagnostic maintenance copié dans le presse-papiers")
+        status_var.set("Base & synthèses copiées dans le presse-papiers")
 
     def ouvrir_detail_synthese():
         selection = tableau_syntheses.selection()
@@ -5027,7 +5027,7 @@ def texte_sante_systeme(etat_raspberry=None):
     base = diagnostic["base"]
     syntheses = diagnostic["syntheses"]
     lignes = [
-        "Santé du système Botaneo",
+        "État Botaneo & Raspberry",
         "",
         f"Base : {database.DB_PATH}",
         f"Taille base : {format_octets(base.get('taille_octets'))} / seuil {format_octets(base.get('seuil_octets'))}",
@@ -5049,13 +5049,13 @@ def texte_sante_systeme(etat_raspberry=None):
 
 def ouvrir_sante_systeme():
     fenetre = tk.Toplevel(root)
-    fenetre.title("Santé du système Botaneo")
+    fenetre.title("État Botaneo & Raspberry")
     fenetre.configure(bg=CARD)
     fenetre.resizable(True, True)
     fenetre.transient(root)
 
-    tk.Label(fenetre, text="🩺 Santé du système", font=("Segoe UI", 18, "bold"), fg=GREEN, bg=CARD).pack(anchor="w", padx=20, pady=(18, 4))
-    tk.Label(fenetre, text="Vue globale des mesures, capteurs, Raspberry passif et base locale", font=("Segoe UI", 10), fg=SECONDARY, bg=CARD).pack(anchor="w", padx=20, pady=(0, 12))
+    tk.Label(fenetre, text="🩺 État Botaneo & Raspberry", font=("Segoe UI", 18, "bold"), fg=GREEN, bg=CARD).pack(anchor="w", padx=20, pady=(18, 4))
+    tk.Label(fenetre, text="Vue globale de l’application, de la base, des capteurs, du Raspberry et des sauvegardes", font=("Segoe UI", 10), fg=SECONDARY, bg=CARD).pack(anchor="w", padx=20, pady=(0, 12))
 
     resume_raspberry_var = tk.StringVar(value="Raspberry : contrôle en cours…")
     resume_raspberry = tk.Label(
@@ -5118,7 +5118,7 @@ def ouvrir_sante_systeme():
         texte = texte_sante_systeme()
         root.clipboard_clear()
         root.clipboard_append(texte)
-        status_var.set("Santé du système copiée dans le presse-papiers")
+        status_var.set("État Botaneo & Raspberry copié dans le presse-papiers")
 
     rafraichir()
 
@@ -6861,7 +6861,7 @@ about_button.pack(side="right", padx=(8, 0))
 
 health_button = tk.Button(
     toolbar,
-    text="🩺 Santé système",
+    text="🩺 État Botaneo",
     command=ouvrir_sante_systeme,
     font=("Segoe UI", 9, "bold"),
     bg=CARD,
@@ -6874,7 +6874,7 @@ health_button = tk.Button(
 health_button.pack(side="right", padx=(8, 0))
 maintenance_button = tk.Button(
     toolbar,
-    text="🧰 Maintenance",
+    text="🧰 Base & synthèses",
     command=ouvrir_maintenance,
     font=("Segoe UI", 9, "bold"),
     bg=CARD,
