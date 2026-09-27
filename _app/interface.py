@@ -6037,6 +6037,116 @@ def _ajouter_resume_export(lignes, titre, resume):
     lignes.append("")
 
 
+def _construire_expositions_export(evenements):
+    points = []
+    for evenement in evenements or []:
+        date = _date_locale_depuis_mesure(evenement[2] if len(evenement) > 2 else None)
+        type_evenement = (evenement[3] if len(evenement) > 3 and evenement[3] else "").strip().lower()
+        titre = (evenement[4] if len(evenement) > 4 and evenement[4] else "").strip().lower()
+        if not date or type_evenement != "exposition":
+            continue
+        if "sortie balcon" in titre:
+            points.append((date, "sortie"))
+        elif "retour intérieur" in titre or "retour interieur" in titre:
+            points.append((date, "retour"))
+    points.sort(key=lambda item: item[0])
+    periodes = []
+    sortie = None
+    for date, action in points:
+        if action == "sortie":
+            sortie = date
+        elif action == "retour" and sortie:
+            if date > sortie:
+                periodes.append((sortie, date))
+            sortie = None
+    if sortie:
+        periodes.append((sortie, None))
+    return periodes
+
+
+def _mesure_dans_exposition(date, expositions, fin_defaut=None):
+    for sortie, retour in expositions or []:
+        fin = retour or fin_defaut or datetime.now()
+        if sortie <= date <= fin:
+            return True
+    return False
+
+
+def _resume_lumiere_contexte(mesures, expositions, debut):
+    points = []
+    fin_defaut = datetime.now()
+    for mesure in mesures:
+        date = _date_locale_depuis_mesure(mesure[1])
+        if not date or date < debut or mesure[4] is None:
+            continue
+        try:
+            lux = float(mesure[4])
+        except (TypeError, ValueError):
+            continue
+        points.append((date, lux, _mesure_dans_exposition(date, expositions, fin_defaut)))
+    if not points:
+        return None
+
+    valeurs = [lux for _, lux, _ in points]
+    interieur = [lux for _, lux, dehors in points if not dehors]
+    balcon = [lux for _, lux, dehors in points if dehors]
+    return {
+        "count": len(points),
+        "moyenne": sum(valeurs) / len(valeurs),
+        "maximum": max(valeurs),
+        "interieur_count": len(interieur),
+        "interieur_moyenne": (sum(interieur) / len(interieur)) if interieur else None,
+        "interieur_maximum": max(interieur) if interieur else None,
+        "balcon_count": len(balcon),
+        "balcon_maximum": max(balcon) if balcon else None,
+    }
+
+
+def _ajouter_contexte_lumiere_export(lignes, mesures, evenements):
+    expositions = _construire_expositions_export(evenements)
+    maintenant = datetime.now()
+    recentes = [
+        (sortie, retour)
+        for sortie, retour in expositions
+        if sortie >= maintenant - timedelta(days=14)
+    ]
+    resume_7j = _resume_lumiere_contexte(mesures, expositions, maintenant - timedelta(days=7))
+    resume_24h = _resume_lumiere_contexte(mesures, expositions, maintenant - timedelta(days=1))
+
+    if not recentes and not resume_7j:
+        return
+
+    lignes.append("Contexte lumière :")
+    if recentes:
+        lignes.append(f"- {len(recentes)} exposition(s) balcon notée(s) sur les 14 derniers jours.")
+        for sortie, retour in recentes[-4:]:
+            if retour:
+                duree = formater_duree_heures((retour - sortie).total_seconds() / 3600)
+                lignes.append(f"- {sortie.strftime('%d/%m %H:%M')} → {retour.strftime('%H:%M')} : sortie balcon déclarée, durée {duree}.")
+            else:
+                lignes.append(f"- {sortie.strftime('%d/%m %H:%M')} : sortie balcon déclarée, retour non noté.")
+    else:
+        lignes.append("- Aucune exposition balcon récente notée dans le journal.")
+
+    for titre, resume in (("24 h", resume_24h), ("7 jours", resume_7j)):
+        if not resume:
+            continue
+        ligne = f"- Lumière {titre} : moyenne globale {resume['moyenne']:.0f} lux, maximum {resume['maximum']:.0f} lux"
+        if resume["interieur_moyenne"] is not None:
+            ligne += f", hors balcon {resume['interieur_moyenne']:.0f} lux de moyenne"
+            if resume["interieur_maximum"] is not None:
+                ligne += f" et {resume['interieur_maximum']:.0f} lux max"
+        if resume["balcon_count"]:
+            ligne += f", {resume['balcon_count']} mesure(s) pendant exposition balcon"
+            if resume["balcon_maximum"] is not None:
+                ligne += f" jusqu'à {resume['balcon_maximum']:.0f} lux"
+        lignes.append(ligne + ".")
+
+    if resume_7j and resume_7j.get("balcon_count") and resume_7j.get("interieur_moyenne") is not None:
+        lignes.append("- Interprétation : les pics lumineux sont contextualisés par les sorties balcon ; ils ne doivent pas masquer la luminosité habituelle de l'emplacement intérieur.")
+    lignes.append("")
+
+
 def generer_texte_analyse_plante(plante_id):
     plante = database.get_plante(plante_id)
     if not plante:
@@ -6093,7 +6203,7 @@ def generer_texte_analyse_plante(plante_id):
         lignes.append("")
 
     try:
-        evenements = database.get_journal_plante(plante_id, limite=8)
+        evenements = database.get_journal_plante(plante_id, limite=50)
     except Exception:
         evenements = []
     if evenements:
@@ -6110,6 +6220,8 @@ def generer_texte_analyse_plante(plante_id):
                 texte += f" — {commentaire}"
             lignes.append(texte)
         lignes.append("")
+
+    _ajouter_contexte_lumiere_export(lignes, mesures, evenements)
 
     maintenant = datetime.now()
     for titre, debut in (
@@ -6148,7 +6260,7 @@ def generer_texte_analyse_plante(plante_id):
 
     lignes.append("Point à discuter :")
     lignes.append("- Comparer l’évolution de l’humidité après arrosage avec l’état réel des feuilles et de la tige.")
-    lignes.append("- Vérifier si la lumière moyenne reste insuffisante pour une Crassula, même lorsque quelques pics lumineux apparaissent.")
+    lignes.append("- Vérifier si la lumière moyenne hors balcon reste insuffisante pour une Crassula, même lorsque quelques pics lumineux apparaissent.")
     return "\n".join(lignes).strip()
 
 
