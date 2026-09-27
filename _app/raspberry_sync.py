@@ -99,15 +99,15 @@ def import_batch(db_path, batch, config):
                                int.from_bytes(frame[7:11], 'little'), int.from_bytes(frame[12:14], 'little')]
                     if decoded != values:
                         raise ValueError('Historique incohérent.')
-                    # Legacy archive deduplicates by raw frame; do not rewrite its dates.
-                    # -1 explicitly means that the collector did not retain the ring-buffer index.
-                    db.execute('''INSERT OR IGNORE INTO historique_miflora_brut
-                        (capteur_id,index_capteur,timestamp_capteur,date_heure_utc,temperature,
-                         humidite,luminosite,conductivite,raw_hex,import_date,statut)
-                        VALUES (?,-1,?,?,?,?,?,?,?,?,?)''',
-                        (sensors[0][0], row['sensor_seconds'],
-                         row['measured_at'] if row['time_quality'] == 'estimated_from_sensor_clock' else None,
-                         *values, raw, datetime.now(timezone.utc).isoformat(), 'raspberry_'+row['time_quality']))
+                    # Legacy archive deduplicates by raw frame; keep only dated historical rows.
+                    # A row without reliable date is acknowledged as undated, but not stored.
+                    if row['measured_at'] and row['time_quality'] == 'estimated_from_sensor_clock':
+                        db.execute('''INSERT OR IGNORE INTO historique_miflora_brut
+                            (capteur_id,index_capteur,timestamp_capteur,date_heure_utc,temperature,
+                             humidite,luminosite,conductivite,raw_hex,import_date,statut)
+                            VALUES (?,-1,?,?,?,?,?,?,?,?,?)''',
+                            (sensors[0][0], row['sensor_seconds'], row['measured_at'],
+                             *values, raw, datetime.now(timezone.utc).isoformat(), 'raspberry_'+row['time_quality']))
                 else:
                     try:
                         raw = bytes.fromhex(row['raw']).hex()
@@ -211,9 +211,9 @@ def synchronize(config=None, sender=transport, db_path=None, collect_now=False, 
                     history_message = (
                         f" Historique Pi : {totals['history_added']} ajoutée(s), "
                         f"{totals['history_duplicates']} déjà reçue(s), "
-                        f"{totals['history_undated']} sans date fiable."
+                        f"{totals['history_undated']} sans date fiable ignorée(s)."
                     )
-                    return {'backup_message': backup_message, 'ok': True, 'message': collect_message + wait_message + backup_message + ' ' + f"Raspberry : {totals['added']} mesure(s) ajoutée(s), {totals['duplicates']} déjà reçue(s), {totals['undated']} sans date fiable conservée(s)." + history_message + attente_message, 'collect_status': collect_status, 'collect_accepted': collect_accepted, 'pending_remaining': pending_remaining or 0, **totals}
+                    return {'backup_message': backup_message, 'ok': True, 'message': collect_message + wait_message + backup_message + ' ' + f"Raspberry : {totals['added']} mesure(s) ajoutée(s), {totals['duplicates']} déjà reçue(s), {totals['undated']} sans date fiable ignorée(s)." + history_message + attente_message, 'collect_status': collect_status, 'collect_accepted': collect_accepted, 'pending_remaining': pending_remaining or 0, **totals}
             raise RuntimeError('Transfert partiel conservé ; suite au prochain essai.')
         except Exception as error:
             message = str(error) if isinstance(error, (ValueError, ConnectionError, RuntimeError)) else 'Transfert interrompu ; reprise sans doublons au prochain essai.'
@@ -239,7 +239,7 @@ def replay_recent_history(config=None, sender=transport, db_path=None, limit=500
             message = (
                 f"Relecture historique Raspberry : {counts['history_added']} ajoutée(s), "
                 f"{counts['history_duplicates']} déjà présente(s), "
-                f"{counts['history_undated']} sans date fiable."
+                f"{counts['history_undated']} sans date fiable ignorée(s)."
             )
             if not ack['rows']:
                 message += ' Aucune entrée historique disponible sur le Raspberry.'

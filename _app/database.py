@@ -1,5 +1,6 @@
 import os
 import sqlite3
+from datetime import datetime
 from pathlib import Path
 
 
@@ -10,6 +11,50 @@ DB_PATH = Path(os.environ.get("BOTANEO_DB_PATH", BASE_DIR / "plantes.db"))
 def get_connection():
     """Ouvre une connexion à la base de données."""
     return sqlite3.connect(DB_PATH)
+
+
+def date_heure_valide(valeur):
+    """Valide une date ISO exploitable avant insertion ou analyse."""
+    if not isinstance(valeur, str) or not valeur.strip():
+        return False
+    texte = valeur.strip()
+    try:
+        datetime.fromisoformat(texte.replace('Z', '+00:00'))
+        return True
+    except ValueError:
+        return False
+
+
+def supprimer_mesures_sans_date():
+    """Supprime les mesures et archives Mi Flora sans date fiable.
+
+    Règle Botaneo : une mesure sans date exploitable ne doit pas participer
+    aux statistiques, même si elle contient des valeurs plausibles.
+    """
+    conn = get_connection()
+    supprimees_mesures = 0
+    supprimees_archives = 0
+    try:
+        rows = conn.execute("SELECT id, date_heure FROM mesures").fetchall()
+        ids_mesures = [row[0] for row in rows if not date_heure_valide(row[1])]
+        if ids_mesures:
+            conn.executemany("DELETE FROM mesures WHERE id = ?", [(row_id,) for row_id in ids_mesures])
+            supprimees_mesures = len(ids_mesures)
+
+        table = conn.execute("""
+            SELECT name FROM sqlite_master
+            WHERE type='table' AND name='historique_miflora_brut'
+        """).fetchone()
+        if table:
+            rows = conn.execute("SELECT id, date_heure_utc FROM historique_miflora_brut").fetchall()
+            ids_archives = [row[0] for row in rows if not date_heure_valide(row[1])]
+            if ids_archives:
+                conn.executemany("DELETE FROM historique_miflora_brut WHERE id = ?", [(row_id,) for row_id in ids_archives])
+                supprimees_archives = len(ids_archives)
+        conn.commit()
+    finally:
+        conn.close()
+    return {"mesures": supprimees_mesures, "archives": supprimees_archives}
 
 
 # ============================================================
@@ -838,6 +883,9 @@ def enregistrer_mesure(
     Enregistre une mesure pour un capteur existant et actif.
     """
 
+    if not date_heure_valide(date_heure):
+        raise ValueError("Date de mesure absente ou invalide : mesure non enregistrée.")
+
     conn = get_connection()
 
     capteur = conn.execute("""
@@ -1064,6 +1112,8 @@ def enregistrer_entrees_historique_miflora(capteur_id, export_historique, import
     for entree in export_historique.get("entries", []):
         raw_hex = entree.get("raw_hex")
         if not raw_hex:
+            continue
+        if not date_heure_valide(entree.get("date_heure_utc")):
             continue
 
         curseur = conn.execute("""

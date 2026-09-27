@@ -245,6 +245,7 @@ Ce fichier sert à garder une trace claire des idées et des prochaines étapes.
 
 ## Historique et graphiques — suivi restant
 
+- [x] Sécurité base : refuser les nouvelles mesures sans date fiable et supprimer les anciennes mesures/archives sans date exploitable.
 - [x] Archive brute Mi Flora conservée sans effacement.
 - [x] Import graphique après archivage, avec déduplication.
 - [x] Lectures partielles acceptées quand les entrées lues sont valides.
@@ -319,3 +320,12 @@ Ce fichier sert à garder une trace claire des idées et des prochaines étapes.
 - [x] Afficher un tableau des capteurs avec dernière mesure, mesures passives et historiques.
 - [ ] Ajouter plus tard un état visuel clair : OK, à surveiller, action conseillée.
 - [ ] Ajouter plus tard les erreurs récentes de synchronisation si elles sont historisées.
+
+## Validation restauration — 27 septembre 2026
+
+- [x] Tester la sauvegarde du 26 septembre sur des copies temporaires : intégrité SQLite correcte.
+- [x] Rejouer les 372 relevés, y compris déjà confirmés : deux passages sans doublon dans une copie du PC actuel.
+- [x] Simuler la perte des mesures PC sur une copie : 369 mesures récupérées, 3 relevés sans date fiable ignorés, aucune erreur de clés étrangères.
+- [ ] Tester séparément le redémarrage sur une carte SD restaurée : non couvert par le test logiciel.
+
+La remise en attente a été effectuée uniquement sur une copie de la base Pi. Les bases utilisées et le Raspberry en fonctionnement n’ont pas été modifiés. Ce test ne constitue pas encore une commande de restauration accessible à l’utilisateur.

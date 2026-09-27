@@ -289,7 +289,7 @@ async def importer_historique_capteur(capteur_id=None, force_pc=False, on_progre
             resultat['historique_message_simplifie'] = (
                 f"Historique simplifié via Raspberry : {history_added} ajoutée(s), "
                 f"{history_duplicates} déjà reçue(s), "
-                f"{history_undated} sans date fiable."
+                f"{history_undated} sans date fiable ignorée(s)."
             )
             resultat['message'] = resultat['historique_message_simplifie'] + ' ' + resultat.get('message', '')
             resultat['historique_action'] = 'donnees_recues'
