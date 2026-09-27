@@ -1603,12 +1603,18 @@ def ouvrir_historique(parent, plante_id):
     ttk.Button(barre, text="Cycles", command=ouvrir_cycles_arrosage).pack(side="right", padx=(8, 0))
     ttk.Button(barre, text="Copier journée", command=copier_journee).pack(side="right", padx=(8, 0))
     ttk.Button(barre, text="Actualiser", command=actualiser).pack(side="right")
-    choix_periode.bind("<<ComboboxSelected>>", actualiser)
+    def selectionner_periode(_event=None):
+        if periode.get() == "Journée":
+            serie.set("Lumière")
+        actualiser()
+
     def selectionner_jour(_event=None):
         if jour_selectionne.get():
             periode.set("Journée")
+            serie.set("Lumière")
         actualiser()
 
+    choix_periode.bind("<<ComboboxSelected>>", selectionner_periode)
     choix_jour.bind("<<ComboboxSelected>>", selectionner_jour)
     choix_serie.bind("<<ComboboxSelected>>", actualiser)
     canvas.bind("<Configure>", dessiner)
