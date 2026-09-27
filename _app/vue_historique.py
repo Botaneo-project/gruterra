@@ -460,6 +460,58 @@ def resumer_cycles_arrosage(mesures, arrosages, limite=6):
     return "\n".join(lignes)
 
 
+def resume_stats_jour_dict(mesures, arrosages=None):
+    arrosages = arrosages or []
+    return {
+        "mesures": len(mesures),
+        "arrosages": len(arrosages),
+        "humidite": statistiques_colonne(mesures, 3),
+        "temperature": statistiques_colonne(mesures, 2),
+        "lumiere": statistiques_colonne(mesures, 4),
+        "conductivite": statistiques_colonne(mesures, 5),
+    }
+
+
+def formater_moyenne_stats(stats, unite):
+    if not stats:
+        return "—"
+    return f"{formater_nombre(stats['moyenne'])} {unite}"
+
+
+def comparer_deux_jours(mesures, arrosages, jour_a, jour_b):
+    mesures_a = filtrer_mesures_jour(mesures, jour_a)
+    mesures_b = filtrer_mesures_jour(mesures, jour_b)
+    arrosages_a = filtrer_arrosages_jour(arrosages, jour_a)
+    arrosages_b = filtrer_arrosages_jour(arrosages, jour_b)
+    stats_a = resume_stats_jour_dict(mesures_a, arrosages_a)
+    stats_b = resume_stats_jour_dict(mesures_b, arrosages_b)
+    lignes = [
+        f"Comparaison Botaneo — {libelle_jour(jour_a)} / {libelle_jour(jour_b)}",
+        "",
+        f"Mesures : {stats_a['mesures']} / {stats_b['mesures']}",
+        f"Arrosages : {stats_a['arrosages']} / {stats_b['arrosages']}",
+        f"Humidité moyenne : {formater_moyenne_stats(stats_a['humidite'], '%')} / {formater_moyenne_stats(stats_b['humidite'], '%')}",
+        f"Température moyenne : {formater_moyenne_stats(stats_a['temperature'], '°C')} / {formater_moyenne_stats(stats_b['temperature'], '°C')}",
+        f"Lumière moyenne : {formater_moyenne_stats(stats_a['lumiere'], 'lux')} / {formater_moyenne_stats(stats_b['lumiere'], 'lux')}",
+        f"Conductivité moyenne : {formater_moyenne_stats(stats_a['conductivite'], 'µS/cm')} / {formater_moyenne_stats(stats_b['conductivite'], 'µS/cm')}",
+    ]
+    if stats_a['humidite'] and stats_b['humidite']:
+        ecart = stats_a['humidite']['moyenne'] - stats_b['humidite']['moyenne']
+        lignes.append(f"Écart humidité moyenne : {formater_nombre(ecart)} point(s)")
+    if stats_a['lumiere'] and stats_b['lumiere']:
+        ecart_lumiere = stats_a['lumiere']['moyenne'] - stats_b['lumiere']['moyenne']
+        lignes.append(f"Écart lumière moyenne : {formater_nombre(ecart_lumiere)} lux")
+    return {
+        "texte": "\n".join(lignes),
+        "stats_a": stats_a,
+        "stats_b": stats_b,
+        "mesures_a": mesures_a,
+        "mesures_b": mesures_b,
+        "arrosages_a": arrosages_a,
+        "arrosages_b": arrosages_b,
+    }
+
+
 def resume_moyennes_jour(mesures, jour, arrosages=None):
     if not jour:
         return "Journée : aucune date sélectionnée."
@@ -1066,6 +1118,93 @@ def ouvrir_historique(parent, plante_id):
                                anchor="e", fill=couleur_secondaire,
                                font=("Segoe UI", 8))
 
+    def ouvrir_comparaison_jours():
+        try:
+            toutes_mesures = database.get_mesures(plante_id=plante_id, limite=-1)
+        except Exception:
+            toutes_mesures = []
+        try:
+            tous_arrosages = database.get_arrosages_plante(plante_id, limite=200)
+        except Exception:
+            tous_arrosages = []
+        jours = jours_disponibles_mesures(toutes_mesures)
+        if len(jours) < 2:
+            messagebox.showinfo("Comparer jours", "Il faut au moins deux journées avec mesures.", parent=fenetre)
+            return
+        libelles = [libelle_jour(jour) for jour in jours]
+        jours_lookup = dict(zip(libelles, jours))
+        detail = tk.Toplevel(fenetre)
+        detail.title("Comparer deux journées")
+        detail.configure(bg=couleurs["CARD"])
+        detail.transient(fenetre)
+        detail.geometry("820x520+90+90")
+        tk.Label(detail, text="📊 Comparer deux journées", bg=couleurs["CARD"], fg=couleurs["GREEN"], font=("Segoe UI", 16, "bold")).pack(anchor="w", padx=18, pady=(16, 4))
+        choix = tk.Frame(detail, bg=couleurs["CARD"])
+        choix.pack(fill="x", padx=18, pady=(6, 10))
+        jour_a_var = tk.StringVar(value=libelles[0])
+        jour_b_var = tk.StringVar(value=libelles[1])
+        tk.Label(choix, text="Jour A", bg=couleurs["CARD"], fg=couleurs["TEXT"]).pack(side="left", padx=(0, 6))
+        combo_a = ttk.Combobox(choix, textvariable=jour_a_var, values=libelles, state="readonly", width=12)
+        combo_a.pack(side="left", padx=(0, 16))
+        tk.Label(choix, text="Jour B", bg=couleurs["CARD"], fg=couleurs["TEXT"]).pack(side="left", padx=(0, 6))
+        combo_b = ttk.Combobox(choix, textvariable=jour_b_var, values=libelles, state="readonly", width=12)
+        combo_b.pack(side="left")
+
+        colonnes_cmp = ("mesure", "jour_a", "jour_b", "ecart")
+        tableau = ttk.Treeview(detail, columns=colonnes_cmp, show="headings", height=8)
+        for colonne, titre, largeur in (("mesure", "Mesure", 180), ("jour_a", "Jour A", 150), ("jour_b", "Jour B", 150), ("ecart", "Écart A-B", 150)):
+            tableau.heading(colonne, text=titre)
+            tableau.column(colonne, width=largeur, anchor="center")
+        tableau.pack(fill="x", padx=18, pady=(0, 10))
+
+        zone = tk.Text(detail, height=9, wrap="word", bg=couleurs["BG"], fg=couleurs["TEXT"], relief="flat", font=("Segoe UI", 9))
+        zone.pack(fill="both", expand=True, padx=18, pady=(0, 12))
+        resultat_courant = {"texte": ""}
+
+        def valeur_stat(stats, cle, unite):
+            bloc = stats.get(cle)
+            if not bloc:
+                return "—", None
+            return f"{formater_nombre(bloc['moyenne'])} {unite}", bloc['moyenne']
+
+        def rafraichir_comparaison(_event=None):
+            jour_a = jours_lookup.get(jour_a_var.get())
+            jour_b = jours_lookup.get(jour_b_var.get())
+            if not jour_a or not jour_b:
+                return
+            resultat = comparer_deux_jours(toutes_mesures, tous_arrosages, jour_a, jour_b)
+            resultat_courant["texte"] = resultat["texte"]
+            for item in tableau.get_children():
+                tableau.delete(item)
+            lignes = [
+                ("Mesures", str(resultat['stats_a']['mesures']), str(resultat['stats_b']['mesures']), str(resultat['stats_a']['mesures'] - resultat['stats_b']['mesures'])),
+                ("Arrosages", str(resultat['stats_a']['arrosages']), str(resultat['stats_b']['arrosages']), str(resultat['stats_a']['arrosages'] - resultat['stats_b']['arrosages'])),
+            ]
+            for titre, cle, unite in (("Humidité moy.", "humidite", "%"), ("Température moy.", "temperature", "°C"), ("Lumière moy.", "lumiere", "lux"), ("Conductivité moy.", "conductivite", "µS/cm")):
+                texte_a, valeur_a = valeur_stat(resultat['stats_a'], cle, unite)
+                texte_b, valeur_b = valeur_stat(resultat['stats_b'], cle, unite)
+                ecart = "—" if valeur_a is None or valeur_b is None else f"{formater_nombre(valeur_a - valeur_b)} {unite}"
+                lignes.append((titre, texte_a, texte_b, ecart))
+            for ligne in lignes:
+                tableau.insert("", "end", values=ligne)
+            zone.configure(state="normal")
+            zone.delete("1.0", "end")
+            zone.insert("1.0", resultat["texte"])
+            zone.configure(state="disabled")
+
+        combo_a.bind("<<ComboboxSelected>>", rafraichir_comparaison)
+        combo_b.bind("<<ComboboxSelected>>", rafraichir_comparaison)
+        boutons = tk.Frame(detail, bg=couleurs["CARD"])
+        boutons.pack(fill="x", padx=18, pady=(0, 14))
+        def copier_comparaison():
+            detail.clipboard_clear()
+            detail.clipboard_append(resultat_courant.get("texte") or "")
+            bilan.set(f"{bilan.get()} · comparaison copiée")
+        ttk.Button(boutons, text="Copier", command=copier_comparaison).pack(side="left")
+        ttk.Button(boutons, text="Fermer", command=detail.destroy).pack(side="right")
+        rafraichir_comparaison()
+
+
     def ouvrir_cycles_arrosage():
         try:
             toutes_mesures = database.get_mesures(plante_id=plante_id, limite=-1)
@@ -1344,6 +1483,7 @@ def ouvrir_historique(parent, plante_id):
 
     ttk.Button(barre, text="Ordre normal", command=remettre_ordre_normal).pack(side="right", padx=(8, 0))
     ttk.Button(barre, text="Copier résumé", command=copier_resume_historique).pack(side="right", padx=(8, 0))
+    ttk.Button(barre, text="Comparer jours", command=ouvrir_comparaison_jours).pack(side="right", padx=(8, 0))
     ttk.Button(barre, text="Cycles", command=ouvrir_cycles_arrosage).pack(side="right", padx=(8, 0))
     ttk.Button(barre, text="Copier journée", command=copier_journee).pack(side="right", padx=(8, 0))
     ttk.Button(barre, text="Actualiser", command=actualiser).pack(side="right")
