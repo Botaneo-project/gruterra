@@ -286,6 +286,51 @@ def filtrer_arrosages_jour(arrosages, jour):
     return resultat
 
 
+def construire_expositions_balcon(evenements):
+    """Retourne les périodes Sortie balcon -> Retour intérieur du journal plante."""
+
+    points = []
+    for evenement in evenements or []:
+        date = date_locale_depuis_iso(evenement[2] if len(evenement) > 2 else None)
+        titre = (evenement[4] if len(evenement) > 4 and evenement[4] else "").strip().lower()
+        type_evenement = (evenement[3] if len(evenement) > 3 and evenement[3] else "").strip().lower()
+        if not date or type_evenement != "exposition":
+            continue
+        if "sortie balcon" in titre:
+            points.append((date, "sortie"))
+        elif "retour intérieur" in titre or "retour interieur" in titre:
+            points.append((date, "retour"))
+
+    points.sort(key=lambda item: item[0])
+    periodes = []
+    sortie = None
+    for date, action in points:
+        if action == "sortie":
+            sortie = date
+        elif action == "retour" and sortie:
+            if date > sortie:
+                periodes.append((sortie, date))
+            sortie = None
+    if sortie:
+        periodes.append((sortie, None))
+    return periodes
+
+
+def filtrer_expositions_periode(expositions, debut, fin):
+    resultat = []
+    for sortie, retour in expositions or []:
+        retour_effectif = retour or fin
+        if retour_effectif >= debut and sortie <= fin:
+            resultat.append((sortie, retour))
+    return resultat
+
+
+def filtrer_expositions_jour(expositions, jour):
+    debut = datetime.combine(jour, datetime.min.time())
+    fin = debut + timedelta(days=1)
+    return filtrer_expositions_periode(expositions, debut, fin)
+
+
 def valeurs_colonne(mesures, index):
     valeurs = []
     for mesure in mesures:
@@ -815,6 +860,7 @@ def ouvrir_historique(parent, plante_id):
     points = []
     mesures_courantes = []
     arrosages_courants = []
+    expositions_courantes = []
     bilan_jour_courant = {"texte": "", "jour": ""}
 
     def analyser_qualite_donnees(mesures, periode_affichee):
@@ -1119,8 +1165,38 @@ def ouvrir_historique(parent, plante_id):
         if dates_arrosage_visibles:
             start = min(start, min(dates_arrosage_visibles))
             end = max(end, max(dates_arrosage_visibles))
+        dates_exposition_visibles = []
+        for sortie_balcon, retour_balcon in expositions_courantes:
+            dates_exposition_visibles.append(sortie_balcon)
+            if retour_balcon:
+                dates_exposition_visibles.append(retour_balcon)
+        if dates_exposition_visibles:
+            start = min(start, min(dates_exposition_visibles))
+            end = max(end, max(dates_exposition_visibles))
         span = (end - start).total_seconds()
         coords = []
+
+        for sortie_balcon, retour_balcon in expositions_courantes:
+            retour_effectif = retour_balcon or end
+            if retour_effectif < start or sortie_balcon > end:
+                continue
+            debut_zone = max(sortie_balcon, start)
+            fin_zone = min(retour_effectif, end)
+            if fin_zone < debut_zone:
+                continue
+            x_debut = x0 + (x1 - x0) * (debut_zone - start).total_seconds() / span if span else (x0 + x1) / 2
+            x_fin = x0 + (x1 - x0) * (fin_zone - start).total_seconds() / span if span else x_debut
+            couleur_balcon = melanger_couleurs(couleurs["ORANGE"], couleurs["CARD"], 0.80)
+            canvas.create_rectangle(x_debut, y0, x_fin, y1, fill=couleur_balcon, outline="")
+            canvas.create_line(x_debut, y0, x_debut, y1, fill=couleurs["ORANGE"], dash=(2, 4))
+            if x_fin - x_debut > 46:
+                canvas.create_text(
+                    (x_debut + x_fin) / 2,
+                    y0 + 12,
+                    text="☀️ balcon",
+                    fill=couleurs["ORANGE"],
+                    font=("Segoe UI", 8, "bold")
+                )
 
         for arrosage in arrosages_courants:
             try:
@@ -1560,7 +1636,7 @@ def ouvrir_historique(parent, plante_id):
 
 
     def actualiser(event=None):
-        nonlocal points, mesures_courantes, arrosages_courants, jours_par_libelle
+        nonlocal points, mesures_courantes, arrosages_courants, expositions_courantes, jours_par_libelle
 
         try:
             mesures = database.get_mesures(plante_id=plante_id, limite=-1)
@@ -1572,6 +1648,12 @@ def ouvrir_historique(parent, plante_id):
             arrosages = database.get_arrosages_plante(plante_id, limite=200)
         except Exception:
             arrosages = []
+
+        try:
+            evenements = database.get_journal_plante(plante_id, limite=500)
+        except Exception:
+            evenements = []
+        expositions = construire_expositions_balcon(evenements)
 
         jours_disponibles = jours_disponibles_mesures(mesures)
         jours_par_libelle = {libelle_jour(jour): jour for jour in jours_disponibles}
@@ -1588,6 +1670,7 @@ def ouvrir_historique(parent, plante_id):
             if jour:
                 mesures = filtrer_mesures_jour(mesures, jour)
                 arrosages = filtrer_arrosages_jour(arrosages, jour)
+                expositions = filtrer_expositions_jour(expositions, jour)
                 texte_jour = resume_moyennes_jour(mesures, jour, arrosages)
                 jour_resume_var.set(texte_jour)
                 bilan_jour_courant["texte"] = texte_jour
@@ -1596,6 +1679,7 @@ def ouvrir_historique(parent, plante_id):
             else:
                 mesures = []
                 arrosages = []
+                expositions = []
                 jour_resume_var.set("Journée : aucune date disponible pour cette plante.")
                 bilan_jour_courant["texte"] = ""
                 bilan_jour_courant["jour"] = ""
@@ -1624,8 +1708,10 @@ def ouvrir_historique(parent, plante_id):
                 if date and limite <= date <= maintenant:
                     arrosages_filtres.append(arrosage)
             arrosages = arrosages_filtres
+            expositions = filtrer_expositions_periode(expositions, limite, maintenant)
 
         arrosages_courants = list(arrosages)
+        expositions_courantes = list(expositions)
 
         mesures_courantes = list(mesures)
         if tri_table["colonne"]:
@@ -1669,10 +1755,11 @@ def ouvrir_historique(parent, plante_id):
         lecture_var.set(analyse["lecture"])
         lecture_label.configure(fg=couleurs.get(analyse["couleur"], couleurs["TEXT"]))
         suffixe_arrosage = f" · {len(arrosages_courants)} arrosage(s)" if arrosages_courants else ""
+        suffixe_exposition = f" · {len(expositions_courantes)} exposition(s) balcon" if expositions_courantes else ""
         if tri_table["colonne"]:
-            bilan.set(f"{len(mesures)} mesure(s){suffixe_arrosage} · tri : {libelle_tri(tri_table['colonne'])}")
+            bilan.set(f"{len(mesures)} mesure(s){suffixe_arrosage}{suffixe_exposition} · tri : {libelle_tri(tri_table['colonne'])}")
         else:
-            bilan.set(f"{len(mesures)} mesure(s){suffixe_arrosage}")
+            bilan.set(f"{len(mesures)} mesure(s){suffixe_arrosage}{suffixe_exposition}")
         dessiner()
 
     for texte, repere in (

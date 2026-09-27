@@ -1559,6 +1559,121 @@ def lancer_controle_humidite_zero(plante_id, delai_ms=10 * 60 * 1000):
     )
 
 
+def parser_date_saisie_utilisateur(valeur):
+    valeur = (valeur or "").strip()
+    formats = (
+        "%d/%m/%Y %H:%M",
+        "%d/%m/%Y %H:%M:%S",
+        "%Y-%m-%d %H:%M",
+        "%Y-%m-%dT%H:%M",
+        "%Y-%m-%dT%H:%M:%S",
+    )
+    for format_date in formats:
+        try:
+            return datetime.strptime(valeur, format_date)
+        except ValueError:
+            pass
+    try:
+        return datetime.fromisoformat(valeur)
+    except Exception:
+        return None
+
+
+def ouvrir_exposition_balcon_passee(plante_id, nom_plante):
+    """Ajoute une sortie balcon passée avec date de sortie et de retour."""
+
+    maintenant = datetime.now().replace(second=0, microsecond=0)
+    sortie_defaut = maintenant - timedelta(hours=2)
+
+    fenetre = tk.Toplevel(root)
+    fenetre.title("Exposition balcon passée")
+    fenetre.configure(bg=CARD)
+    fenetre.resizable(False, False)
+    fenetre.transient(root)
+    fenetre.grab_set()
+
+    tk.Label(
+        fenetre,
+        text=f"☀️ Exposition balcon · {nom_plante}",
+        font=("Segoe UI", 15, "bold"),
+        fg=TEXT,
+        bg=CARD
+    ).pack(anchor="w", padx=20, pady=(16, 6))
+
+    tk.Label(
+        fenetre,
+        text="Permet d'ajouter après coup une sortie et un retour, sans modifier les mesures.",
+        font=("Segoe UI", 9),
+        fg=SECONDARY,
+        bg=CARD,
+        wraplength=420,
+        justify="left"
+    ).pack(anchor="w", padx=20, pady=(0, 12))
+
+    tk.Label(fenetre, text="Sortie", bg=CARD, fg=TEXT, font=("Segoe UI", 9, "bold")).pack(anchor="w", padx=20, pady=(4, 3))
+    sortie_var = tk.StringVar(value=sortie_defaut.strftime("%d/%m/%Y %H:%M"))
+    sortie_entry = tk.Entry(fenetre, textvariable=sortie_var, width=42, bg=BG, fg=TEXT, insertbackground=TEXT)
+    sortie_entry.pack(fill="x", padx=20)
+
+    tk.Label(fenetre, text="Retour", bg=CARD, fg=TEXT, font=("Segoe UI", 9, "bold")).pack(anchor="w", padx=20, pady=(10, 3))
+    retour_var = tk.StringVar(value=maintenant.strftime("%d/%m/%Y %H:%M"))
+    retour_entry = tk.Entry(fenetre, textvariable=retour_var, width=42, bg=BG, fg=TEXT, insertbackground=TEXT)
+    retour_entry.pack(fill="x", padx=20)
+
+    tk.Label(fenetre, text="Commentaire facultatif", bg=CARD, fg=TEXT, font=("Segoe UI", 9, "bold")).pack(anchor="w", padx=20, pady=(10, 3))
+    commentaire_entry = tk.Entry(fenetre, width=42, bg=BG, fg=TEXT, insertbackground=TEXT)
+    commentaire_entry.pack(fill="x", padx=20)
+
+    erreur = tk.StringVar()
+    tk.Label(fenetre, textvariable=erreur, bg=CARD, fg=RED, wraplength=420, justify="left").pack(fill="x", padx=20, pady=8)
+
+    def enregistrer():
+        sortie = parser_date_saisie_utilisateur(sortie_var.get())
+        retour = parser_date_saisie_utilisateur(retour_var.get())
+        if sortie is None or retour is None:
+            erreur.set("Date invalide. Format conseillé : 25/09/2026 14:30")
+            return
+        if retour <= sortie:
+            erreur.set("Le retour doit être après la sortie.")
+            return
+
+        commentaire_libre = commentaire_entry.get().strip()
+        duree = formater_duree_heures((retour - sortie).total_seconds() / 3600)
+        suffixe = f" Commentaire : {commentaire_libre}" if commentaire_libre else ""
+
+        try:
+            database.ajouter_observation_plante(
+                plante_id,
+                sortie.isoformat(timespec="seconds"),
+                f"Plante sortie temporairement sur le balcon. Durée déclarée : {duree}.{suffixe} Les pics de lumière de cette période doivent être interprétés comme une exposition extérieure ponctuelle.",
+                titre="Sortie balcon",
+                type_evenement="exposition",
+                source="botaneo"
+            )
+            database.ajouter_observation_plante(
+                plante_id,
+                retour.isoformat(timespec="seconds"),
+                f"Plante rentrée à l'intérieur après une exposition balcon déclarée de {duree}.{suffixe} Les mesures suivantes correspondent de nouveau à l'emplacement habituel.",
+                titre="Retour intérieur",
+                type_evenement="exposition",
+                source="botaneo"
+            )
+        except Exception as exception:
+            erreur.set(f"Impossible d'enregistrer l'exposition : {exception}")
+            return
+
+        fenetre.destroy()
+        actualiser_interface()
+        status_var.set(f"Exposition balcon ajoutée pour {nom_plante} · {duree}.")
+
+    boutons = tk.Frame(fenetre, bg=CARD)
+    boutons.pack(fill="x", padx=20, pady=(0, 15))
+    tk.Button(boutons, text="Enregistrer", command=enregistrer, bg=LIGHT_GREEN, fg=GREEN, activebackground=LIGHT_GREEN, relief="flat", cursor="hand2").pack(side="right")
+    tk.Button(boutons, text="Annuler", command=fenetre.destroy, bg=BG, fg=TEXT, relief="flat", cursor="hand2").pack(side="left")
+
+    sortie_entry.focus_set()
+
+
 def enregistrer_evenement_balcon(plante_id, nom_plante, action):
     """Enregistre un événement d'exposition extérieure dans le journal de la plante."""
 
@@ -2070,6 +2185,7 @@ def creer_carte_plante_compacte(parent, plante):
     tk.Button(boutons, text="💧 Arrosage", font=("Segoe UI", 8, "bold"), bg=LIGHT_BLUE, fg=BLUE, relief="flat", cursor="hand2", command=lambda pid=plante_id, n=nom: ouvrir_arrosage_plante(pid, n)).pack(side="left", padx=(0, 8))
     tk.Button(boutons, text="☀️ Sortie balcon", font=("Segoe UI", 8, "bold"), bg=BG, fg=ORANGE, relief="flat", cursor="hand2", command=lambda pid=plante_id, n=nom: enregistrer_evenement_balcon(pid, n, "sortie")).pack(side="left", padx=(0, 8))
     tk.Button(boutons, text="🏠 Retour intérieur", font=("Segoe UI", 8, "bold"), bg=BG, fg=BLUE, relief="flat", cursor="hand2", command=lambda pid=plante_id, n=nom: enregistrer_evenement_balcon(pid, n, "retour")).pack(side="left", padx=(0, 8))
+    tk.Button(boutons, text="🕘 Exposition passée", font=("Segoe UI", 8, "bold"), bg=BG, fg=SECONDARY, relief="flat", cursor="hand2", command=lambda pid=plante_id, n=nom: ouvrir_exposition_balcon_passee(pid, n)).pack(side="left", padx=(0, 8))
     tk.Button(boutons, text="🔎 Analyse", font=("Segoe UI", 8, "bold"), bg=LIGHT_GREEN, fg=GREEN, relief="flat", cursor="hand2", command=lambda pid=plante_id: afficher_message_analyse(pid)).pack(side="left", padx=(0, 8))
     tk.Button(boutons, text="📋 Copier analyse", font=("Segoe UI", 8, "bold"), bg=BG, fg=BLUE, relief="flat", cursor="hand2", command=lambda pid=plante_id: copier_analyse_plante(pid)).pack(side="left", padx=(0, 8))
     tk.Button(boutons, text="📈 Historique", font=("Segoe UI", 8, "bold"), bg=BG, fg=TEXT, relief="flat", cursor="hand2", command=lambda pid=plante_id: afficher_message_historique(pid)).pack(side="left")
@@ -2624,6 +2740,23 @@ def creer_carte_plante(parent, plante):
         cursor="hand2",
         command=lambda pid=plante_id, nom=nom:
             enregistrer_evenement_balcon(pid, nom, "retour")
+    ).pack(
+        side="left",
+        padx=(0, 8)
+    )
+
+    tk.Button(
+        boutons,
+        text="🕘 Exposition passée",
+        font=("Segoe UI", 9, "bold"),
+        bg=BG,
+        fg=SECONDARY,
+        activebackground=BG,
+        activeforeground=SECONDARY,
+        relief="flat",
+        cursor="hand2",
+        command=lambda pid=plante_id, nom=nom:
+            ouvrir_exposition_balcon_passee(pid, nom)
     ).pack(
         side="left",
         padx=(0, 8)
