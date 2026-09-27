@@ -816,14 +816,31 @@ def analyser_lumiere_24h(plante_id):
         for luminosite in luminosites
         if luminosite >= 1000
     )
+    mesures_tres_lumineuses = sum(
+        1
+        for luminosite in luminosites
+        if luminosite >= 10000
+    )
 
     ratio_utile = mesures_utiles / len(luminosites)
+    ratio_tres_lumineux = mesures_tres_lumineuses / len(luminosites)
+    detail_base = (
+        f"Moyenne {moyenne:.0f} lux, pic {maximum:.0f} lux, "
+        f"{mesures_utiles}/{len(luminosites)} mesure(s) au-dessus de 1000 lux. "
+    )
+    pic_isole = maximum >= 10000 and moyenne < 500 and ratio_tres_lumineux < 0.20
 
     if maximum < 800 or moyenne < 250:
         message = "Lumière faible sur 24 h"
+        detail = detail_base + "Éclairage conseillé."
+        couleur = ORANGE
+        fond = LIGHT_ORANGE
+
+    elif pic_isole:
+        message = "Pic lumineux isolé"
         detail = (
-            f"Moyenne {moyenne:.0f} lux, pic {maximum:.0f} lux. "
-            "Éclairage conseillé."
+            detail_base
+            + "Le pic ressemble à une exposition ponctuelle ; la moyenne reste faible pour juger la journée complète."
         )
         couleur = ORANGE
         fond = LIGHT_ORANGE
@@ -831,17 +848,15 @@ def analyser_lumiere_24h(plante_id):
     elif ratio_utile < 0.25:
         message = "Lumière à surveiller"
         detail = (
-            f"Moyenne {moyenne:.0f} lux, pic {maximum:.0f} lux. "
-            "La plante reçoit peu de vraie lumière utile."
+            detail_base
+            + "La plante reçoit peu de vraie lumière utile."
         )
         couleur = ORANGE
         fond = LIGHT_ORANGE
 
     else:
         message = "Lumière correcte aujourd'hui"
-        detail = (
-            f"Moyenne {moyenne:.0f} lux, pic {maximum:.0f} lux."
-        )
+        detail = detail_base.rstrip()
         couleur = GREEN
         fond = LIGHT_GREEN
 
@@ -852,6 +867,9 @@ def analyser_lumiere_24h(plante_id):
         "moyenne": moyenne,
         "maximum": maximum,
         "nombre_mesures": len(luminosites),
+        "mesures_utiles": mesures_utiles,
+        "ratio_utile": ratio_utile,
+        "pic_isole": pic_isole,
         "couleur": couleur,
         "fond": fond
     }
