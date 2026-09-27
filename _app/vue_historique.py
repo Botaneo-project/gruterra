@@ -1189,13 +1189,31 @@ def ouvrir_historique(parent, plante_id):
             couleur_balcon = melanger_couleurs(couleurs["ORANGE"], couleurs["CARD"], 0.80)
             canvas.create_rectangle(x_debut, y0, x_fin, y1, fill=couleur_balcon, outline="")
             canvas.create_line(x_debut, y0, x_debut, y1, fill=couleurs["ORANGE"], dash=(2, 4))
-            if x_fin - x_debut > 46:
+            canvas.create_text(
+                x_debut + 4,
+                y0 + 12,
+                text="☀️ sortie",
+                anchor="w",
+                fill=couleurs["ORANGE"],
+                font=("Segoe UI", 8, "bold")
+            )
+            if retour_balcon:
+                canvas.create_line(x_fin, y0, x_fin, y1, fill=couleurs["BLUE"], dash=(2, 4))
+                canvas.create_text(
+                    x_fin - 4,
+                    y0 + 28,
+                    text="🏠 retour",
+                    anchor="e",
+                    fill=couleurs["BLUE"],
+                    font=("Segoe UI", 8, "bold")
+                )
+            elif x_fin - x_debut > 46:
                 canvas.create_text(
                     (x_debut + x_fin) / 2,
-                    y0 + 12,
-                    text="☀️ balcon",
-                    fill=couleurs["ORANGE"],
-                    font=("Segoe UI", 8, "bold")
+                    y0 + 28,
+                    text="retour non noté",
+                    fill=couleurs["SECONDARY"],
+                    font=("Segoe UI", 8)
                 )
 
         for arrosage in arrosages_courants:

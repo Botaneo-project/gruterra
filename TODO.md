@@ -341,3 +341,5 @@ La remise en attente a été effectuée uniquement sur une copie de la base Pi. 
 - [x] Permettre d'ajouter après coup une exposition balcon passée avec date/heure de sortie et date/heure de retour.
 
 - [x] Afficher les expositions balcon dans le graphique historique sous forme de zone visuelle, sans modifier les mesures.
+
+- [x] Afficher séparément les repères `sortie` et `retour` des expositions balcon dans le graphique historique.
