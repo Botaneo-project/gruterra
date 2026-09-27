@@ -491,6 +491,26 @@ def valeur_cycle(cycle, cle):
     return None
 
 
+def points_humidite_cycle(cycle):
+    debut = cycle.get("date")
+    if not debut:
+        return []
+    points = []
+    for mesure in cycle.get("mesures") or []:
+        date = date_locale_depuis_iso(mesure[1])
+        if not date:
+            continue
+        try:
+            humidite = float(mesure[3])
+        except (TypeError, ValueError):
+            continue
+        if math.isfinite(humidite):
+            heures = (date - debut).total_seconds() / 3600
+            if heures >= 0:
+                points.append((heures, humidite))
+    return sorted(points)
+
+
 def comparer_deux_cycles(cycle_a, cycle_b):
     mesures_a = len(cycle_a.get("mesures") or [])
     mesures_b = len(cycle_b.get("mesures") or [])
@@ -1362,6 +1382,57 @@ def ouvrir_historique(parent, plante_id):
             tableau_cmp.column(colonne, width=largeur, anchor="center")
         tableau_cmp.pack(fill="x")
 
+        graphique_cycles = tk.Canvas(comparaison_frame, height=190, bg=couleurs["BG"], highlightbackground=couleurs["BORDER"], highlightthickness=1)
+        graphique_cycles.pack(fill="x", pady=(8, 0))
+
+        def dessiner_comparaison_cycles(cycle_a, cycle_b):
+            graphique_cycles.delete("all")
+            largeur = max(graphique_cycles.winfo_width(), 420)
+            hauteur = max(graphique_cycles.winfo_height(), 180)
+            x0, x1, y0, y1 = 58, largeur - 28, 26, hauteur - 38
+            points_a = points_humidite_cycle(cycle_a)
+            points_b = points_humidite_cycle(cycle_b)
+            tous_points = points_a + points_b
+            if not tous_points:
+                graphique_cycles.create_text(largeur / 2, hauteur / 2, text="Aucune humidité exploitable pour ces cycles.", fill=couleurs["SECONDARY"], font=("Segoe UI", 10))
+                return
+            max_heures = max(1, max(point[0] for point in tous_points))
+            valeurs = [point[1] for point in tous_points]
+            bas = max(0, min(valeurs) - 2)
+            haut = min(100, max(valeurs) + 2)
+            if bas == haut:
+                bas -= 1
+                haut += 1
+            graphique_cycles.create_text(x0, 12, text="Humidité depuis arrosage", anchor="w", fill=couleurs["TEXT"], font=("Segoe UI", 9, "bold"))
+            graphique_cycles.create_text(x1, 12, text="A = vert · B = bleu", anchor="e", fill=couleurs["SECONDARY"], font=("Segoe UI", 8))
+            graphique_cycles.create_rectangle(x0, y0, x1, y1, outline=couleurs["BORDER"])
+            for i in range(4):
+                valeur = bas + (haut - bas) * i / 3
+                y = y1 - (y1 - y0) * (valeur - bas) / (haut - bas)
+                graphique_cycles.create_line(x0, y, x1, y, fill=melanger_couleurs(couleurs["GRID"], couleurs["CARD"], 0.25))
+                graphique_cycles.create_text(x0 - 8, y, text=formater_nombre(valeur), anchor="e", fill=couleurs["SECONDARY"], font=("Segoe UI", 8))
+            for heures in (0, max_heures / 2, max_heures):
+                x = x0 + (x1 - x0) * heures / max_heures
+                graphique_cycles.create_line(x, y1, x, y1 + 4, fill=couleurs["SECONDARY"])
+                graphique_cycles.create_text(x, y1 + 16, text=f"{formater_nombre(heures)} h", fill=couleurs["SECONDARY"], font=("Segoe UI", 8))
+
+            def dessiner_ligne(points, couleur, etiquette):
+                if not points:
+                    return
+                coords = []
+                for heures, humidite in points:
+                    x = x0 + (x1 - x0) * heures / max_heures
+                    y = y1 - (y1 - y0) * (humidite - bas) / (haut - bas)
+                    coords.extend((x, y))
+                if len(coords) >= 4:
+                    graphique_cycles.create_line(*coords, fill=couleur, width=3, smooth=True)
+                x_fin, y_fin = coords[-2], coords[-1]
+                graphique_cycles.create_oval(x_fin - 4, y_fin - 4, x_fin + 4, y_fin + 4, fill=couleur, outline=couleurs["CARD"], width=1)
+                graphique_cycles.create_text(x_fin + 6, y_fin, text=etiquette, anchor="w", fill=couleur, font=("Segoe UI", 8, "bold"))
+
+            dessiner_ligne(points_a, couleurs["GREEN"], "A")
+            dessiner_ligne(points_b, couleurs["BLUE"], "B")
+
         zone = tk.Text(detail, height=8, wrap="word", bg=couleurs["BG"], fg=couleurs["TEXT"], relief="flat", font=("Segoe UI", 9))
         zone.pack(fill="both", expand=True, padx=18, pady=(0, 12))
         zone.insert("1.0", texte)
@@ -1378,6 +1449,7 @@ def ouvrir_historique(parent, plante_id):
                 return
             resultat = comparer_deux_cycles(cycle_a, cycle_b)
             comparaison_texte["texte"] = resultat["texte"]
+            dessiner_comparaison_cycles(cycle_a, cycle_b)
             for ligne in resultat["lignes_tableau"]:
                 tableau_cmp.insert("", "end", values=ligne)
             zone.configure(state="normal")
@@ -1387,6 +1459,7 @@ def ouvrir_historique(parent, plante_id):
 
         combo_cycle_a.bind("<<ComboboxSelected>>", rafraichir_comparaison_cycles)
         combo_cycle_b.bind("<<ComboboxSelected>>", rafraichir_comparaison_cycles)
+        graphique_cycles.bind("<Configure>", lambda _event: rafraichir_comparaison_cycles())
         rafraichir_comparaison_cycles()
 
         boutons = tk.Frame(detail, bg=couleurs["CARD"])
