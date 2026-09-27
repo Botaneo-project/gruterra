@@ -1559,6 +1559,36 @@ def lancer_controle_humidite_zero(plante_id, delai_ms=10 * 60 * 1000):
     )
 
 
+def enregistrer_evenement_balcon(plante_id, nom_plante, action):
+    """Enregistre un événement d'exposition extérieure dans le journal de la plante."""
+
+    maintenant = datetime.now().isoformat(timespec="seconds")
+    if action == "sortie":
+        titre = "Sortie balcon"
+        commentaire = "Plante sortie temporairement sur le balcon. Les pics de lumière suivants doivent être interprétés comme une exposition extérieure ponctuelle."
+        message = f"Sortie balcon notée pour {nom_plante}."
+    else:
+        titre = "Retour intérieur"
+        commentaire = "Plante rentrée à l'intérieur. Les mesures suivantes correspondent de nouveau à l'emplacement habituel."
+        message = f"Retour intérieur noté pour {nom_plante}."
+
+    try:
+        database.ajouter_observation_plante(
+            plante_id,
+            maintenant,
+            commentaire,
+            titre=titre,
+            type_evenement="exposition",
+            source="botaneo"
+        )
+    except Exception as erreur:
+        status_var.set(f"Événement balcon impossible : {erreur}")
+        return
+
+    actualiser_interface()
+    status_var.set(message)
+
+
 def ouvrir_arrosage_plante(plante_id, nom_plante):
     fenetre = tk.Toplevel(root)
     fenetre.title("Arrosage")
@@ -2038,6 +2068,8 @@ def creer_carte_plante_compacte(parent, plante):
     boutons = tk.Frame(carte, bg=CARD)
     boutons.pack(fill="x", padx=14, pady=(0, 10))
     tk.Button(boutons, text="💧 Arrosage", font=("Segoe UI", 8, "bold"), bg=LIGHT_BLUE, fg=BLUE, relief="flat", cursor="hand2", command=lambda pid=plante_id, n=nom: ouvrir_arrosage_plante(pid, n)).pack(side="left", padx=(0, 8))
+    tk.Button(boutons, text="☀️ Sortie balcon", font=("Segoe UI", 8, "bold"), bg=BG, fg=ORANGE, relief="flat", cursor="hand2", command=lambda pid=plante_id, n=nom: enregistrer_evenement_balcon(pid, n, "sortie")).pack(side="left", padx=(0, 8))
+    tk.Button(boutons, text="🏠 Retour intérieur", font=("Segoe UI", 8, "bold"), bg=BG, fg=BLUE, relief="flat", cursor="hand2", command=lambda pid=plante_id, n=nom: enregistrer_evenement_balcon(pid, n, "retour")).pack(side="left", padx=(0, 8))
     tk.Button(boutons, text="🔎 Analyse", font=("Segoe UI", 8, "bold"), bg=LIGHT_GREEN, fg=GREEN, relief="flat", cursor="hand2", command=lambda pid=plante_id: afficher_message_analyse(pid)).pack(side="left", padx=(0, 8))
     tk.Button(boutons, text="📋 Copier analyse", font=("Segoe UI", 8, "bold"), bg=BG, fg=BLUE, relief="flat", cursor="hand2", command=lambda pid=plante_id: copier_analyse_plante(pid)).pack(side="left", padx=(0, 8))
     tk.Button(boutons, text="📈 Historique", font=("Segoe UI", 8, "bold"), bg=BG, fg=TEXT, relief="flat", cursor="hand2", command=lambda pid=plante_id: afficher_message_historique(pid)).pack(side="left")
@@ -2558,6 +2590,40 @@ def creer_carte_plante(parent, plante):
         cursor="hand2",
         command=lambda pid=plante_id, nom=nom:
             ouvrir_arrosage_plante(pid, nom)
+    ).pack(
+        side="left",
+        padx=(0, 8)
+    )
+
+    tk.Button(
+        boutons,
+        text="☀️ Sortie balcon",
+        font=("Segoe UI", 9, "bold"),
+        bg=BG,
+        fg=ORANGE,
+        activebackground=BG,
+        activeforeground=ORANGE,
+        relief="flat",
+        cursor="hand2",
+        command=lambda pid=plante_id, nom=nom:
+            enregistrer_evenement_balcon(pid, nom, "sortie")
+    ).pack(
+        side="left",
+        padx=(0, 8)
+    )
+
+    tk.Button(
+        boutons,
+        text="🏠 Retour intérieur",
+        font=("Segoe UI", 9, "bold"),
+        bg=BG,
+        fg=BLUE,
+        activebackground=BG,
+        activeforeground=BLUE,
+        relief="flat",
+        cursor="hand2",
+        command=lambda pid=plante_id, nom=nom:
+            enregistrer_evenement_balcon(pid, nom, "retour")
     ).pack(
         side="left",
         padx=(0, 8)
