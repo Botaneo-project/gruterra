@@ -345,3 +345,5 @@ La remise en attente a été effectuée uniquement sur une copie de la base Pi. 
 - [x] Afficher séparément les repères `sortie` et `retour` des expositions balcon dans le graphique historique.
 
 - [x] Enrichir `Copier analyse plante` avec un contexte lumière : sorties balcon, moyenne globale, moyenne hors balcon et interprétation des pics.
+
+- [x] Enrichir `Copier journée` avec les sorties balcon du jour et les statistiques lumière globale / hors balcon / pendant balcon.

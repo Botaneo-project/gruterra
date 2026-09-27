@@ -693,6 +693,54 @@ def resume_moyennes_jour(mesures, jour, arrosages=None):
     return "\n".join(lignes)
 
 
+def mesure_dans_exposition_historique(date, expositions):
+    for sortie, retour in expositions or []:
+        fin = retour or datetime.combine(date.date(), datetime.max.time())
+        if sortie <= date <= fin:
+            return True
+    return False
+
+
+def resume_expositions_jour(mesures, expositions):
+    if not expositions:
+        return "Exposition balcon : aucune notée ce jour."
+
+    lignes = ["Exposition balcon :"]
+    for sortie, retour in expositions:
+        if retour:
+            duree = (retour - sortie).total_seconds() / 3600
+            lignes.append(f"- {sortie.strftime('%H:%M')} → {retour.strftime('%H:%M')} · durée {formater_nombre(duree)} h.")
+        else:
+            lignes.append(f"- {sortie.strftime('%H:%M')} → retour non noté.")
+
+    valeurs_globales = []
+    valeurs_interieur = []
+    valeurs_balcon = []
+    for mesure in mesures or []:
+        date = date_locale_depuis_iso(mesure[1])
+        if not date or mesure[4] is None:
+            continue
+        try:
+            lux = float(mesure[4])
+        except (TypeError, ValueError):
+            continue
+        valeurs_globales.append(lux)
+        if mesure_dans_exposition_historique(date, expositions):
+            valeurs_balcon.append(lux)
+        else:
+            valeurs_interieur.append(lux)
+
+    if valeurs_globales:
+        lignes.append(f"- Lumière globale : moyenne {formater_nombre(sum(valeurs_globales) / len(valeurs_globales))} lux, max {formater_nombre(max(valeurs_globales))} lux.")
+    if valeurs_interieur:
+        lignes.append(f"- Hors balcon : moyenne {formater_nombre(sum(valeurs_interieur) / len(valeurs_interieur))} lux, max {formater_nombre(max(valeurs_interieur))} lux.")
+    if valeurs_balcon:
+        lignes.append(f"- Pendant balcon : {len(valeurs_balcon)} mesure(s), max {formater_nombre(max(valeurs_balcon))} lux.")
+    if valeurs_interieur and valeurs_balcon:
+        lignes.append("- Lecture : les pics lumineux de cette journée sont expliqués par l'exposition balcon ; interpréter séparément l'emplacement intérieur.")
+    return "\n".join(lignes)
+
+
 def ouvrir_historique(parent, plante_id):
     couleurs = theme_actuel()
     plante = database.get_plante(plante_id)
@@ -1602,13 +1650,18 @@ def ouvrir_historique(parent, plante_id):
         if periode.get() != "Journée" or not texte_jour:
             bilan.set(f"{bilan.get()} · aucune journée sélectionnée à copier")
             return
+        texte_expositions = bilan_jour_courant.get("expositions") or ""
         lignes = [
             f"Botaneo — Bilan journalier {nom_plante}",
             "",
             texte_jour,
+        ]
+        if texte_expositions:
+            lignes.extend(["", texte_expositions])
+        lignes.extend([
             "",
             qualite_var.get(),
-        ]
+        ])
         fenetre.clipboard_clear()
         fenetre.clipboard_append("\n".join(lignes).strip())
         bilan.set(f"{bilan.get()} · journée copiée")
@@ -1690,8 +1743,10 @@ def ouvrir_historique(parent, plante_id):
                 arrosages = filtrer_arrosages_jour(arrosages, jour)
                 expositions = filtrer_expositions_jour(expositions, jour)
                 texte_jour = resume_moyennes_jour(mesures, jour, arrosages)
+                texte_exposition_jour = resume_expositions_jour(mesures, expositions)
                 jour_resume_var.set(texte_jour)
                 bilan_jour_courant["texte"] = texte_jour
+                bilan_jour_courant["expositions"] = texte_exposition_jour
                 bilan_jour_courant["jour"] = libelle_jour(jour)
                 jour_resume_label.configure(fg=couleurs["TEXT"])
             else:
@@ -1700,6 +1755,7 @@ def ouvrir_historique(parent, plante_id):
                 expositions = []
                 jour_resume_var.set("Journée : aucune date disponible pour cette plante.")
                 bilan_jour_courant["texte"] = ""
+                bilan_jour_courant["expositions"] = ""
                 bilan_jour_courant["jour"] = ""
                 jour_resume_label.configure(fg=couleurs["SECONDARY"])
         else:
