@@ -58,7 +58,8 @@ Ce fichier sert à garder une trace claire des idées et des prochaines étapes.
 - [x] Historique : ajouter une première fenêtre de résumé des cycles d’arrosage, avec réponse à l’eau et vitesse de séchage.
 - [x] Historique : comparer deux cycles d’arrosage en tableau, avec hausse observée, séchage et texte copiable.
 - [x] Historique : superposer deux cycles d’arrosage sur une même échelle temporelle, en humidité depuis l’arrosage.
-- Historique : améliorer plus tard le graphique comparatif des cycles avec choix de mesure et repères 24/48 h.
+- [x] Historique : ajouter le choix de mesure dans le graphique comparatif des cycles : humidité, lumière, température, conductivité.
+- Historique : améliorer plus tard le graphique comparatif des cycles avec repères 24/48 h.
 - Dans 3 à 4 jours : vérifier qu’aucune nouvelle mesure entièrement à zéro ne réapparaît dans les mesures ou les synthèses.
 - Priorité réelle : démarrer l’analyse par cycle d’arrosage en version simple, sans surinterpréter les données.
 - Pour chaque cycle : repérer l’humidité avant arrosage, le pic observé, la baisse après pic et la qualité des mesures disponibles.

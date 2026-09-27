@@ -491,23 +491,25 @@ def valeur_cycle(cycle, cle):
     return None
 
 
-def points_humidite_cycle(cycle):
+def points_cycle(cycle, nom_serie):
     debut = cycle.get("date")
     if not debut:
         return []
+    config = SERIES.get(nom_serie, SERIES["Humidité"])
+    index = config["colonne"]
     points = []
     for mesure in cycle.get("mesures") or []:
         date = date_locale_depuis_iso(mesure[1])
         if not date:
             continue
         try:
-            humidite = float(mesure[3])
+            valeur = float(mesure[index])
         except (TypeError, ValueError):
             continue
-        if math.isfinite(humidite):
+        if math.isfinite(valeur):
             heures = (date - debut).total_seconds() / 3600
             if heures >= 0:
-                points.append((heures, humidite))
+                points.append((heures, valeur))
     return sorted(points)
 
 
@@ -1373,7 +1375,11 @@ def ouvrir_historique(parent, plante_id):
         combo_cycle_a.pack(side="left", padx=(0, 12))
         tk.Label(choix_cycles, text="Cycle B", bg=couleurs["CARD"], fg=couleurs["TEXT"]).pack(side="left", padx=(0, 6))
         combo_cycle_b = ttk.Combobox(choix_cycles, textvariable=cycle_b_var, values=libelles_cycles, state="readonly", width=28)
-        combo_cycle_b.pack(side="left")
+        combo_cycle_b.pack(side="left", padx=(0, 12))
+        serie_cycle_var = tk.StringVar(value="Humidité")
+        tk.Label(choix_cycles, text="Graphique", bg=couleurs["CARD"], fg=couleurs["TEXT"]).pack(side="left", padx=(0, 6))
+        combo_serie_cycle = ttk.Combobox(choix_cycles, textvariable=serie_cycle_var, values=tuple(SERIES.keys()), state="readonly", width=13)
+        combo_serie_cycle.pack(side="left")
 
         colonnes_cmp_cycles = ("indicateur", "cycle_a", "cycle_b", "ecart")
         tableau_cmp = ttk.Treeview(comparaison_frame, columns=colonnes_cmp_cycles, show="headings", height=6)
@@ -1390,20 +1396,27 @@ def ouvrir_historique(parent, plante_id):
             largeur = max(graphique_cycles.winfo_width(), 420)
             hauteur = max(graphique_cycles.winfo_height(), 180)
             x0, x1, y0, y1 = 58, largeur - 28, 26, hauteur - 38
-            points_a = points_humidite_cycle(cycle_a)
-            points_b = points_humidite_cycle(cycle_b)
+            nom_serie = serie_cycle_var.get() or "Humidité"
+            config_serie = SERIES.get(nom_serie, SERIES["Humidité"])
+            points_a = points_cycle(cycle_a, nom_serie)
+            points_b = points_cycle(cycle_b, nom_serie)
             tous_points = points_a + points_b
             if not tous_points:
-                graphique_cycles.create_text(largeur / 2, hauteur / 2, text="Aucune humidité exploitable pour ces cycles.", fill=couleurs["SECONDARY"], font=("Segoe UI", 10))
+                graphique_cycles.create_text(largeur / 2, hauteur / 2, text=f"Aucune donnée exploitable pour {nom_serie.lower()} sur ces cycles.", fill=couleurs["SECONDARY"], font=("Segoe UI", 10))
                 return
             max_heures = max(1, max(point[0] for point in tous_points))
             valeurs = [point[1] for point in tous_points]
-            bas = max(0, min(valeurs) - 2)
-            haut = min(100, max(valeurs) + 2)
+            marge = max(1, (max(valeurs) - min(valeurs)) * 0.08)
+            bas = min(valeurs) - marge
+            haut = max(valeurs) + marge
+            if "minimum" in config_serie:
+                bas = min(bas, config_serie["minimum"])
+            if "maximum" in config_serie:
+                haut = max(haut, config_serie["maximum"])
             if bas == haut:
                 bas -= 1
                 haut += 1
-            graphique_cycles.create_text(x0, 12, text="Humidité depuis arrosage", anchor="w", fill=couleurs["TEXT"], font=("Segoe UI", 9, "bold"))
+            graphique_cycles.create_text(x0, 12, text=f"{config_serie['titre']} depuis arrosage ({config_serie['unite']})", anchor="w", fill=couleurs["TEXT"], font=("Segoe UI", 9, "bold"))
             graphique_cycles.create_text(x1, 12, text="A = vert · B = bleu", anchor="e", fill=couleurs["SECONDARY"], font=("Segoe UI", 8))
             graphique_cycles.create_rectangle(x0, y0, x1, y1, outline=couleurs["BORDER"])
             for i in range(4):
@@ -1459,6 +1472,7 @@ def ouvrir_historique(parent, plante_id):
 
         combo_cycle_a.bind("<<ComboboxSelected>>", rafraichir_comparaison_cycles)
         combo_cycle_b.bind("<<ComboboxSelected>>", rafraichir_comparaison_cycles)
+        combo_serie_cycle.bind("<<ComboboxSelected>>", rafraichir_comparaison_cycles)
         graphique_cycles.bind("<Configure>", lambda _event: rafraichir_comparaison_cycles())
         rafraichir_comparaison_cycles()
 
