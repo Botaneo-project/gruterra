@@ -1282,6 +1282,9 @@ def ouvrir_historique(parent, plante_id):
             tous_arrosages = []
         cycles = calculer_cycles_arrosage(toutes_mesures, tous_arrosages)
         texte = resumer_cycles_arrosage(toutes_mesures, tous_arrosages)
+        if not cycles:
+            messagebox.showinfo("Cycles d’arrosage", "Aucun cycle d’arrosage exploitable pour cette plante.", parent=fenetre)
+            return
         detail = tk.Toplevel(fenetre)
         detail.title("Cycles d’arrosage")
         detail.configure(bg=couleurs["CARD"])
@@ -1290,7 +1293,8 @@ def ouvrir_historique(parent, plante_id):
         tk.Label(detail, text="💧 Cycles d’arrosage", bg=couleurs["CARD"], fg=couleurs["WATER"], font=("Segoe UI", 16, "bold")).pack(anchor="w", padx=18, pady=(16, 4))
         tk.Label(detail, text="Comparaison des réponses à l’arrosage, calculée sur la zone mesurée par le Mi Flora.", bg=couleurs["CARD"], fg=couleurs["SECONDARY"], font=("Segoe UI", 9)).pack(anchor="w", padx=18, pady=(0, 6))
         analyse_cycles_var = tk.StringVar(value=analyser_cycles_arrosage(cycles))
-        tk.Label(detail, textvariable=analyse_cycles_var, bg=couleurs["LIGHT_BLUE"], fg=couleurs["BLUE"], font=("Segoe UI", 9, "bold"), anchor="w", justify="left", wraplength=860, padx=10, pady=7).pack(fill="x", padx=18, pady=(0, 10))
+        fond_analyse = melanger_couleurs(couleurs["BLUE"], couleurs["CARD"], 0.88)
+        tk.Label(detail, textvariable=analyse_cycles_var, bg=fond_analyse, fg=couleurs["BLUE"], font=("Segoe UI", 9, "bold"), anchor="w", justify="left", wraplength=860, padx=10, pady=7).pack(fill="x", padx=18, pady=(0, 10))
 
         colonnes_cycles = ("date", "quantite", "mesures", "depart", "pic", "fin", "sechage", "suivi")
         tableau = ttk.Treeview(detail, columns=colonnes_cycles, show="headings", height=6)
@@ -1494,7 +1498,7 @@ def ouvrir_historique(parent, plante_id):
                 bilan_jour_courant["jour"] = ""
                 jour_resume_label.configure(fg=couleurs["SECONDARY"])
         else:
-            choix_jour.configure(state="disabled")
+            choix_jour.configure(state="readonly" if libelles_jours else "disabled")
             bilan_jour_courant["texte"] = ""
             bilan_jour_courant["jour"] = ""
             jour_resume_label.pack_forget()
@@ -1600,7 +1604,12 @@ def ouvrir_historique(parent, plante_id):
     ttk.Button(barre, text="Copier journée", command=copier_journee).pack(side="right", padx=(8, 0))
     ttk.Button(barre, text="Actualiser", command=actualiser).pack(side="right")
     choix_periode.bind("<<ComboboxSelected>>", actualiser)
-    choix_jour.bind("<<ComboboxSelected>>", actualiser)
+    def selectionner_jour(_event=None):
+        if jour_selectionne.get():
+            periode.set("Journée")
+        actualiser()
+
+    choix_jour.bind("<<ComboboxSelected>>", selectionner_jour)
     choix_serie.bind("<<ComboboxSelected>>", actualiser)
     canvas.bind("<Configure>", dessiner)
     actualiser()
