@@ -478,6 +478,72 @@ def formater_moyenne_stats(stats, unite):
     return f"{formater_nombre(stats['moyenne'])} {unite}"
 
 
+def libelle_cycle(cycle):
+    arrosage = cycle.get("arrosage")
+    quantite = f"{formater_nombre(arrosage[3])} ml" if arrosage and arrosage[3] is not None else "quantité non notée"
+    return f"{formater_date_courte(cycle.get('date'))} · {quantite}"
+
+
+def valeur_cycle(cycle, cle):
+    valeur = cycle.get(cle)
+    if isinstance(valeur, (int, float)) and math.isfinite(valeur):
+        return valeur
+    return None
+
+
+def comparer_deux_cycles(cycle_a, cycle_b):
+    mesures_a = len(cycle_a.get("mesures") or [])
+    mesures_b = len(cycle_b.get("mesures") or [])
+    depart_a = valeur_cycle(cycle_a, "premiere_humidite")
+    depart_b = valeur_cycle(cycle_b, "premiere_humidite")
+    pic_a = valeur_cycle(cycle_a, "pic_humidite")
+    pic_b = valeur_cycle(cycle_b, "pic_humidite")
+    fin_a = valeur_cycle(cycle_a, "derniere_humidite")
+    fin_b = valeur_cycle(cycle_b, "derniere_humidite")
+    sechage_a = valeur_cycle(cycle_a, "sechage")
+    sechage_b = valeur_cycle(cycle_b, "sechage")
+    hausse_a = pic_a - depart_a if pic_a is not None and depart_a is not None else None
+    hausse_b = pic_b - depart_b if pic_b is not None and depart_b is not None else None
+
+    def fmt(valeur, unite=""):
+        return "—" if valeur is None else f"{formater_nombre(valeur)}{(' ' + unite) if unite else ''}"
+
+    lignes = [
+        "Comparaison Botaneo — cycles d’arrosage",
+        "",
+        f"Cycle A : {libelle_cycle(cycle_a)}",
+        f"Cycle B : {libelle_cycle(cycle_b)}",
+        "",
+        f"Mesures : {mesures_a} / {mesures_b} · écart {mesures_a - mesures_b}",
+        f"Humidité départ : {fmt(depart_a, '%')} / {fmt(depart_b, '%')}",
+        f"Pic observé : {fmt(pic_a, '%')} / {fmt(pic_b, '%')}",
+        f"Humidité fin : {fmt(fin_a, '%')} / {fmt(fin_b, '%')}",
+        f"Hausse observée : {fmt(hausse_a, 'pt')} / {fmt(hausse_b, 'pt')}",
+        f"Séchage : {fmt(sechage_a, 'pt/j')} / {fmt(sechage_b, 'pt/j')}",
+    ]
+    if sechage_a is not None and sechage_b is not None:
+        diff = sechage_a - sechage_b
+        if abs(diff) < 0.4:
+            lecture = "vitesse de séchage proche"
+        elif diff < 0:
+            lecture = "cycle A sèche plus vite"
+        else:
+            lecture = "cycle A sèche plus lentement"
+        lignes.append(f"Lecture : {lecture} ({formater_nombre(diff)} pt/j d’écart).")
+    lignes.append("Lecture prudente : les durées et la répartition des mesures peuvent différer entre cycles.")
+    return {
+        "texte": "\n".join(lignes),
+        "lignes_tableau": [
+            ("Mesures", str(mesures_a), str(mesures_b), str(mesures_a - mesures_b)),
+            ("Départ", fmt(depart_a, "%"), fmt(depart_b, "%"), fmt((depart_a - depart_b) if depart_a is not None and depart_b is not None else None, "pt")),
+            ("Pic", fmt(pic_a, "%"), fmt(pic_b, "%"), fmt((pic_a - pic_b) if pic_a is not None and pic_b is not None else None, "pt")),
+            ("Fin", fmt(fin_a, "%"), fmt(fin_b, "%"), fmt((fin_a - fin_b) if fin_a is not None and fin_b is not None else None, "pt")),
+            ("Hausse observée", fmt(hausse_a, "pt"), fmt(hausse_b, "pt"), fmt((hausse_a - hausse_b) if hausse_a is not None and hausse_b is not None else None, "pt")),
+            ("Séchage", fmt(sechage_a, "pt/j"), fmt(sechage_b, "pt/j"), fmt((sechage_a - sechage_b) if sechage_a is not None and sechage_b is not None else None, "pt/j")),
+        ],
+    }
+
+
 def comparer_deux_jours(mesures, arrosages, jour_a, jour_b):
     mesures_a = filtrer_mesures_jour(mesures, jour_a)
     mesures_b = filtrer_mesures_jour(mesures, jour_b)
@@ -1220,7 +1286,7 @@ def ouvrir_historique(parent, plante_id):
         detail.title("Cycles d’arrosage")
         detail.configure(bg=couleurs["CARD"])
         detail.transient(fenetre)
-        detail.geometry("920x500+80+80")
+        detail.geometry("980x690+70+50")
         tk.Label(detail, text="💧 Cycles d’arrosage", bg=couleurs["CARD"], fg=couleurs["WATER"], font=("Segoe UI", 16, "bold")).pack(anchor="w", padx=18, pady=(16, 4))
         tk.Label(detail, text="Comparaison des réponses à l’arrosage, calculée sur la zone mesurée par le Mi Flora.", bg=couleurs["CARD"], fg=couleurs["SECONDARY"], font=("Segoe UI", 9)).pack(anchor="w", padx=18, pady=(0, 6))
         analyse_cycles_var = tk.StringVar(value=analyser_cycles_arrosage(cycles))
@@ -1269,15 +1335,61 @@ def ouvrir_historique(parent, plante_id):
                 suivi,
             ))
 
+        comparaison_frame = tk.Frame(detail, bg=couleurs["CARD"])
+        comparaison_frame.pack(fill="x", padx=18, pady=(0, 8))
+        tk.Label(comparaison_frame, text="Comparer deux cycles", bg=couleurs["CARD"], fg=couleurs["TEXT"], font=("Segoe UI", 10, "bold")).pack(anchor="w")
+        choix_cycles = tk.Frame(comparaison_frame, bg=couleurs["CARD"])
+        choix_cycles.pack(fill="x", pady=(6, 6))
+        libelles_cycles = [libelle_cycle(cycle) for cycle in cycles_affiches]
+        cycles_lookup = dict(zip(libelles_cycles, cycles_affiches))
+        cycle_a_var = tk.StringVar(value=libelles_cycles[0] if libelles_cycles else "")
+        cycle_b_var = tk.StringVar(value=libelles_cycles[1] if len(libelles_cycles) > 1 else (libelles_cycles[0] if libelles_cycles else ""))
+        tk.Label(choix_cycles, text="Cycle A", bg=couleurs["CARD"], fg=couleurs["TEXT"]).pack(side="left", padx=(0, 6))
+        combo_cycle_a = ttk.Combobox(choix_cycles, textvariable=cycle_a_var, values=libelles_cycles, state="readonly", width=28)
+        combo_cycle_a.pack(side="left", padx=(0, 12))
+        tk.Label(choix_cycles, text="Cycle B", bg=couleurs["CARD"], fg=couleurs["TEXT"]).pack(side="left", padx=(0, 6))
+        combo_cycle_b = ttk.Combobox(choix_cycles, textvariable=cycle_b_var, values=libelles_cycles, state="readonly", width=28)
+        combo_cycle_b.pack(side="left")
+
+        colonnes_cmp_cycles = ("indicateur", "cycle_a", "cycle_b", "ecart")
+        tableau_cmp = ttk.Treeview(comparaison_frame, columns=colonnes_cmp_cycles, show="headings", height=6)
+        for colonne, titre, largeur in (("indicateur", "Indicateur", 155), ("cycle_a", "Cycle A", 130), ("cycle_b", "Cycle B", 130), ("ecart", "Écart A-B", 130)):
+            tableau_cmp.heading(colonne, text=titre)
+            tableau_cmp.column(colonne, width=largeur, anchor="center")
+        tableau_cmp.pack(fill="x")
+
         zone = tk.Text(detail, height=8, wrap="word", bg=couleurs["BG"], fg=couleurs["TEXT"], relief="flat", font=("Segoe UI", 9))
         zone.pack(fill="both", expand=True, padx=18, pady=(0, 12))
         zone.insert("1.0", texte)
         zone.configure(state="disabled")
+        comparaison_texte = {"texte": ""}
+
+        def rafraichir_comparaison_cycles(_event=None):
+            cycle_a = cycles_lookup.get(cycle_a_var.get())
+            cycle_b = cycles_lookup.get(cycle_b_var.get())
+            for item in tableau_cmp.get_children():
+                tableau_cmp.delete(item)
+            if not cycle_a or not cycle_b:
+                comparaison_texte["texte"] = ""
+                return
+            resultat = comparer_deux_cycles(cycle_a, cycle_b)
+            comparaison_texte["texte"] = resultat["texte"]
+            for ligne in resultat["lignes_tableau"]:
+                tableau_cmp.insert("", "end", values=ligne)
+            zone.configure(state="normal")
+            zone.delete("1.0", "end")
+            zone.insert("1.0", texte + "\n\n" + resultat["texte"])
+            zone.configure(state="disabled")
+
+        combo_cycle_a.bind("<<ComboboxSelected>>", rafraichir_comparaison_cycles)
+        combo_cycle_b.bind("<<ComboboxSelected>>", rafraichir_comparaison_cycles)
+        rafraichir_comparaison_cycles()
+
         boutons = tk.Frame(detail, bg=couleurs["CARD"])
         boutons.pack(fill="x", padx=18, pady=(0, 14))
         def copier_cycles():
             detail.clipboard_clear()
-            detail.clipboard_append(texte)
+            detail.clipboard_append((texte + "\n\n" + comparaison_texte.get("texte", "")).strip())
             bilan.set(f"{bilan.get()} · cycles copiés")
         ttk.Button(boutons, text="Copier", command=copier_cycles).pack(side="left")
         ttk.Button(boutons, text="Fermer", command=detail.destroy).pack(side="right")
