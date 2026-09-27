@@ -1429,6 +1429,22 @@ def ouvrir_historique(parent, plante_id):
                 graphique_cycles.create_line(x, y1, x, y1 + 4, fill=couleurs["SECONDARY"])
                 graphique_cycles.create_text(x, y1 + 16, text=f"{formater_nombre(heures)} h", fill=couleurs["SECONDARY"], font=("Segoe UI", 8))
 
+            for repere_heures, libelle_repere in ((24, "24 h"), (48, "48 h")):
+                if repere_heures <= max_heures:
+                    x = x0 + (x1 - x0) * repere_heures / max_heures
+                    graphique_cycles.create_line(
+                        x, y0, x, y1,
+                        fill=melanger_couleurs(couleurs["ORANGE"], couleurs["CARD"], 0.35),
+                        dash=(4, 4)
+                    )
+                    graphique_cycles.create_text(
+                        x + 4, y0 + 12,
+                        text=libelle_repere,
+                        anchor="w",
+                        fill=couleurs["ORANGE"],
+                        font=("Segoe UI", 8, "bold")
+                    )
+
             def dessiner_ligne(points, couleur, etiquette):
                 if not points:
                     return
