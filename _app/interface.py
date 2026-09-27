@@ -2494,7 +2494,7 @@ def creer_carte_plante(parent, plante):
 
     tk.Button(
         boutons,
-        text="🔎 Voir l'analyse",
+        text="📈 Historique / analyse",
         font=("Segoe UI", 9, "bold"),
         bg=LIGHT_GREEN,
         fg=GREEN,
@@ -2502,7 +2502,7 @@ def creer_carte_plante(parent, plante):
         relief="flat",
         cursor="hand2",
         command=lambda pid=plante_id:
-            afficher_message_analyse(pid)
+            ouvrir_historique(root, pid)
     ).pack(
         side="left",
         padx=(0, 8)
