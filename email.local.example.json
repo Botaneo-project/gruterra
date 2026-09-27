@@ -1,0 +1,22 @@
+{
+  "enabled": false,
+  "mode": "preview",
+  "smtp": {
+    "host": "smtp.example.com",
+    "port": 587,
+    "starttls": true,
+    "user": "botaneo@example.com",
+    "secret_env": "BOTANEO_SMTP_SECRET"
+  },
+  "message": {
+    "sender": "botaneo@example.com",
+    "recipients": [
+      "vous@example.com"
+    ],
+    "subject_prefix": "[Botaneo]"
+  },
+  "rules": {
+    "min_delay_hours_same_alert": 24,
+    "require_manual_validation": true
+  }
+}

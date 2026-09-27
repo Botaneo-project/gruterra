@@ -347,3 +347,14 @@ La remise en attente a été effectuée uniquement sur une copie de la base Pi. 
 - [x] Enrichir `Copier analyse plante` avec un contexte lumière : sorties balcon, moyenne globale, moyenne hors balcon et interprétation des pics.
 
 - [x] Enrichir `Copier journée` avec les sorties balcon du jour et les statistiques lumière globale / hors balcon / pendant balcon.
+
+## Alertes e-mail sécurisées
+- [x] Préparer le terrain pour un SMTP sécurisé local : exemple public, fichier local ignoré, module de préparation en mode aperçu sans envoi automatique.
+- [ ] Garder Outlook local comme option secondaire, mais ne pas en dépendre : l'application Outlook ou la session Windows peuvent ne pas être ouvertes.
+- [ ] Mémoriser la dernière alerte envoyée par plante et par type d'alerte pour éviter un e-mail à chaque synchronisation.
+- [ ] Ajouter un délai minimal entre deux alertes identiques.
+- [ ] Ne jamais envoyer d'e-mail automatiquement tant que le destinataire, les plantes concernées et les règles d'alerte ne sont pas validés explicitement.
+- [ ] Prévoir d'abord un mode test qui affiche le mail préparé sans l'envoyer.
+
+
+- [ ] Brancher plus tard le centre d'alertes sur l'aperçu e-mail, puis seulement ensuite sur un envoi réel validé.

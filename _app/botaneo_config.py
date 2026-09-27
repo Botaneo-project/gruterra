@@ -9,6 +9,7 @@ APP_DIR = Path(__file__).resolve().parent
 CONFIG_DIR = Path(os.environ.get("BOTANEO_CONFIG_DIR", str(APP_DIR.parent / "_config")))
 NETATMO_CONFIG = CONFIG_DIR / "netatmo_config.json"
 LOCAL_CONFIG = CONFIG_DIR / "botaneo.local.json"
+EMAIL_CONFIG = CONFIG_DIR / "email.local.json"
 
 
 def normaliser_station_favorite(valeur):
