@@ -333,3 +333,8 @@ Ce fichier sert à garder une trace claire des idées et des prochaines étapes.
 - [ ] Tester séparément le redémarrage sur une carte SD restaurée : non couvert par le test logiciel.
 
 La remise en attente a été effectuée uniquement sur une copie de la base Pi. Les bases utilisées et le Raspberry en fonctionnement n’ont pas été modifiés. Ce test ne constitue pas encore une commande de restauration accessible à l’utilisateur.
+
+## Cohérence des analyses Crassula
+- [x] Aligner le compteur de l'analyse post-arrosage avec le résumé exporté : l'ancienne analyse ne lisait que les 200 dernières mesures, alors que le résumé depuis le dernier arrosage utilise tout l'historique disponible.
+- [ ] Mieux contextualiser les pics lumineux liés aux sorties sur balcon pour qu'ils ne masquent pas la faible luminosité habituelle du salon.
+- [ ] Ajouter plus tard des événements dédiés `Sortie balcon` / `Retour intérieur` afin de distinguer les journées 100 % intérieur des journées avec exposition extérieure.

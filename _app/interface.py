@@ -1270,7 +1270,10 @@ def analyser_apres_arrosage(plante_id):
     if heures_depuis < 0 or heures_depuis > 10 * 24:
         return None
 
-    mesures = database.get_mesures(plante_id=plante_id, limite=200)
+    # On utilise toutes les mesures disponibles depuis l'arrosage.
+    # La limite historique de 200 créait un écart avec le résumé exporté,
+    # qui comptait bien toutes les mesures depuis le dernier arrosage.
+    mesures = database.get_mesures(plante_id=plante_id, limite=-1)
     points = []
     for mesure in mesures:
         date_heure = mesure[1]
@@ -1344,7 +1347,7 @@ def analyser_apres_arrosage(plante_id):
     heures_depuis_derniere = (maintenant - derniere_date).total_seconds() / 3600
     duree_suivi = max((derniere_date - date_arrosage).total_seconds() / 3600, 0)
     resume_contexte = (
-        f"{len(points)} mesure(s) après arrosage, "
+        f"{len(points)} mesure(s) retenue(s) depuis arrosage, "
         f"suivi sur {formater_duree_heures(duree_suivi)}, "
         f"dernière mesure {anciennete(derniere_date.isoformat(timespec='seconds'))}"
     )
