@@ -360,3 +360,5 @@ La remise en attente a été effectuée uniquement sur une copie de la base Pi. 
 - [x] Brancher le centre d'alertes sur un aperçu e-mail sans envoi réel.
 
 - [ ] Ajouter plus tard la mémoire de dernière alerte envoyée et le délai minimal avant tout envoi SMTP réel.
+
+- [x] Améliorer le graphique historique : graduations horaires et repère sélectionnable avec heure/valeur du point le plus proche.

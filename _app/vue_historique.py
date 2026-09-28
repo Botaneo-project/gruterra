@@ -909,6 +909,8 @@ def ouvrir_historique(parent, plante_id):
     mesures_courantes = []
     arrosages_courants = []
     expositions_courantes = []
+    points_graphique_courants = []
+    repere_graphique = {"index": None}
     bilan_jour_courant = {"texte": "", "jour": ""}
 
     def analyser_qualite_donnees(mesures, periode_affichee):
@@ -1165,7 +1167,57 @@ def ouvrir_historique(parent, plante_id):
         bilan.set(f"{len(mesures_courantes)} mesure(s) · ordre normal")
 
 
+    def graduations_temps(start, end):
+        duree_heures = max((end - start).total_seconds() / 3600, 0)
+        if duree_heures <= 8:
+            pas_heures = 1
+        elif duree_heures <= 30:
+            pas_heures = 3
+        elif duree_heures <= 72:
+            pas_heures = 6
+        elif duree_heures <= 24 * 10:
+            pas_heures = 24
+        else:
+            pas_heures = 24 * 7
+
+        base = start.replace(minute=0, second=0, microsecond=0)
+        while base < start:
+            base += timedelta(hours=pas_heures)
+        graduations = []
+        courant = base
+        while courant <= end:
+            graduations.append(courant)
+            courant += timedelta(hours=pas_heures)
+        return graduations
+
+
+    def libelle_graduation(date, start, end):
+        duree_heures = max((end - start).total_seconds() / 3600, 0)
+        if duree_heures <= 36:
+            return date.strftime("%H:%M")
+        if date.hour == 0 or duree_heures > 72:
+            return date.strftime("%d/%m")
+        return date.strftime("%Hh")
+
+
+    def selectionner_point_graphique_depuis_x(x_souris):
+        if not points_graphique_courants:
+            return
+        index, date, valeur, x, y = min(
+            points_graphique_courants,
+            key=lambda item: abs(item[3] - x_souris)
+        )
+        repere_graphique["index"] = index
+        unite = SERIES[serie.get()]["unite"]
+        bilan.set(
+            f"{len(mesures_courantes)} mesure(s) · repère graphique : "
+            f"{date.strftime('%d/%m/%Y %H:%M')} · {formater_nombre(valeur)} {unite}"
+        )
+        dessiner()
+
+
     def dessiner(event=None):
+        nonlocal points_graphique_courants
         canvas.delete("all")
         w = max(canvas.winfo_width(), 240)
         h = max(canvas.winfo_height(), 180)
@@ -1297,10 +1349,12 @@ def ouvrir_historique(parent, plante_id):
                 font=("Segoe UI", 8, "bold")
             )
 
-        for date, valeur in points:
+        points_graphique_courants = []
+        for index_point, (date, valeur) in enumerate(points):
             x = x0 + (x1 - x0) * (date - start).total_seconds() / span if span else (x0 + x1) / 2
             y = y1 - (y1 - y0) * (valeur - low) / (high - low)
             coords.extend((x, y))
+            points_graphique_courants.append((index_point, date, valeur, x, y))
 
         coords_ligne = simplifier_coordonnees(coords, x1 - x0)
 
@@ -1328,6 +1382,26 @@ def ouvrir_historique(parent, plante_id):
             canvas.create_oval(x - rayon, y - rayon, x + rayon, y + rayon,
                                fill=couleurs["CARD"], outline=couleur_ligne, width=2)
 
+        index_selection = repere_graphique.get("index")
+        if isinstance(index_selection, int) and 0 <= index_selection < len(points_graphique_courants):
+            _index, date_selection, valeur_selection, x_selection, y_selection = points_graphique_courants[index_selection]
+            canvas.create_line(x_selection, y0, x_selection, y1, fill=couleurs["ORANGE"], width=2, dash=(4, 3))
+            canvas.create_oval(x_selection - 7, y_selection - 7, x_selection + 7, y_selection + 7,
+                               fill=couleurs["ORANGE"], outline=couleurs["CARD"], width=2)
+            texte_repere = f"{date_selection.strftime('%H:%M')} · {formater_nombre(valeur_selection)} {config['unite']}"
+            largeur_etiquette = max(130, len(texte_repere) * 7)
+            x_texte = min(max(x_selection, x0 + largeur_etiquette / 2), x1 - largeur_etiquette / 2)
+            y_texte = max(y0 + 18, y_selection - 24)
+            canvas.create_rectangle(
+                x_texte - largeur_etiquette / 2,
+                y_texte - 13,
+                x_texte + largeur_etiquette / 2,
+                y_texte + 13,
+                fill=couleurs["CARD"],
+                outline=couleurs["ORANGE"]
+            )
+            canvas.create_text(x_texte, y_texte, text=texte_repere, fill=couleurs["TEXT"], font=("Segoe UI", 9, "bold"))
+
         dernier_x, dernier_y = points_marqueurs[-1]
         canvas.create_oval(dernier_x - 6, dernier_y - 6, dernier_x + 6, dernier_y + 6,
                            fill=couleur_ligne, outline=couleurs["CARD"], width=2)
@@ -1336,17 +1410,25 @@ def ouvrir_historique(parent, plante_id):
                            anchor="s", fill=couleurs["TEXT"],
                            font=("Segoe UI", 9, "bold"))
 
-        canvas.create_text(x0, y1 + 28, text=start.strftime("%d/%m %H:%M"),
+        if span:
+            for graduation in graduations_temps(start, end):
+                x_tick = x0 + (x1 - x0) * (graduation - start).total_seconds() / span
+                canvas.create_line(x_tick, y1, x_tick, y1 + 5, fill=couleur_secondaire)
+                canvas.create_line(x_tick, y0, x_tick, y1, fill=melanger_couleurs(couleur_grille, couleurs["CARD"], 0.35))
+                canvas.create_text(
+                    x_tick,
+                    y1 + 20,
+                    text=libelle_graduation(graduation, start, end),
+                    anchor="center",
+                    fill=couleur_secondaire,
+                    font=("Segoe UI", 8)
+                )
+        canvas.create_text(x0, y1 + 38, text=start.strftime("%d/%m %H:%M"),
                            anchor="w", fill=couleur_secondaire,
                            font=("Segoe UI", 8))
-        if span:
-            milieu = start + (end - start) / 2
-            canvas.create_text((x0 + x1) / 2, y1 + 28, text=milieu.strftime("%d/%m %H:%M"),
-                               anchor="center", fill=couleur_secondaire,
-                               font=("Segoe UI", 8))
-            canvas.create_text(x1, y1 + 28, text=end.strftime("%d/%m %H:%M"),
-                               anchor="e", fill=couleur_secondaire,
-                               font=("Segoe UI", 8))
+        canvas.create_text(x1, y1 + 38, text=end.strftime("%d/%m %H:%M"),
+                           anchor="e", fill=couleur_secondaire,
+                           font=("Segoe UI", 8))
 
     def ouvrir_comparaison_jours():
         try:
@@ -1802,6 +1884,8 @@ def ouvrir_historique(parent, plante_id):
 
         mesures_stats, mesures_suspectes_ids = filtrer_mesures_pour_serie(mesures, serie.get())
         points = extraire_points(mesures_stats, serie.get())
+        if repere_graphique.get("index") is not None and repere_graphique["index"] >= len(points):
+            repere_graphique["index"] = None
         config = SERIES[serie.get()]
 
         analyse = analyser_points(points, serie.get())
@@ -1882,6 +1966,8 @@ def ouvrir_historique(parent, plante_id):
     choix_jour.bind("<<ComboboxSelected>>", selectionner_jour)
     choix_serie.bind("<<ComboboxSelected>>", actualiser)
     canvas.bind("<Configure>", dessiner)
+    canvas.bind("<Button-1>", lambda event: selectionner_point_graphique_depuis_x(event.x))
+    canvas.bind("<B1-Motion>", lambda event: selectionner_point_graphique_depuis_x(event.x))
     actualiser()
 
     return fenetre
