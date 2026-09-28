@@ -21,6 +21,7 @@ from ui_preferences import charger_theme_sombre, sauvegarder_theme_sombre
 from vue_historique import ouvrir_historique
 import sync_miflora
 import raspberry_sync
+import botaneo_email
 from capteurs import netatmo
 import previsions_meteo
 from suivi_raspberry_ui import SuiviRaspberry
@@ -6714,6 +6715,116 @@ def construire_alertes(plantes):
     return alertes
 
 
+def lignes_email_depuis_alertes(alertes):
+    lignes = [
+        "Aperçu des alertes Botaneo.",
+        "",
+        "Aucun e-mail n'a été envoyé automatiquement.",
+        "",
+    ]
+    if not alertes:
+        lignes.append("Aucune alerte importante avec les données actuelles.")
+        return lignes
+
+    for alerte in alertes:
+        niveau = alerte.get("niveau", "info")
+        titre = alerte.get("titre", "Alerte Botaneo")
+        detail = alerte.get("detail", "")
+        lignes.append(f"[{niveau.upper()}] {titre}")
+        if detail:
+            lignes.append(str(detail))
+        lignes.append("")
+    return lignes
+
+
+def ouvrir_apercu_email_alertes(alertes):
+    fenetre = tk.Toplevel(root)
+    fenetre.title("Aperçu e-mail alertes")
+    fenetre.configure(bg=CARD)
+    fenetre.geometry("760x560+90+70")
+    fenetre.transient(root)
+
+    tk.Label(
+        fenetre,
+        text="📧 Aperçu e-mail des alertes",
+        font=("Segoe UI", 16, "bold"),
+        fg=TEXT,
+        bg=CARD
+    ).pack(anchor="w", padx=18, pady=(16, 4))
+
+    tk.Label(
+        fenetre,
+        text="Préparation uniquement : aucun e-mail n'est envoyé depuis cette fenêtre.",
+        font=("Segoe UI", 9),
+        fg=SECONDARY,
+        bg=CARD
+    ).pack(anchor="w", padx=18, pady=(0, 10))
+
+    zone = tk.Text(
+        fenetre,
+        wrap="word",
+        bg=BG,
+        fg=TEXT,
+        insertbackground=TEXT,
+        relief="flat",
+        font=("Segoe UI", 9),
+        padx=12,
+        pady=12
+    )
+    zone.pack(fill="both", expand=True, padx=18, pady=(0, 12))
+
+    try:
+        apercu = botaneo_email.apercu_message_alerte(
+            "Alertes Botaneo",
+            lignes_email_depuis_alertes(alertes)
+        )
+    except Exception as erreur:
+        lignes = [
+            "Configuration e-mail locale absente ou incomplète.",
+            "",
+            "C'est normal tant que le compte dédié Botaneo n'est pas créé.",
+            "Le futur fichier privé devra être placé ici :",
+            r"C:\Plantes\_config\email.local.json",
+            "",
+            f"Détail technique : {erreur}",
+            "",
+            "Aperçu du contenu qui serait préparé :",
+            "",
+            *lignes_email_depuis_alertes(alertes),
+        ]
+        apercu = "\n".join(lignes)
+
+    zone.insert("1.0", apercu)
+    zone.configure(state="disabled")
+
+    boutons = tk.Frame(fenetre, bg=CARD)
+    boutons.pack(fill="x", padx=18, pady=(0, 14))
+
+    def copier():
+        fenetre.clipboard_clear()
+        fenetre.clipboard_append(apercu)
+        status_var.set("Aperçu e-mail copié dans le presse-papiers")
+
+    tk.Button(
+        boutons,
+        text="Copier l'aperçu",
+        command=copier,
+        bg=LIGHT_GREEN,
+        fg=GREEN,
+        relief="flat",
+        cursor="hand2"
+    ).pack(side="left")
+    tk.Button(
+        boutons,
+        text="Fermer",
+        command=fenetre.destroy,
+        bg=BG,
+        fg=TEXT,
+        relief="flat",
+        cursor="hand2"
+    ).pack(side="right")
+
+
 def afficher_tuile_alerte(parent, alerte):
     tuile = tk.Frame(parent, bg=alerte["fond"], highlightbackground=BORDER, highlightthickness=1)
     tuile.pack(fill="x", padx=12, pady=(0, 6))
@@ -6748,6 +6859,18 @@ def afficher_centre_alertes(parent, plantes):
         couleur = GREEN
 
     tk.Label(entete, text="🔔 Centre d’alertes", font=("Segoe UI", 13, "bold"), fg=TEXT, bg=CARD, anchor="w").pack(side="left")
+    tk.Button(
+        entete,
+        text="📧 Aperçu e-mail",
+        font=("Segoe UI", 8, "bold"),
+        bg=BG,
+        fg=BLUE,
+        activebackground=BG,
+        activeforeground=BLUE,
+        relief="flat",
+        cursor="hand2",
+        command=lambda a=alertes: ouvrir_apercu_email_alertes(a)
+    ).pack(side="right", padx=(8, 0))
     tk.Label(entete, text=resume, font=("Segoe UI", 9, "bold"), fg=couleur, bg=CARD, anchor="e").pack(side="right")
 
     if not alertes:

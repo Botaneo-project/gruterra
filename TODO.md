@@ -357,4 +357,6 @@ La remise en attente a été effectuée uniquement sur une copie de la base Pi. 
 - [ ] Prévoir d'abord un mode test qui affiche le mail préparé sans l'envoyer.
 
 
-- [ ] Brancher plus tard le centre d'alertes sur l'aperçu e-mail, puis seulement ensuite sur un envoi réel validé.
+- [x] Brancher le centre d'alertes sur un aperçu e-mail sans envoi réel.
+
+- [ ] Ajouter plus tard la mémoire de dernière alerte envoyée et le délai minimal avant tout envoi SMTP réel.
