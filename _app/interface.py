@@ -1273,6 +1273,42 @@ def analyser_cycle_arrosage(plante_id):
     }
 
 
+def _resume_reperes_post_arrosage(points, date_arrosage, avant=None):
+    """Construit une ligne courte avec les repères 10 min, 1 h, 24 h et 48 h."""
+    if not points:
+        return "Repères : en attente de mesures après arrosage."
+
+    def mesure_proche(minutes):
+        cible = date_arrosage + timedelta(minutes=minutes)
+        candidates = []
+        tolerance = timedelta(minutes=max(25, minutes * 0.35))
+        for date_mesure, humidite in points:
+            if date_mesure < date_arrosage:
+                continue
+            ecart = abs(date_mesure - cible)
+            if ecart <= tolerance:
+                candidates.append((ecart, date_mesure, humidite))
+        if not candidates:
+            return None
+        candidates.sort(key=lambda item: item[0])
+        return candidates[0][1], candidates[0][2]
+
+    morceaux = []
+    for libelle, minutes in (("10 min", 10), ("1 h", 60), ("24 h", 1440), ("48 h", 2880)):
+        trouve = mesure_proche(minutes)
+        if trouve:
+            morceaux.append(f"{libelle} : {trouve[1]:.0f} %")
+        else:
+            morceaux.append(f"{libelle} : —")
+
+    if avant:
+        premiere = points[0]
+        comparaison = f"Avant/après : {avant[1]:.0f} % → {premiere[1]:.0f} %."
+    else:
+        comparaison = "Avant/après : mesure avant arrosage non disponible."
+    return comparaison + " Repères : " + " · ".join(morceaux) + "."
+
+
 def analyser_apres_arrosage(plante_id):
     """Analyse prudente des mesures qui suivent le dernier arrosage."""
     dernier = database.get_dernier_arrosage(plante_id)
@@ -1312,6 +1348,25 @@ def analyser_apres_arrosage(plante_id):
                 pass
 
     points = sorted(points, key=lambda item: item[0])
+    derniere_avant = None
+    for mesure in mesures:
+        date_heure = mesure[1]
+        humidite = mesure[3]
+        if humidite is None:
+            continue
+        try:
+            date_mesure = datetime.fromisoformat(date_heure)
+            if date_mesure.tzinfo:
+                date_mesure = date_mesure.astimezone().replace(tzinfo=None)
+        except (TypeError, ValueError):
+            continue
+        if date_mesure < date_arrosage:
+            if derniere_avant is None or date_mesure > derniere_avant[0]:
+                try:
+                    derniere_avant = (date_mesure, float(humidite))
+                except (TypeError, ValueError):
+                    pass
+    reperes_post_arrosage = _resume_reperes_post_arrosage(points, date_arrosage, derniere_avant)
     quantite = dernier[3]
     quantite_txt = f"{quantite:g} ml" if quantite is not None else "quantité non renseignée"
     type_eau = dernier[8] if len(dernier) > 8 else None
@@ -1319,24 +1374,6 @@ def analyser_apres_arrosage(plante_id):
     arrosage_txt = f"{quantite_txt}{eau_txt}"
 
     if not points:
-        derniere_avant = None
-        for mesure in mesures:
-            date_heure = mesure[1]
-            humidite = mesure[3]
-            if humidite is None:
-                continue
-            try:
-                date_mesure = datetime.fromisoformat(date_heure)
-                if date_mesure.tzinfo:
-                    date_mesure = date_mesure.astimezone().replace(tzinfo=None)
-            except (TypeError, ValueError):
-                continue
-            if date_mesure < date_arrosage:
-                if derniere_avant is None or date_mesure > derniere_avant[0]:
-                    try:
-                        derniere_avant = (date_mesure, float(humidite))
-                    except (TypeError, ValueError):
-                        pass
 
         if derniere_avant:
             ecart_heures = (date_arrosage - derniere_avant[0]).total_seconds() / 3600
@@ -1347,11 +1384,12 @@ def analyser_apres_arrosage(plante_id):
             detail = (
                 f"Arrosage du {formater_date(dernier[2])} · {arrosage_txt}. "
                 f"Aucune mesure Mi Flora enregistrée depuis. Dernière mesure avant arrosage : "
-                f"{derniere_avant[1]:.0f} %, {ecart_heures:.1f} h avant. Relancer une mesure directe pour démarrer le suivi."
+                f"{derniere_avant[1]:.0f} %, {ecart_heures:.1f} h avant. Relancer une mesure directe pour démarrer le suivi. "
+                f"{reperes_post_arrosage}"
             )
         else:
             resume = "Suivi post-arrosage : en attente de la prochaine mesure."
-            detail = f"Arrosage du {formater_date(dernier[2])} · {arrosage_txt}. Aucune mesure Mi Flora enregistrée depuis."
+            detail = f"Arrosage du {formater_date(dernier[2])} · {arrosage_txt}. Aucune mesure Mi Flora enregistrée depuis. {reperes_post_arrosage}"
 
         return {
             "niveau": "info",
@@ -1375,8 +1413,8 @@ def analyser_apres_arrosage(plante_id):
         return {
             "niveau": "info",
             "titre": "💧 Suivi post-arrosage lancé",
-            "detail": f"Dernière humidité après arrosage : {derniere_humidite:.0f} %. {resume_contexte}. Il faut encore du recul avant d'interpréter.",
-            "resume": f"Suivi post-arrosage : {derniere_humidite:.0f} %, recul encore court · {resume_contexte}.",
+            "detail": f"Dernière humidité après arrosage : {derniere_humidite:.0f} %. {resume_contexte}. {reperes_post_arrosage} Il faut encore du recul avant d'interpréter.",
+            "resume": f"Suivi post-arrosage : {derniere_humidite:.0f} %, recul encore court · {reperes_post_arrosage}",
             "couleur": BLUE,
             "fond": LIGHT_BLUE
         }
@@ -1390,8 +1428,8 @@ def analyser_apres_arrosage(plante_id):
         return {
             "niveau": "danger",
             "titre": "💧 Humidité persistante après arrosage",
-            "detail": f"{derniere_humidite:.0f} % encore mesurés environ {formater_duree_heures(heures_depuis)} après l'arrosage. {resume_contexte}. Vérifier le substrat avant tout nouvel arrosage.",
-            "resume": f"Suivi post-arrosage : humidité encore haute ({derniere_humidite:.0f} %) après {formater_duree_heures(heures_depuis)} · {resume_contexte}.",
+            "detail": f"{derniere_humidite:.0f} % encore mesurés environ {formater_duree_heures(heures_depuis)} après l'arrosage. {resume_contexte}. {reperes_post_arrosage} Vérifier le substrat avant tout nouvel arrosage.",
+            "resume": f"Suivi post-arrosage : humidité encore haute ({derniere_humidite:.0f} %) après {formater_duree_heures(heures_depuis)} · {reperes_post_arrosage}",
             "couleur": RED,
             "fond": LIGHT_RED
         }
@@ -1400,8 +1438,8 @@ def analyser_apres_arrosage(plante_id):
         return {
             "niveau": "attention",
             "titre": "💧 Séchage lent après arrosage",
-            "detail": f"{derniere_humidite:.0f} % après {formater_duree_heures(heures_depuis)}, tendance {tendance_jour:.1f} point/jour. {resume_contexte}. Surveiller avant de remettre de l'eau.",
-            "resume": f"Suivi post-arrosage : séchage lent ({derniere_humidite:.0f} %, {tendance_jour:.1f} point/jour) · {resume_contexte}.",
+            "detail": f"{derniere_humidite:.0f} % après {formater_duree_heures(heures_depuis)}, tendance {tendance_jour:.1f} point/jour. {resume_contexte}. {reperes_post_arrosage} Surveiller avant de remettre de l'eau.",
+            "resume": f"Suivi post-arrosage : séchage lent ({derniere_humidite:.0f} %, {tendance_jour:.1f} point/jour) · {reperes_post_arrosage}",
             "couleur": ORANGE,
             "fond": LIGHT_ORANGE
         }
@@ -1410,8 +1448,8 @@ def analyser_apres_arrosage(plante_id):
         return {
             "niveau": "ok",
             "titre": "💧 Retour au niveau initial détecté",
-            "detail": f"Humidité revenue à {derniere_humidite:.0f} % dans la zone du capteur. {resume_contexte}. Le Mi Flora ne permet pas de confirmer le séchage complet de toute la motte.",
-            "resume": f"Suivi post-arrosage : retour au niveau initial dans la zone du capteur, {derniere_humidite:.0f} % · {resume_contexte}.",
+            "detail": f"Humidité revenue à {derniere_humidite:.0f} % dans la zone du capteur. {resume_contexte}. {reperes_post_arrosage} Le Mi Flora ne permet pas de confirmer le séchage complet de toute la motte.",
+            "resume": f"Suivi post-arrosage : retour au niveau initial dans la zone du capteur, {derniere_humidite:.0f} % · {reperes_post_arrosage}",
             "couleur": GREEN,
             "fond": LIGHT_GREEN
         }
@@ -1419,8 +1457,8 @@ def analyser_apres_arrosage(plante_id):
     return {
         "niveau": "info",
         "titre": "💧 Suivi post-arrosage",
-        "detail": f"Dernière humidité : {derniere_humidite:.0f} %, tendance {tendance_jour:.1f} point/jour. {resume_contexte}. Rien d'inquiétant détecté pour l'instant.",
-        "resume": f"Suivi post-arrosage : {derniere_humidite:.0f} %, tendance {tendance_jour:.1f} point/jour · {resume_contexte}.",
+        "detail": f"Dernière humidité : {derniere_humidite:.0f} %, tendance {tendance_jour:.1f} point/jour. {resume_contexte}. {reperes_post_arrosage} Rien d'inquiétant détecté pour l'instant.",
+        "resume": f"Suivi post-arrosage : {derniere_humidite:.0f} %, tendance {tendance_jour:.1f} point/jour · {reperes_post_arrosage}",
         "couleur": BLUE,
         "fond": LIGHT_BLUE
     }

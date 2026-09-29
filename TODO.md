@@ -62,8 +62,8 @@ Ce fichier sert à garder une trace claire des idées et des prochaines étapes.
 - [x] Historique : ajouter les repères 24 h et 48 h dans le graphique comparatif des cycles.
 - [x] État Botaneo : afficher un contrôle explicite des mesures et synthèses entièrement à zéro.
 - [x] Analyse des cycles d’arrosage : version simple et prudente, centrée sur hausse observée, retour au départ et séchage après pic.
-- Pour chaque cycle : repérer l’humidité avant arrosage, le pic observé, la baisse après pic et la qualité des mesures disponibles.
-- Stabiliser l’analyse plante autour de l’arrosage : phrase courte, repères 10 min / 1 h / 24 h / 48 h et comparaison avant/après.
+- [x] Pour chaque cycle : repérer l’humidité avant arrosage, le pic observé, la baisse après pic et la qualité des mesures disponibles.
+- [x] Stabiliser l’analyse plante autour de l’arrosage : phrase courte, repères 10 min / 1 h / 24 h / 48 h et comparaison avant/après.
 - Garder le Bluetooth et la synchronisation Raspberry en observation pendant quelques cycles avant de modifier encore la collecte.
 - Reprendre ensuite l’interface des alertes, sans envoyer de mails automatiquement.
 

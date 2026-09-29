@@ -382,20 +382,35 @@ def mesurer_cycle_arrosage(arrosage, prochain_arrosage, mesures):
         return None
     date_fin = date_locale_depuis_iso(prochain_arrosage[2]) if prochain_arrosage else None
     mesures_cycle = []
+    humidites_avant = []
     for mesure in mesures:
         date_mesure = date_locale_depuis_iso(mesure[1])
-        if not date_mesure or date_mesure < date_arrosage:
+        if not date_mesure:
+            continue
+        try:
+            humidite = float(mesure[3]) if mesure[3] is not None else None
+        except (TypeError, ValueError):
+            humidite = None
+        if date_mesure < date_arrosage:
+            if humidite is not None and math.isfinite(humidite):
+                humidites_avant.append((date_mesure, humidite))
             continue
         if date_fin and date_mesure >= date_fin:
             continue
         mesures_cycle.append(mesure)
     mesures_cycle.sort(key=lambda mesure: mesure[1] or "")
+    humidites_avant.sort(key=lambda item: item[0])
+    avant_date, avant_humidite = humidites_avant[-1] if humidites_avant else (None, None)
+    delai_avant_h = (date_arrosage - avant_date).total_seconds() / 3600 if avant_date else None
     if not mesures_cycle:
         return {
             "date": date_arrosage,
             "fin": date_fin,
             "arrosage": arrosage,
             "mesures": [],
+            "humidite_avant": avant_humidite,
+            "delai_avant_h": delai_avant_h,
+            "qualite": "aucune mesure après",
             "texte": f"{formater_date_courte(date_arrosage)} · aucune mesure après arrosage",
         }
 
@@ -407,6 +422,9 @@ def mesurer_cycle_arrosage(arrosage, prochain_arrosage, mesures):
             "fin": date_fin,
             "arrosage": arrosage,
             "mesures": mesures_cycle,
+            "humidite_avant": avant_humidite,
+            "delai_avant_h": delai_avant_h,
+            "qualite": "humidité inexploitable",
             "texte": f"{formater_date_courte(date_arrosage)} · {len(mesures_cycle)} mesure(s), humidité inexploitable",
         }
 
@@ -414,20 +432,33 @@ def mesurer_cycle_arrosage(arrosage, prochain_arrosage, mesures):
     pic_date, pic_humidite = max(humidites, key=lambda item: item[1])
     derniere_date, derniere_humidite = humidites[-1]
     duree_heures = max((derniere_date - premiere_date).total_seconds() / 3600, 0)
+    ecarts = [(b[0] - a[0]).total_seconds() / 3600 for a, b in zip(humidites, humidites[1:])]
+    plus_grand_trou = max(ecarts) if ecarts else 0
+    if len(humidites) < 4:
+        qualite = "prudence : peu de mesures"
+    elif plus_grand_trou > 8:
+        qualite = f"prudence : trou {formater_nombre(plus_grand_trou)} h"
+    elif plus_grand_trou > 3:
+        qualite = f"correct avec trou {formater_nombre(plus_grand_trou)} h"
+    else:
+        qualite = "bonne"
     sechage = None
+    baisse_apres_pic = None
     if derniere_date > pic_date and pic_humidite != derniere_humidite:
         heures_depuis_pic = (derniere_date - pic_date).total_seconds() / 3600
         if heures_depuis_pic > 0:
+            baisse_apres_pic = pic_humidite - derniere_humidite
             sechage = (derniere_humidite - pic_humidite) / heures_depuis_pic * 24
     quantite = f"{formater_nombre(arrosage[3])} ml" if arrosage[3] is not None else "quantité non notée"
+    avant_txt = formater_nombre(avant_humidite) if avant_humidite is not None else "—"
     texte = (
         f"{formater_date_courte(date_arrosage)} · {quantite} · {len(mesures_cycle)} mesure(s) · "
-        f"humidité {formater_nombre(premiere_humidite)} → pic {formater_nombre(pic_humidite)} → fin {formater_nombre(derniere_humidite)} %"
+        f"avant {avant_txt} → après {formater_nombre(premiere_humidite)} → pic {formater_nombre(pic_humidite)} → fin {formater_nombre(derniere_humidite)} % · qualité {qualite}"
     )
     if sechage is not None:
-        texte += f" · séchage {formater_nombre(sechage)} point/jour après pic"
+        texte += f" · baisse après pic {formater_nombre(baisse_apres_pic)} pt ({formater_nombre(sechage)} pt/j)"
     else:
-        texte += " · séchage non calculable"
+        texte += " · baisse après pic non calculable"
     if date_fin:
         texte += f" · prochain arrosage {formater_date_courte(date_fin)}"
     elif duree_heures:
@@ -439,9 +470,13 @@ def mesurer_cycle_arrosage(arrosage, prochain_arrosage, mesures):
         "mesures": mesures_cycle,
         "texte": texte,
         "sechage": sechage,
+        "baisse_apres_pic": baisse_apres_pic,
+        "humidite_avant": avant_humidite,
+        "delai_avant_h": delai_avant_h,
         "premiere_humidite": premiere_humidite,
         "pic_humidite": pic_humidite,
         "derniere_humidite": derniere_humidite,
+        "qualite": qualite,
     }
 
 
@@ -472,21 +507,34 @@ def analyser_cycles_arrosage(cycles):
         return "Analyse cycles : pas encore assez de mesures d'humidité après arrosage pour interpréter."
 
     recent = cycles_humidite[-1]
-    hausse = recent["pic_humidite"] - recent["premiere_humidite"]
-    retour = recent["derniere_humidite"] - recent["premiere_humidite"]
+    reference_depart = recent.get("humidite_avant")
+    if reference_depart is None:
+        reference_depart = recent["premiere_humidite"]
+    hausse = recent["pic_humidite"] - reference_depart
+    baisse = recent.get("baisse_apres_pic")
+    retour = recent["derniere_humidite"] - reference_depart
+    qualite = recent.get("qualite") or "à vérifier"
     morceaux = [
         "Analyse cycles : lecture simple du dernier cycle",
+        f"avant {formater_nombre(reference_depart)} %",
+        f"pic {formater_nombre(recent['pic_humidite'])} %",
         f"hausse observée +{formater_nombre(hausse)} point(s)",
-        f"fin de cycle {formater_nombre(retour)} point(s) par rapport au départ",
+        f"fin {formater_nombre(retour)} point(s) par rapport à l'avant-arrosage",
+        f"qualité {qualite}",
     ]
+    if baisse is not None:
+        morceaux.append(f"baisse après pic {formater_nombre(baisse)} point(s)")
+    else:
+        morceaux.append("baisse après pic non calculable")
     if recent.get("sechage") is not None:
         morceaux.append(f"vitesse après pic {formater_nombre(recent['sechage'])} pt/j")
-    else:
-        morceaux.append("vitesse de séchage non calculable")
 
     if len(cycles_humidite) >= 2:
         precedent = cycles_humidite[-2]
-        hausse_precedente = precedent["pic_humidite"] - precedent["premiere_humidite"]
+        depart_precedent = precedent.get("humidite_avant")
+        if depart_precedent is None:
+            depart_precedent = precedent["premiere_humidite"]
+        hausse_precedente = precedent["pic_humidite"] - depart_precedent
         morceaux.append(f"cycle précédent : hausse +{formater_nombre(hausse_precedente)} point(s)")
 
     return "; ".join(morceaux) + ". Interprétation prudente : zone du capteur uniquement."
@@ -1543,27 +1591,31 @@ def ouvrir_historique(parent, plante_id):
         fond_analyse = melanger_couleurs(couleurs["BLUE"], couleurs["CARD"], 0.88)
         tk.Label(detail, textvariable=analyse_cycles_var, bg=fond_analyse, fg=couleurs["BLUE"], font=("Segoe UI", 9, "bold"), anchor="w", justify="left", wraplength=860, padx=10, pady=7).pack(fill="x", padx=18, pady=(0, 10))
 
-        colonnes_cycles = ("date", "quantite", "mesures", "depart", "pic", "fin", "sechage", "suivi")
+        colonnes_cycles = ("date", "quantite", "mesures", "avant", "depart", "pic", "fin", "sechage", "qualite", "suivi")
         tableau = ttk.Treeview(detail, columns=colonnes_cycles, show="headings", height=6)
         titres_cycles = {
             "date": "Arrosage",
             "quantite": "Quantité",
             "mesures": "Mesures",
-            "depart": "Départ",
+            "avant": "Avant",
+            "depart": "Après",
             "pic": "Pic",
             "fin": "Fin",
             "sechage": "Séchage",
+            "qualite": "Qualité",
             "suivi": "Suivi",
         }
         largeurs_cycles = {
             "date": 135,
             "quantite": 80,
             "mesures": 75,
+            "avant": 70,
             "depart": 70,
             "pic": 70,
             "fin": 70,
-            "sechage": 125,
-            "suivi": 150,
+            "sechage": 105,
+            "qualite": 150,
+            "suivi": 135,
         }
         for colonne in colonnes_cycles:
             tableau.heading(colonne, text=titres_cycles[colonne])
@@ -1579,10 +1631,12 @@ def ouvrir_historique(parent, plante_id):
                 formater_date_courte(cycle.get("date")),
                 quantite,
                 len(cycle.get("mesures") or []),
+                formater_nombre(cycle.get("humidite_avant")) if cycle.get("humidite_avant") is not None else "—",
                 formater_nombre(cycle.get("premiere_humidite")) if cycle.get("premiere_humidite") is not None else "—",
                 formater_nombre(cycle.get("pic_humidite")) if cycle.get("pic_humidite") is not None else "—",
                 formater_nombre(cycle.get("derniere_humidite")) if cycle.get("derniere_humidite") is not None else "—",
                 f"{formater_nombre(cycle.get('sechage'))} pt/j" if cycle.get("sechage") is not None else "—",
+                cycle.get("qualite") or "—",
                 suivi,
             ))
 
