@@ -462,33 +462,34 @@ def calculer_cycles_arrosage(mesures, arrosages, limite=6):
 
 
 def analyser_cycles_arrosage(cycles):
-    cycles_sechage = [cycle for cycle in cycles if cycle.get("sechage") is not None]
-    if len(cycles_sechage) < 2:
-        return "Analyse cycles : comparaison encore limitée, moins de deux cycles avec vitesse de séchage calculable."
-    precedent = cycles_sechage[-2]
-    recent = cycles_sechage[-1]
-    sechage_precedent = precedent["sechage"]
-    sechage_recent = recent["sechage"]
-    difference = sechage_recent - sechage_precedent
-    if abs(difference) < 0.4:
-        tendance = "vitesse de séchage proche du cycle précédent"
-    elif difference < 0:
-        tendance = "séchage plus rapide que le cycle précédent"
+    cycles_humidite = [
+        cycle for cycle in cycles
+        if cycle.get("premiere_humidite") is not None
+        and cycle.get("pic_humidite") is not None
+        and cycle.get("derniere_humidite") is not None
+    ]
+    if not cycles_humidite:
+        return "Analyse cycles : pas encore assez de mesures d'humidité après arrosage pour interpréter."
+
+    recent = cycles_humidite[-1]
+    hausse = recent["pic_humidite"] - recent["premiere_humidite"]
+    retour = recent["derniere_humidite"] - recent["premiere_humidite"]
+    morceaux = [
+        "Analyse cycles : lecture simple du dernier cycle",
+        f"hausse observée +{formater_nombre(hausse)} point(s)",
+        f"fin de cycle {formater_nombre(retour)} point(s) par rapport au départ",
+    ]
+    if recent.get("sechage") is not None:
+        morceaux.append(f"vitesse après pic {formater_nombre(recent['sechage'])} pt/j")
     else:
-        tendance = "séchage plus lent que le cycle précédent"
-    reponse_recent = None
-    if recent.get("pic_humidite") is not None and recent.get("premiere_humidite") is not None:
-        reponse_recent = recent["pic_humidite"] - recent["premiere_humidite"]
-    reponse_precedent = None
-    if precedent.get("pic_humidite") is not None and precedent.get("premiere_humidite") is not None:
-        reponse_precedent = precedent["pic_humidite"] - precedent["premiere_humidite"]
-    phrase_reponse = ""
-    if reponse_recent is not None and reponse_precedent is not None:
-        phrase_reponse = f" · hausse observée récente +{formater_nombre(reponse_recent)} pt, précédente +{formater_nombre(reponse_precedent)} pt"
-    return (
-        f"Analyse cycles : {tendance} "
-        f"({formater_nombre(sechage_recent)} contre {formater_nombre(sechage_precedent)} pt/j){phrase_reponse}."
-    )
+        morceaux.append("vitesse de séchage non calculable")
+
+    if len(cycles_humidite) >= 2:
+        precedent = cycles_humidite[-2]
+        hausse_precedente = precedent["pic_humidite"] - precedent["premiere_humidite"]
+        morceaux.append(f"cycle précédent : hausse +{formater_nombre(hausse_precedente)} point(s)")
+
+    return "; ".join(morceaux) + ". Interprétation prudente : zone du capteur uniquement."
 
 
 def resumer_cycles_arrosage(mesures, arrosages, limite=6):

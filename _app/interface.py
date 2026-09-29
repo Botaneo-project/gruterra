@@ -5253,7 +5253,9 @@ def texte_sante_systeme(etat_raspberry=None):
         f"Base : {database.DB_PATH}",
         f"Taille base : {format_octets(base.get('taille_octets'))} / seuil {format_octets(base.get('seuil_octets'))}",
         f"Mesures brutes : {diagnostic['nombre_mesures']}",
+        f"Mesures entièrement à zéro : {diagnostic.get('mesures_entierement_zero', 0)}",
         f"Synthèses : {syntheses['nombre']} ({syntheses['premier_jour']} → {syntheses['dernier_jour']})",
+        f"Synthèses entièrement à zéro : {diagnostic.get('syntheses_entierement_zero', 0)}",
         f"Compactage conseillé : {'oui' if base.get('compactage_conseille') else 'non'}",
         "",
     ]

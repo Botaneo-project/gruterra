@@ -1803,6 +1803,53 @@ def get_diagnostic_mesures_par_capteur():
     return rows
 
 
+def compter_mesures_entierement_zero():
+    """Compte les mesures où les quatre valeurs numériques principales valent 0.
+
+    Ces lignes peuvent indiquer une lecture incomplète ou une donnée de remplacement.
+    Elles ne sont pas supprimées ici : le diagnostic sert à les rendre visibles.
+    """
+    conn = get_connection()
+    row = conn.execute("""
+        SELECT COUNT(*)
+        FROM mesures
+        WHERE temperature IS NOT NULL
+          AND humidite IS NOT NULL
+          AND luminosite IS NOT NULL
+          AND conductivite IS NOT NULL
+          AND temperature = 0
+          AND humidite = 0
+          AND luminosite = 0
+          AND conductivite = 0
+    """).fetchone()
+    conn.close()
+    return row[0] or 0
+
+
+def compter_syntheses_entierement_zero():
+    """Compte les synthèses stockées dont toutes les statistiques numériques sont à 0."""
+    initialiser_syntheses_mesures_journalieres()
+    conn = get_connection()
+    row = conn.execute("""
+        SELECT COUNT(*)
+        FROM syntheses_mesures_journalieres
+        WHERE COALESCE(temperature_min, 0) = 0
+          AND COALESCE(temperature_max, 0) = 0
+          AND COALESCE(temperature_moy, 0) = 0
+          AND COALESCE(humidite_min, 0) = 0
+          AND COALESCE(humidite_max, 0) = 0
+          AND COALESCE(humidite_moy, 0) = 0
+          AND COALESCE(luminosite_min, 0) = 0
+          AND COALESCE(luminosite_max, 0) = 0
+          AND COALESCE(luminosite_moy, 0) = 0
+          AND COALESCE(conductivite_min, 0) = 0
+          AND COALESCE(conductivite_max, 0) = 0
+          AND COALESCE(conductivite_moy, 0) = 0
+    """).fetchone()
+    conn.close()
+    return row[0] or 0
+
+
 def get_diagnostic_syntheses():
     """Retourne un résumé compact de l'état des synthèses journalières."""
     initialiser_syntheses_mesures_journalieres()
@@ -1827,6 +1874,8 @@ def get_diagnostic_global():
     return {
         "base": compactage,
         "nombre_mesures": get_nombre_mesures(),
+        "mesures_entierement_zero": compter_mesures_entierement_zero(),
+        "syntheses_entierement_zero": compter_syntheses_entierement_zero(),
         "syntheses": syntheses,
         "capteurs": capteurs,
     }
