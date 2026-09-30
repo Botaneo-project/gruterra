@@ -1714,17 +1714,25 @@ def ouvrir_exposition_balcon_passee(plante_id, nom_plante):
 
 
 def enregistrer_evenement_balcon(plante_id, nom_plante, action):
-    """Enregistre un événement d'exposition extérieure dans le journal de la plante."""
+    """Enregistre un événement d'exposition extérieure dans le journal de la plante après validation."""
 
-    maintenant = datetime.now().isoformat(timespec="seconds")
+    maintenant_dt = datetime.now()
+    maintenant = maintenant_dt.isoformat(timespec="seconds")
+    heure_lisible = maintenant_dt.strftime("%d/%m/%Y à %H:%M")
     if action == "sortie":
         titre = "Sortie balcon"
         commentaire = "Plante sortie temporairement sur le balcon. Les pics de lumière suivants doivent être interprétés comme une exposition extérieure ponctuelle."
         message = f"Sortie balcon notée pour {nom_plante}."
+        question = f"Confirmer la sortie balcon de {nom_plante} maintenant ({heure_lisible}) ?"
     else:
         titre = "Retour intérieur"
         commentaire = "Plante rentrée à l'intérieur. Les mesures suivantes correspondent de nouveau à l'emplacement habituel."
         message = f"Retour intérieur noté pour {nom_plante}."
+        question = f"Confirmer le retour intérieur de {nom_plante} maintenant ({heure_lisible}) ?"
+
+    if not messagebox.askyesno("Confirmer l'exposition balcon", question, parent=root):
+        status_var.set(f"{titre} annulé : aucun événement ajouté.")
+        return
 
     try:
         database.ajouter_observation_plante(

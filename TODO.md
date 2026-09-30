@@ -338,6 +338,7 @@ La remise en attente a été effectuée uniquement sur une copie de la base Pi. 
 - [x] Aligner le compteur de l'analyse post-arrosage avec le résumé exporté : l'ancienne analyse ne lisait que les 200 dernières mesures, alors que le résumé depuis le dernier arrosage utilise tout l'historique disponible.
 - [x] Mieux contextualiser les pics lumineux liés aux sorties sur balcon pour qu'ils ne masquent pas la faible luminosité habituelle du salon : l’analyse 24 h distingue maintenant un pic isolé d’une journée réellement lumineuse.
 - [x] Ajouter des événements dédiés `Sortie balcon` / `Retour intérieur` dans le journal plante, accessibles depuis la carte plante.
+- [x] Sécuriser les boutons `Sortie balcon` et `Retour intérieur` avec une confirmation avant inscription dans le journal plante.
 - [x] Permettre d'ajouter après coup une exposition balcon passée avec date/heure de sortie et date/heure de retour.
 
 - [x] Afficher les expositions balcon dans le graphique historique sous forme de zone visuelle, sans modifier les mesures.
