@@ -2718,7 +2718,7 @@ def creer_carte_plante(parent, plante):
         relief="flat",
         cursor="hand2",
         command=lambda pid=plante_id:
-            ouvrir_historique(root, pid)
+            ouvrir_historique(root, pid, synchroniser)
     ).pack(
         side="left",
         padx=(0, 8)
@@ -6543,7 +6543,7 @@ def afficher_raccourcis_historique(plante_id):
                 cursor="hand2",
                 command=lambda pid=plante_historique[0]: (
                     fenetre.destroy(),
-                    ouvrir_historique(root, pid)
+                    ouvrir_historique(root, pid, synchroniser)
                 )
             ).pack(fill="x", pady=3)
     else:
@@ -6578,7 +6578,7 @@ def afficher_raccourcis_historique(plante_id):
 
 def afficher_message_historique(plante_id):
     if plante_a_historique_mesures(plante_id):
-        ouvrir_historique(root, plante_id)
+        ouvrir_historique(root, plante_id, synchroniser)
     else:
         afficher_raccourcis_historique(plante_id)
 

@@ -790,7 +790,7 @@ def resume_expositions_jour(mesures, expositions):
     return "\n".join(lignes)
 
 
-def ouvrir_historique(parent, plante_id):
+def ouvrir_historique(parent, plante_id, action_synchroniser=None):
     couleurs = theme_actuel()
     plante = database.get_plante(plante_id)
 
@@ -838,6 +838,14 @@ def ouvrir_historique(parent, plante_id):
                                values=tuple(SERIES.keys()),
                                state="readonly", width=16)
     choix_serie.pack(side="left")
+
+    if action_synchroniser:
+        ttk.Button(
+            barre,
+            text="↻ Resynchroniser",
+            command=action_synchroniser
+        ).pack(side="left", padx=(14, 0))
+
     tk.Label(barre, textvariable=bilan, bg=couleurs["BG"],
              fg=couleurs["TEXT"]).pack(side="left", padx=18)
 
