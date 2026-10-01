@@ -66,7 +66,9 @@ Ce fichier sert à garder une trace claire des idées et des prochaines étapes.
 - [ ] Vérifier les threads Tkinter : aucun thread secondaire ne doit modifier directement un widget, tout doit repasser par `root.after(...)`.
 - [x] Créer une première suite de tests automatisés pour les éléments purs : schéma base vide, suppression des mesures sans date, sessions d’arrosage et dates centralisées.
 - [x] Étendre les tests automatisés aux zéros suspects : un 0 % isolé est conservé dans les données, mais exclu des graphiques/statistiques d’humidité.
-- [ ] Étendre les tests automatisés aux cycles d’arrosage détaillés et à l’import Raspberry.
+- [x] Étendre les tests automatisés aux cycles d’arrosage simples : humidité avant, première mesure, pic, fin et vitesse de séchage.
+- [x] Étendre les tests automatisés à l’import Raspberry : ajout d’une mesure courante et déduplication idempotente.
+- [ ] Étendre plus tard les tests aux cycles d’arrosage fractionnés détaillés et à l’historique Raspberry brut.
 - [ ] Extraire la logique d’arrosage vers `_app/services/analyse_arrosage.py` une fois les tests posés.
 - [ ] Extraire ensuite la logique lumière vers `_app/services/analyse_lumiere.py` : intérieur, balcon, future lampe horticole, hors balcon.
 - [ ] Préparer progressivement la réduction de `interface.py` et `vue_historique.py`, sans découpage brutal de l’interface graphique.

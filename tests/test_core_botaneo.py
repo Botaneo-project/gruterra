@@ -104,6 +104,72 @@ class TestSessionsArrosage(unittest.TestCase):
         self.assertEqual(sessions[1]["quantite_totale_ml"], 80)
 
 
+class TestCyclesArrosage(unittest.TestCase):
+    def test_cycle_arrosage_calcule_pic_et_sechage_simple(self):
+        vue_historique = importlib.import_module("vue_historique")
+        arrosages = [
+            (1, 1, "2026-09-20T10:00:00", 80, "normal", None, None, "", "Volvic", None, 0),
+        ]
+        mesures = [
+            (1, "2026-09-20T09:00:00", 24.0, 18, 100, 70, "", 1),
+            (2, "2026-09-20T10:30:00", 24.1, 24, 120, 72, "", 1),
+            (3, "2026-09-20T11:30:00", 24.2, 26, 130, 73, "", 1),
+            (4, "2026-09-21T11:30:00", 24.0, 22, 110, 71, "", 1),
+        ]
+
+        cycles = vue_historique.calculer_cycles_arrosage(mesures, arrosages)
+
+        self.assertEqual(len(cycles), 1)
+        cycle = cycles[0]
+        self.assertEqual(cycle["humidite_avant"], 18)
+        self.assertEqual(cycle["premiere_humidite"], 24)
+        self.assertEqual(cycle["pic_humidite"], 26)
+        self.assertEqual(cycle["derniere_humidite"], 22)
+        self.assertEqual(cycle["baisse_apres_pic"], 4)
+        self.assertAlmostEqual(cycle["sechage"], -4.0)
+
+
+class TestImportRaspberry(BaseTemporaireMixin, unittest.TestCase):
+    def test_import_batch_est_idempotent_pour_mesure_courante(self):
+        db = self.database
+        db.initialiser_schema()
+        plante_id = db.ajouter_plante("Crassula", "Crassula ovata")
+        capteur_id = db.ajouter_capteur("Mi Flora", "AA:BB:CC:DD:EE:FF", plante_id)
+        raspberry_sync = importlib.import_module("raspberry_sync")
+        config = {
+            "device_id": "pi-test",
+            "sensors": ["AA:BB:CC:DD:EE:FF"],
+        }
+        row = {
+            "device_id": "pi-test",
+            "measurement_id": "m-001",
+            "schema_version": 1,
+            "kind": "current",
+            "sensor_id": "AA:BB:CC:DD:EE:FF",
+            "measured_at": "2026-09-20T13:39:29+00:00",
+            "time_quality": "ntp",
+            "raw": "01020304",
+            "temperature_c": 25.1,
+            "moisture_percent": 26,
+            "illuminance_lux": 311,
+            "conductivity_us_cm": 90,
+        }
+        batch = {"version": 1, "device_id": "pi-test", "rows": [row]}
+
+        premier, ack1 = raspberry_sync.import_batch(db.DB_PATH, batch, config)
+        second, ack2 = raspberry_sync.import_batch(db.DB_PATH, batch, config)
+
+        self.assertEqual(premier["added"], 1)
+        self.assertEqual(premier["current_added"], 1)
+        self.assertEqual(second["duplicates"], 1)
+        self.assertEqual(second["current_duplicates"], 1)
+        self.assertEqual(len(ack1["rows"]), 1)
+        self.assertEqual(ack1, ack2)
+        mesures = db.get_mesures(plante_id=plante_id, limite=10)
+        self.assertEqual(len(mesures), 1)
+        self.assertEqual(mesures[0][7], capteur_id)
+
+
 class TestHistoriqueZerosSuspects(unittest.TestCase):
     def test_zero_humidite_isole_est_exclu_du_graphique_mais_identifie(self):
         vue_historique = importlib.import_module("vue_historique")
