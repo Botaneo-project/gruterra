@@ -110,6 +110,24 @@ Ce fichier sert à garder une trace claire des idées et des prochaines étapes.
 - Prévision +2 h : utiliser le code météo pour éviter `Ciel non disponible` quand la source le fournit.
 - Ne pas intégrer de token Météo-France officiel tant que le portail ou le compte ne sont pas stables.
 
+
+## Sessions d’arrosage à prévoir
+
+Objectif : préparer une évolution sans casser l’enregistrement actuel des arrosages. Tant que cette partie n’est pas développée, le bouton d’arrosage doit continuer à enregistrer chaque apport comme aujourd’hui.
+
+- [ ] Regrouper logiquement plusieurs apports proches, par exemple 40 ml + 55 ml, en une session d’arrosage de 95 ml sans supprimer les deux lignes brutes.
+- [ ] Calculer automatiquement le volume total de la session, avec le détail des apports et de leurs horaires.
+- [ ] Conserver l’état du substrat au début de la session uniquement ; les compléments peuvent rester `non renseigné`.
+- [ ] Ajouter des champs facultatifs : arrosage progressif, eau utilisée, pot sorti du cache-pot, répartition de l’eau, drainage observé, délai avant drainage, commentaire libre.
+- [ ] Basculer l’analyse post-arrosage sur le début de session, avec possibilité d’étudier séparément la réaction à chaque fraction.
+- [ ] Ne plus afficher seulement `arrosage 55 ml` si cet apport appartient à une session totale de 95 ml.
+- [ ] Conserver les données originales en base : le regroupement doit être logique, pas une fusion destructive des lignes.
+- [ ] Garantir la cohérence temporelle : une mesure prise avant un apport complémentaire ne doit jamais être attribuée à cet apport.
+- [ ] Continuer l’amélioration de la lumière contextualisée : intérieur, balcon, future lampe horticole, statistiques hors balcon.
+- [ ] Conserver les indicateurs de qualité des données pour éviter que les périodes très denses faussent les moyennes.
+- [ ] Distinguer dans la synchronisation `synchronisation terminée` et `nouvelle mesure effectivement acquise`.
+- [ ] Répéter dans les analyses que le Mi Flora mesure une zone du substrat et ne prouve pas à lui seul l’état de toute la motte.
+
 ## Historique Mi Flora
 
 - Garder la règle de sécurité : aucune suppression de mémoire Mi Flora sans validation claire.
