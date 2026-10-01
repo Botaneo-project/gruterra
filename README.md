@@ -16,7 +16,7 @@ cd C:\Plantes
 py audit_botaneo.py
 ```
 
-Elle exécute les tests automatisés, la vérification avant GitHub et un contrôle du diff Git.
+Elle exécute les tests automatisés, la vérification avant GitHub, un contrôle du diff Git et affiche les fichiers encore modifiés à relire avant commit.
 
 ## Fonctionnalités principales
 

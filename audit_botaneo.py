@@ -48,6 +48,35 @@ def executer(titre: str, commande: list[str]) -> bool:
     return False
 
 
+def afficher_status_git(git: str | None) -> None:
+    if not git:
+        return
+    print()
+    print("=== État Git après audit ===")
+    resultat = subprocess.run(
+        [git, "status", "--short"],
+        cwd=ROOT,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        encoding="utf-8",
+        errors="replace",
+    )
+    if resultat.returncode != 0:
+        print("Impossible de lire l’état Git.")
+        if resultat.stderr.strip():
+            print(resultat.stderr.strip())
+        return
+    lignes = [ligne for ligne in resultat.stdout.splitlines() if ligne.strip()]
+    if not lignes:
+        print("Aucun fichier modifié.")
+        return
+    print("Fichiers modifiés ou non suivis :")
+    for ligne in lignes:
+        print(f"  {ligne}")
+    print("Relire cette liste avant tout commit. Ne jamais utiliser git add .")
+
+
 def main() -> int:
     print("Botaneo — audit local")
     print(f"Dossier : {ROOT}")
@@ -66,6 +95,8 @@ def main() -> int:
     ok = True
     for titre, commande in etapes:
         ok = executer(titre, commande) and ok
+
+    afficher_status_git(git)
 
     print()
     if ok:
