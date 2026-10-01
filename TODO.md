@@ -51,6 +51,23 @@ Ce fichier sert à garder une trace claire des idées et des prochaines étapes.
 - Fenêtre `Santé système` enrichie avec un diagnostic Raspberry : température, disque libre, mémoire, sauvegardes locales, écriture et erreurs disque récentes.
 - Document de reprise agent créé : `CONTEXTE_AGENT_BOTANEO.md` avec architecture, Raspberry, secrets, process GitHub, Plante de Jade et priorités.
 
+
+## Audit technique — seconde passe
+
+État après les dernières corrections : le schéma principal et les clés étrangères sont corrigés. Les prochains risques sont moins visibles que les bugs fonctionnels, mais ils conditionnent la stabilité future.
+
+- [x] Schéma principal : `database.py` crée maintenant `plantes`, `capteurs`, `mesures` et les index utiles pour une installation neuve.
+- [x] Clés étrangères SQLite activées dans `get_connection()`.
+- [ ] Centraliser la gestion des dates dans un module dédié, par exemple `_app/botaneo_dates.py` : date locale, UTC, parsing ISO, affichage local et comparaisons sûres.
+- [ ] Auditer les dates Raspberry / PC / historique Mi Flora pour éviter les mélanges entre UTC, heure locale et ISO sans fuseau.
+- [ ] Vérifier les threads Tkinter : aucun thread secondaire ne doit modifier directement un widget, tout doit repasser par `root.after(...)`.
+- [ ] Créer de vrais tests automatisés pour les éléments purs : schéma base vide, sessions d’arrosage, cycles, zéros suspects, import Raspberry.
+- [ ] Extraire la logique d’arrosage vers `_app/services/analyse_arrosage.py` une fois les tests posés.
+- [ ] Extraire ensuite la logique lumière vers `_app/services/analyse_lumiere.py` : intérieur, balcon, future lampe horticole, hors balcon.
+- [ ] Préparer progressivement la réduction de `interface.py` et `vue_historique.py`, sans découpage brutal de l’interface graphique.
+- [ ] Documenter clairement que la page web Raspberry en HTTP est acceptable uniquement sur réseau local privé et ne doit pas être exposée à Internet.
+- [ ] Nettoyer les doublons et fichiers anciens seulement après stabilisation et vérification qu’ils ne servent plus de référence.
+
 ## Prochaine suite recommandée
 
 - [x] Historique : ajouter une première fenêtre de comparaison de deux journées avec tableau et texte copiable.
