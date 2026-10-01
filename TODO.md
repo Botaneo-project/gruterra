@@ -60,7 +60,8 @@ Ce fichier sert à garder une trace claire des idées et des prochaines étapes.
 - [x] Clés étrangères SQLite activées dans `get_connection()`.
 - [x] Créer le module dédié `_app/botaneo_dates.py` : date locale, UTC, parsing ISO, affichage local et comparaisons sûres.
 - [x] Remplacer les conversions de dates critiques Raspberry/Mi Flora par `_app/botaneo_dates.py` pour les imports UTC, les dates locales PC et les mesures rapatriées.
-- [ ] Continuer le remplacement progressif dans l’interface : historique graphique, rappels, alertes et exports texte.
+- [x] Remplacer les conversions critiques de l’historique graphique par `_app/botaneo_dates.py` : points de courbe, tris, tableaux, qualité des données, repères arrosage et filtres de période.
+- [ ] Continuer le remplacement progressif dans l’interface : rappels, alertes et exports texte.
 - [ ] Auditer les dates Raspberry / PC / historique Mi Flora pour éviter les mélanges entre UTC, heure locale et ISO sans fuseau.
 - [ ] Vérifier les threads Tkinter : aucun thread secondaire ne doit modifier directement un widget, tout doit repasser par `root.after(...)`.
 - [ ] Créer de vrais tests automatisés pour les éléments purs : schéma base vide, sessions d’arrosage, cycles, zéros suspects, import Raspberry.

@@ -5,6 +5,7 @@ from tkinter import ttk
 from datetime import datetime, timedelta
 
 import database
+from botaneo_dates import formater_local, maintenant_local, vers_local_naif
 from ui_preferences import charger_theme_sombre
 
 
@@ -66,13 +67,10 @@ def extraire_points(mesures, nom_serie):
 
     for mesure in mesures:
         try:
-            date = datetime.fromisoformat(mesure[1])
+            date = vers_local_naif(mesure[1])
             valeur = float(mesure[config["colonne"]])
 
-            if date.tzinfo:
-                date = date.astimezone().replace(tzinfo=None)
-
-            if math.isfinite(valeur):
+            if date and math.isfinite(valeur):
                 points.append((date, valeur))
 
         except (ValueError, TypeError):
@@ -210,9 +208,9 @@ def ids_humidite_zero_suspects(mesures):
     points = []
     for mesure in mesures:
         try:
-            date = datetime.fromisoformat(mesure[1])
-            if date.tzinfo:
-                date = date.astimezone().replace(tzinfo=None)
+            date = vers_local_naif(mesure[1])
+            if not date:
+                continue
             humidite = float(mesure[3])
             points.append((date, mesure, humidite))
         except (TypeError, ValueError):
@@ -246,13 +244,7 @@ def filtrer_mesures_pour_serie(mesures, nom_serie):
 
 
 def date_locale_depuis_iso(valeur):
-    try:
-        date = datetime.fromisoformat(valeur)
-        if date.tzinfo:
-            date = date.astimezone().replace(tzinfo=None)
-        return date
-    except (TypeError, ValueError):
-        return None
+    return vers_local_naif(valeur)
 
 
 def libelle_jour(date_jour):
@@ -1001,13 +993,9 @@ def ouvrir_historique(parent, plante_id, action_synchroniser=None):
     def analyser_qualite_donnees(mesures, periode_affichee):
         dates = []
         for mesure in mesures:
-            try:
-                date = datetime.fromisoformat(mesure[1])
-                if date.tzinfo:
-                    date = date.astimezone().replace(tzinfo=None)
+            date = vers_local_naif(mesure[1])
+            if date:
                 dates.append(date)
-            except (TypeError, ValueError):
-                pass
         dates.sort()
         if not dates:
             return "Qualité des données : aucune mesure sur cette période.", "SECONDARY"
@@ -1054,10 +1042,8 @@ def ouvrir_historique(parent, plante_id, action_synchroniser=None):
         valeur = mesure[index]
         if colonne == "date":
             try:
-                date = datetime.fromisoformat(valeur)
-                if date.tzinfo:
-                    date = date.astimezone().replace(tzinfo=None)
-                return date.timestamp()
+                date = vers_local_naif(valeur)
+                return date.timestamp() if date else float("-inf")
             except (ValueError, TypeError):
                 return float("-inf")
         try:
@@ -1083,7 +1069,7 @@ def ouvrir_historique(parent, plante_id, action_synchroniser=None):
 
         for mesure in mesures:
             try:
-                date = datetime.fromisoformat(mesure[1]).strftime("%d/%m/%Y %H:%M:%S")
+                date = formater_local(mesure[1], str(mesure[1] or "—"))
             except (ValueError, TypeError):
                 date = str(mesure[1] or "—")
 
@@ -1117,7 +1103,7 @@ def ouvrir_historique(parent, plante_id, action_synchroniser=None):
             valeur = valeur_tri_mesure(meilleure, colonne)
             if colonne == "date":
                 try:
-                    date = datetime.fromisoformat(meilleure[1]).strftime("%d/%m/%Y %H:%M:%S")
+                    date = formater_local(meilleure[1], str(meilleure[1] or "—"))
                 except (ValueError, TypeError):
                     date = str(meilleure[1] or "—")
                 bilan.set(f"{len(mesures_courantes)} mesure(s) · tri : {libelle_tri(colonne)} · {date}")
@@ -1209,22 +1195,16 @@ def ouvrir_historique(parent, plante_id, action_synchroniser=None):
             arrosages_courants,
             key=lambda item: valeur_tri_mesure((None, item[2], None, None, None, None), "date")
         )
-        try:
-            date_arrosage = datetime.fromisoformat(dernier_arrosage[2])
-            if date_arrosage.tzinfo:
-                date_arrosage = date_arrosage.astimezone().replace(tzinfo=None)
-        except (TypeError, ValueError):
+        date_arrosage = date_locale_depuis_iso(dernier_arrosage[2])
+        if not date_arrosage:
             selectionner_mesure(None, "date d'arrosage inexploitable")
             return
 
         cible = date_arrosage + timedelta(minutes=minutes_repere(repere))
         mesures_apres = []
         for mesure in mesures_courantes:
-            try:
-                date_mesure = datetime.fromisoformat(mesure[1])
-                if date_mesure.tzinfo:
-                    date_mesure = date_mesure.astimezone().replace(tzinfo=None)
-            except (TypeError, ValueError):
+            date_mesure = date_locale_depuis_iso(mesure[1])
+            if not date_mesure:
                 continue
             if date_mesure >= date_arrosage:
                 mesures_apres.append((mesure, date_mesure))
@@ -1340,13 +1320,9 @@ def ouvrir_historique(parent, plante_id, action_synchroniser=None):
         start, end = points[0][0], points[-1][0]
         dates_arrosage_visibles = []
         for arrosage in arrosages_courants:
-            try:
-                date_arrosage = datetime.fromisoformat(arrosage[2])
-                if date_arrosage.tzinfo:
-                    date_arrosage = date_arrosage.astimezone().replace(tzinfo=None)
+            date_arrosage = date_locale_depuis_iso(arrosage[2])
+            if date_arrosage:
                 dates_arrosage_visibles.append(date_arrosage)
-            except (TypeError, ValueError):
-                pass
         if dates_arrosage_visibles:
             start = min(start, min(dates_arrosage_visibles))
             end = max(end, max(dates_arrosage_visibles))
@@ -1402,11 +1378,8 @@ def ouvrir_historique(parent, plante_id, action_synchroniser=None):
                 )
 
         for arrosage in arrosages_courants:
-            try:
-                date_arrosage = datetime.fromisoformat(arrosage[2])
-                if date_arrosage.tzinfo:
-                    date_arrosage = date_arrosage.astimezone().replace(tzinfo=None)
-            except (TypeError, ValueError):
+            date_arrosage = date_locale_depuis_iso(arrosage[2])
+            if not date_arrosage:
                 continue
             if not (start <= date_arrosage <= end):
                 continue
@@ -1940,8 +1913,8 @@ def ouvrir_historique(parent, plante_id, action_synchroniser=None):
         jours = {"24 heures": 1, "7 jours": 7}.get(periode.get())
 
         if jours:
-            limite = datetime.now() - timedelta(days=jours)
-            maintenant = datetime.now()
+            maintenant = maintenant_local().replace(tzinfo=None)
+            limite = maintenant - timedelta(days=jours)
             filtre = []
             for mesure in mesures:
                 date = date_locale_depuis_iso(mesure[1])
