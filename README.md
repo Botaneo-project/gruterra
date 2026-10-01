@@ -6,6 +6,18 @@ Botaneo est une application locale de suivi des plantes. Elle centralise les pla
 
 Le projet est prévu d’abord pour un usage local sous Windows. Les données réelles, les tokens et la base SQLite personnelle restent sur le PC de l’utilisateur.
 
+
+## Audit local avant envoi GitHub
+
+Une commande permet de lancer les contrôles principaux sans capteur :
+
+```powershell
+cd C:\Plantes
+py audit_botaneo.py
+```
+
+Elle exécute les tests automatisés, la vérification avant GitHub et un contrôle du diff Git.
+
 ## Fonctionnalités principales
 
 - Interface graphique Tkinter.
