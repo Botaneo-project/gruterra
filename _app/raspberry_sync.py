@@ -6,8 +6,9 @@ import sqlite3
 import subprocess
 import threading
 import time
-from datetime import datetime, timezone
 from pathlib import Path
+
+from botaneo_dates import iso_utc, iso_depuis_local, vers_utc
 
 LOCK = threading.Lock()
 
@@ -107,7 +108,7 @@ def import_batch(db_path, batch, config):
                              humidite,luminosite,conductivite,raw_hex,import_date,statut)
                             VALUES (?,-1,?,?,?,?,?,?,?,?,?)''',
                             (sensors[0][0], row['sensor_seconds'], row['measured_at'],
-                             *values, raw, datetime.now(timezone.utc).isoformat(), 'raspberry_'+row['time_quality']))
+                             *values, raw, iso_utc(), 'raspberry_'+row['time_quality']))
                 else:
                     try:
                         raw = bytes.fromhex(row['raw']).hex()
@@ -116,10 +117,12 @@ def import_batch(db_path, batch, config):
                 disposition = 'undated'
                 quality = 'estimated_from_sensor_clock' if row['kind'] == 'history' else 'ntp'
                 if row['measured_at'] and row['time_quality'] == quality:
-                    instant = datetime.fromisoformat(row['measured_at'])
-                    if instant.tzinfo is None or instant > datetime.now(timezone.utc):
+                    instant = vers_utc(row['measured_at'])
+                    if instant is None or instant > vers_utc(iso_utc()):
                         raise ValueError('Date invalide.')
-                    date = instant.astimezone().replace(tzinfo=None).isoformat(timespec='seconds')
+                    date = iso_depuis_local(row['measured_at'])
+                    if not date:
+                        raise ValueError('Date invalide.')
                     # History contains internal time: absorb clock estimation drift.
                     tolerance = 120 if row['kind'] == 'history' else 1
                     duplicate = db.execute('''SELECT 1 FROM mesures WHERE capteur_id=?
@@ -135,7 +138,7 @@ def import_batch(db_path, batch, config):
                 counts[row['kind'] + '_' + disposition] += 1
                 db.execute('INSERT INTO raspberry_receipts VALUES (?,?,?,?,?,?)',
                            (row['device_id'], row['measurement_id'], checksum, json.dumps(row),
-                            datetime.now(timezone.utc).isoformat(), disposition))
+                            iso_utc(), disposition))
             ack.append({'kind': row['kind'], 'measurement_id': row['measurement_id'], 'digest': checksum})
         db.commit()
         return counts, {'device_id': config['device_id'], 'rows': ack}

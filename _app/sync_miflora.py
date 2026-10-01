@@ -1,9 +1,9 @@
 """Adaptation pour l'interface de la lecture Mi Flora d'origine."""
 import asyncio
-from datetime import datetime, timezone
 
 import database
 import raspberry_sync
+from botaneo_dates import iso_local, iso_utc
 from historique_graphique import alimenter_graphiques
 from capteurs.miflora import lire_mesure, scanner_avec_progression
 from capteurs.historique import lire_historique
@@ -197,7 +197,7 @@ async def importer_historique_capteur_direct_pc(capteur, on_progress=None):
                 'history_count': history_count,
                 'passes': len(export.get('passes', [])),
             })
-        import_date = datetime.now(timezone.utc).isoformat(timespec='seconds')
+        import_date = iso_utc()
         resume = database.enregistrer_entrees_historique_miflora(
             capteur[0],
             export,
@@ -330,7 +330,7 @@ async def synchroniser_capteur(capteur_id=None):
         )
     except Exception as erreur:
         return {'ok': False, 'message': f"Erreur Bluetooth : {message_erreur_mesure_bluetooth(erreur)}"}
-    date = datetime.now().isoformat(timespec='seconds')
+    date = iso_local()
     try:
         database.enregistrer_mesure(capteur[0], date, temperature, humidite,
                                     luminosite, conductivite, brut)
@@ -355,7 +355,7 @@ async def synchroniser_capteur_direct_pc(capteur):
         )
     except Exception as erreur:
         return {'ok': False, 'message': f"Mesure Bluetooth PC impossible : {message_erreur_mesure_bluetooth(erreur)}"}
-    date = datetime.now().isoformat(timespec='seconds')
+    date = iso_local()
     try:
         database.enregistrer_mesure(capteur[0], date, temperature, humidite,
                                     luminosite, conductivite, brut)
