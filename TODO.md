@@ -191,6 +191,8 @@ Objectif : préparer une évolution sans casser l’enregistrement actuel des ar
 - [ ] Prévoir un mode avancé plus tard : script de mise à jour Windows et script de mise à jour Raspberry.
 - [ ] Afficher clairement la version installée et la dernière version disponible dans l’interface.
 
+- [x] Installation neuve : créer le schéma principal `plantes`, `capteurs`, `mesures` directement dans `database.py`, avec clés étrangères actives et index utiles.
+
 ## GitHub, sauvegarde et sécurité
 
 - Maintenir `README.md`, `RASPBERRY.md`, `TODO.md` et `CONTEXTE_AGENT_BOTANEO.md` à jour après les grosses évolutions.

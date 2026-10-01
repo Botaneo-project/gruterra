@@ -8,9 +8,72 @@ BASE_DIR = Path(__file__).resolve().parent
 DB_PATH = Path(os.environ.get("BOTANEO_DB_PATH", BASE_DIR / "plantes.db"))
 
 
+_SCHEMA_INITIALISE = False
+
+
 def get_connection():
-    """Ouvre une connexion à la base de données."""
-    return sqlite3.connect(DB_PATH)
+    """Ouvre une connexion à la base de données avec les clés étrangères actives."""
+    conn = sqlite3.connect(DB_PATH)
+    conn.execute("PRAGMA foreign_keys = ON")
+    return conn
+
+
+def initialiser_schema():
+    """Crée le schéma principal minimal pour une installation neuve.
+
+    Cette initialisation est additive : elle crée les tables et index absents,
+    sans supprimer ni fusionner les données existantes.
+    """
+    global _SCHEMA_INITIALISE
+    if _SCHEMA_INITIALISE:
+        return
+
+    conn = get_connection()
+    try:
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS plantes (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                nom TEXT NOT NULL,
+                espece TEXT,
+                emplacement TEXT,
+                zone TEXT
+            )
+        """)
+
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS capteurs (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                nom TEXT NOT NULL,
+                adresse_ble TEXT NOT NULL,
+                plante_id INTEGER,
+                actif INTEGER NOT NULL DEFAULT 1,
+                date_fin TEXT,
+                FOREIGN KEY (plante_id) REFERENCES plantes(id)
+            )
+        """)
+
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS mesures (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                date_heure TEXT NOT NULL,
+                temperature REAL,
+                humidite REAL,
+                luminosite REAL,
+                conductivite REAL,
+                donnees_brutes TEXT,
+                capteur_id INTEGER,
+                FOREIGN KEY (capteur_id) REFERENCES capteurs(id)
+            )
+        """)
+
+        conn.execute("CREATE INDEX IF NOT EXISTS idx_capteurs_plante ON capteurs(plante_id)")
+        conn.execute("CREATE INDEX IF NOT EXISTS idx_capteurs_adresse_active ON capteurs(adresse_ble, actif)")
+        conn.execute("CREATE INDEX IF NOT EXISTS idx_mesures_capteur_date ON mesures(capteur_id, date_heure)")
+        conn.execute("CREATE INDEX IF NOT EXISTS idx_mesures_date ON mesures(date_heure)")
+        conn.commit()
+        _SCHEMA_INITIALISE = True
+    finally:
+        conn.close()
 
 
 def date_heure_valide(valeur):
@@ -64,6 +127,8 @@ def supprimer_mesures_sans_date():
 def get_plantes():
     """Retourne toutes les plantes."""
 
+    initialiser_schema()
+
     conn = get_connection()
 
     plantes = conn.execute("""
@@ -84,6 +149,8 @@ def get_plantes():
 
 def get_plante(plante_id):
     """Retourne une plante à partir de son identifiant."""
+
+    initialiser_schema()
 
     conn = get_connection()
 
@@ -110,6 +177,8 @@ def ajouter_plante(
     zone=None
 ):
     """Ajoute une nouvelle plante."""
+
+    initialiser_schema()
 
     conn = get_connection()
 
@@ -141,6 +210,8 @@ def modifier_plante(
 ):
     """Modifie une plante existante."""
 
+    initialiser_schema()
+
     conn = get_connection()
 
     conn.execute("""
@@ -165,6 +236,8 @@ def modifier_plante(
 
 def supprimer_plante(plante_id):
     """Supprime une plante."""
+
+    initialiser_schema()
 
     conn = get_connection()
 
@@ -438,6 +511,8 @@ def get_capteurs():
     et leur date de fin éventuelle.
     """
 
+    initialiser_schema()
+
     conn = get_connection()
 
     capteurs = conn.execute("""
@@ -465,6 +540,8 @@ def get_capteurs():
 
 def get_capteur(capteur_id):
     """Retourne un capteur avec sa plante associée."""
+
+    initialiser_schema()
 
     conn = get_connection()
 
@@ -502,6 +579,8 @@ def get_capteur_par_adresse(adresse_ble):
 
     adresse_ble = adresse_ble.strip().upper()
 
+    initialiser_schema()
+
     conn = get_connection()
 
     capteur = conn.execute("""
@@ -527,6 +606,8 @@ def get_capteur_actif_par_adresse(adresse_ble):
     """Retourne le capteur actif correspondant à une adresse BLE."""
 
     adresse_ble = adresse_ble.strip().upper()
+
+    initialiser_schema()
 
     conn = get_connection()
 
@@ -580,6 +661,8 @@ def ajouter_capteur(
         raise ValueError(
             f"La plante ID {plante_id} n'existe pas."
         )
+
+    initialiser_schema()
 
     conn = get_connection()
 
@@ -939,6 +1022,8 @@ def enregistrer_mesure(
 def get_nombre_mesures():
     """Retourne le nombre total de mesures."""
 
+    initialiser_schema()
+
     conn = get_connection()
 
     nombre = conn.execute("""
@@ -953,6 +1038,8 @@ def get_nombre_mesures():
 
 def get_derniere_mesure():
     """Retourne la dernière mesure enregistrée."""
+
+    initialiser_schema()
 
     conn = get_connection()
 
@@ -989,6 +1076,8 @@ def get_mesures(
     Si plante_id est fourni, les mesures sont filtrées
     par plante.
     """
+
+    initialiser_schema()
 
     conn = get_connection()
 
