@@ -104,6 +104,37 @@ class TestSessionsArrosage(unittest.TestCase):
         self.assertEqual(sessions[1]["quantite_totale_ml"], 80)
 
 
+class TestHistoriqueZerosSuspects(unittest.TestCase):
+    def test_zero_humidite_isole_est_exclu_du_graphique_mais_identifie(self):
+        vue_historique = importlib.import_module("vue_historique")
+        mesures = [
+            (1, "2026-09-20T10:00:00", 24.0, 22, 120, 80, "", 1),
+            (2, "2026-09-20T11:00:00", 24.1, 0, 130, 81, "", 1),
+            (3, "2026-09-20T12:00:00", 24.2, 21, 140, 82, "", 1),
+        ]
+
+        suspects = vue_historique.ids_humidite_zero_suspects(mesures)
+        mesures_filtrees, suspects_filtres = vue_historique.filtrer_mesures_pour_serie(mesures, "Humidité")
+
+        self.assertEqual(suspects, {2})
+        self.assertEqual(suspects_filtres, {2})
+        self.assertEqual([mesure[0] for mesure in mesures_filtrees], [1, 3])
+        self.assertEqual(len(mesures), 3)
+
+    def test_zero_humidite_non_encadre_reste_conserve(self):
+        vue_historique = importlib.import_module("vue_historique")
+        mesures = [
+            (1, "2026-09-20T10:00:00", 24.0, 0, 120, 80, "", 1),
+            (2, "2026-09-20T11:00:00", 24.1, 0, 130, 81, "", 1),
+            (3, "2026-09-20T12:00:00", 24.2, 3, 140, 82, "", 1),
+        ]
+
+        mesures_filtrees, suspects = vue_historique.filtrer_mesures_pour_serie(mesures, "Humidité")
+
+        self.assertEqual(suspects, set())
+        self.assertEqual(mesures_filtrees, mesures)
+
+
 class TestDatesBotaneo(unittest.TestCase):
     def test_parse_z_et_formatage_local(self):
         dates = importlib.import_module("botaneo_dates")
