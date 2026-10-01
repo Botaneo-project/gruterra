@@ -64,7 +64,8 @@ Ce fichier sert à garder une trace claire des idées et des prochaines étapes.
 - [ ] Continuer le remplacement progressif dans l’interface : rappels, alertes et exports texte.
 - [ ] Auditer les dates Raspberry / PC / historique Mi Flora pour éviter les mélanges entre UTC, heure locale et ISO sans fuseau.
 - [ ] Vérifier les threads Tkinter : aucun thread secondaire ne doit modifier directement un widget, tout doit repasser par `root.after(...)`.
-- [ ] Créer de vrais tests automatisés pour les éléments purs : schéma base vide, sessions d’arrosage, cycles, zéros suspects, import Raspberry.
+- [x] Créer une première suite de tests automatisés pour les éléments purs : schéma base vide, suppression des mesures sans date, sessions d’arrosage et dates centralisées.
+- [ ] Étendre les tests automatisés aux cycles d’arrosage, zéros suspects et import Raspberry.
 - [ ] Extraire la logique d’arrosage vers `_app/services/analyse_arrosage.py` une fois les tests posés.
 - [ ] Extraire ensuite la logique lumière vers `_app/services/analyse_lumiere.py` : intérieur, balcon, future lampe horticole, hors balcon.
 - [ ] Préparer progressivement la réduction de `interface.py` et `vue_historique.py`, sans découpage brutal de l’interface graphique.
