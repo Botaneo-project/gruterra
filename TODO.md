@@ -58,7 +58,8 @@ Ce fichier sert à garder une trace claire des idées et des prochaines étapes.
 
 - [x] Schéma principal : `database.py` crée maintenant `plantes`, `capteurs`, `mesures` et les index utiles pour une installation neuve.
 - [x] Clés étrangères SQLite activées dans `get_connection()`.
-- [ ] Centraliser la gestion des dates dans un module dédié, par exemple `_app/botaneo_dates.py` : date locale, UTC, parsing ISO, affichage local et comparaisons sûres.
+- [x] Créer le module dédié `_app/botaneo_dates.py` : date locale, UTC, parsing ISO, affichage local et comparaisons sûres.
+- [ ] Remplacer progressivement les conversions de dates critiques par `_app/botaneo_dates.py`, en commençant par Raspberry, historique Mi Flora et arrosages.
 - [ ] Auditer les dates Raspberry / PC / historique Mi Flora pour éviter les mélanges entre UTC, heure locale et ISO sans fuseau.
 - [ ] Vérifier les threads Tkinter : aucun thread secondaire ne doit modifier directement un widget, tout doit repasser par `root.after(...)`.
 - [ ] Créer de vrais tests automatisés pour les éléments purs : schéma base vide, sessions d’arrosage, cycles, zéros suspects, import Raspberry.
