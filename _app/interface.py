@@ -1177,25 +1177,54 @@ def formater_duree_heures(heures):
     return f"{jours:.1f} j"
 
 
+def formater_session_arrosage(session):
+    """Libellé prudent d'une session logique, sans fusionner les lignes brutes."""
+    if not session:
+        return None
+    total = session.get("quantite_totale_ml")
+    total_txt = f"{total:g} ml" if total is not None else "quantité non renseignée"
+    apports = session.get("apports") or []
+    if len(apports) <= 1:
+        apport = apports[0] if apports else None
+        type_eau = apport[8] if apport and len(apport) > 8 else None
+        eau_txt = f" · eau : {type_eau}" if type_eau else ""
+        return f"{total_txt}{eau_txt}"
+    details = []
+    for apport in apports:
+        try:
+            heure = datetime.fromisoformat(apport[2]).strftime("%H:%M")
+        except (TypeError, ValueError):
+            heure = "heure inconnue"
+        quantite = apport[3]
+        quantite_txt = f"{quantite:g} ml" if quantite is not None else "quantité non renseignée"
+        details.append(f"{quantite_txt} à {heure}")
+    return f"session {total_txt} ({' + '.join(details)})"
+
+
+def date_debut_session_iso(session):
+    if not session:
+        return None
+    date = session.get("date_debut")
+    if hasattr(date, "isoformat"):
+        return date.isoformat(timespec="seconds")
+    return None
+
+
 def analyser_cycle_arrosage(plante_id):
-    dernier = database.get_dernier_arrosage(plante_id)
-    if not dernier or not dernier[2]:
+    sessions = database.get_sessions_arrosage_plante(plante_id, limite=50)
+    session_arrosage = sessions[0] if sessions else None
+    dernier = session_arrosage.get("premier") if session_arrosage else database.get_dernier_arrosage(plante_id)
+    date_session_iso = date_debut_session_iso(session_arrosage) if session_arrosage else (dernier[2] if dernier else None)
+    if not dernier or not date_session_iso:
         return None
     try:
-        date_arrosage = datetime.fromisoformat(dernier[2])
+        date_arrosage = datetime.fromisoformat(date_session_iso)
     except (TypeError, ValueError):
         return None
 
     date_arrosage_suivant = None
-    for arrosage in database.get_arrosages_plante(plante_id, limite=50):
-        if arrosage[2] == dernier[2] and arrosage[0] == dernier[0]:
-            continue
-        try:
-            date_candidate = datetime.fromisoformat(arrosage[2])
-        except (TypeError, ValueError):
-            continue
-        if date_candidate > date_arrosage and (date_arrosage_suivant is None or date_candidate < date_arrosage_suivant):
-            date_arrosage_suivant = date_candidate
+    if len(sessions) >= 2:
+        date_arrosage_suivant = sessions[1].get("date_debut")
 
     mesures = database.get_mesures(plante_id=plante_id, limite=-1)
     points_avant = []
@@ -1237,14 +1266,19 @@ def analyser_cycle_arrosage(plante_id):
     else:
         qualite = "bonne sur les mesures disponibles"
 
-    quantite = dernier[3]
-    quantite_txt = f"{quantite:g} ml" if quantite is not None else "quantité non renseignée"
-    type_eau = dernier[8] if len(dernier) > 8 else None
-    eau_txt = f" · {type_eau}" if type_eau else ""
+    session_txt = formater_session_arrosage(session_arrosage) if session_arrosage else None
+    if session_txt:
+        quantite_txt = session_txt
+        eau_txt = ""
+    else:
+        quantite = dernier[3]
+        quantite_txt = f"{quantite:g} ml" if quantite is not None else "quantité non renseignée"
+        type_eau = dernier[8] if len(dernier) > 8 else None
+        eau_txt = f" · {type_eau}" if type_eau else ""
     contexte = dernier[7] if len(dernier) > 7 else None
 
     lignes = [
-        f"Cycle du {formater_date(dernier[2])} · {quantite_txt}{eau_txt}",
+        f"Cycle du {formater_date(date_session_iso)} · {quantite_txt}{eau_txt}",
     ]
     if avant:
         ecart_avant = (date_arrosage - avant[0]).total_seconds() / 3600
@@ -1271,7 +1305,6 @@ def analyser_cycle_arrosage(plante_id):
         "lignes": lignes,
         "qualite": qualite,
     }
-
 
 def _resume_reperes_post_arrosage(points, date_arrosage, avant=None):
     """Construit une ligne courte avec les repères 10 min, 1 h, 24 h et 48 h."""
@@ -1311,12 +1344,14 @@ def _resume_reperes_post_arrosage(points, date_arrosage, avant=None):
 
 def analyser_apres_arrosage(plante_id):
     """Analyse prudente des mesures qui suivent le dernier arrosage."""
-    dernier = database.get_dernier_arrosage(plante_id)
-    if not dernier or not dernier[2]:
+    session_arrosage = database.get_derniere_session_arrosage(plante_id)
+    dernier = session_arrosage.get("premier") if session_arrosage else database.get_dernier_arrosage(plante_id)
+    date_session_iso = date_debut_session_iso(session_arrosage) if session_arrosage else (dernier[2] if dernier else None)
+    if not dernier or not date_session_iso:
         return None
 
     try:
-        date_arrosage = datetime.fromisoformat(dernier[2])
+        date_arrosage = datetime.fromisoformat(date_session_iso)
     except (TypeError, ValueError):
         return None
 
@@ -1367,11 +1402,13 @@ def analyser_apres_arrosage(plante_id):
                 except (TypeError, ValueError):
                     pass
     reperes_post_arrosage = _resume_reperes_post_arrosage(points, date_arrosage, derniere_avant)
-    quantite = dernier[3]
-    quantite_txt = f"{quantite:g} ml" if quantite is not None else "quantité non renseignée"
-    type_eau = dernier[8] if len(dernier) > 8 else None
-    eau_txt = f" · eau : {type_eau}" if type_eau else ""
-    arrosage_txt = f"{quantite_txt}{eau_txt}"
+    arrosage_txt = formater_session_arrosage(session_arrosage) if session_arrosage else None
+    if not arrosage_txt:
+        quantite = dernier[3]
+        quantite_txt = f"{quantite:g} ml" if quantite is not None else "quantité non renseignée"
+        type_eau = dernier[8] if len(dernier) > 8 else None
+        eau_txt = f" · eau : {type_eau}" if type_eau else ""
+        arrosage_txt = f"{quantite_txt}{eau_txt}"
 
     if not points:
 
@@ -1382,7 +1419,7 @@ def analyser_apres_arrosage(plante_id):
                 f"Dernière avant : {derniere_avant[1]:.0f} %, {ecart_heures:.1f} h avant."
             )
             detail = (
-                f"Arrosage du {formater_date(dernier[2])} · {arrosage_txt}. "
+                f"Arrosage du {formater_date(date_session_iso)} · {arrosage_txt}. "
                 f"Aucune mesure Mi Flora enregistrée depuis. Dernière mesure avant arrosage : "
                 f"{derniere_avant[1]:.0f} %, {ecart_heures:.1f} h avant. Relancer une mesure directe pour démarrer le suivi. "
                 f"{reperes_post_arrosage}"
@@ -1466,7 +1503,8 @@ def analyser_apres_arrosage(plante_id):
 
 
 def afficher_resume_arrosage(parent, plante_id):
-    dernier = database.get_dernier_arrosage(plante_id)
+    session_arrosage = database.get_derniere_session_arrosage(plante_id)
+    dernier = session_arrosage.get("dernier") if session_arrosage else database.get_dernier_arrosage(plante_id)
     rappel = database.get_rappel_arrosage_actif(plante_id)
     suivi = analyser_apres_arrosage(plante_id)
     cycle = analyser_cycle_arrosage(plante_id)
@@ -1477,11 +1515,17 @@ def afficher_resume_arrosage(parent, plante_id):
     lignes = []
 
     if dernier:
-        quantite = dernier[3]
-        quantite_txt = f"{quantite:g} ml" if quantite is not None else "quantité non renseignée"
-        type_eau = dernier[8] if len(dernier) > 8 else None
-        eau_txt = f" · eau : {type_eau}" if type_eau else ""
-        lignes.append(f"Dernier arrosage : {formater_date(dernier[2])} · {quantite_txt}{eau_txt}")
+        if session_arrosage:
+            session_txt = formater_session_arrosage(session_arrosage)
+            date_txt = formater_date(date_debut_session_iso(session_arrosage))
+            prefixe = "Dernière session d’arrosage" if session_arrosage.get("fractionnee") else "Dernier arrosage"
+            lignes.append(f"{prefixe} : {date_txt} · {session_txt}")
+        else:
+            quantite = dernier[3]
+            quantite_txt = f"{quantite:g} ml" if quantite is not None else "quantité non renseignée"
+            type_eau = dernier[8] if len(dernier) > 8 else None
+            eau_txt = f" · eau : {type_eau}" if type_eau else ""
+            lignes.append(f"Dernier arrosage : {formater_date(dernier[2])} · {quantite_txt}{eau_txt}")
 
     if suivi:
         lignes.append(suivi["resume"])
@@ -1839,6 +1883,32 @@ def ouvrir_arrosage_plante(plante_id, nom_plante):
     )
     substrat_combo.grid(row=4, column=1, sticky="ew")
     substrat_combo.current(0)
+
+    tk.Label(contexte_frame, text="Mode", bg=CARD, fg=SECONDARY, font=("Segoe UI", 8)).grid(row=5, column=0, sticky="w", pady=(6, 0))
+    progressif_combo = ttk.Combobox(
+        contexte_frame,
+        state="readonly",
+        values=["Non renseigné", "Arrosage en une fois", "Arrosage progressif", "Complément d'arrosage", "Autre"],
+        width=18
+    )
+    progressif_combo.grid(row=6, column=0, sticky="ew", padx=(0, 8))
+    progressif_combo.current(0)
+
+    tk.Label(contexte_frame, text="Pot", bg=CARD, fg=SECONDARY, font=("Segoe UI", 8)).grid(row=5, column=1, sticky="w", pady=(6, 0))
+    pot_combo = ttk.Combobox(
+        contexte_frame,
+        state="readonly",
+        values=["Non renseigné", "Pot sorti du cache-pot", "Pot laissé dans le cache-pot", "Pas de cache-pot", "Non vérifié"],
+        width=20
+    )
+    pot_combo.grid(row=6, column=1, sticky="ew")
+    pot_combo.current(0)
+
+    tk.Label(contexte_frame, text="Délai drainage", bg=CARD, fg=SECONDARY, font=("Segoe UI", 8)).grid(row=7, column=0, sticky="w", pady=(6, 0))
+    drainage_delai_entry = tk.Entry(contexte_frame, bg=BG, fg=TEXT, insertbackground=TEXT)
+    drainage_delai_entry.grid(row=8, column=0, columnspan=2, sticky="ew")
+    drainage_delai_entry.insert(0, "")
+
     contexte_frame.columnconfigure(0, weight=1)
     contexte_frame.columnconfigure(1, weight=1)
 
@@ -1902,10 +1972,15 @@ def ouvrir_arrosage_plante(plante_id, nom_plante):
                 ("Répartition", repartition_combo),
                 ("Écoulement", ecoulement_combo),
                 ("Cache-pot", cachepot_combo),
-                ("Substrat", substrat_combo)):
+                ("Substrat début session", substrat_combo),
+                ("Mode", progressif_combo),
+                ("Pot", pot_combo)):
             valeur = combo.get().strip()
             if valeur and valeur != "Non renseigné":
                 contexte_arrosage.append(f"{libelle} : {valeur}")
+        delai_drainage = drainage_delai_entry.get().strip()
+        if delai_drainage:
+            contexte_arrosage.append(f"Délai drainage : {delai_drainage}")
 
         commentaire_lignes = []
         if commentaire_libre:

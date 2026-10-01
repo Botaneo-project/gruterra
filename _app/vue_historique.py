@@ -376,11 +376,44 @@ def formater_date_courte(date):
     return date.strftime("%d/%m/%Y %H:%M")
 
 
+def date_debut_arrosage(arrosage):
+    if isinstance(arrosage, dict):
+        return arrosage.get("date_debut")
+    return date_locale_depuis_iso(arrosage[2])
+
+
+def quantite_arrosage_texte(arrosage):
+    if isinstance(arrosage, dict):
+        total = arrosage.get("quantite_totale_ml")
+        total_txt = f"{formater_nombre(total)} ml" if total is not None else "quantité non notée"
+        apports = arrosage.get("apports") or []
+        if len(apports) > 1:
+            details = []
+            for apport in apports:
+                date = date_locale_depuis_iso(apport[2])
+                heure = date.strftime("%H:%M") if date else "heure inconnue"
+                quantite = f"{formater_nombre(apport[3])} ml" if apport[3] is not None else "quantité non notée"
+                details.append(f"{quantite} à {heure}")
+            return f"session {total_txt} ({' + '.join(details)})"
+        return total_txt
+    return f"{formater_nombre(arrosage[3])} ml" if arrosage and arrosage[3] is not None else "quantité non notée"
+
+
+def quantite_arrosage_courte(arrosage):
+    if isinstance(arrosage, dict):
+        total = arrosage.get("quantite_totale_ml")
+        total_txt = f"{formater_nombre(total)} ml" if total is not None else "—"
+        if arrosage.get("fractionnee"):
+            return f"session {total_txt}"
+        return total_txt
+    return f"{formater_nombre(arrosage[3])} ml" if arrosage and arrosage[3] is not None else "—"
+
+
 def mesurer_cycle_arrosage(arrosage, prochain_arrosage, mesures):
-    date_arrosage = date_locale_depuis_iso(arrosage[2])
+    date_arrosage = date_debut_arrosage(arrosage)
     if not date_arrosage:
         return None
-    date_fin = date_locale_depuis_iso(prochain_arrosage[2]) if prochain_arrosage else None
+    date_fin = date_debut_arrosage(prochain_arrosage) if prochain_arrosage else None
     mesures_cycle = []
     humidites_avant = []
     for mesure in mesures:
@@ -449,7 +482,7 @@ def mesurer_cycle_arrosage(arrosage, prochain_arrosage, mesures):
         if heures_depuis_pic > 0:
             baisse_apres_pic = pic_humidite - derniere_humidite
             sechage = (derniere_humidite - pic_humidite) / heures_depuis_pic * 24
-    quantite = f"{formater_nombre(arrosage[3])} ml" if arrosage[3] is not None else "quantité non notée"
+    quantite = quantite_arrosage_texte(arrosage)
     avant_txt = formater_nombre(avant_humidite) if avant_humidite is not None else "—"
     texte = (
         f"{formater_date_courte(date_arrosage)} · {quantite} · {len(mesures_cycle)} mesure(s) · "
@@ -481,15 +514,10 @@ def mesurer_cycle_arrosage(arrosage, prochain_arrosage, mesures):
 
 
 def calculer_cycles_arrosage(mesures, arrosages, limite=6):
-    arrosages_dates = []
-    for arrosage in arrosages:
-        date_arrosage = date_locale_depuis_iso(arrosage[2])
-        if date_arrosage:
-            arrosages_dates.append((date_arrosage, arrosage))
-    arrosages_dates.sort(key=lambda item: item[0])
+    sessions = database.construire_sessions_arrosage(arrosages)
     cycles = []
-    for index, (_date, arrosage) in enumerate(arrosages_dates):
-        prochain = arrosages_dates[index + 1][1] if index + 1 < len(arrosages_dates) else None
+    for index, arrosage in enumerate(sessions):
+        prochain = sessions[index + 1] if index + 1 < len(sessions) else None
         cycle = mesurer_cycle_arrosage(arrosage, prochain, mesures)
         if cycle:
             cycles.append(cycle)
@@ -574,7 +602,7 @@ def formater_moyenne_stats(stats, unite):
 
 def libelle_cycle(cycle):
     arrosage = cycle.get("arrosage")
-    quantite = f"{formater_nombre(arrosage[3])} ml" if arrosage and arrosage[3] is not None else "quantité non notée"
+    quantite = quantite_arrosage_courte(arrosage)
     return f"{formater_date_courte(cycle.get('date'))} · {quantite}"
 
 
@@ -1633,7 +1661,7 @@ def ouvrir_historique(parent, plante_id, action_synchroniser=None):
         cycles_affiches = list(reversed(cycles))
         for cycle in cycles_affiches:
             arrosage = cycle.get("arrosage")
-            quantite = f"{formater_nombre(arrosage[3])} ml" if arrosage and arrosage[3] is not None else "—"
+            quantite = quantite_arrosage_courte(arrosage)
             suivi = f"→ {formater_date_courte(cycle.get('fin'))}" if cycle.get("fin") else "cycle en cours"
             tableau.insert("", "end", values=(
                 formater_date_courte(cycle.get("date")),

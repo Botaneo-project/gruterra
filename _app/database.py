@@ -1319,6 +1319,72 @@ def get_arrosages_plante(plante_id, limite=20):
     conn.close()
     return arrosages
 
+
+
+def _date_arrosage_iso(arrosage):
+    try:
+        return datetime.fromisoformat(arrosage[2])
+    except (TypeError, ValueError, IndexError):
+        return None
+
+
+def construire_sessions_arrosage(arrosages, fenetre_minutes=90):
+    """
+    Regroupe logiquement des apports proches en sessions d'arrosage.
+
+    Les lignes brutes restent inchangées. Une session est seulement une lecture
+    calculée pour l'affichage et l'analyse : plusieurs apports rapprochés, sur
+    la même plante, deviennent une session avec volume total et détail.
+    """
+    lignes = []
+    for arrosage in arrosages or []:
+        date = _date_arrosage_iso(arrosage)
+        if date:
+            lignes.append((date, arrosage))
+    lignes.sort(key=lambda item: item[0])
+
+    sessions = []
+    fenetre_secondes = max(1, int(fenetre_minutes)) * 60
+    for date, arrosage in lignes:
+        if not sessions:
+            sessions.append({"date_debut": date, "date_fin": date, "apports": [arrosage]})
+            continue
+        derniere = sessions[-1]
+        ecart = (date - derniere["date_fin"]).total_seconds()
+        if 0 <= ecart <= fenetre_secondes:
+            derniere["apports"].append(arrosage)
+            derniere["date_fin"] = date
+        else:
+            sessions.append({"date_debut": date, "date_fin": date, "apports": [arrosage]})
+
+    for session in sessions:
+        total = 0.0
+        total_present = False
+        for apport in session["apports"]:
+            try:
+                if apport[3] is not None:
+                    total += float(apport[3])
+                    total_present = True
+            except (TypeError, ValueError, IndexError):
+                pass
+        session["quantite_totale_ml"] = total if total_present else None
+        session["premier"] = session["apports"][0]
+        session["dernier"] = session["apports"][-1]
+        session["fractionnee"] = len(session["apports"]) > 1
+    return sessions
+
+
+def get_sessions_arrosage_plante(plante_id, limite=50, fenetre_minutes=90):
+    """Retourne les sessions d'arrosage calculées, de la plus récente à la plus ancienne."""
+    arrosages = get_arrosages_plante(plante_id, limite=limite)
+    sessions = construire_sessions_arrosage(arrosages, fenetre_minutes=fenetre_minutes)
+    return list(reversed(sessions))
+
+
+def get_derniere_session_arrosage(plante_id, fenetre_minutes=90):
+    sessions = get_sessions_arrosage_plante(plante_id, limite=50, fenetre_minutes=fenetre_minutes)
+    return sessions[0] if sessions else None
+
 # ============================================================
 # COLLECTES PRIORITAIRES
 # ============================================================
