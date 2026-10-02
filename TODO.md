@@ -189,7 +189,8 @@ Objectif : préparer une évolution sans casser l’enregistrement actuel des ar
 - [x] Ajouter une vitesse sur 24 h pour repérer un ralentissement ou une accélération du séchage.
 - [x] Attribuer une qualité à chaque cycle selon les trous de mesure : bonne, correcte, prudence, interruption longue.
 - [x] Signaler dans le cycle si le pic ou la dernière mesure tombe après une interruption longue.
-- [ ] Comparer les cycles seulement quand les conditions sont proches : quantité d’eau, type d’eau, emplacement, lumière, température, substrat.
+- [x] Ajouter une alerte de comparabilité des cycles selon les données disponibles : quantité d’eau, type d’eau et qualité des mesures.
+- [ ] Étendre plus tard la comparabilité aux conditions non encore structurées : emplacement, lumière, température, substrat.
 - [ ] Construire progressivement une référence propre à chaque plante après plusieurs cycles documentés.
 - [ ] Estimer le prochain arrosage probable quand les données sont suffisantes.
 - [ ] Détecter une baisse de luminosité sur plusieurs jours.

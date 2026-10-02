@@ -8,6 +8,7 @@ import database
 from services.analyse_arrosage import (
     analyser_cycles_arrosage,
     calculer_cycles_arrosage,
+    comparer_conditions_cycles,
     date_debut_arrosage,
     formater_date_courte,
     mesurer_cycle_arrosage,
@@ -409,6 +410,8 @@ def comparer_deux_cycles(cycle_a, cycle_b):
     trou_a = valeur_cycle(cycle_a, "plus_grand_trou_h")
     trou_b = valeur_cycle(cycle_b, "plus_grand_trou_h")
 
+    comparabilite = comparer_conditions_cycles(cycle_a, cycle_b)
+
     lignes = [
         "Comparaison Botaneo — cycles d’arrosage",
         "",
@@ -423,6 +426,7 @@ def comparer_deux_cycles(cycle_a, cycle_b):
         f"Séchage : {fmt(sechage_a, 'pt/j')} / {fmt(sechage_b, 'pt/j')}",
         f"Vitesse 24 h : {fmt(vitesse_24h_a, 'pt/j')} / {fmt(vitesse_24h_b, 'pt/j')}",
         f"Qualité : {cycle_a.get('qualite') or '—'} / {cycle_b.get('qualite') or '—'}",
+        comparabilite["texte"],
     ]
     if sechage_a is not None and sechage_b is not None:
         diff = sechage_a - sechage_b
@@ -446,6 +450,7 @@ def comparer_deux_cycles(cycle_a, cycle_b):
             ("Vitesse 24 h", fmt(vitesse_24h_a, "pt/j"), fmt(vitesse_24h_b, "pt/j"), fmt((vitesse_24h_a - vitesse_24h_b) if vitesse_24h_a is not None and vitesse_24h_b is not None else None, "pt/j")),
             ("Plus grand trou", fmt(trou_a, "h"), fmt(trou_b, "h"), fmt((trou_a - trou_b) if trou_a is not None and trou_b is not None else None, "h")),
             ("Qualité", cycle_a.get("qualite") or "—", cycle_b.get("qualite") or "—", "—"),
+            ("Comparabilité", comparabilite["niveau"], "", "; ".join(comparabilite["alertes"])),
         ],
     }
 

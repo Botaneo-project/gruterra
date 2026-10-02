@@ -61,6 +61,87 @@ def quantite_arrosage_courte(arrosage):
     return f"{formater_nombre(arrosage[3])} ml" if arrosage and arrosage[3] is not None else "—"
 
 
+def valeur_arrosage(arrosage, index, cle_session=None):
+    if isinstance(arrosage, dict):
+        if cle_session and arrosage.get(cle_session) is not None:
+            return arrosage.get(cle_session)
+        apports = arrosage.get("apports") or []
+        if not apports:
+            return None
+        valeurs = []
+        for apport in apports:
+            try:
+                valeur = apport[index]
+            except IndexError:
+                valeur = None
+            if valeur not in (None, ""):
+                valeurs.append(valeur)
+        if not valeurs:
+            return None
+        return valeurs[0] if len(set(map(str, valeurs))) == 1 else "mixte"
+    try:
+        return arrosage[index]
+    except (TypeError, IndexError):
+        return None
+
+
+def quantite_arrosage_valeur(arrosage):
+    valeur = valeur_arrosage(arrosage, 3, "quantite_totale_ml")
+    try:
+        return float(valeur) if valeur is not None else None
+    except (TypeError, ValueError):
+        return None
+
+
+def type_eau_arrosage(arrosage):
+    valeur = valeur_arrosage(arrosage, 8)
+    return str(valeur).strip().lower() if valeur not in (None, "") else None
+
+
+def comparer_conditions_cycles(cycle_a, cycle_b):
+    """Compare les conditions disponibles avant de rapprocher deux cycles."""
+
+    alertes = []
+    niveau = "proche"
+
+    quantite_a = quantite_arrosage_valeur(cycle_a.get("arrosage"))
+    quantite_b = quantite_arrosage_valeur(cycle_b.get("arrosage"))
+    if quantite_a is not None and quantite_b is not None:
+        ecart_quantite = abs(quantite_a - quantite_b)
+        reference = max(quantite_a, quantite_b, 1)
+        if ecart_quantite > 20 and ecart_quantite / reference > 0.2:
+            niveau = "à éviter"
+            alertes.append(f"quantités différentes ({formater_nombre(quantite_a)} ml / {formater_nombre(quantite_b)} ml)")
+        elif ecart_quantite > 10:
+            niveau = "prudence"
+            alertes.append(f"quantités légèrement différentes ({formater_nombre(quantite_a)} ml / {formater_nombre(quantite_b)} ml)")
+
+    eau_a = type_eau_arrosage(cycle_a.get("arrosage"))
+    eau_b = type_eau_arrosage(cycle_b.get("arrosage"))
+    if eau_a and eau_b and eau_a != eau_b:
+        niveau = "à éviter" if niveau == "à éviter" else "prudence"
+        alertes.append(f"types d’eau différents ({eau_a} / {eau_b})")
+
+    niveaux_qualite = {"bonne": 0, "correcte": 1, "prudence": 2, "interruption longue": 3}
+    qa = niveaux_qualite.get(cycle_a.get("qualite_niveau"), 2)
+    qb = niveaux_qualite.get(cycle_b.get("qualite_niveau"), 2)
+    if max(qa, qb) >= 3:
+        niveau = "à éviter"
+        alertes.append("au moins un cycle contient une interruption longue")
+    elif max(qa, qb) >= 2 and niveau == "proche":
+        niveau = "prudence"
+        alertes.append("au moins un cycle demande une lecture prudente")
+
+    if not alertes:
+        alertes.append("conditions disponibles proches")
+
+    return {
+        "niveau": niveau,
+        "alertes": alertes,
+        "texte": f"Comparabilité : {niveau} · " + "; ".join(alertes),
+    }
+
+
 def analyser_qualite_cycle(humidites, pic_date=None, derniere_date=None):
     """Retourne une qualité stable pour un cycle et ses principaux trous de mesure."""
 

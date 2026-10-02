@@ -181,6 +181,25 @@ class TestCyclesArrosage(unittest.TestCase):
         self.assertEqual(cycle["pic_humidite"], 25)
         self.assertEqual(cycle["derniere_humidite"], 24)
 
+    def test_compare_conditions_cycles_signale_quantite_et_qualite(self):
+        analyse_arrosage = importlib.import_module("services.analyse_arrosage")
+        cycle_a = {
+            "arrosage": (1, 1, "2026-09-20T10:00:00", 80, "normal", None, None, "", "Volvic", None, 0),
+            "qualite_niveau": "bonne",
+        }
+        cycle_b = {
+            "arrosage": (2, 1, "2026-09-27T10:00:00", 130, "normal", None, None, "", "eau du robinet", None, 0),
+            "qualite_niveau": "interruption longue",
+        }
+
+        comparaison = analyse_arrosage.comparer_conditions_cycles(cycle_a, cycle_b)
+
+        self.assertEqual(comparaison["niveau"], "à éviter")
+        self.assertIn("quantités différentes", comparaison["texte"])
+        self.assertIn("types d’eau différents", comparaison["texte"])
+        self.assertIn("interruption longue", comparaison["texte"])
+
+
 
 class TestAnalyseLumiere(unittest.TestCase):
     def test_construit_expositions_balcon_et_filtre_par_jour(self):
