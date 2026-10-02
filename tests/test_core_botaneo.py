@@ -469,6 +469,17 @@ class TestPreparationMiseAJour(unittest.TestCase):
         self.assertIn("_config", separation["donnees_utilisateur_actuelles"])
         self.assertIn("base SQLite réelle", separation["donnees_utilisateur_futures"])
 
+    def test_plan_mise_a_jour_ne_detaille_pas_les_secrets(self):
+        botaneo_update = importlib.import_module("botaneo_update")
+
+        plan = botaneo_update.construire_plan_mise_a_jour(Path("C:/Plantes"))
+        texte = botaneo_update.formater_plan_mise_a_jour(plan).lower()
+
+        self.assertIn("_config", texte)
+        self.assertNotIn("netatmo_config.json", texte)
+        self.assertNotIn("email.local.json", texte)
+        self.assertNotIn("raspberry.local.json", texte)
+
     def test_comparer_versions_ne_declenche_jamais_application(self):
         botaneo_update = importlib.import_module("botaneo_update")
 
