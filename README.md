@@ -110,7 +110,7 @@ Botaneo/
     ├── sync_miflora.py
     ├── vue_historique.py
     ├── capteurs/
-    ├── services/
+    ├── services/              # logique testable extraite de l'interface
     ├── ui/
     └── assets/
 ```
