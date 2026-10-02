@@ -4953,18 +4953,9 @@ def etat_raspberry_a_propos():
 def resume_mise_a_jour_a_propos(racine):
     try:
         plan = botaneo_update.construire_plan_mise_a_jour(racine)
+        return botaneo_update.resume_court_mise_a_jour(plan)
     except Exception as erreur:
         return f"Mise à jour : plan indisponible ({erreur})"
-    presents = [element.chemin for element in plan.get("elements_personnels", []) if element.existe]
-    absents = [element.chemin for element in plan.get("elements_personnels", []) if not element.existe]
-    lignes = [
-        "Mise à jour future : préparation uniquement, aucune mise à jour automatique active",
-        "- à préserver : " + (", ".join(presents) if presents else "aucun élément personnel détecté"),
-    ]
-    if absents:
-        lignes.append("- non présents sur ce poste : " + ", ".join(absents))
-    lignes.append("- règle : sauvegarde locale et validation explicite avant toute application")
-    return "\n".join(lignes)
 
 
 def texte_a_propos():

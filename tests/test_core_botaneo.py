@@ -500,6 +500,21 @@ class TestPreparationMiseAJour(unittest.TestCase):
         self.assertFalse(pret["application_autorisee"])
         self.assertIn("plantes.db", bloque["message"])
 
+    def test_resume_court_mise_a_jour_est_lisible_et_non_applicatif(self):
+        botaneo_update = importlib.import_module("botaneo_update")
+        with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as dossier:
+            racine = Path(dossier)
+            (racine / "_config").mkdir()
+            (racine / "plantes.db").write_text("sqlite fictif", encoding="utf-8")
+            plan = botaneo_update.construire_plan_mise_a_jour(racine)
+            resume = botaneo_update.resume_court_mise_a_jour(plan).lower()
+
+        self.assertIn("préparation uniquement", resume)
+        self.assertIn("application automatique : désactivée", resume)
+        self.assertIn("données personnelles", resume)
+        self.assertIn("fichiers secrets", resume)
+        self.assertNotIn("netatmo_config.json", resume)
+
     def test_comparer_versions_ne_declenche_jamais_application(self):
         botaneo_update = importlib.import_module("botaneo_update")
 

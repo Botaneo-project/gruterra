@@ -163,6 +163,28 @@ def message_verification_plan(statut, bloquants, avertissements):
     return "Mise à jour possible seulement avec prudence : " + ", ".join(avertissements)
 
 
+def resume_court_mise_a_jour(plan) -> str:
+    verification = plan.get("verification", {})
+    elements = plan.get("elements_personnels", [])
+    presents = [element.chemin for element in elements if element.existe]
+    absents = [element.chemin for element in elements if not element.existe]
+    statut = verification.get("statut", "inconnu")
+
+    lignes = [
+        "Mise à jour future : préparation uniquement",
+        f"- état du plan : {statut}",
+        f"- contrôle : {verification.get('message', 'non effectué')}",
+        "- application automatique : désactivée",
+        "- données personnelles : conservées séparément du programme",
+        "- fichiers secrets : noms détaillés non affichés",
+        "- à préserver : " + (", ".join(presents) if presents else "aucun élément personnel détecté"),
+    ]
+    if absents:
+        lignes.append("- non présents sur ce poste : " + ", ".join(absents))
+    lignes.append("- règle : sauvegarde locale et validation explicite avant toute application")
+    return "\n".join(lignes)
+
+
 def formater_plan_mise_a_jour(plan) -> str:
     lignes = [
         "Plan de mise à jour Botaneo",
