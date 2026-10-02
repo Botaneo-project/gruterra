@@ -213,6 +213,24 @@ class TestCyclesArrosage(unittest.TestCase):
         self.assertEqual(par_cle["48h"]["heures"], 48)
         self.assertEqual(par_cle["pic"]["couleur"], "ORANGE")
 
+    def test_valeur_cycle_proche_repere_utilise_la_mesure_proche_sans_inventer(self):
+        vue_historique = importlib.import_module("vue_historique")
+        cycle = {
+            "date": datetime(2026, 9, 20, 10, 0),
+            "mesures": [
+                (1, "2026-09-20T10:30:00", 24.0, 24, 120, 72, "", 1),
+                (2, "2026-09-21T09:30:00", 24.1, 21, 130, 73, "", 1),
+                (3, "2026-09-23T12:00:00", 24.2, 19, 140, 74, "", 1),
+            ],
+        }
+
+        proche_24h = vue_historique.valeur_cycle_proche_repere(cycle, "Humidité", 24)
+        absent_48h = vue_historique.valeur_cycle_proche_repere(cycle, "Humidité", 48)
+
+        self.assertEqual(proche_24h["valeur"], 21)
+        self.assertAlmostEqual(proche_24h["heures"], 23.5)
+        self.assertIsNone(absent_48h)
+
     def test_interpreter_reponse_cycle_retour_depart(self):
         analyse_arrosage = importlib.import_module("services.analyse_arrosage")
 

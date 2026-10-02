@@ -90,6 +90,8 @@ Ce fichier sert à garder une trace claire des idées et des prochaines étapes.
 - [x] Historique : superposer deux cycles d’arrosage sur une même échelle temporelle, en humidité depuis l’arrosage.
 - [x] Historique : ajouter le choix de mesure dans le graphique comparatif des cycles : humidité, lumière, température, conductivité.
 - [x] Historique : ajouter les repères 24 h et 48 h dans le graphique comparatif des cycles.
+- [x] Historique : améliorer la vue graphique des cycles avec repères visuels dédiés : arrosage, pic A/B, 24 h, 48 h, légende simple et moins de texte brut.
+- [x] Historique : afficher les valeurs d’humidité proches de 24 h et 48 h dans la comparaison des cycles, sans inventer de valeur si aucune mesure proche n’existe.
 - [x] État Botaneo : afficher un contrôle explicite des mesures et synthèses entièrement à zéro.
 - [x] Analyse des cycles d’arrosage : version simple et prudente, centrée sur hausse observée, retour au départ et séchage après pic.
 - [x] Pour chaque cycle : repérer l’humidité avant arrosage, le pic observé, la baisse après pic et la qualité des mesures disponibles.

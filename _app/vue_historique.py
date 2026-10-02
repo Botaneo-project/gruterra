@@ -388,6 +388,17 @@ def points_cycle(cycle, nom_serie):
     return sorted(points)
 
 
+def valeur_cycle_proche_repere(cycle, nom_serie, heures_cible, tolerance_h=3):
+    points = points_cycle(cycle, nom_serie)
+    if not points:
+        return None
+    meilleur = min(points, key=lambda point: abs(point[0] - heures_cible))
+    ecart = abs(meilleur[0] - heures_cible)
+    if ecart > tolerance_h:
+        return None
+    return {"heures": meilleur[0], "valeur": meilleur[1], "ecart_h": ecart}
+
+
 def heures_depuis_debut_cycle(cycle, date):
     debut = cycle.get("date")
     if not debut or not date:
@@ -437,6 +448,19 @@ def comparer_deux_cycles(cycle_a, cycle_b):
     trou_a = valeur_cycle(cycle_a, "plus_grand_trou_h")
     trou_b = valeur_cycle(cycle_b, "plus_grand_trou_h")
 
+    repere_24_a = valeur_cycle_proche_repere(cycle_a, "Humidité", 24)
+    repere_24_b = valeur_cycle_proche_repere(cycle_b, "Humidité", 24)
+    repere_48_a = valeur_cycle_proche_repere(cycle_a, "Humidité", 48)
+    repere_48_b = valeur_cycle_proche_repere(cycle_b, "Humidité", 48)
+
+    def fmt_repere(repere):
+        if not repere:
+            return "—"
+        return f"{formater_nombre(repere['valeur'])} % à {formater_nombre(repere['heures'])} h"
+
+    def valeur_repere(repere):
+        return repere["valeur"] if repere else None
+
     comparabilite = comparer_conditions_cycles(cycle_a, cycle_b)
 
     lignes = [
@@ -448,6 +472,8 @@ def comparer_deux_cycles(cycle_a, cycle_b):
         f"Mesures : {mesures_a} / {mesures_b} · écart {mesures_a - mesures_b}",
         f"Humidité départ : {fmt(depart_a, '%')} / {fmt(depart_b, '%')}",
         f"Pic observé : {fmt(pic_a, '%')} / {fmt(pic_b, '%')}",
+        f"Repère 24 h : {fmt_repere(repere_24_a)} / {fmt_repere(repere_24_b)}",
+        f"Repère 48 h : {fmt_repere(repere_48_a)} / {fmt_repere(repere_48_b)}",
         f"Humidité fin : {fmt(fin_a, '%')} / {fmt(fin_b, '%')}",
         f"Hausse observée : {fmt(hausse_a, 'pt')} / {fmt(hausse_b, 'pt')}",
         f"Séchage : {fmt(sechage_a, 'pt/j')} / {fmt(sechage_b, 'pt/j')}",
@@ -471,6 +497,8 @@ def comparer_deux_cycles(cycle_a, cycle_b):
             ("Mesures", str(mesures_a), str(mesures_b), str(mesures_a - mesures_b)),
             ("Départ", fmt(depart_a, "%"), fmt(depart_b, "%"), fmt((depart_a - depart_b) if depart_a is not None and depart_b is not None else None, "pt")),
             ("Pic", fmt(pic_a, "%"), fmt(pic_b, "%"), fmt((pic_a - pic_b) if pic_a is not None and pic_b is not None else None, "pt")),
+            ("Autour 24 h", fmt_repere(repere_24_a), fmt_repere(repere_24_b), fmt((valeur_repere(repere_24_a) - valeur_repere(repere_24_b)) if valeur_repere(repere_24_a) is not None and valeur_repere(repere_24_b) is not None else None, "pt")),
+            ("Autour 48 h", fmt_repere(repere_48_a), fmt_repere(repere_48_b), fmt((valeur_repere(repere_48_a) - valeur_repere(repere_48_b)) if valeur_repere(repere_48_a) is not None and valeur_repere(repere_48_b) is not None else None, "pt")),
             ("Fin", fmt(fin_a, "%"), fmt(fin_b, "%"), fmt((fin_a - fin_b) if fin_a is not None and fin_b is not None else None, "pt")),
             ("Hausse observée", fmt(hausse_a, "pt"), fmt(hausse_b, "pt"), fmt((hausse_a - hausse_b) if hausse_a is not None and hausse_b is not None else None, "pt")),
             ("Séchage", fmt(sechage_a, "pt/j"), fmt(sechage_b, "pt/j"), fmt((sechage_a - sechage_b) if sechage_a is not None and sechage_b is not None else None, "pt/j")),
@@ -1430,7 +1458,7 @@ def ouvrir_historique(parent, plante_id, action_synchroniser=None):
         combo_serie_cycle.pack(side="left")
 
         colonnes_cmp_cycles = ("indicateur", "cycle_a", "cycle_b", "ecart")
-        tableau_cmp = ttk.Treeview(comparaison_frame, columns=colonnes_cmp_cycles, show="headings", height=6)
+        tableau_cmp = ttk.Treeview(comparaison_frame, columns=colonnes_cmp_cycles, show="headings", height=8)
         for colonne, titre, largeur in (("indicateur", "Indicateur", 155), ("cycle_a", "Cycle A", 130), ("cycle_b", "Cycle B", 130), ("ecart", "Écart A-B", 130)):
             tableau_cmp.heading(colonne, text=titre)
             tableau_cmp.column(colonne, width=largeur, anchor="center")
@@ -1565,7 +1593,7 @@ def ouvrir_historique(parent, plante_id, action_synchroniser=None):
             dessiner_ligne(points_a, couleurs["GREEN"], "A", cycle_a)
             dessiner_ligne(points_b, couleurs["BLUE"], "B", cycle_b)
 
-        zone = tk.Text(detail, height=8, wrap="word", bg=couleurs["BG"], fg=couleurs["TEXT"], relief="flat", font=("Segoe UI", 9))
+        zone = tk.Text(detail, height=6, wrap="word", bg=couleurs["BG"], fg=couleurs["TEXT"], relief="flat", font=("Segoe UI", 9))
         zone.pack(fill="both", expand=True, padx=18, pady=(0, 12))
         zone.insert("1.0", texte)
         zone.configure(state="disabled")
