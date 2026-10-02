@@ -252,6 +252,10 @@ La comparaison de version est préparée avec un manifeste local. Le format publ
 
 Toute future mise à jour devra rester précédée d’une sauvegarde locale et d’une validation explicite.
 
+## Analyse des cycles d’arrosage
+
+Botaneo analyse les cycles d’arrosage sans conclure pour toute la motte : le Mi Flora mesure seulement sa zone. L’analyse compare l’humidité avant arrosage, le pic, la fin de cycle, la hausse après arrosage, l’écart final par rapport au départ, la baisse après pic, la vitesse observée et la qualité des mesures disponibles.
+
 ## Maintenance
 
 - Sauvegarder la base avant toute migration.

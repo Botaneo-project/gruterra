@@ -216,6 +216,33 @@ def vitesse_humidite_sur_24h(humidites):
     return (derniere_humidite - humidite_ref) / heures * 24
 
 
+def interpreter_reponse_cycle(reference_depart, premiere_humidite, pic_humidite, derniere_humidite, qualite_niveau):
+    if premiere_humidite is None or pic_humidite is None or derniere_humidite is None:
+        return {
+            "hausse_apres_arrosage": None,
+            "ecart_final_depart": None,
+            "lecture_courte": "Réponse à l’arrosage non interprétable avec les mesures disponibles.",
+        }
+    if reference_depart is None:
+        reference_depart = premiere_humidite
+    hausse = pic_humidite - reference_depart
+    ecart_final = derniere_humidite - reference_depart
+    prudence = " Lecture prudente : qualité des mesures à surveiller." if qualite_niveau in {"prudence", "interruption longue"} else ""
+    if hausse < 2:
+        lecture = "Réponse faible dans la zone du capteur : l’humidité mesurée monte peu après l’arrosage."
+    elif ecart_final <= 2:
+        lecture = "Retour proche du niveau de départ dans la zone du capteur."
+    elif ecart_final >= 8:
+        lecture = "Humidité encore nettement au-dessus du départ dans la zone du capteur."
+    else:
+        lecture = "Réponse visible à l’arrosage, avec retour partiel vers le niveau de départ."
+    return {
+        "hausse_apres_arrosage": hausse,
+        "ecart_final_depart": ecart_final,
+        "lecture_courte": lecture + prudence,
+    }
+
+
 def mesurer_cycle_arrosage(arrosage, prochain_arrosage, mesures):
     date_arrosage = date_debut_arrosage(arrosage)
     if not date_arrosage:
@@ -279,11 +306,14 @@ def mesurer_cycle_arrosage(arrosage, prochain_arrosage, mesures):
     baisse_apres_pic = None
     if sechage is not None:
         baisse_apres_pic = pic_humidite - derniere_humidite
+    reference_depart = avant_humidite if avant_humidite is not None else premiere_humidite
+    interpretation = interpreter_reponse_cycle(reference_depart, premiere_humidite, pic_humidite, derniere_humidite, qualite_detail["niveau"])
     quantite = quantite_arrosage_texte(arrosage)
     avant_txt = formater_nombre(avant_humidite) if avant_humidite is not None else "—"
     texte = (
         f"{formater_date_courte(date_arrosage)} · {quantite} · {len(mesures_cycle)} mesure(s) · "
-        f"avant {avant_txt} → après {formater_nombre(premiere_humidite)} → pic {formater_nombre(pic_humidite)} → fin {formater_nombre(derniere_humidite)} % · qualité {qualite}"
+        f"avant {avant_txt} → après {formater_nombre(premiere_humidite)} → pic {formater_nombre(pic_humidite)} → fin {formater_nombre(derniere_humidite)} % · "
+        f"hausse +{formater_nombre(interpretation['hausse_apres_arrosage'])} pt · retour {formater_nombre(interpretation['ecart_final_depart'])} pt · qualité {qualite}"
     )
     if sechage is not None:
         texte += f" · baisse après pic {formater_nombre(baisse_apres_pic)} pt ({formater_nombre(sechage)} pt/j)"
@@ -314,6 +344,9 @@ def mesurer_cycle_arrosage(arrosage, prochain_arrosage, mesures):
         "premiere_humidite": premiere_humidite,
         "pic_humidite": pic_humidite,
         "derniere_humidite": derniere_humidite,
+        "hausse_apres_arrosage": interpretation["hausse_apres_arrosage"],
+        "ecart_final_depart": interpretation["ecart_final_depart"],
+        "lecture_courte": interpretation["lecture_courte"],
         "qualite": qualite,
     }
 
@@ -349,6 +382,7 @@ def analyser_cycles_arrosage(cycles):
     qualite = recent.get("qualite") or "à vérifier"
     morceaux = [
         "Analyse cycles : lecture simple du dernier cycle",
+        recent.get("lecture_courte", "lecture courte non disponible"),
         f"avant {formater_nombre(reference_depart)} %",
         f"pic {formater_nombre(recent['pic_humidite'])} %",
         f"hausse observée +{formater_nombre(hausse)} point(s)",

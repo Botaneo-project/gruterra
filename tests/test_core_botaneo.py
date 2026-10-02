@@ -180,9 +180,23 @@ class TestCyclesArrosage(unittest.TestCase):
         self.assertEqual(cycle["pic_humidite"], 26)
         self.assertEqual(cycle["derniere_humidite"], 22)
         self.assertEqual(cycle["baisse_apres_pic"], 4)
+        self.assertEqual(cycle["hausse_apres_arrosage"], 8)
+        self.assertEqual(cycle["ecart_final_depart"], 4)
+        self.assertIn("retour partiel", cycle["lecture_courte"])
         self.assertAlmostEqual(cycle["sechage"], -4.0)
         self.assertEqual(cycle["qualite_niveau"], "prudence")
         self.assertEqual(cycle["plus_grand_trou_h"], 24.0)
+
+    def test_interpreter_reponse_cycle_retour_depart(self):
+        analyse_arrosage = importlib.import_module("services.analyse_arrosage")
+
+        retour = analyse_arrosage.interpreter_reponse_cycle(18, 24, 30, 19, "bonne")
+        faible = analyse_arrosage.interpreter_reponse_cycle(18, 18, 19, 18, "bonne")
+
+        self.assertEqual(retour["hausse_apres_arrosage"], 12)
+        self.assertEqual(retour["ecart_final_depart"], 1)
+        self.assertIn("Retour proche", retour["lecture_courte"])
+        self.assertIn("Réponse faible", faible["lecture_courte"])
 
     def test_cycle_signale_interruption_longue_et_vitesse_24h(self):
         analyse_arrosage = importlib.import_module("services.analyse_arrosage")
