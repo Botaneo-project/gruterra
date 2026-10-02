@@ -405,14 +405,14 @@ La remise en attente a été effectuée uniquement sur une copie de la base Pi. 
 ## Alertes e-mail sécurisées
 - [x] Préparer le terrain pour un SMTP sécurisé local : exemple public, fichier local ignoré, module de préparation en mode aperçu sans envoi automatique.
 - [ ] Garder Outlook local comme option secondaire, mais ne pas en dépendre : l'application Outlook ou la session Windows peuvent ne pas être ouvertes.
-- [ ] Mémoriser la dernière alerte envoyée par plante et par type d'alerte pour éviter un e-mail à chaque synchronisation.
-- [ ] Ajouter un délai minimal entre deux alertes identiques.
+- [x] Préparer la mémoire locale de dernière alerte par plante/type/titre pour éviter un e-mail à chaque synchronisation.
+- [x] Ajouter le calcul du délai minimal entre deux alertes identiques, en mode test sans envoi.
 - [ ] Ne jamais envoyer d'e-mail automatiquement tant que le destinataire, les plantes concernées et les règles d'alerte ne sont pas validés explicitement.
 - [ ] Prévoir d'abord un mode test qui affiche le mail préparé sans l'envoyer.
 
 
 - [x] Brancher le centre d'alertes sur un aperçu e-mail sans envoi réel.
 
-- [ ] Ajouter plus tard la mémoire de dernière alerte envoyée et le délai minimal avant tout envoi SMTP réel.
+- [x] Préparer la mémoire de dernière alerte envoyée et le délai minimal avant tout envoi SMTP réel.
 
 - [x] Améliorer le graphique historique : graduations horaires et repère sélectionnable avec heure/valeur du point le plus proche.

@@ -9,10 +9,15 @@ from __future__ import annotations
 
 import os
 from dataclasses import dataclass
+from datetime import datetime, timedelta
 from email.message import EmailMessage
+from pathlib import Path
 from typing import Iterable
 
-from botaneo_config import EMAIL_CONFIG, lire_json
+from botaneo_config import EMAIL_CONFIG, CONFIG_DIR, ecrire_json, lire_json
+
+
+EMAIL_ALERT_STATE = CONFIG_DIR / "email_alert_state.local.json"
 
 
 @dataclass(frozen=True)
@@ -110,3 +115,77 @@ def email_actif_pour_envoi(settings: EmailSettings | None = None) -> bool:
     settings = settings or charger_parametres_email()
     return settings.enabled and settings.mode == "smtp" and not settings.require_manual_validation
 
+
+def normaliser_cle_alerte(plante_id=None, type_alerte="generale", titre="") -> str:
+    morceaux = [
+        str(plante_id) if plante_id not in (None, "") else "global",
+        str(type_alerte or "generale").strip().lower() or "generale",
+        str(titre or "").strip().lower() or "sans_titre",
+    ]
+    return "|".join(morceau.replace("|", "/") for morceau in morceaux)
+
+
+def lire_memoire_alertes(path=EMAIL_ALERT_STATE) -> dict:
+    try:
+        data = lire_json(path)
+    except RuntimeError:
+        return {"schema": 1, "alertes": {}}
+    if data.get("schema") != 1 or not isinstance(data.get("alertes"), dict):
+        return {"schema": 1, "alertes": {}}
+    return data
+
+
+def sauvegarder_memoire_alertes(memoire: dict, path=EMAIL_ALERT_STATE) -> None:
+    path = Path(path)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    data = {"schema": 1, "alertes": dict(memoire.get("alertes", {}))}
+    ecrire_json(path, data)
+
+
+def derniere_alerte_envoyee(plante_id=None, type_alerte="generale", titre="", path=EMAIL_ALERT_STATE):
+    cle = normaliser_cle_alerte(plante_id, type_alerte, titre)
+    entree = lire_memoire_alertes(path).get("alertes", {}).get(cle) or {}
+    date_texte = entree.get("derniere_alerte")
+    if not date_texte:
+        return None
+    try:
+        return datetime.fromisoformat(date_texte)
+    except (TypeError, ValueError):
+        return None
+
+
+def alerte_autorisee(plante_id=None, type_alerte="generale", titre="", reference=None, settings: EmailSettings | None = None, path=EMAIL_ALERT_STATE) -> dict:
+    settings = settings or charger_parametres_email()
+    reference = reference or datetime.now()
+    derniere = derniere_alerte_envoyee(plante_id, type_alerte, titre, path)
+    if not derniere:
+        return {"autorisee": True, "raison": "aucune alerte précédente mémorisée", "prochaine_possible": reference}
+    prochaine = derniere + timedelta(hours=settings.min_delay_hours_same_alert)
+    if prochaine <= reference:
+        return {"autorisee": True, "raison": "délai minimal écoulé", "derniere_alerte": derniere, "prochaine_possible": prochaine}
+    return {"autorisee": False, "raison": "délai minimal non écoulé", "derniere_alerte": derniere, "prochaine_possible": prochaine}
+
+
+def memoriser_alerte_envoyee(plante_id=None, type_alerte="generale", titre="", date_envoi=None, path=EMAIL_ALERT_STATE) -> dict:
+    date_envoi = date_envoi or datetime.now()
+    cle = normaliser_cle_alerte(plante_id, type_alerte, titre)
+    memoire = lire_memoire_alertes(path)
+    alertes = memoire.setdefault("alertes", {})
+    entree = alertes.get(cle) or {}
+    entree["derniere_alerte"] = date_envoi.isoformat(timespec="seconds")
+    entree["compteur"] = int(entree.get("compteur", 0)) + 1
+    entree["plante_id"] = plante_id
+    entree["type_alerte"] = type_alerte
+    entree["titre"] = titre
+    alertes[cle] = entree
+    sauvegarder_memoire_alertes(memoire, path)
+    return entree
+
+
+def resume_memoire_alerte(plante_id=None, type_alerte="generale", titre="", settings: EmailSettings | None = None, reference=None, path=EMAIL_ALERT_STATE) -> str:
+    etat = alerte_autorisee(plante_id, type_alerte, titre, reference=reference, settings=settings, path=path)
+    if etat["autorisee"]:
+        return "Alerte e-mail : autorisée en test, aucun envoi automatique."
+    prochaine = etat.get("prochaine_possible")
+    prochaine_txt = prochaine.strftime("%d/%m/%Y %H:%M") if prochaine else "date inconnue"
+    return f"Alerte e-mail : temporisée jusqu’au {prochaine_txt}, aucun envoi automatique."

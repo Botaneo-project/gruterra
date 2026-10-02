@@ -6843,19 +6843,34 @@ def lignes_email_depuis_alertes(alertes):
         "Aperçu des alertes Botaneo.",
         "",
         "Aucun e-mail n'a été envoyé automatiquement.",
+        "La mémoire locale sert seulement à éviter de reproposer trop souvent la même alerte.",
         "",
     ]
     if not alertes:
         lignes.append("Aucune alerte importante avec les données actuelles.")
         return lignes
 
+    try:
+        settings_email = botaneo_email.charger_parametres_email()
+    except Exception:
+        settings_email = None
+
     for alerte in alertes:
         niveau = alerte.get("niveau", "info")
         titre = alerte.get("titre", "Alerte Botaneo")
         detail = alerte.get("detail", "")
+        try:
+            statut_email = botaneo_email.resume_memoire_alerte(
+                type_alerte=niveau,
+                titre=titre,
+                settings=settings_email,
+            )
+        except Exception:
+            statut_email = "Alerte e-mail : statut mémoire indisponible, aucun envoi automatique."
         lignes.append(f"[{niveau.upper()}] {titre}")
         if detail:
             lignes.append(str(detail))
+        lignes.append(statut_email)
         lignes.append("")
     return lignes
 

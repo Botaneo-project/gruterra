@@ -85,6 +85,56 @@ class TestSchemaEtNettoyage(BaseTemporaireMixin, unittest.TestCase):
         self.assertEqual(mesures[0][1], "2026-09-20T13:39:29")
 
 
+class TestAlertesEmail(unittest.TestCase):
+    def test_memoire_alerte_respecte_delai_minimal(self):
+        botaneo_email = importlib.import_module("botaneo_email")
+        settings = botaneo_email.EmailSettings(
+            enabled=True,
+            mode="preview",
+            host="",
+            port=587,
+            starttls=True,
+            user="",
+            secret_env="BOTANEO_SMTP_SECRET",
+            sender="",
+            recipients=(),
+            subject_prefix="[Botaneo]",
+            min_delay_hours_same_alert=24,
+            require_manual_validation=True,
+        )
+        with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as dossier:
+            path = Path(dossier) / "email_alert_state.local.json"
+            botaneo_email.memoriser_alerte_envoyee(
+                plante_id=12,
+                type_alerte="rappel_arrosage",
+                titre="Cactus",
+                date_envoi=datetime(2026, 9, 20, 10, 0),
+                path=path,
+            )
+
+            trop_tot = botaneo_email.alerte_autorisee(
+                plante_id=12,
+                type_alerte="rappel_arrosage",
+                titre="Cactus",
+                reference=datetime(2026, 9, 20, 20, 0),
+                settings=settings,
+                path=path,
+            )
+            apres_delai = botaneo_email.alerte_autorisee(
+                plante_id=12,
+                type_alerte="rappel_arrosage",
+                titre="Cactus",
+                reference=datetime(2026, 9, 21, 11, 0),
+                settings=settings,
+                path=path,
+            )
+
+        self.assertFalse(trop_tot["autorisee"])
+        self.assertEqual(trop_tot["raison"], "délai minimal non écoulé")
+        self.assertTrue(apres_delai["autorisee"])
+
+
+
 class TestSessionsArrosage(unittest.TestCase):
     def test_apports_proches_sont_regroupes_sans_modifier_les_lignes(self):
         database = importlib.import_module("database")
