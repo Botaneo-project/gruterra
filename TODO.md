@@ -74,7 +74,8 @@ Ce fichier sert à garder une trace claire des idées et des prochaines étapes.
 - [x] Étendre les tests aux cycles d’arrosage fractionnés simples : début de session, total 40 + 55 ml, mesures entre deux apports et cohérence temporelle.
 - [x] Étendre les tests à l’historique Raspberry brut : trame Mi Flora valide, archive conservée, mesure exploitable ajoutée et déduplication idempotente.
 - [ ] Étendre plus tard les tests à l’analyse séparée de chaque fraction d’une session.
-- [ ] Extraire la logique d’arrosage vers `_app/services/analyse_arrosage.py` une fois les tests posés.
+- [x] Extraire une première partie de la logique d’arrosage vers `_app/services/analyse_arrosage.py` : cycles, sessions, texte d’analyse et résumé, avec tests de non-régression.
+- [ ] Continuer plus tard l’extraction des autres morceaux d’analyse plante liés à l’arrosage si l’interface évolue.
 - [ ] Extraire ensuite la logique lumière vers `_app/services/analyse_lumiere.py` : intérieur, balcon, future lampe horticole, hors balcon.
 - [ ] Préparer progressivement la réduction de `interface.py` et `vue_historique.py`, sans découpage brutal de l’interface graphique.
 - [x] Documenter clairement que la page web Raspberry en HTTP est acceptable uniquement sur réseau local privé et ne doit pas être exposée à Internet.

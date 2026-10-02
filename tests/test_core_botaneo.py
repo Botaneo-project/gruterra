@@ -106,6 +106,7 @@ class TestSessionsArrosage(unittest.TestCase):
 
 class TestCyclesArrosage(unittest.TestCase):
     def test_cycle_arrosage_calcule_pic_et_sechage_simple(self):
+        analyse_arrosage = importlib.import_module("services.analyse_arrosage")
         vue_historique = importlib.import_module("vue_historique")
         arrosages = [
             (1, 1, "2026-09-20T10:00:00", 80, "normal", None, None, "", "Volvic", None, 0),
@@ -117,8 +118,10 @@ class TestCyclesArrosage(unittest.TestCase):
             (4, "2026-09-21T11:30:00", 24.0, 22, 110, 71, "", 1),
         ]
 
-        cycles = vue_historique.calculer_cycles_arrosage(mesures, arrosages)
+        cycles = analyse_arrosage.calculer_cycles_arrosage(mesures, arrosages)
+        cycles_vue = vue_historique.calculer_cycles_arrosage(mesures, arrosages)
 
+        self.assertEqual(cycles, cycles_vue)
         self.assertEqual(len(cycles), 1)
         cycle = cycles[0]
         self.assertEqual(cycle["humidite_avant"], 18)
