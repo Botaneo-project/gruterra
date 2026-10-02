@@ -456,7 +456,7 @@ class TestPreparationMiseAJour(unittest.TestCase):
         self.assertTrue(elements["_app/data"].existe)
         self.assertIn("préserver _config", texte)
         self.assertIn("Interdit sans validation explicite", texte)
-        self.assertIn("Vérification distante non configurée", texte)
+        self.assertIn("vérification distante non configurée", texte.lower())
         self.assertIn("Séparation programme / données", texte)
         self.assertIn("programme remplaçable", texte)
 
@@ -514,6 +514,19 @@ class TestPreparationMiseAJour(unittest.TestCase):
         self.assertIn("données personnelles", resume)
         self.assertIn("fichiers secrets", resume)
         self.assertNotIn("netatmo_config.json", resume)
+
+    def test_statut_version_depuis_manifest_local(self):
+        botaneo_update = importlib.import_module("botaneo_update")
+        with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as dossier:
+            manifest = Path(dossier) / "version.json"
+            absent = botaneo_update.construire_statut_version_depuis_manifest("0.1.0", manifest)
+            manifest.write_text('{"version": "0.2.0"}', encoding="utf-8")
+            disponible = botaneo_update.construire_statut_version_depuis_manifest("0.1.0", manifest)
+
+        self.assertEqual(absent["statut"], "verification_non_configuree")
+        self.assertEqual(disponible["statut"], "mise_a_jour_disponible")
+        self.assertFalse(disponible["application_autorisee"])
+        self.assertIn("source", disponible)
 
     def test_comparer_versions_ne_declenche_jamais_application(self):
         botaneo_update = importlib.import_module("botaneo_update")

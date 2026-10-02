@@ -7,6 +7,7 @@ sauvegardes.
 """
 from __future__ import annotations
 
+import json
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -95,7 +96,7 @@ def construire_plan_mise_a_jour(racine) -> dict:
         "separation_programme_donnees": construire_separation_programme_donnees(racine),
         "elements_personnels": elements,
         "fichiers_exemple": exemples,
-        "statut_version": construire_statut_version("0.1.0-dev"),
+        "statut_version": construire_statut_version_depuis_manifest("0.1.0-dev", racine / "version_manifest.json"),
         "actions_avant_update": [
             "fermer Botaneo",
             "lancer une sauvegarde locale",
@@ -256,6 +257,54 @@ def message_version(statut, version_locale, version_distante):
     if statut == "a_jour":
         return f"Version locale {version_locale} à jour."
     return f"Version locale {version_locale} plus récente que la version distante {version_distante}."
+
+
+def lire_manifest_version(chemin_manifest):
+    """Lit un manifeste de version local, sans accès réseau."""
+
+    chemin = Path(chemin_manifest)
+    if not chemin.exists():
+        return {
+            "disponible": False,
+            "version": None,
+            "source": str(chemin),
+            "message": "Manifeste de version absent ; vérification distante non configurée.",
+        }
+    try:
+        donnees = json.loads(chemin.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as erreur:
+        return {
+            "disponible": False,
+            "version": None,
+            "source": str(chemin),
+            "message": f"Manifeste de version illisible : {erreur}",
+        }
+    version = donnees.get("version") if isinstance(donnees, dict) else None
+    if not version:
+        return {
+            "disponible": False,
+            "version": None,
+            "source": str(chemin),
+            "message": "Manifeste de version sans champ version exploitable.",
+        }
+    return {
+        "disponible": True,
+        "version": str(version),
+        "source": str(chemin),
+        "message": f"Version distante déclarée : {version}",
+    }
+
+
+def construire_statut_version_depuis_manifest(version_locale, chemin_manifest):
+    manifest = lire_manifest_version(chemin_manifest)
+    if not manifest.get("disponible"):
+        statut = construire_statut_version(version_locale)
+        statut["source"] = manifest.get("source")
+        statut["message"] = manifest.get("message", statut.get("message"))
+        return statut
+    statut = construire_statut_version(version_locale, manifest.get("version"))
+    statut["source"] = manifest.get("source")
+    return statut
 
 
 def construire_statut_version(version_locale, version_distante=None):
