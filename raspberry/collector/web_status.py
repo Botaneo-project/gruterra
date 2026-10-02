@@ -1,4 +1,4 @@
-"""Local read-only dashboard; no Bluetooth commands or database mutations."""
+"""Authenticated mobile dashboard with queued collection requests."""
 import json
 import base64
 import hashlib
@@ -32,43 +32,58 @@ def snapshot(path):
 
 
 HTML = '''<!doctype html><html lang="fr"><meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Botanéo · Raspberry</title><style>
 body{font:17px system-ui;margin:0;background:#f2f6f1;color:#223228}main{max-width:650px;margin:auto;padding:24px 18px}
 h1{margin-bottom:4px}p{line-height:1.5}.card{background:white;padding:20px;border-radius:18px;margin:16px 0}
 .grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}.value{font-size:27px;font-weight:650}
 .muted{color:#58665a;font-size:14px}button{background:#326b47;color:white;border:0;border-radius:12px;padding:14px;font:inherit;width:100%}
-.warning{color:#93421c}h2{font-size:20px}</style><main><h1>Botanéo</h1>
-<p class="muted">Votre collecteur Raspberry</p><p id="connection">Chargement…</p>
+.warning{color:#93421c}h2{font-size:20px}
+*{box-sizing:border-box}body{background:#eff4ef}main{padding:24px 18px calc(28px + env(safe-area-inset-bottom))}
+h1{font-size:34px;letter-spacing:-1.2px;color:#24583b}.card{border:1px solid #dde7dc;box-shadow:0 4px 16px #183e2210}
+.grid{gap:10px}.grid>div{background:#f3f7f2;padding:14px 10px;border-radius:12px;min-width:0}.value{font-size:clamp(20px,6vw,27px);overflow-wrap:anywhere}
+button{min-height:50px;font-weight:650;cursor:pointer;touch-action:manipulation}button:disabled{background:#dce5dc;color:#435447;cursor:wait}
+button:focus-visible{outline:3px solid #bd7c20;outline-offset:3px}#refresh{background:white;color:#326b47;border:1px solid #b7cdbb}
+#connection{font-size:14px;padding:10px 12px;background:#e0eddf;border-radius:12px}#connection.offline{background:#fff0d9;color:#794600}
+#collect-state{min-height:48px;font-size:15px}h2{overflow-wrap:anywhere}.badge{display:inline-block;padding:5px 9px;border-radius:8px;background:#e0eddf;color:#24583b;font-size:13px}.badge.warning{background:#fff0d9;color:#794600}
+details{margin-top:15px;font-size:14px}summary{padding:10px 0;cursor:pointer;color:#536459}.warning{line-height:1.5}
+@media(prefers-reduced-motion:no-preference){button{transition:background .2s}}
+</style><main><h1>Botanéo</h1>
+<p class="muted">Votre collecteur Raspberry</p><p id="connection" role="status">Chargement…</p>
 <button id="collect">Lire les capteurs maintenant</button><p id="collect-state" aria-live="polite"></p><div id="sensors"></div><section class="card"><h2>Synchronisation PC</h2><p id="pending">—</p>
 <p class="muted">Les relevés restent conservés sur le Raspberry. Le PC les récupère lorsque Botanéo est ouvert et que les deux appareils peuvent communiquer.</p></section>
-<button id="refresh">Actualiser l’affichage</button><p class="muted">Cette page consulte les données enregistrées. Elle ne déclenche aucune lecture Bluetooth. Actualisation automatique toutes les 5 secondes. La lecture des capteurs peut prendre plusieurs minutes.</p></main>
+<button id="refresh">Actualiser l’affichage</button><p class="muted">Actualiser affiche les données déjà enregistrées. « Lire les capteurs » demande une nouvelle lecture, qui peut prendre plusieurs minutes. Actualisation automatique tant que cette page est visible.</p></main>
 <script>
 const byId=id=>document.getElementById(id);
 function element(tag,text,cls){const e=document.createElement(tag);e.textContent=text;if(cls)e.className=cls;return e}
 function date(value){return value?new Date(value).toLocaleString('fr-FR'):'Aucune'}
-async function refresh(){try{
-const r=await fetch('/api/status',{cache:'no-store'});if(!r.ok)throw Error();const data=await r.json();
-byId('connection').textContent='Raspberry joignable · '+date(data.checked_at);
+function age(value){const n=Date.now()-new Date(value).getTime();if(!value||!Number.isFinite(n)||n<0)return 'Date à vérifier';const m=Math.floor(n/60000);return m<1?'À l’instant':m<60?'Il y a '+m+' min':m<1440?'Il y a '+Math.floor(m/60)+' h':'Il y a '+Math.floor(m/1440)+' j'}
+let refreshing=false;
+
+async function refresh(){if(refreshing)return;refreshing=true;try{
+const r=await fetch('/api/status',{cache:'no-store',signal:AbortSignal.timeout(12000)});if(!r.ok)throw Error();const data=await r.json();
+byId('connection').className='';byId('connection').textContent='Raspberry joignable · '+date(data.checked_at);
 byId('collect').disabled=Boolean(data.collection.running||data.collection.pending);
-byId('collect-state').textContent=data.collection.pending?'Demande enregistrée…':data.collection.message;
+byId('collect').textContent=data.collection.running?'Lecture en cours…':data.collection.pending?'Demande en attente…':'Lire les capteurs maintenant';
+byId('collect-state').textContent=data.collection.running?'Le Raspberry lit les capteurs. Les valeurs précédentes restent visibles.':data.collection.pending?'Demande reçue. En attente du collecteur…':data.collection.message+(data.collection.finished_at?' · '+date(data.collection.finished_at):'');
+const expanded=new Set([...byId('sensors').querySelectorAll('details[open]')].map(e=>e.dataset.sensor));
 byId('sensors').replaceChildren();
 for(const sensor of data.sensors){const s=sensor.status,m=sensor.latest,c=element('section','','card');
-c.append(element('h2','Capteur '+s.sensor_id));
+c.append(element('h2','Capteur '+(data.sensors.indexOf(sensor)+1)));const old=!m||m.time_quality!=='ntp'||Date.now()-new Date(m.measured_at).getTime()>12*3600000;c.append(element('p',m?age(m.measured_at):'En attente de première mesure','badge'+(old?' warning':'')));
 if(m){const grid=element('div','','grid');
 for(const [label,value,unit] of [['Température',m.temperature_c,'°C'],['Humidité du sol',m.moisture_percent,'%'],['Lumière',m.illuminance_lux,'lux'],['Conductivité',m.conductivity_us_cm,'µS/cm']]){
-const cell=element('div','');cell.append(element('div',label,'muted'),element('div',value+' '+unit,'value'));grid.append(cell)}c.append(grid);
+const cell=element('div','');cell.append(element('div',label,'muted'),element('div',(typeof value==='number'?value.toLocaleString('fr-FR',{maximumFractionDigits:1}):'—')+' '+unit,'value'));grid.append(cell)}c.append(grid);
 c.append(element('p','Dernier relevé : '+date(m.measured_at),'muted'));
 if(m.time_quality!=='ntp')c.append(element('p','Date non confirmée : horloge du Raspberry à vérifier.','warning'));
 else if(Date.now()-new Date(m.measured_at).getTime()>12*3600000)c.append(element('p','Relevé ancien : plus de 12 heures.','warning'));
 }else c.append(element('p','Aucune mesure disponible.'));
 if(s.last_error)c.append(element('p','Dernière collecte en échec. Les dernières valeurs sont conservées.','warning'));
-c.append(element('p','Dernière tentative : '+date(s.last_attempt),'muted'));byId('sensors').append(c)}
+const details=element('details','');details.dataset.sensor=s.sensor_id;details.open=expanded.has(s.sensor_id);details.append(element('summary','Détails du capteur'),element('p',s.sensor_id),element('p','Dernière tentative : '+date(s.last_attempt)),element('p','Dernière réussite : '+date(s.last_success)));c.append(details);byId('sensors').append(c)}
 if(!data.sensors.length)byId('sensors').append(element('p','Aucun capteur enregistré.'));
 byId('pending').textContent=data.pending+' relevé(s) en attente de confirmation du PC · '+data.history+' relevé(s) historiques conservés.';
-}catch(e){byId('connection').textContent='Raspberry indisponible. Les valeurs affichées peuvent être anciennes.'}}
+}catch(e){byId('connection').className='offline';byId('connection').textContent='Connexion interrompue · les valeurs affichées ne sont plus actualisées.';byId('collect').disabled=true}finally{refreshing=false}}
 byId('collect').onclick=async()=>{byId('collect').disabled=true;byId('collect-state').textContent='Envoi de la demande…';try{const response=await fetch('/api/collect',{method:'POST',headers:{'X-Botaneo-Token':'CSRF_PLACEHOLDER'}});if(!response.ok&&response.status!==409)throw Error();await refresh()}catch(e){byId('collect-state').textContent='Demande non confirmée. Actualisez la page pour vérifier son état.';byId('collect').disabled=false}};
-byId('refresh').onclick=refresh;refresh();setInterval(refresh,5000);
+byId('refresh').onclick=refresh;refresh();setInterval(()=>{if(!document.hidden)refresh()},5000);document.addEventListener('visibilitychange',()=>{if(!document.hidden)refresh()});
 </script></html>'''
 
 
