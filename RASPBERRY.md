@@ -28,6 +28,13 @@ Les sauvegardes contiennent l’état de confirmation des transferts. Leur resta
 3. Vérifier la date des mesures et le message de sauvegarde copiée ou déjà vérifiée.
 4. Pour un nouveau capteur, vérifier son association à la bonne plante avant l’import.
 
+
+## Sécurité de la page web locale
+
+La page web Raspberry est prévue pour un réseau domestique privé. Elle peut fonctionner en HTTP clair, par exemple sur le port local du collecteur, parce qu’elle sert à consulter ou déclencher Botaneo depuis le même réseau.
+
+Ne pas exposer cette page à Internet, ne pas ouvrir de redirection de port vers elle et ne pas la publier derrière un nom de domaine public sans ajouter une vraie couche HTTPS, une authentification adaptée et une revue de sécurité. Sur un réseau inconnu ou partagé, préférer l’accès SSH/VPN maîtrisé ou garder la consultation depuis le PC.
+
 ## Prochaines validations
 
 - Test complet avec un nouveau capteur en déplacement, puis retour et récupération PC.

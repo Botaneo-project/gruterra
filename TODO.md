@@ -74,7 +74,7 @@ Ce fichier sert à garder une trace claire des idées et des prochaines étapes.
 - [ ] Extraire la logique d’arrosage vers `_app/services/analyse_arrosage.py` une fois les tests posés.
 - [ ] Extraire ensuite la logique lumière vers `_app/services/analyse_lumiere.py` : intérieur, balcon, future lampe horticole, hors balcon.
 - [ ] Préparer progressivement la réduction de `interface.py` et `vue_historique.py`, sans découpage brutal de l’interface graphique.
-- [ ] Documenter clairement que la page web Raspberry en HTTP est acceptable uniquement sur réseau local privé et ne doit pas être exposée à Internet.
+- [x] Documenter clairement que la page web Raspberry en HTTP est acceptable uniquement sur réseau local privé et ne doit pas être exposée à Internet.
 - [ ] Nettoyer les doublons et fichiers anciens seulement après stabilisation et vérification qu’ils ne servent plus de référence.
 
 ## Prochaine suite recommandée
