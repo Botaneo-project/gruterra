@@ -40,6 +40,7 @@ Ce fichier sert à garder une trace claire des idées et des prochaines étapes.
 - Script `verifier_avant_github.py` ajouté pour contrôler les fichiers sensibles avant commit ou push.
 - Script `audit_botaneo.py` ajouté pour lancer tests automatisés, vérification avant GitHub, contrôle du diff et affichage des fichiers modifiés en une commande.
 - Tests ajoutés pour le script d’audit local afin de vérifier ses retours OK/échec et son comportement sans Git disponible.
+- Documentation des tests ajoutée dans `tests/README.md` pour expliquer la couverture et les limites matérielles.
 - Dépôt GitHub privé initialisé et utilisé pour sauvegarder les évolutions validées.
 - Statut de synchronisation copiable depuis l’interface.
 - Synchronisation : sous-étapes détaillées pendant les phases longues.
