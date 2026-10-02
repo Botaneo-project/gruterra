@@ -194,7 +194,26 @@ class TestAnalyseLumiere(unittest.TestCase):
         self.assertIn("10:00 → 12:00", resume)
         self.assertIn("Hors balcon", resume)
         self.assertIn("Pendant balcon : 1 mesure(s)", resume)
+        self.assertIn("Exposition lumineuse cumulée", resume)
         self.assertIn("pics lumineux", resume)
+
+    def test_exposition_lumineuse_cumulee_ignore_les_grands_trous(self):
+        analyse_lumiere = importlib.import_module("services.analyse_lumiere")
+        mesures = [
+            (1, "2026-09-25T09:00:00", 24.0, 20, 100, 70, "", 1),
+            (2, "2026-09-25T10:00:00", 24.1, 20, 500, 71, "", 1),
+            (3, "2026-09-25T11:00:00", 24.2, 20, 12000, 72, "", 1),
+            (4, "2026-09-25T20:00:00", 24.3, 20, 50, 73, "", 1),
+        ]
+
+        stats = analyse_lumiere.calculer_exposition_lumineuse(mesures)
+
+        self.assertEqual(stats["points"], 4)
+        self.assertAlmostEqual(stats["duree_totale_h"], 2.0)
+        self.assertAlmostEqual(stats["cumul_lux_h"], 600.0)
+        self.assertAlmostEqual(stats["durees_par_plage_h"]["très faible"], 1.0)
+        self.assertAlmostEqual(stats["durees_par_plage_h"]["faible"], 1.0)
+        self.assertAlmostEqual(stats["durees_par_plage_h"]["forte"], 0.0)
 
 
 class TestImportRaspberry(BaseTemporaireMixin, unittest.TestCase):

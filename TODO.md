@@ -155,7 +155,7 @@ Objectif : préparer une évolution sans casser l’enregistrement actuel des ar
 - [x] Ne plus afficher seulement `arrosage 55 ml` si cet apport appartient à une session totale de 95 ml.
 - [x] Conserver les données originales en base : le regroupement est logique, pas une fusion destructive des lignes.
 - [x] Garantir la cohérence temporelle : l’analyse post-arrosage part du début de session, une mesure antérieure à un complément n’est pas attribuée à ce complément.
-- [ ] Continuer l’amélioration de la lumière contextualisée : durées par plages de luminosité, exposition cumulée quotidienne, future lampe horticole, comparaison intérieur/balcon.
+- [ ] Continuer l’amélioration de la lumière contextualisée : comparaison de journées intérieur/balcon, future lampe horticole, interprétation plante.
 - [ ] Conserver les indicateurs de qualité des données pour éviter que les périodes très denses faussent les moyennes.
 - [x] Distinguer dans la synchronisation `synchronisation terminée` et `nouvelle mesure effectivement acquise`.
 - [x] Répéter dans les analyses que le Mi Flora mesure une zone du substrat et ne prouve pas à lui seul l’état de toute la motte.
@@ -193,11 +193,11 @@ Objectif : préparer une évolution sans casser l’enregistrement actuel des ar
 - [ ] Construire progressivement une référence propre à chaque plante après plusieurs cycles documentés.
 - [ ] Estimer le prochain arrosage probable quand les données sont suffisantes.
 - [ ] Détecter une baisse de luminosité sur plusieurs jours.
-- [ ] Ajouter les événements `Sortie sur le balcon` et `Retour à l’intérieur` dans le journal plante.
+- [x] Ajouter les événements `Sortie sur le balcon` et `Retour à l’intérieur` dans le journal plante.
 - [ ] Distinguer les journées entièrement en intérieur des journées avec exposition extérieure.
-- [ ] Calculer les durées d’exposition par plages de luminosité, au lieu de se limiter au maximum du jour.
-- [ ] Calculer une exposition lumineuse cumulée quotidienne en tenant compte des intervalles entre mesures.
-- [ ] Éviter qu’un pic lumineux ponctuel masque une journée globalement sombre.
+- [x] Calculer les durées d’exposition par plages de luminosité, au lieu de se limiter au maximum du jour.
+- [x] Calculer une exposition lumineuse cumulée quotidienne en tenant compte des intervalles entre mesures.
+- [x] Éviter qu’un pic lumineux ponctuel masque une journée globalement sombre grâce au cumul lux·h et aux durées par plage.
 - [ ] Préparer la comparaison entre lumière naturelle extérieure ponctuelle et lampe horticole.
 - [ ] Comparer la température actuelle avec la moyenne récente.
 - [ ] Interpréter prudemment la conductivité, sans alerte trop agressive.
