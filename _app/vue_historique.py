@@ -404,6 +404,11 @@ def comparer_deux_cycles(cycle_a, cycle_b):
     def fmt(valeur, unite=""):
         return "—" if valeur is None else f"{formater_nombre(valeur)}{(' ' + unite) if unite else ''}"
 
+    vitesse_24h_a = valeur_cycle(cycle_a, "vitesse_24h")
+    vitesse_24h_b = valeur_cycle(cycle_b, "vitesse_24h")
+    trou_a = valeur_cycle(cycle_a, "plus_grand_trou_h")
+    trou_b = valeur_cycle(cycle_b, "plus_grand_trou_h")
+
     lignes = [
         "Comparaison Botaneo — cycles d’arrosage",
         "",
@@ -416,6 +421,8 @@ def comparer_deux_cycles(cycle_a, cycle_b):
         f"Humidité fin : {fmt(fin_a, '%')} / {fmt(fin_b, '%')}",
         f"Hausse observée : {fmt(hausse_a, 'pt')} / {fmt(hausse_b, 'pt')}",
         f"Séchage : {fmt(sechage_a, 'pt/j')} / {fmt(sechage_b, 'pt/j')}",
+        f"Vitesse 24 h : {fmt(vitesse_24h_a, 'pt/j')} / {fmt(vitesse_24h_b, 'pt/j')}",
+        f"Qualité : {cycle_a.get('qualite') or '—'} / {cycle_b.get('qualite') or '—'}",
     ]
     if sechage_a is not None and sechage_b is not None:
         diff = sechage_a - sechage_b
@@ -436,6 +443,9 @@ def comparer_deux_cycles(cycle_a, cycle_b):
             ("Fin", fmt(fin_a, "%"), fmt(fin_b, "%"), fmt((fin_a - fin_b) if fin_a is not None and fin_b is not None else None, "pt")),
             ("Hausse observée", fmt(hausse_a, "pt"), fmt(hausse_b, "pt"), fmt((hausse_a - hausse_b) if hausse_a is not None and hausse_b is not None else None, "pt")),
             ("Séchage", fmt(sechage_a, "pt/j"), fmt(sechage_b, "pt/j"), fmt((sechage_a - sechage_b) if sechage_a is not None and sechage_b is not None else None, "pt/j")),
+            ("Vitesse 24 h", fmt(vitesse_24h_a, "pt/j"), fmt(vitesse_24h_b, "pt/j"), fmt((vitesse_24h_a - vitesse_24h_b) if vitesse_24h_a is not None and vitesse_24h_b is not None else None, "pt/j")),
+            ("Plus grand trou", fmt(trou_a, "h"), fmt(trou_b, "h"), fmt((trou_a - trou_b) if trou_a is not None and trou_b is not None else None, "h")),
+            ("Qualité", cycle_a.get("qualite") or "—", cycle_b.get("qualite") or "—", "—"),
         ],
     }
 
@@ -1312,7 +1322,7 @@ def ouvrir_historique(parent, plante_id, action_synchroniser=None):
         fond_analyse = melanger_couleurs(couleurs["BLUE"], couleurs["CARD"], 0.88)
         tk.Label(detail, textvariable=analyse_cycles_var, bg=fond_analyse, fg=couleurs["BLUE"], font=("Segoe UI", 9, "bold"), anchor="w", justify="left", wraplength=860, padx=10, pady=7).pack(fill="x", padx=18, pady=(0, 10))
 
-        colonnes_cycles = ("date", "quantite", "mesures", "avant", "depart", "pic", "fin", "sechage", "qualite", "suivi")
+        colonnes_cycles = ("date", "quantite", "mesures", "avant", "depart", "pic", "fin", "sechage", "vitesse24", "trou", "qualite", "suivi")
         tableau = ttk.Treeview(detail, columns=colonnes_cycles, show="headings", height=6)
         titres_cycles = {
             "date": "Arrosage",
@@ -1323,6 +1333,8 @@ def ouvrir_historique(parent, plante_id, action_synchroniser=None):
             "pic": "Pic",
             "fin": "Fin",
             "sechage": "Séchage",
+            "vitesse24": "24 h",
+            "trou": "Trou max",
             "qualite": "Qualité",
             "suivi": "Suivi",
         }
@@ -1334,9 +1346,11 @@ def ouvrir_historique(parent, plante_id, action_synchroniser=None):
             "depart": 70,
             "pic": 70,
             "fin": 70,
-            "sechage": 105,
-            "qualite": 150,
-            "suivi": 135,
+            "sechage": 95,
+            "vitesse24": 75,
+            "trou": 80,
+            "qualite": 145,
+            "suivi": 125,
         }
         for colonne in colonnes_cycles:
             tableau.heading(colonne, text=titres_cycles[colonne])
@@ -1357,6 +1371,8 @@ def ouvrir_historique(parent, plante_id, action_synchroniser=None):
                 formater_nombre(cycle.get("pic_humidite")) if cycle.get("pic_humidite") is not None else "—",
                 formater_nombre(cycle.get("derniere_humidite")) if cycle.get("derniere_humidite") is not None else "—",
                 f"{formater_nombre(cycle.get('sechage'))} pt/j" if cycle.get("sechage") is not None else "—",
+                f"{formater_nombre(cycle.get('vitesse_24h'))} pt/j" if cycle.get("vitesse_24h") is not None else "—",
+                f"{formater_nombre(cycle.get('plus_grand_trou_h'))} h" if cycle.get("plus_grand_trou_h") is not None else "—",
                 cycle.get("qualite") or "—",
                 suivi,
             ))

@@ -185,10 +185,10 @@ Objectif : préparer une évolution sans casser l’enregistrement actuel des ar
 - [x] Reformuler l’analyse post-arrosage pour éviter de confondre zone du capteur et motte complète : `Retour au niveau d’humidité initial détecté dans la zone du capteur. Le Mi Flora ne permet pas de confirmer le séchage complet de la motte.`
 - [x] Ajouter aux événements d’arrosage des champs facultatifs : volume total, type d’eau, méthode de répartition, écoulement observé, eau stagnante dans le cache-pot, état visuel du substrat et commentaire libre.
 - [ ] Ne pas imposer automatiquement 80 ml : garder la comparabilité des cycles sans empêcher d’adapter l’arrosage aux besoins réels.
-- [ ] Calculer la vitesse moyenne de séchage en points d’humidité par jour entre le pic confirmé et la fin du cycle.
-- [ ] Ajouter une vitesse glissante sur 24 h pour repérer un ralentissement ou une accélération du séchage.
-- [ ] Attribuer une qualité à chaque cycle selon les trous de mesure : régulier, manque léger, prudence, interruption longue.
-- [ ] Éviter d’interpréter précisément un cycle si le pic ou le retour au niveau initial tombe dans une interruption longue.
+- [x] Calculer la vitesse moyenne de séchage en points d’humidité par jour entre le pic confirmé et la fin du cycle.
+- [x] Ajouter une vitesse sur 24 h pour repérer un ralentissement ou une accélération du séchage.
+- [x] Attribuer une qualité à chaque cycle selon les trous de mesure : bonne, correcte, prudence, interruption longue.
+- [x] Signaler dans le cycle si le pic ou la dernière mesure tombe après une interruption longue.
 - [ ] Comparer les cycles seulement quand les conditions sont proches : quantité d’eau, type d’eau, emplacement, lumière, température, substrat.
 - [ ] Construire progressivement une référence propre à chaque plante après plusieurs cycles documentés.
 - [ ] Estimer le prochain arrosage probable quand les données sont suffisantes.

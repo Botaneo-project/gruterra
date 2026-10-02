@@ -61,6 +61,80 @@ def quantite_arrosage_courte(arrosage):
     return f"{formater_nombre(arrosage[3])} ml" if arrosage and arrosage[3] is not None else "—"
 
 
+def analyser_qualite_cycle(humidites, pic_date=None, derniere_date=None):
+    """Retourne une qualité stable pour un cycle et ses principaux trous de mesure."""
+
+    ecarts = []
+    for avant, apres in zip(humidites, humidites[1:]):
+        heures = (apres[0] - avant[0]).total_seconds() / 3600
+        if heures > 0:
+            ecarts.append({"debut": avant[0], "fin": apres[0], "heures": heures})
+    plus_grand_trou = max((ecart["heures"] for ecart in ecarts), default=0)
+
+    if len(humidites) < 4:
+        niveau = "prudence"
+        libelle = "prudence : peu de mesures"
+    elif plus_grand_trou > 24:
+        niveau = "interruption longue"
+        libelle = f"interruption longue : trou {formater_nombre(plus_grand_trou)} h"
+    elif plus_grand_trou > 8:
+        niveau = "prudence"
+        libelle = f"prudence : trou {formater_nombre(plus_grand_trou)} h"
+    elif plus_grand_trou > 3:
+        niveau = "correcte"
+        libelle = f"correcte avec trou {formater_nombre(plus_grand_trou)} h"
+    else:
+        niveau = "bonne"
+        libelle = "bonne"
+
+    avertissements = []
+    for cible, nom in ((pic_date, "pic"), (derniere_date, "dernière mesure")):
+        if not cible:
+            continue
+        for ecart in ecarts:
+            if ecart["heures"] > 8 and ecart["fin"] == cible:
+                avertissements.append(f"{nom} après trou {formater_nombre(ecart['heures'])} h")
+                break
+
+    if avertissements and niveau == "bonne":
+        niveau = "correcte"
+    elif avertissements and niveau == "correcte":
+        niveau = "prudence"
+
+    return {
+        "niveau": niveau,
+        "libelle": libelle,
+        "plus_grand_trou_h": plus_grand_trou,
+        "avertissements": avertissements,
+    }
+
+
+def vitesse_sechage_apres_pic(pic_date, pic_humidite, derniere_date, derniere_humidite):
+    if not pic_date or not derniere_date or derniere_date <= pic_date:
+        return None
+    if pic_humidite is None or derniere_humidite is None or pic_humidite == derniere_humidite:
+        return None
+    heures_depuis_pic = (derniere_date - pic_date).total_seconds() / 3600
+    if heures_depuis_pic <= 0:
+        return None
+    return (derniere_humidite - pic_humidite) / heures_depuis_pic * 24
+
+
+def vitesse_humidite_sur_24h(humidites):
+    if len(humidites) < 2:
+        return None
+    derniere_date, derniere_humidite = humidites[-1]
+    cible = derniere_date.timestamp() - 24 * 3600
+    candidates = [item for item in humidites[:-1] if item[0].timestamp() <= cible]
+    if not candidates:
+        return None
+    date_ref, humidite_ref = candidates[-1]
+    heures = (derniere_date - date_ref).total_seconds() / 3600
+    if heures <= 0:
+        return None
+    return (derniere_humidite - humidite_ref) / heures * 24
+
+
 def mesurer_cycle_arrosage(arrosage, prochain_arrosage, mesures):
     date_arrosage = date_debut_arrosage(arrosage)
     if not date_arrosage:
@@ -117,23 +191,13 @@ def mesurer_cycle_arrosage(arrosage, prochain_arrosage, mesures):
     pic_date, pic_humidite = max(humidites, key=lambda item: item[1])
     derniere_date, derniere_humidite = humidites[-1]
     duree_heures = max((derniere_date - premiere_date).total_seconds() / 3600, 0)
-    ecarts = [(b[0] - a[0]).total_seconds() / 3600 for a, b in zip(humidites, humidites[1:])]
-    plus_grand_trou = max(ecarts) if ecarts else 0
-    if len(humidites) < 4:
-        qualite = "prudence : peu de mesures"
-    elif plus_grand_trou > 8:
-        qualite = f"prudence : trou {formater_nombre(plus_grand_trou)} h"
-    elif plus_grand_trou > 3:
-        qualite = f"correct avec trou {formater_nombre(plus_grand_trou)} h"
-    else:
-        qualite = "bonne"
-    sechage = None
+    qualite_detail = analyser_qualite_cycle(humidites, pic_date=pic_date, derniere_date=derniere_date)
+    qualite = qualite_detail["libelle"]
+    sechage = vitesse_sechage_apres_pic(pic_date, pic_humidite, derniere_date, derniere_humidite)
+    vitesse_24h = vitesse_humidite_sur_24h(humidites)
     baisse_apres_pic = None
-    if derniere_date > pic_date and pic_humidite != derniere_humidite:
-        heures_depuis_pic = (derniere_date - pic_date).total_seconds() / 3600
-        if heures_depuis_pic > 0:
-            baisse_apres_pic = pic_humidite - derniere_humidite
-            sechage = (derniere_humidite - pic_humidite) / heures_depuis_pic * 24
+    if sechage is not None:
+        baisse_apres_pic = pic_humidite - derniere_humidite
     quantite = quantite_arrosage_texte(arrosage)
     avant_txt = formater_nombre(avant_humidite) if avant_humidite is not None else "—"
     texte = (
@@ -144,6 +208,10 @@ def mesurer_cycle_arrosage(arrosage, prochain_arrosage, mesures):
         texte += f" · baisse après pic {formater_nombre(baisse_apres_pic)} pt ({formater_nombre(sechage)} pt/j)"
     else:
         texte += " · baisse après pic non calculable"
+    if vitesse_24h is not None:
+        texte += f" · vitesse 24 h {formater_nombre(vitesse_24h)} pt/j"
+    if qualite_detail["avertissements"]:
+        texte += " · " + "; ".join(qualite_detail["avertissements"])
     if date_fin:
         texte += f" · prochain arrosage {formater_date_courte(date_fin)}"
     elif duree_heures:
@@ -155,7 +223,11 @@ def mesurer_cycle_arrosage(arrosage, prochain_arrosage, mesures):
         "mesures": mesures_cycle,
         "texte": texte,
         "sechage": sechage,
+        "vitesse_24h": vitesse_24h,
         "baisse_apres_pic": baisse_apres_pic,
+        "qualite_niveau": qualite_detail["niveau"],
+        "plus_grand_trou_h": qualite_detail["plus_grand_trou_h"],
+        "avertissements_qualite": qualite_detail["avertissements"],
         "humidite_avant": avant_humidite,
         "delai_avant_h": delai_avant_h,
         "premiere_humidite": premiere_humidite,
@@ -208,6 +280,10 @@ def analyser_cycles_arrosage(cycles):
         morceaux.append("baisse après pic non calculable")
     if recent.get("sechage") is not None:
         morceaux.append(f"vitesse après pic {formater_nombre(recent['sechage'])} pt/j")
+    if recent.get("vitesse_24h") is not None:
+        morceaux.append(f"vitesse sur 24 h {formater_nombre(recent['vitesse_24h'])} pt/j")
+    if recent.get("avertissements_qualite"):
+        morceaux.append("points à vérifier : " + ", ".join(recent["avertissements_qualite"]))
 
     if len(cycles_humidite) >= 2:
         precedent = cycles_humidite[-2]

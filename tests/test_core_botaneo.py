@@ -130,6 +130,28 @@ class TestCyclesArrosage(unittest.TestCase):
         self.assertEqual(cycle["derniere_humidite"], 22)
         self.assertEqual(cycle["baisse_apres_pic"], 4)
         self.assertAlmostEqual(cycle["sechage"], -4.0)
+        self.assertEqual(cycle["qualite_niveau"], "prudence")
+        self.assertEqual(cycle["plus_grand_trou_h"], 24.0)
+
+    def test_cycle_signale_interruption_longue_et_vitesse_24h(self):
+        analyse_arrosage = importlib.import_module("services.analyse_arrosage")
+        arrosages = [
+            (1, 1, "2026-09-20T10:00:00", 80, "normal", None, None, "", "Volvic", None, 0),
+        ]
+        mesures = [
+            (1, "2026-09-20T09:00:00", 24.0, 18, 100, 70, "", 1),
+            (2, "2026-09-20T10:30:00", 24.1, 25, 120, 72, "", 1),
+            (3, "2026-09-20T11:30:00", 24.2, 28, 130, 73, "", 1),
+            (4, "2026-09-21T12:30:00", 24.0, 20, 110, 71, "", 1),
+            (5, "2026-09-21T13:30:00", 24.0, 19, 110, 71, "", 1),
+        ]
+
+        cycle = analyse_arrosage.calculer_cycles_arrosage(mesures, arrosages)[0]
+
+        self.assertEqual(cycle["qualite_niveau"], "interruption longue")
+        self.assertIn("trou", cycle["qualite"])
+        self.assertAlmostEqual(cycle["plus_grand_trou_h"], 25.0)
+        self.assertAlmostEqual(cycle["vitesse_24h"], -8.307692307692307)
 
 
     def test_cycle_fractionne_part_du_debut_de_session(self):
