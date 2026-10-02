@@ -189,6 +189,7 @@ Objectif : préparer une évolution sans casser l’enregistrement actuel des ar
 - [x] Ajouter une vitesse sur 24 h pour repérer un ralentissement ou une accélération du séchage.
 - [x] Attribuer une qualité à chaque cycle selon les trous de mesure : bonne, correcte, prudence, interruption longue.
 - [x] Enrichir chaque cycle avec une lecture courte : hausse après arrosage, écart final au départ et retour proche/partiel/persistant dans la zone du capteur.
+- [x] Adapter les alertes d’humidité après un arrosage récent : afficher un suivi post-arrosage au lieu d’une alerte sèche classique.
 - [x] Signaler dans le cycle si le pic ou la dernière mesure tombe après une interruption longue.
 - [x] Ajouter une alerte de comparabilité des cycles selon les données disponibles : quantité d’eau, type d’eau et qualité des mesures.
 - [ ] Étendre plus tard la comparabilité aux conditions non encore structurées : emplacement, lumière, température, substrat.

@@ -744,7 +744,28 @@ def obtenir_derniere_synchronisation_capteur(capteur_id):
     return mesures[0][1]
 
 
-def determiner_etat_humidite(humidite):
+def derniere_session_arrosage_recente(plante_id, heures=48):
+    try:
+        session = database.get_derniere_session_arrosage(plante_id)
+    except Exception:
+        return None
+    if not session:
+        return None
+    date_source = session.get("date_debut") if isinstance(session, dict) else None
+    if not date_source and isinstance(session, dict):
+        premier = session.get("premier")
+        date_source = premier[2] if premier and len(premier) > 2 else None
+    try:
+        date_arrosage = date_source if isinstance(date_source, datetime) else datetime.fromisoformat(str(date_source))
+    except (TypeError, ValueError):
+        return None
+    age_h = (datetime.now() - date_arrosage).total_seconds() / 3600
+    if 0 <= age_h <= heures:
+        return {"session": session, "date": date_arrosage, "age_h": age_h}
+    return None
+
+
+def determiner_etat_humidite(humidite, plante_id=None):
 
     if humidite is None:
         return (
@@ -753,7 +774,15 @@ def determiner_etat_humidite(humidite):
             BG
         )
 
+    arrosage_recent = derniere_session_arrosage_recente(plante_id) if plante_id is not None else None
+
     if humidite < 20:
+        if arrosage_recent:
+            return (
+                "🟠 Suivi post-arrosage : humidité encore basse",
+                ORANGE,
+                LIGHT_ORANGE
+            )
         return (
             "🔴 Humidité très basse",
             RED,
@@ -761,6 +790,12 @@ def determiner_etat_humidite(humidite):
         )
 
     if humidite < 30:
+        if arrosage_recent:
+            return (
+                "🟢 Suivi post-arrosage en cours",
+                GREEN,
+                LIGHT_GREEN
+            )
         return (
             "🟠 Humidité à surveiller",
             ORANGE,
@@ -966,12 +1001,20 @@ def construire_decisions_plante(plante_id, mesure, analyse_lumiere):
     actions = []
     surveillances = []
 
+    arrosage_recent = derniere_session_arrosage_recente(plante_id)
+
     if humidite is None:
         surveillances.append("humidité du sol non mesurée")
     elif humidite < 20:
-        actions.append("arrosage probablement nécessaire")
+        if arrosage_recent:
+            surveillances.append("suivi post-arrosage : humidité encore basse dans la zone du capteur")
+        else:
+            actions.append("arrosage probablement nécessaire")
     elif humidite < 30:
-        surveillances.append("humidité du sol basse")
+        if arrosage_recent:
+            surveillances.append("suivi post-arrosage en cours, sans urgence immédiate")
+        else:
+            surveillances.append("humidité du sol basse")
 
     if temperature is not None and (temperature < 12 or temperature > 30):
         surveillances.append("température à contrôler")
@@ -2493,7 +2536,8 @@ def creer_carte_plante(parent, plante):
     # --------------------------------------------------------
 
     etat, couleur, fond = determiner_etat_humidite(
-        humidite
+        humidite,
+        plante_id
     )
 
     etat_frame = tk.Frame(
