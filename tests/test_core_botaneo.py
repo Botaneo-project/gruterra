@@ -547,6 +547,31 @@ class TestPreparationMiseAJour(unittest.TestCase):
         self.assertEqual(disponible["notes"], "Correction test")
         self.assertEqual(disponible["url"], "https://example.invalid/release")
 
+    def test_diagnostic_mise_a_jour_reste_non_applicatif(self):
+        botaneo_update = importlib.import_module("botaneo_update")
+        with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as dossier:
+            racine = Path(dossier)
+            (racine / "_config").mkdir()
+            (racine / "_security_backups").mkdir()
+            (racine / "plantes.db").write_text("sqlite fictif", encoding="utf-8")
+            diagnostic = botaneo_update.construire_diagnostic_mise_a_jour(racine)
+            texte = botaneo_update.formater_diagnostic_mise_a_jour(diagnostic)
+
+        self.assertEqual(diagnostic["statut_global"], "pret_a_verifier")
+        self.assertFalse(diagnostic["application_autorisee"])
+        self.assertIn("plantes.db", diagnostic["elements_presents"])
+        self.assertIn("Diagnostic de mise à jour Botaneo", texte)
+        self.assertIn("Application automatique autorisée : non", texte)
+
+    def test_diagnostic_mise_a_jour_signale_bloquant(self):
+        botaneo_update = importlib.import_module("botaneo_update")
+        with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as dossier:
+            racine = Path(dossier)
+            diagnostic = botaneo_update.construire_diagnostic_mise_a_jour(racine)
+
+        self.assertEqual(diagnostic["statut_global"], "bloque")
+        self.assertIn("corriger les éléments bloquants", diagnostic["prochaines_actions"][0])
+
     def test_comparer_versions_ne_declenche_jamais_application(self):
         botaneo_update = importlib.import_module("botaneo_update")
 

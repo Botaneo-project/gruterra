@@ -4952,10 +4952,10 @@ def etat_raspberry_a_propos():
 
 def resume_mise_a_jour_a_propos(racine):
     try:
-        plan = botaneo_update.construire_plan_mise_a_jour(racine)
-        return botaneo_update.resume_court_mise_a_jour(plan)
+        diagnostic = botaneo_update.construire_diagnostic_mise_a_jour(racine)
+        return botaneo_update.formater_diagnostic_mise_a_jour(diagnostic)
     except Exception as erreur:
-        return f"Mise à jour : plan indisponible ({erreur})"
+        return f"Mise à jour : diagnostic indisponible ({erreur})"
 
 
 def texte_a_propos():

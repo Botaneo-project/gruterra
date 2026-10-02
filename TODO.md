@@ -228,6 +228,7 @@ Objectif : préparer une évolution sans casser l’enregistrement actuel des ar
 - [x] Préparer une lecture de manifeste de version local pour tester la comparaison de versions avant le branchement GitHub réel.
 - [x] Ajouter un exemple public `version_manifest.example.json` et ignorer le vrai manifeste local.
 - [x] Afficher dans `À propos` les notes et le lien informatif du manifeste local quand ils existent, sans action automatique.
+- [x] Préparer un diagnostic structuré de mise à jour : état global, protections, version, blocages, éléments détectés et prochaines actions.
 - [ ] Afficher plus tard la dernière version disponible depuis GitHub quand la vérification réseau réelle sera ajoutée.
 
 - [x] Installation neuve : créer le schéma principal `plantes`, `capteurs`, `mesures` directement dans `database.py`, avec clés étrangères actives et index utiles.

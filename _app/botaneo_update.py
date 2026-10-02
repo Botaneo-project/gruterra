@@ -194,6 +194,66 @@ def resume_court_mise_a_jour(plan) -> str:
     return "\n".join(lignes)
 
 
+def construire_diagnostic_mise_a_jour(racine) -> dict:
+    """Construit un diagnostic global, lisible par l'interface ou un futur script.
+
+    Le diagnostic reste strictement en lecture seule : il ne télécharge rien, ne
+    modifie aucun fichier et n'autorise jamais l'application automatique.
+    """
+
+    plan = construire_plan_mise_a_jour(racine)
+    verification = plan.get("verification", {})
+    statut_version = plan.get("statut_version", {})
+    elements = plan.get("elements_personnels", [])
+    presents = [element.chemin for element in elements if element.existe]
+    absents = [element.chemin for element in elements if not element.existe]
+
+    statut_global = "pret_a_verifier"
+    if verification.get("statut") == "prudence":
+        statut_global = "prudence"
+    if verification.get("statut") == "bloque":
+        statut_global = "bloque"
+
+    prochaines_actions = [
+        "faire une sauvegarde locale",
+        "vérifier les données personnelles détectées",
+        "relire les notes de version",
+        "demander une validation explicite avant toute application",
+    ]
+    if statut_global == "bloque":
+        prochaines_actions.insert(0, "corriger les éléments bloquants avant toute mise à jour")
+    elif statut_global == "prudence":
+        prochaines_actions.insert(0, "contrôler les avertissements avant de continuer")
+
+    return {
+        "statut_global": statut_global,
+        "application_autorisee": False,
+        "mode": plan.get("mode", "préparation uniquement"),
+        "racine": plan.get("racine"),
+        "version": statut_version,
+        "verification": verification,
+        "elements_presents": presents,
+        "elements_absents": absents,
+        "prochaines_actions": prochaines_actions,
+        "resume": resume_court_mise_a_jour(plan),
+    }
+
+
+def formater_diagnostic_mise_a_jour(diagnostic) -> str:
+    lignes = [
+        "Diagnostic de mise à jour Botaneo",
+        f"Statut global : {diagnostic.get('statut_global', 'inconnu')}",
+        f"Mode : {diagnostic.get('mode', 'préparation uniquement')}",
+        f"Application automatique autorisée : {'oui' if diagnostic.get('application_autorisee') else 'non'}",
+        "",
+        diagnostic.get("resume", "Résumé indisponible."),
+        "",
+        "Prochaines actions :",
+    ]
+    lignes.extend(f"- {action}" for action in diagnostic.get("prochaines_actions", []))
+    return "\n".join(lignes)
+
+
 def formater_plan_mise_a_jour(plan) -> str:
     lignes = [
         "Plan de mise à jour Botaneo",
