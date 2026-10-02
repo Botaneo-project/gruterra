@@ -291,6 +291,8 @@ def lire_manifest_version(chemin_manifest):
         "disponible": True,
         "version": str(version),
         "source": str(chemin),
+        "notes": str(donnees.get("notes", "")),
+        "url": str(donnees.get("url", "")),
         "message": f"Version distante déclarée : {version}",
     }
 
@@ -304,6 +306,8 @@ def construire_statut_version_depuis_manifest(version_locale, chemin_manifest):
         return statut
     statut = construire_statut_version(version_locale, manifest.get("version"))
     statut["source"] = manifest.get("source")
+    statut["notes"] = manifest.get("notes", "")
+    statut["url"] = manifest.get("url", "")
     return statut
 
 
