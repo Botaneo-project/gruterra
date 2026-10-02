@@ -160,6 +160,43 @@ class TestCyclesArrosage(unittest.TestCase):
         self.assertEqual(cycle["derniere_humidite"], 24)
 
 
+class TestAnalyseLumiere(unittest.TestCase):
+    def test_construit_expositions_balcon_et_filtre_par_jour(self):
+        analyse_lumiere = importlib.import_module("services.analyse_lumiere")
+        evenements = [
+            (1, 1, "2026-09-25T10:00:00", "exposition", "Sortie balcon"),
+            (2, 1, "2026-09-25T12:30:00", "exposition", "Retour intérieur"),
+            (3, 1, "2026-09-26T09:00:00", "exposition", "Sortie balcon"),
+        ]
+
+        expositions = analyse_lumiere.construire_expositions_balcon(evenements)
+        expositions_25 = analyse_lumiere.filtrer_expositions_jour(expositions, datetime(2026, 9, 25).date())
+        expositions_26 = analyse_lumiere.filtrer_expositions_jour(expositions, datetime(2026, 9, 26).date())
+
+        self.assertEqual(len(expositions), 2)
+        self.assertEqual(expositions[0][0].isoformat(), "2026-09-25T10:00:00")
+        self.assertEqual(expositions[0][1].isoformat(), "2026-09-25T12:30:00")
+        self.assertIsNone(expositions[1][1])
+        self.assertEqual(expositions_25, [expositions[0]])
+        self.assertEqual(expositions_26, [expositions[1]])
+
+    def test_resume_expositions_jour_separe_interieur_et_balcon(self):
+        analyse_lumiere = importlib.import_module("services.analyse_lumiere")
+        expositions = [(datetime(2026, 9, 25, 10, 0), datetime(2026, 9, 25, 12, 0))]
+        mesures = [
+            (1, "2026-09-25T09:00:00", 24.0, 20, 100, 70, "", 1),
+            (2, "2026-09-25T10:30:00", 24.1, 20, 18000, 71, "", 1),
+            (3, "2026-09-25T13:00:00", 24.2, 20, 200, 72, "", 1),
+        ]
+
+        resume = analyse_lumiere.resume_expositions_jour(mesures, expositions)
+
+        self.assertIn("10:00 → 12:00", resume)
+        self.assertIn("Hors balcon", resume)
+        self.assertIn("Pendant balcon : 1 mesure(s)", resume)
+        self.assertIn("pics lumineux", resume)
+
+
 class TestImportRaspberry(BaseTemporaireMixin, unittest.TestCase):
     def test_import_batch_est_idempotent_pour_mesure_courante(self):
         db = self.database

@@ -76,7 +76,7 @@ Ce fichier sert à garder une trace claire des idées et des prochaines étapes.
 - [ ] Étendre plus tard les tests à l’analyse séparée de chaque fraction d’une session.
 - [x] Extraire une première partie de la logique d’arrosage vers `_app/services/analyse_arrosage.py` : cycles, sessions, texte d’analyse et résumé, avec tests de non-régression.
 - [ ] Continuer plus tard l’extraction des autres morceaux d’analyse plante liés à l’arrosage si l’interface évolue.
-- [ ] Extraire ensuite la logique lumière vers `_app/services/analyse_lumiere.py` : intérieur, balcon, future lampe horticole, hors balcon.
+- [x] Extraire une première partie de la logique lumière vers `_app/services/analyse_lumiere.py` : expositions balcon, filtrage par jour/période, séparation intérieur/balcon dans les résumés.
 - [ ] Préparer progressivement la réduction de `interface.py` et `vue_historique.py`, sans découpage brutal de l’interface graphique.
 - [x] Documenter clairement que la page web Raspberry en HTTP est acceptable uniquement sur réseau local privé et ne doit pas être exposée à Internet.
 - [ ] Nettoyer les doublons et fichiers anciens seulement après stabilisation et vérification qu’ils ne servent plus de référence.
@@ -155,7 +155,7 @@ Objectif : préparer une évolution sans casser l’enregistrement actuel des ar
 - [x] Ne plus afficher seulement `arrosage 55 ml` si cet apport appartient à une session totale de 95 ml.
 - [x] Conserver les données originales en base : le regroupement est logique, pas une fusion destructive des lignes.
 - [x] Garantir la cohérence temporelle : l’analyse post-arrosage part du début de session, une mesure antérieure à un complément n’est pas attribuée à ce complément.
-- [ ] Continuer l’amélioration de la lumière contextualisée : intérieur, balcon, future lampe horticole, statistiques hors balcon.
+- [ ] Continuer l’amélioration de la lumière contextualisée : durées par plages de luminosité, exposition cumulée quotidienne, future lampe horticole, comparaison intérieur/balcon.
 - [ ] Conserver les indicateurs de qualité des données pour éviter que les périodes très denses faussent les moyennes.
 - [x] Distinguer dans la synchronisation `synchronisation terminée` et `nouvelle mesure effectivement acquise`.
 - [x] Répéter dans les analyses que le Mi Flora mesure une zone du substrat et ne prouve pas à lui seul l’état de toute la motte.
