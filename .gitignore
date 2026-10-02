@@ -6,6 +6,7 @@ _config/
 .env.*
 !.env.example
 *.local.json
+version_manifest.json
 netatmo_config.json
 netatmo_config.json.bak
 

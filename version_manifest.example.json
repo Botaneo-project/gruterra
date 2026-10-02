@@ -1,0 +1,5 @@
+{
+  "version": "0.1.0",
+  "notes": "Exemple public. Le vrai manifeste distant/local sera ajouté plus tard et ne déclenchera aucune mise à jour automatique.",
+  "mise_a_jour_automatique": false
+}
