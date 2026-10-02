@@ -198,6 +198,65 @@ class TestImportRaspberry(BaseTemporaireMixin, unittest.TestCase):
         self.assertEqual(mesures[0][7], capteur_id)
 
 
+    def test_import_batch_historique_stocke_archive_et_dedoublonne(self):
+        db = self.database
+        db.initialiser_schema()
+        plante_id = db.ajouter_plante("Crassula", "Crassula ovata")
+        capteur_id = db.ajouter_capteur("Mi Flora", "AA:BB:CC:DD:EE:FF", plante_id)
+        raspberry_sync = importlib.import_module("raspberry_sync")
+        config = {
+            "device_id": "pi-test",
+            "sensors": ["AA:BB:CC:DD:EE:FF"],
+        }
+        sensor_seconds = 1_908_000
+        frame = bytearray(16)
+        frame[0:4] = sensor_seconds.to_bytes(4, "little")
+        frame[4:6] = int(25.1 * 10).to_bytes(2, "little", signed=True)
+        frame[7:11] = int(311).to_bytes(4, "little")
+        frame[11] = 26
+        frame[12:14] = int(90).to_bytes(2, "little")
+        raw = frame.hex()
+        row = {
+            "device_id": "pi-test",
+            "measurement_id": "h-001",
+            "schema_version": 1,
+            "kind": "history",
+            "sensor_id": "AA:BB:CC:DD:EE:FF",
+            "sensor_seconds": sensor_seconds,
+            "measured_at": "2026-09-20T13:39:29+00:00",
+            "time_quality": "estimated_from_sensor_clock",
+            "raw": raw,
+            "temperature_c": 25.1,
+            "moisture_percent": 26,
+            "illuminance_lux": 311,
+            "conductivity_us_cm": 90,
+        }
+        batch = {"version": 1, "device_id": "pi-test", "rows": [row]}
+
+        premier, ack1 = raspberry_sync.import_batch(db.DB_PATH, batch, config)
+        second, ack2 = raspberry_sync.import_batch(db.DB_PATH, batch, config)
+
+        self.assertEqual(premier["added"], 1)
+        self.assertEqual(premier["history_added"], 1)
+        self.assertEqual(second["duplicates"], 1)
+        self.assertEqual(second["history_duplicates"], 1)
+        self.assertEqual(ack1, ack2)
+        mesures = db.get_mesures(plante_id=plante_id, limite=10)
+        self.assertEqual(len(mesures), 1)
+        self.assertEqual(mesures[0][3], 26)
+        self.assertEqual(mesures[0][7], capteur_id)
+        conn = db.get_connection()
+        try:
+            archives = conn.execute("SELECT capteur_id, timestamp_capteur, raw_hex, statut FROM historique_miflora_brut").fetchall()
+        finally:
+            conn.close()
+        self.assertEqual(len(archives), 1)
+        self.assertEqual(archives[0][0], capteur_id)
+        self.assertEqual(archives[0][1], sensor_seconds)
+        self.assertEqual(archives[0][2], raw)
+        self.assertEqual(archives[0][3], "raspberry_estimated_from_sensor_clock")
+
+
 class TestHistoriqueZerosSuspects(unittest.TestCase):
     def test_zero_humidite_isole_est_exclu_du_graphique_mais_identifie(self):
         vue_historique = importlib.import_module("vue_historique")
