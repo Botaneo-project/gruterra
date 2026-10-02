@@ -1,4 +1,5 @@
 import os
+import json
 from instance_botaneo import exiger_instance_unique
 exiger_instance_unique(graphique=True)
 
@@ -4958,6 +4959,24 @@ def resume_mise_a_jour_a_propos(racine):
         return f"Mise à jour : diagnostic indisponible ({erreur})"
 
 
+def texte_diagnostic_update_json_a_propos():
+    racine = Path(__file__).resolve().parent.parent
+    try:
+        diagnostic = botaneo_update.construire_diagnostic_mise_a_jour(racine)
+        return botaneo_update.exporter_diagnostic_mise_a_jour_json(diagnostic)
+    except Exception as erreur:
+        return json.dumps(
+            {
+                "erreur": "diagnostic mise à jour indisponible",
+                "message": str(erreur),
+                "application_autorisee": False,
+            },
+            ensure_ascii=False,
+            indent=2,
+            sort_keys=True,
+        )
+
+
 def texte_a_propos():
     racine = Path(__file__).resolve().parent.parent
     lignes = [
@@ -5036,6 +5055,11 @@ def ouvrir_a_propos():
         root.clipboard_append(texte_a_propos())
         status_var.set("Informations À propos copiées dans le presse-papiers")
 
+    def copier_diagnostic_update_json():
+        root.clipboard_clear()
+        root.clipboard_append(texte_diagnostic_update_json_a_propos())
+        status_var.set("Diagnostic mise à jour JSON copié dans le presse-papiers")
+
     tk.Button(
         boutons,
         text="📋 Copier",
@@ -5046,6 +5070,17 @@ def ouvrir_a_propos():
         relief="flat",
         cursor="hand2"
     ).pack(side="left")
+
+    tk.Button(
+        boutons,
+        text="Copier diagnostic update JSON",
+        command=copier_diagnostic_update_json,
+        bg=BG,
+        fg=TEXT,
+        activebackground=BG,
+        relief="flat",
+        cursor="hand2"
+    ).pack(side="left", padx=(8, 0))
 
     tk.Button(
         boutons,
