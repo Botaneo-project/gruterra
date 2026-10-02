@@ -106,9 +106,9 @@ Ce fichier sert à garder une trace claire des idées et des prochaines étapes.
 - Garder le seuil batterie modifiable dans les paramètres.
 - Préparer les alertes par plante, sélectionnables depuis l’interface.
 - Prévoir les rappels par e-mail pour les plantes sans capteur ou hors domicile.
-- Utiliser Outlook local plus tard, puisque le PC est déjà configuré.
-- Mémoriser la dernière alerte envoyée pour éviter un e-mail à chaque synchronisation.
-- Ajouter un délai minimal entre deux alertes identiques.
+- SMTP sécurisé local prévu comme piste principale ; Outlook local reste une option secondaire.
+- Mémoire de dernière alerte préparée pour éviter un e-mail à chaque synchronisation.
+- Délai minimal entre deux alertes identiques préparé en mode test.
 - Ne pas envoyer d’e-mail automatiquement tant que le destinataire et les règles ne sont pas validés.
 
 ### 2. Améliorer l’interface quand il y aura beaucoup de plantes
@@ -404,11 +404,11 @@ La remise en attente a été effectuée uniquement sur une copie de la base Pi. 
 
 ## Alertes e-mail sécurisées
 - [x] Préparer le terrain pour un SMTP sécurisé local : exemple public, fichier local ignoré, module de préparation en mode aperçu sans envoi automatique.
-- [ ] Garder Outlook local comme option secondaire, mais ne pas en dépendre : l'application Outlook ou la session Windows peuvent ne pas être ouvertes.
+- [x] Garder Outlook local comme option secondaire dans le cadrage, sans en dépendre : l'application Outlook ou la session Windows peuvent ne pas être ouvertes.
 - [x] Préparer la mémoire locale de dernière alerte par plante/type/titre pour éviter un e-mail à chaque synchronisation.
 - [x] Ajouter le calcul du délai minimal entre deux alertes identiques, en mode test sans envoi.
-- [ ] Ne jamais envoyer d'e-mail automatiquement tant que le destinataire, les plantes concernées et les règles d'alerte ne sont pas validés explicitement.
-- [ ] Prévoir d'abord un mode test qui affiche le mail préparé sans l'envoyer.
+- [x] Conserver le comportement actuel sans envoi automatique tant que le destinataire, les plantes concernées et les règles d'alerte ne sont pas validés explicitement.
+- [x] Prévoir d'abord un mode test qui affiche le mail préparé sans l'envoyer.
 
 
 - [x] Brancher le centre d'alertes sur un aperçu e-mail sans envoi réel.

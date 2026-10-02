@@ -238,7 +238,7 @@ meteo_etat = CacheMeteo(NETATMO_CACHE)
 def charger_config_alertes():
     config = {
         "email_actif": False,
-        "email_mode": "outlook",
+        "email_mode": "preview",
         "email_destinataire": "",
         "seuil_batterie": 50,
         "delai_min_jours": 1,
@@ -269,8 +269,8 @@ def charger_config_alertes():
         plantes = []
     config["plantes_rappel_email"] = sorted({int(pid) for pid in plantes if str(pid).isdigit()})
     config["email_actif"] = bool(config.get("email_actif", False))
-    if config.get("email_mode") != "outlook":
-        config["email_mode"] = "outlook"
+    if config.get("email_mode") not in {"preview", "smtp", "outlook"}:
+        config["email_mode"] = "preview"
     if not isinstance(config.get("email_destinataire"), str):
         config["email_destinataire"] = ""
     return config
@@ -5626,7 +5626,7 @@ def ouvrir_parametres():
     tk.Label(alertes_bloc, text="Alertes", font=("Segoe UI", 11, "bold"), fg=ORANGE, bg=LIGHT_ORANGE).pack(anchor="w", padx=12, pady=(10, 4))
 
     email_var = tk.BooleanVar(value=bool(alertes_config.get("email_actif", False)))
-    tk.Checkbutton(alertes_bloc, text="Préparer les alertes e-mail via Outlook", variable=email_var,
+    tk.Checkbutton(alertes_bloc, text="Préparer les alertes e-mail en mode test", variable=email_var,
                   bg=LIGHT_ORANGE, fg=TEXT, activebackground=LIGHT_ORANGE,
                   activeforeground=TEXT, selectcolor=CARD).pack(anchor="w", padx=12, pady=(0, 6))
 
@@ -5656,8 +5656,8 @@ def ouvrir_parametres():
                       bg=LIGHT_ORANGE, fg=TEXT, activebackground=LIGHT_ORANGE,
                       activeforeground=TEXT, selectcolor=CARD).pack(anchor="w")
 
-    tk.Label(alertes_bloc, text="Outlook est prévu comme mode d'envoi. Aucun mot de passe e-mail ne sera stocké dans Botaneo.",
-             bg=LIGHT_ORANGE, fg=SECONDARY, font=("Segoe UI", 8), wraplength=420,
+    tk.Label(alertes_bloc, text="Mode test uniquement : Botaneo prépare un aperçu. Le SMTP sécurisé local sera prioritaire plus tard ; Outlook restera une option secondaire si nécessaire.",
+             bg=LIGHT_ORANGE, fg=SECONDARY, font=("Segoe UI", 8), wraplength=520,
              justify="left").pack(anchor="w", padx=12, pady=(0, 8))
 
     erreur = tk.StringVar()
@@ -5739,7 +5739,7 @@ def ouvrir_parametres():
             return
 
         alertes_config["email_actif"] = bool(email_var.get())
-        alertes_config["email_mode"] = "outlook"
+        alertes_config["email_mode"] = "preview"
         alertes_config["email_destinataire"] = destinataire
         alertes_config["seuil_batterie"] = seuil_batterie
         alertes_config["plantes_rappel_email"] = [pid for pid, var in plantes_alertes_vars if var.get()]
