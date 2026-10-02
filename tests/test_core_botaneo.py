@@ -456,6 +456,19 @@ class TestPreparationMiseAJour(unittest.TestCase):
         self.assertTrue(elements["_app/data"].existe)
         self.assertIn("préserver _config", texte)
         self.assertIn("Interdit sans validation explicite", texte)
+        self.assertIn("Vérification distante non configurée", texte)
+
+    def test_comparer_versions_ne_declenche_jamais_application(self):
+        botaneo_update = importlib.import_module("botaneo_update")
+
+        disponible = botaneo_update.comparer_versions("0.1.0", "0.2.0")
+        stable = botaneo_update.comparer_versions("0.1.0-dev", "0.1.0")
+        a_jour = botaneo_update.comparer_versions("0.1.0", "0.1.0")
+
+        self.assertEqual(disponible["statut"], "mise_a_jour_disponible")
+        self.assertEqual(stable["statut"], "version_stable_disponible")
+        self.assertEqual(a_jour["statut"], "a_jour")
+        self.assertFalse(disponible["application_autorisee"])
 
 
 
