@@ -58,6 +58,31 @@ def detecter_element_personnel(racine, chemin_relatif) -> ElementPersonnel:
     )
 
 
+def construire_separation_programme_donnees(racine) -> dict:
+    racine = Path(racine)
+    return {
+        "programme_actuel": [
+            "_app",
+            "raspberry",
+            "tests",
+            "requirements.txt",
+            "README.md",
+            "TODO.md",
+        ],
+        "donnees_utilisateur_actuelles": list(ELEMENTS_PERSONNELS),
+        "donnees_utilisateur_futures": [
+            "dossier utilisateur Botaneo dédié",
+            "base SQLite réelle",
+            "configuration privée",
+            "secrets et tokens",
+            "préférences locales",
+            "sauvegardes et caches runtime",
+        ],
+        "principe": "le programme pourra être remplacé, les données utilisateur devront rester conservées",
+        "racine_actuelle": str(racine),
+    }
+
+
 def construire_plan_mise_a_jour(racine) -> dict:
     """Construit un plan de mise à jour en lecture seule."""
 
@@ -67,6 +92,7 @@ def construire_plan_mise_a_jour(racine) -> dict:
     return {
         "mode": "préparation uniquement",
         "racine": str(racine),
+        "separation_programme_donnees": construire_separation_programme_donnees(racine),
         "elements_personnels": elements,
         "fichiers_exemple": exemples,
         "statut_version": construire_statut_version("0.1.0-dev"),
@@ -92,6 +118,11 @@ def formater_plan_mise_a_jour(plan) -> str:
         f"Mode : {plan.get('mode', 'préparation')}",
         f"Racine : {plan.get('racine', 'inconnue')}",
         plan.get("statut_version", {}).get("message", "Vérification de version non configurée."),
+        "",
+        "Séparation programme / données :",
+        f"- principe : {plan.get('separation_programme_donnees', {}).get('principe', 'à définir')}",
+        "- programme remplaçable : " + ", ".join(plan.get("separation_programme_donnees", {}).get("programme_actuel", [])),
+        "- données à conserver : " + ", ".join(plan.get("separation_programme_donnees", {}).get("donnees_utilisateur_actuelles", [])),
         "",
         "Éléments personnels à préserver :",
     ]

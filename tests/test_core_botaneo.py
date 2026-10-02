@@ -457,6 +457,17 @@ class TestPreparationMiseAJour(unittest.TestCase):
         self.assertIn("préserver _config", texte)
         self.assertIn("Interdit sans validation explicite", texte)
         self.assertIn("Vérification distante non configurée", texte)
+        self.assertIn("Séparation programme / données", texte)
+        self.assertIn("programme remplaçable", texte)
+
+    def test_separation_programme_donnees_identifie_les_zones(self):
+        botaneo_update = importlib.import_module("botaneo_update")
+
+        separation = botaneo_update.construire_separation_programme_donnees(Path("C:/Plantes"))
+
+        self.assertIn("_app", separation["programme_actuel"])
+        self.assertIn("_config", separation["donnees_utilisateur_actuelles"])
+        self.assertIn("base SQLite réelle", separation["donnees_utilisateur_futures"])
 
     def test_comparer_versions_ne_declenche_jamais_application(self):
         botaneo_update = importlib.import_module("botaneo_update")

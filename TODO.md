@@ -217,7 +217,8 @@ Objectif : préparer une évolution sans casser l’enregistrement actuel des ar
 - [x] Préparer un plan de protection avant mise à jour : base locale, configuration, secrets ignorés, sauvegardes et données runtime.
 - [x] Distinguer dans le plan de mise à jour le programme et les données personnelles : base réelle, tokens, favoris, paramètres Raspberry, alertes.
 - [x] Lister explicitement les éléments personnels à conserver pendant les mises à jour : données, configuration locale, favoris, secrets, sauvegardes et caches locaux.
-- [ ] Séparer clairement le dossier programme du dossier utilisateur pour faciliter les mises à jour sans perte de données.
+- [x] Préparer dans le plan de mise à jour la séparation logique entre programme remplaçable et données utilisateur à préserver.
+- [ ] Déplacer réellement plus tard les données utilisateur vers un dossier dédié, avec migration et sauvegarde.
 - [x] Préparer le comparateur de versions pour un futur mode simple : version locale / version distante, sans application automatique.
 - [ ] Brancher plus tard la vérification distante GitHub et proposer la mise à jour seulement après validation.
 - [ ] Prévoir un mode avancé plus tard : script de mise à jour Windows et script de mise à jour Raspberry.

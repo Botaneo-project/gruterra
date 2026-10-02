@@ -236,7 +236,7 @@ Le fichier `.gitignore` exclut notamment :
 
 ## Mise à jour future
 
-Botaneo prépare un futur système de mise à jour, mais aucun auto-upgrade réel n’est lancé pour l’instant. Le module `_app/botaneo_update.py` construit seulement un plan de protection : base `plantes.db`, dossier `_config/`, sauvegardes locales, `_app/data/` et fichiers privés doivent être conservés avant toute mise à jour. Toute mise à jour devra rester précédée d’une sauvegarde locale et d’une validation explicite.
+Botaneo prépare un futur système de mise à jour, mais aucun auto-upgrade réel n’est lancé pour l’instant. Le module `_app/botaneo_update.py` construit seulement un plan de protection : base `plantes.db`, dossier `_config/`, sauvegardes locales, `_app/data/` et fichiers privés doivent être conservés avant toute mise à jour. Le plan distingue aussi le programme remplaçable des données utilisateur à préserver, afin de préparer une future séparation propre entre installation et dossier personnel. Toute mise à jour devra rester précédée d’une sauvegarde locale et d’une validation explicite.
 
 ## Maintenance
 
