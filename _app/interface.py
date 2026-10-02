@@ -22,6 +22,7 @@ from vue_historique import ouvrir_historique
 import sync_miflora
 import raspberry_sync
 import botaneo_email
+import botaneo_update
 from capteurs import netatmo
 import previsions_meteo
 from suivi_raspberry_ui import SuiviRaspberry
@@ -4949,6 +4950,23 @@ def etat_raspberry_a_propos():
         return "Configuration présente, à vérifier"
 
 
+def resume_mise_a_jour_a_propos(racine):
+    try:
+        plan = botaneo_update.construire_plan_mise_a_jour(racine)
+    except Exception as erreur:
+        return f"Mise à jour : plan indisponible ({erreur})"
+    presents = [element.chemin for element in plan.get("elements_personnels", []) if element.existe]
+    absents = [element.chemin for element in plan.get("elements_personnels", []) if not element.existe]
+    lignes = [
+        "Mise à jour future : préparation uniquement, aucune mise à jour automatique active",
+        "- à préserver : " + (", ".join(presents) if presents else "aucun élément personnel détecté"),
+    ]
+    if absents:
+        lignes.append("- non présents sur ce poste : " + ", ".join(absents))
+    lignes.append("- règle : sauvegarde locale et validation explicite avant toute application")
+    return "\n".join(lignes)
+
+
 def texte_a_propos():
     racine = Path(__file__).resolve().parent.parent
     lignes = [
@@ -4971,6 +4989,8 @@ def texte_a_propos():
         "- historique graphique avec qualité des données",
         "",
         f"Raspberry : {etat_raspberry_a_propos()}",
+        "",
+        resume_mise_a_jour_a_propos(racine),
         "",
         "Sécurité :",
         "- les tokens, bases réelles, sauvegardes et fichiers _config restent locaux",

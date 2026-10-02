@@ -220,7 +220,8 @@ Objectif : préparer une évolution sans casser l’enregistrement actuel des ar
 - [ ] Séparer clairement le dossier programme du dossier utilisateur pour faciliter les mises à jour sans perte de données.
 - [ ] Prévoir un mode simple : vérifier la version disponible sur GitHub, proposer la mise à jour, puis appliquer seulement après validation.
 - [ ] Prévoir un mode avancé plus tard : script de mise à jour Windows et script de mise à jour Raspberry.
-- [ ] Afficher clairement la version installée et la dernière version disponible dans l’interface.
+- [x] Afficher dans `À propos` la version locale, la révision Git et le résumé du plan de protection avant mise à jour.
+- [ ] Afficher plus tard la dernière version disponible depuis GitHub quand la vérification réseau sera ajoutée.
 
 - [x] Installation neuve : créer le schéma principal `plantes`, `capteurs`, `mesures` directement dans `database.py`, avec clés étrangères actives et index utiles.
 
