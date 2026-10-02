@@ -481,6 +481,18 @@ class TestPreparationMiseAJour(unittest.TestCase):
         self.assertNotIn("email.local.json", texte)
         self.assertNotIn("raspberry.local.json", texte)
 
+    def test_verification_plan_bloque_sans_separation_programme_donnees(self):
+        botaneo_update = importlib.import_module("botaneo_update")
+        plan = {
+            "elements_personnels": [],
+            "separation_programme_donnees": {},
+        }
+
+        verification = botaneo_update.verifier_plan_mise_a_jour(plan)
+
+        self.assertEqual(verification["statut"], "bloque")
+        self.assertIn("séparation programme/données absente", verification["message"])
+
     def test_verification_plan_mise_a_jour_pret_prudence_bloque(self):
         botaneo_update = importlib.import_module("botaneo_update")
         with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as dossier:

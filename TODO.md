@@ -232,6 +232,7 @@ Objectif : préparer une évolution sans casser l’enregistrement actuel des ar
 - [x] Préparer un export JSON en mémoire du diagnostic de mise à jour, sans écriture automatique de fichier.
 - [x] Ajouter dans `À propos` un bouton pour copier le diagnostic de mise à jour JSON.
 - [x] Remplacer les codes techniques du diagnostic update par des libellés plus lisibles dans l’affichage utilisateur.
+- [x] Bloquer le diagnostic update si la séparation programme/données ou la liste des données personnelles à préserver manque dans le plan.
 - [ ] Afficher plus tard la dernière version disponible depuis GitHub quand la vérification réseau réelle sera ajoutée.
 
 - [x] Installation neuve : créer le schéma principal `plantes`, `capteurs`, `mesures` directement dans `database.py`, avec clés étrangères actives et index utiles.

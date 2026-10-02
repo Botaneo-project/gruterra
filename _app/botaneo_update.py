@@ -128,6 +128,16 @@ def verifier_plan_mise_a_jour(plan) -> dict:
     avertissements = []
     bloquants = []
 
+    separation = plan.get("separation_programme_donnees", {})
+    if not separation.get("programme_actuel") or not separation.get("donnees_utilisateur_actuelles"):
+        bloquants.append("séparation programme/données absente du plan")
+    else:
+        donnees_attendues = set(ELEMENTS_PERSONNELS)
+        donnees_plan = set(separation.get("donnees_utilisateur_actuelles", []))
+        manquantes = sorted(donnees_attendues - donnees_plan)
+        if manquantes:
+            bloquants.append("données personnelles absentes du plan : " + ", ".join(manquantes))
+
     base = elements.get("plantes.db")
     if not base or not base.existe or base.type != "fichier":
         bloquants.append("base plantes.db introuvable")
