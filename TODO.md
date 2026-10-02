@@ -182,7 +182,7 @@ Objectif : préparer une évolution sans casser l’enregistrement actuel des ar
 - [x] Centre d’alertes : afficher le délai lisible du prochain arrosage et préparer le rappel mail une semaine avant.
 - [ ] Améliorer la phrase de synthèse globale, par exemple : `Votre Crassula devrait nécessiter une intervention dans les prochaines 24 h.`
 - [ ] Calculer les tendances d’humidité du sol avec plus de recul.
-- [ ] Distinguer tendance globale, vitesse de séchage entre arrosages et réponse à l’arrosage.
+- [x] Distinguer dans l’analyse des cycles la réponse à l’arrosage, la vitesse de séchage après pic et la tendance récente sur 24 h.
 - [x] Construire une analyse par cycle d’arrosage : humidité initiale, réponse à l’arrosage, pic observé, phase de séchage, retour au niveau initial.
 - [x] Reformuler l’analyse post-arrosage pour éviter de confondre zone du capteur et motte complète : `Retour au niveau d’humidité initial détecté dans la zone du capteur. Le Mi Flora ne permet pas de confirmer le séchage complet de la motte.`
 - [x] Ajouter aux événements d’arrosage des champs facultatifs : volume total, type d’eau, méthode de répartition, écoulement observé, eau stagnante dans le cache-pot, état visuel du substrat et commentaire libre.

@@ -216,6 +216,32 @@ def vitesse_humidite_sur_24h(humidites):
     return (derniere_humidite - humidite_ref) / heures * 24
 
 
+def qualifier_vitesse_sechage(sechage):
+    if sechage is None:
+        return "vitesse de séchage non calculable"
+    if sechage < -8:
+        return "séchage rapide après le pic"
+    if sechage < -3:
+        return "séchage progressif après le pic"
+    if sechage < -0.5:
+        return "séchage lent après le pic"
+    if sechage <= 0.5:
+        return "humidité presque stable après le pic"
+    return "humidité encore en hausse après le pic"
+
+
+def resumer_indicateurs_cycle(cycle):
+    return {
+        "reponse_arrosage": cycle.get("lecture_courte") or "Réponse à l’arrosage non interprétable.",
+        "sechage_apres_pic": qualifier_vitesse_sechage(cycle.get("sechage")),
+        "tendance_24h": (
+            f"tendance sur 24 h : {formater_nombre(cycle.get('vitesse_24h'))} pt/j"
+            if cycle.get("vitesse_24h") is not None
+            else "tendance sur 24 h non calculable"
+        ),
+    }
+
+
 def interpreter_reponse_cycle(reference_depart, premiere_humidite, pic_humidite, derniere_humidite, qualite_niveau):
     if premiere_humidite is None or pic_humidite is None or derniere_humidite is None:
         return {
@@ -315,10 +341,11 @@ def mesurer_cycle_arrosage(arrosage, prochain_arrosage, mesures):
         f"avant {avant_txt} → après {formater_nombre(premiere_humidite)} → pic {formater_nombre(pic_humidite)} → fin {formater_nombre(derniere_humidite)} % · "
         f"hausse +{formater_nombre(interpretation['hausse_apres_arrosage'])} pt · retour {formater_nombre(interpretation['ecart_final_depart'])} pt · qualité {qualite}"
     )
+    lecture_sechage = qualifier_vitesse_sechage(sechage)
     if sechage is not None:
-        texte += f" · baisse après pic {formater_nombre(baisse_apres_pic)} pt ({formater_nombre(sechage)} pt/j)"
+        texte += f" · baisse après pic {formater_nombre(baisse_apres_pic)} pt ({formater_nombre(sechage)} pt/j, {lecture_sechage})"
     else:
-        texte += " · baisse après pic non calculable"
+        texte += f" · {lecture_sechage}"
     if vitesse_24h is not None:
         texte += f" · vitesse 24 h {formater_nombre(vitesse_24h)} pt/j"
     if qualite_detail["avertissements"]:
@@ -350,6 +377,7 @@ def mesurer_cycle_arrosage(arrosage, prochain_arrosage, mesures):
         "hausse_apres_arrosage": interpretation["hausse_apres_arrosage"],
         "ecart_final_depart": interpretation["ecart_final_depart"],
         "lecture_courte": interpretation["lecture_courte"],
+        "lecture_sechage": lecture_sechage,
         "qualite": qualite,
     }
 
@@ -383,13 +411,16 @@ def analyser_cycles_arrosage(cycles):
     baisse = recent.get("baisse_apres_pic")
     retour = recent["derniere_humidite"] - reference_depart
     qualite = recent.get("qualite") or "à vérifier"
+    indicateurs = resumer_indicateurs_cycle(recent)
     morceaux = [
         "Analyse cycles : lecture simple du dernier cycle",
-        recent.get("lecture_courte", "lecture courte non disponible"),
+        "réponse à l’arrosage : " + indicateurs["reponse_arrosage"],
         f"avant {formater_nombre(reference_depart)} %",
         f"pic {formater_nombre(recent['pic_humidite'])} %",
         f"hausse observée +{formater_nombre(hausse)} point(s)",
         f"fin {formater_nombre(retour)} point(s) par rapport à l'avant-arrosage",
+        "séchage après pic : " + indicateurs["sechage_apres_pic"],
+        "tendance récente : " + indicateurs["tendance_24h"],
         f"qualité {qualite}",
     ]
     if baisse is not None:
@@ -397,9 +428,9 @@ def analyser_cycles_arrosage(cycles):
     else:
         morceaux.append("baisse après pic non calculable")
     if recent.get("sechage") is not None:
-        morceaux.append(f"vitesse après pic {formater_nombre(recent['sechage'])} pt/j")
+        morceaux.append(f"vitesse de séchage après pic {formater_nombre(recent['sechage'])} pt/j")
     if recent.get("vitesse_24h") is not None:
-        morceaux.append(f"vitesse sur 24 h {formater_nombre(recent['vitesse_24h'])} pt/j")
+        morceaux.append(f"tendance sur les dernières 24 h {formater_nombre(recent['vitesse_24h'])} pt/j")
     if recent.get("avertissements_qualite"):
         morceaux.append("points à vérifier : " + ", ".join(recent["avertissements_qualite"]))
 

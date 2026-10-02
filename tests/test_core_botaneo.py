@@ -186,6 +186,7 @@ class TestCyclesArrosage(unittest.TestCase):
         self.assertEqual(cycle["hausse_apres_arrosage"], 8)
         self.assertEqual(cycle["ecart_final_depart"], 4)
         self.assertIn("retour partiel", cycle["lecture_courte"])
+        self.assertEqual(cycle["lecture_sechage"], "séchage progressif après le pic")
         self.assertAlmostEqual(cycle["sechage"], -4.0)
         self.assertEqual(cycle["qualite_niveau"], "prudence")
         self.assertEqual(cycle["plus_grand_trou_h"], 24.0)
@@ -241,6 +242,28 @@ class TestCyclesArrosage(unittest.TestCase):
         self.assertEqual(retour["ecart_final_depart"], 1)
         self.assertIn("Retour proche", retour["lecture_courte"])
         self.assertIn("Réponse faible", faible["lecture_courte"])
+
+    def test_analyse_cycles_distingue_reponse_sechage_et_tendance(self):
+        analyse_arrosage = importlib.import_module("services.analyse_arrosage")
+        cycles = [{
+            "humidite_avant": 18,
+            "premiere_humidite": 24,
+            "pic_humidite": 30,
+            "derniere_humidite": 19,
+            "baisse_apres_pic": 11,
+            "sechage": -5.5,
+            "vitesse_24h": -2.2,
+            "lecture_courte": "Retour proche du niveau de départ dans la zone du capteur.",
+            "qualite": "bonne",
+            "qualite_niveau": "bonne",
+        }]
+
+        texte = analyse_arrosage.analyser_cycles_arrosage(cycles)
+
+        self.assertIn("réponse à l’arrosage", texte)
+        self.assertIn("séchage après pic", texte)
+        self.assertIn("tendance sur les dernières 24 h", texte)
+        self.assertIn("zone du capteur", texte)
 
     def test_cycle_signale_interruption_longue_et_vitesse_24h(self):
         analyse_arrosage = importlib.import_module("services.analyse_arrosage")
