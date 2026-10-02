@@ -89,7 +89,7 @@ def construire_plan_mise_a_jour(racine) -> dict:
     racine = Path(racine)
     elements = [detecter_element_personnel(racine, item) for item in ELEMENTS_PERSONNELS]
     exemples = [str(item) for item in FICHIERS_CONFIG_EXEMPLE if (racine / item).exists()]
-    return {
+    plan = {
         "mode": "préparation uniquement",
         "racine": str(racine),
         "separation_programme_donnees": construire_separation_programme_donnees(racine),
@@ -110,6 +110,57 @@ def construire_plan_mise_a_jour(racine) -> dict:
             "lancer un git reset ou un nettoyage destructeur",
         ],
     }
+    plan["verification"] = verifier_plan_mise_a_jour(plan)
+    return plan
+
+
+def verifier_plan_mise_a_jour(plan) -> dict:
+    """Vérifie si le plan contient les protections minimales avant une future mise à jour.
+
+    Cette vérification reste informative : elle ne lance aucune mise à jour et ne
+    modifie aucun fichier. Elle sert à éviter de présenter comme prêt un poste où
+    la base, la configuration privée ou les sauvegardes locales ne sont pas
+    identifiables.
+    """
+
+    elements = {element.chemin: element for element in plan.get("elements_personnels", [])}
+    avertissements = []
+    bloquants = []
+
+    base = elements.get("plantes.db")
+    if not base or not base.existe or base.type != "fichier":
+        bloquants.append("base plantes.db introuvable")
+
+    config = elements.get("_config")
+    if not config or not config.existe or config.type != "dossier":
+        avertissements.append("dossier _config absent ou non détecté")
+
+    sauvegardes = elements.get("_security_backups")
+    if not sauvegardes or not sauvegardes.existe:
+        avertissements.append("aucune sauvegarde locale _security_backups détectée")
+
+    statut = "pret"
+    if avertissements:
+        statut = "prudence"
+    if bloquants:
+        statut = "bloque"
+
+    return {
+        "statut": statut,
+        "pret": statut == "pret",
+        "application_autorisee": False,
+        "bloquants": bloquants,
+        "avertissements": avertissements,
+        "message": message_verification_plan(statut, bloquants, avertissements),
+    }
+
+
+def message_verification_plan(statut, bloquants, avertissements):
+    if statut == "pret":
+        return "Protections principales détectées ; mise à jour toujours soumise à validation explicite."
+    if statut == "bloque":
+        return "Mise à jour à bloquer : " + ", ".join(bloquants)
+    return "Mise à jour possible seulement avec prudence : " + ", ".join(avertissements)
 
 
 def formater_plan_mise_a_jour(plan) -> str:
@@ -118,6 +169,7 @@ def formater_plan_mise_a_jour(plan) -> str:
         f"Mode : {plan.get('mode', 'préparation')}",
         f"Racine : {plan.get('racine', 'inconnue')}",
         plan.get("statut_version", {}).get("message", "Vérification de version non configurée."),
+        plan.get("verification", {}).get("message", "Vérification du plan non effectuée."),
         "",
         "Séparation programme / données :",
         f"- principe : {plan.get('separation_programme_donnees', {}).get('principe', 'à définir')}",

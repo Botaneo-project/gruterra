@@ -223,6 +223,7 @@ Objectif : préparer une évolution sans casser l’enregistrement actuel des ar
 - [ ] Brancher plus tard la vérification distante GitHub et proposer la mise à jour seulement après validation.
 - [ ] Prévoir un mode avancé plus tard : script de mise à jour Windows et script de mise à jour Raspberry.
 - [x] Afficher dans `À propos` la version locale, la révision Git et le résumé du plan de protection avant mise à jour.
+- [x] Ajouter une vérification préparatoire du plan de mise à jour : prêt, prudence ou bloqué selon la présence de la base, de la configuration et des sauvegardes locales.
 - [ ] Afficher plus tard la dernière version disponible depuis GitHub quand la vérification réseau réelle sera ajoutée.
 
 - [x] Installation neuve : créer le schéma principal `plantes`, `capteurs`, `mesures` directement dans `database.py`, avec clés étrangères actives et index utiles.

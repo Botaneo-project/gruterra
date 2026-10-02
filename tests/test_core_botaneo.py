@@ -480,6 +480,26 @@ class TestPreparationMiseAJour(unittest.TestCase):
         self.assertNotIn("email.local.json", texte)
         self.assertNotIn("raspberry.local.json", texte)
 
+    def test_verification_plan_mise_a_jour_pret_prudence_bloque(self):
+        botaneo_update = importlib.import_module("botaneo_update")
+        with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as dossier:
+            racine = Path(dossier)
+            (racine / "_config").mkdir()
+            (racine / "_security_backups").mkdir()
+            (racine / "plantes.db").write_text("sqlite fictif", encoding="utf-8")
+
+            pret = botaneo_update.construire_plan_mise_a_jour(racine)["verification"]
+            (racine / "_security_backups").rmdir()
+            prudence = botaneo_update.construire_plan_mise_a_jour(racine)["verification"]
+            (racine / "plantes.db").unlink()
+            bloque = botaneo_update.construire_plan_mise_a_jour(racine)["verification"]
+
+        self.assertEqual(pret["statut"], "pret")
+        self.assertEqual(prudence["statut"], "prudence")
+        self.assertEqual(bloque["statut"], "bloque")
+        self.assertFalse(pret["application_autorisee"])
+        self.assertIn("plantes.db", bloque["message"])
+
     def test_comparer_versions_ne_declenche_jamais_application(self):
         botaneo_update = importlib.import_module("botaneo_update")
 
