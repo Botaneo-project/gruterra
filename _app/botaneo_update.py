@@ -171,15 +171,23 @@ def resume_court_mise_a_jour(plan) -> str:
     absents = [element.chemin for element in elements if not element.existe]
     statut = verification.get("statut", "inconnu")
 
+    statut_version = plan.get("statut_version", {})
     lignes = [
         "Mise à jour future : préparation uniquement",
         f"- état du plan : {statut}",
         f"- contrôle : {verification.get('message', 'non effectué')}",
+        f"- version : {statut_version.get('message', 'vérification non configurée')}",
+    ]
+    if statut_version.get("notes"):
+        lignes.append(f"- notes : {statut_version.get('notes')}")
+    if statut_version.get("url"):
+        lignes.append(f"- lien informatif : {statut_version.get('url')}")
+    lignes.extend([
         "- application automatique : désactivée",
         "- données personnelles : conservées séparément du programme",
         "- fichiers secrets : noms détaillés non affichés",
         "- à préserver : " + (", ".join(presents) if presents else "aucun élément personnel détecté"),
-    ]
+    ])
     if absents:
         lignes.append("- non présents sur ce poste : " + ", ".join(absents))
     lignes.append("- règle : sauvegarde locale et validation explicite avant toute application")

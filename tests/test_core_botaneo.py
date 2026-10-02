@@ -515,6 +515,23 @@ class TestPreparationMiseAJour(unittest.TestCase):
         self.assertIn("fichiers secrets", resume)
         self.assertNotIn("netatmo_config.json", resume)
 
+    def test_resume_court_affiche_notes_version_si_disponibles(self):
+        botaneo_update = importlib.import_module("botaneo_update")
+        plan = {
+            "verification": {"statut": "pret", "message": "OK"},
+            "elements_personnels": [],
+            "statut_version": {
+                "message": "Version distante 0.2.0 disponible ; sauvegarde et validation nécessaires avant application.",
+                "notes": "Amélioration historique",
+                "url": "https://example.invalid/release",
+            },
+        }
+        resume = botaneo_update.resume_court_mise_a_jour(plan)
+
+        self.assertIn("Amélioration historique", resume)
+        self.assertIn("https://example.invalid/release", resume)
+        self.assertIn("application automatique : désactivée", resume)
+
     def test_statut_version_depuis_manifest_local(self):
         botaneo_update = importlib.import_module("botaneo_update")
         with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as dossier:
