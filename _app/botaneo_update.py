@@ -239,6 +239,15 @@ def construire_diagnostic_mise_a_jour(racine) -> dict:
     }
 
 
+def libelle_statut_global(statut) -> str:
+    libelles = {
+        "pret_a_verifier": "Prêt pour vérification manuelle",
+        "prudence": "À contrôler avant mise à jour",
+        "bloque": "Bloqué tant que les protections manquent",
+    }
+    return libelles.get(statut, "État inconnu")
+
+
 def exporter_diagnostic_mise_a_jour_json(diagnostic) -> str:
     """Retourne un rapport JSON lisible, sans écrire de fichier."""
 
@@ -257,9 +266,11 @@ def exporter_diagnostic_mise_a_jour_json(diagnostic) -> str:
 
 
 def formater_diagnostic_mise_a_jour(diagnostic) -> str:
+    statut_global = diagnostic.get('statut_global', 'inconnu')
     lignes = [
         "Diagnostic de mise à jour Botaneo",
-        f"Statut global : {diagnostic.get('statut_global', 'inconnu')}",
+        f"État : {libelle_statut_global(statut_global)}",
+        f"Code état : {statut_global}",
         f"Mode : {diagnostic.get('mode', 'préparation uniquement')}",
         f"Application automatique autorisée : {'oui' if diagnostic.get('application_autorisee') else 'non'}",
         "",

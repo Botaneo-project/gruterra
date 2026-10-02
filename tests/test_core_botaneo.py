@@ -548,6 +548,14 @@ class TestPreparationMiseAJour(unittest.TestCase):
         self.assertEqual(disponible["notes"], "Correction test")
         self.assertEqual(disponible["url"], "https://example.invalid/release")
 
+    def test_libelle_statut_global_est_lisible(self):
+        botaneo_update = importlib.import_module("botaneo_update")
+
+        self.assertEqual(botaneo_update.libelle_statut_global("pret_a_verifier"), "Prêt pour vérification manuelle")
+        self.assertEqual(botaneo_update.libelle_statut_global("prudence"), "À contrôler avant mise à jour")
+        self.assertEqual(botaneo_update.libelle_statut_global("bloque"), "Bloqué tant que les protections manquent")
+        self.assertEqual(botaneo_update.libelle_statut_global("autre"), "État inconnu")
+
     def test_diagnostic_mise_a_jour_reste_non_applicatif(self):
         botaneo_update = importlib.import_module("botaneo_update")
         with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as dossier:
@@ -562,6 +570,7 @@ class TestPreparationMiseAJour(unittest.TestCase):
         self.assertFalse(diagnostic["application_autorisee"])
         self.assertIn("plantes.db", diagnostic["elements_presents"])
         self.assertIn("Diagnostic de mise à jour Botaneo", texte)
+        self.assertIn("Prêt pour vérification manuelle", texte)
         self.assertIn("Application automatique autorisée : non", texte)
 
     def test_exporter_diagnostic_mise_a_jour_json(self):
