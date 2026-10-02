@@ -236,7 +236,21 @@ Le fichier `.gitignore` exclut notamment :
 
 ## Mise à jour future
 
-Botaneo prépare un futur système de mise à jour, mais aucun auto-upgrade réel n’est lancé pour l’instant. Le module `_app/botaneo_update.py` construit seulement un plan de protection : base `plantes.db`, dossier `_config/`, sauvegardes locales, `_app/data/` et fichiers privés doivent être conservés avant toute mise à jour. Le plan distingue aussi le programme remplaçable des données utilisateur à préserver, afin de préparer une future séparation propre entre installation et dossier personnel. Il ne détaille pas les noms de fichiers secrets : il indique seulement les dossiers privés à conserver. Le plan signale aussi si la base personnelle, la configuration ou les sauvegardes locales semblent absentes, afin de bloquer ou ralentir toute future mise à jour risquée. La fenêtre `À propos` affiche un résumé court de cet état, sans activer de mise à jour automatique. Une lecture de manifeste de version local est préparée pour tester la comparaison de versions avant une future vérification GitHub réelle, toujours sans téléchargement automatique. Le format public est documenté dans `version_manifest.example.json` avec version, notes et URL informative ; le vrai `version_manifest.json` est ignoré par Git. Si un manifeste local existe, ses informations peuvent être affichées dans `À propos`, mais elles restent purement indicatives. Un diagnostic structuré de mise à jour regroupe aussi l’état global, les blocages, les données détectées et les prochaines actions, sans autoriser l’application automatique. Ce diagnostic peut aussi être exporté en JSON en mémoire pour préparer un futur script, sans écrire de fichier automatiquement. Toute mise à jour devra rester précédée d’une sauvegarde locale et d’une validation explicite.
+Botaneo prépare un futur système de mise à jour, mais aucun auto-upgrade réel n’est lancé pour l’instant.
+
+Le module `_app/botaneo_update.py` prépare seulement les garde-fous :
+
+- protéger la base `plantes.db` ;
+- préserver `_config/`, `_security_backups/`, `_historique/` et `_app/data/` ;
+- distinguer le programme remplaçable des données utilisateur ;
+- bloquer le diagnostic si la séparation programme / données est absente ou incomplète ;
+- éviter d’afficher les noms détaillés des fichiers secrets.
+
+La fenêtre `À propos` affiche l’état de cette préparation et permet de copier un diagnostic JSON. Ce diagnostic reste informatif : il regroupe l’état global, les blocages, les données détectées et les prochaines actions, sans écrire de fichier automatiquement et sans autoriser une mise à jour.
+
+La comparaison de version est préparée avec un manifeste local. Le format public est documenté dans `version_manifest.example.json` avec version, notes et URL informative ; le vrai `version_manifest.json` est ignoré par Git. Aucune vérification GitHub réelle, aucun téléchargement et aucune application automatique ne sont encore actifs.
+
+Toute future mise à jour devra rester précédée d’une sauvegarde locale et d’une validation explicite.
 
 ## Maintenance
 
