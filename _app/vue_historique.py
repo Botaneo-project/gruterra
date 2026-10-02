@@ -388,6 +388,33 @@ def points_cycle(cycle, nom_serie):
     return sorted(points)
 
 
+def heures_depuis_debut_cycle(cycle, date):
+    debut = cycle.get("date")
+    if not debut or not date:
+        return None
+    try:
+        heures = (date - debut).total_seconds() / 3600
+    except TypeError:
+        return None
+    if not math.isfinite(heures) or heures < 0:
+        return None
+    return heures
+
+
+def reperes_visuels_cycle(cycle):
+    """Repères simples pour dessiner un cycle : arrosage, pic, 24 h, 48 h."""
+
+    reperes = [{"cle": "arrosage", "heures": 0, "libelle": "Arrosage", "couleur": "WATER", "style": "plein"}]
+    pic_heures = heures_depuis_debut_cycle(cycle, cycle.get("pic_date"))
+    if pic_heures is not None:
+        reperes.append({"cle": "pic", "heures": pic_heures, "libelle": "Pic", "couleur": "ORANGE", "style": "plein"})
+    reperes.extend([
+        {"cle": "24h", "heures": 24, "libelle": "24 h", "couleur": "PURPLE", "style": "pointille"},
+        {"cle": "48h", "heures": 48, "libelle": "48 h", "couleur": "PURPLE", "style": "pointille"},
+    ])
+    return reperes
+
+
 def comparer_deux_cycles(cycle_a, cycle_b):
     mesures_a = len(cycle_a.get("mesures") or [])
     mesures_b = len(cycle_b.get("mesures") or [])
@@ -1409,14 +1436,14 @@ def ouvrir_historique(parent, plante_id, action_synchroniser=None):
             tableau_cmp.column(colonne, width=largeur, anchor="center")
         tableau_cmp.pack(fill="x")
 
-        graphique_cycles = tk.Canvas(comparaison_frame, height=190, bg=couleurs["BG"], highlightbackground=couleurs["BORDER"], highlightthickness=1)
+        graphique_cycles = tk.Canvas(comparaison_frame, height=250, bg=couleurs["BG"], highlightbackground=couleurs["BORDER"], highlightthickness=1)
         graphique_cycles.pack(fill="x", pady=(8, 0))
 
         def dessiner_comparaison_cycles(cycle_a, cycle_b):
             graphique_cycles.delete("all")
-            largeur = max(graphique_cycles.winfo_width(), 420)
-            hauteur = max(graphique_cycles.winfo_height(), 180)
-            x0, x1, y0, y1 = 58, largeur - 28, 26, hauteur - 38
+            largeur = max(graphique_cycles.winfo_width(), 520)
+            hauteur = max(graphique_cycles.winfo_height(), 230)
+            x0, x1, y0, y1 = 64, largeur - 34, 54, hauteur - 46
             nom_serie = serie_cycle_var.get() or "Humidité"
             config_serie = SERIES.get(nom_serie, SERIES["Humidité"])
             points_a = points_cycle(cycle_a, nom_serie)
@@ -1425,9 +1452,16 @@ def ouvrir_historique(parent, plante_id, action_synchroniser=None):
             if not tous_points:
                 graphique_cycles.create_text(largeur / 2, hauteur / 2, text=f"Aucune donnée exploitable pour {nom_serie.lower()} sur ces cycles.", fill=couleurs["SECONDARY"], font=("Segoe UI", 10))
                 return
-            max_heures = max(1, max(point[0] for point in tous_points))
+            reperes_a = reperes_visuels_cycle(cycle_a)
+            reperes_b = reperes_visuels_cycle(cycle_b)
+            max_repere = max((repere["heures"] for repere in reperes_a + reperes_b if repere["cle"] in {"24h", "48h"}), default=0)
+            max_heures = max(1, max(point[0] for point in tous_points), min(48, max_repere))
+            if max(point[0] for point in tous_points) >= 24:
+                max_heures = max(max_heures, 24)
+            if max(point[0] for point in tous_points) >= 48:
+                max_heures = max(max_heures, 48)
             valeurs = [point[1] for point in tous_points]
-            marge = max(1, (max(valeurs) - min(valeurs)) * 0.08)
+            marge = max(1, (max(valeurs) - min(valeurs)) * 0.10)
             bas = min(valeurs) - marge
             haut = max(valeurs) + marge
             if "minimum" in config_serie:
@@ -1437,51 +1471,99 @@ def ouvrir_historique(parent, plante_id, action_synchroniser=None):
             if bas == haut:
                 bas -= 1
                 haut += 1
-            graphique_cycles.create_text(x0, 12, text=f"{config_serie['titre']} depuis arrosage ({config_serie['unite']})", anchor="w", fill=couleurs["TEXT"], font=("Segoe UI", 9, "bold"))
-            graphique_cycles.create_text(x1, 12, text="A = vert · B = bleu", anchor="e", fill=couleurs["SECONDARY"], font=("Segoe UI", 8))
+
+            def x_depuis_heures(heures):
+                return x0 + (x1 - x0) * heures / max_heures
+
+            def y_depuis_valeur(valeur):
+                return y1 - (y1 - y0) * (valeur - bas) / (haut - bas)
+
+            graphique_cycles.create_text(x0, 17, text=f"{config_serie['titre']} depuis arrosage ({config_serie['unite']})", anchor="w", fill=couleurs["TEXT"], font=("Segoe UI", 10, "bold"))
             graphique_cycles.create_rectangle(x0, y0, x1, y1, outline=couleurs["BORDER"])
+
+            legendes = [
+                (couleurs["GREEN"], "Cycle A"),
+                (couleurs["BLUE"], "Cycle B"),
+                (couleurs["WATER"], "Arrosage"),
+                (couleurs["ORANGE"], "Pic"),
+                (couleurs["PURPLE"], "24 h / 48 h"),
+            ]
+            x_legende = x0
+            for couleur, libelle in legendes:
+                graphique_cycles.create_oval(x_legende, 34, x_legende + 9, 43, fill=couleur, outline=couleur)
+                graphique_cycles.create_text(x_legende + 14, 38, text=libelle, anchor="w", fill=couleurs["SECONDARY"], font=("Segoe UI", 8, "bold"))
+                x_legende += max(76, len(libelle) * 7 + 24)
+
+            couleur_grille = melanger_couleurs(couleurs["GRID"], couleurs["CARD"], 0.25)
             for i in range(4):
                 valeur = bas + (haut - bas) * i / 3
-                y = y1 - (y1 - y0) * (valeur - bas) / (haut - bas)
-                graphique_cycles.create_line(x0, y, x1, y, fill=melanger_couleurs(couleurs["GRID"], couleurs["CARD"], 0.25))
+                y = y_depuis_valeur(valeur)
+                graphique_cycles.create_line(x0, y, x1, y, fill=couleur_grille)
                 graphique_cycles.create_text(x0 - 8, y, text=formater_nombre(valeur), anchor="e", fill=couleurs["SECONDARY"], font=("Segoe UI", 8))
-            for heures in (0, max_heures / 2, max_heures):
-                x = x0 + (x1 - x0) * heures / max_heures
+            graduations = [0]
+            if max_heures > 24:
+                graduations.append(24)
+            if max_heures > 48:
+                graduations.append(48)
+            graduations.extend([max_heures / 2, max_heures])
+            for heures in sorted({round(item, 2) for item in graduations if 0 <= item <= max_heures}):
+                x = x_depuis_heures(heures)
                 graphique_cycles.create_line(x, y1, x, y1 + 4, fill=couleurs["SECONDARY"])
                 graphique_cycles.create_text(x, y1 + 16, text=f"{formater_nombre(heures)} h", fill=couleurs["SECONDARY"], font=("Segoe UI", 8))
 
-            for repere_heures, libelle_repere in ((24, "24 h"), (48, "48 h")):
-                if repere_heures <= max_heures:
-                    x = x0 + (x1 - x0) * repere_heures / max_heures
-                    graphique_cycles.create_line(
-                        x, y0, x, y1,
-                        fill=melanger_couleurs(couleurs["ORANGE"], couleurs["CARD"], 0.35),
-                        dash=(4, 4)
-                    )
-                    graphique_cycles.create_text(
-                        x + 4, y0 + 12,
-                        text=libelle_repere,
-                        anchor="w",
-                        fill=couleurs["ORANGE"],
-                        font=("Segoe UI", 8, "bold")
-                    )
+            def dessiner_repere(repere):
+                heures = repere["heures"]
+                if heures > max_heures:
+                    return
+                couleur = couleurs.get(repere["couleur"], couleurs["SECONDARY"])
+                x = x_depuis_heures(heures)
+                dash = (4, 4) if repere.get("style") == "pointille" else None
+                graphique_cycles.create_line(x, y0, x, y1, fill=couleur, dash=dash, width=2 if repere["cle"] in {"arrosage", "pic"} else 1)
+                texte_y = y0 + 13 if repere["cle"] in {"arrosage", "24h"} else y0 + 29
+                graphique_cycles.create_text(x + 5, texte_y, text=repere["libelle"], anchor="w", fill=couleur, font=("Segoe UI", 8, "bold"))
 
-            def dessiner_ligne(points, couleur, etiquette):
+            for repere in reperes_a:
+                if repere["cle"] != "pic":
+                    dessiner_repere(repere)
+            for cycle, suffixe in ((cycle_a, "A"), (cycle_b, "B")):
+                pic_heures = heures_depuis_debut_cycle(cycle, cycle.get("pic_date"))
+                if pic_heures is not None:
+                    dessiner_repere({
+                        "cle": "pic",
+                        "heures": pic_heures,
+                        "libelle": f"Pic {suffixe}",
+                        "couleur": "ORANGE",
+                        "style": "plein",
+                    })
+
+            def dessiner_ligne(points, couleur, etiquette, cycle):
                 if not points:
                     return
                 coords = []
-                for heures, humidite in points:
-                    x = x0 + (x1 - x0) * heures / max_heures
-                    y = y1 - (y1 - y0) * (humidite - bas) / (haut - bas)
+                for heures, valeur in points:
+                    x = x_depuis_heures(heures)
+                    y = y_depuis_valeur(valeur)
                     coords.extend((x, y))
                 if len(coords) >= 4:
                     graphique_cycles.create_line(*coords, fill=couleur, width=3, smooth=True)
+                for heures, valeur in points:
+                    x = x_depuis_heures(heures)
+                    y = y_depuis_valeur(valeur)
+                    rayon = 2
+                    graphique_cycles.create_oval(x - rayon, y - rayon, x + rayon, y + rayon, fill=couleur, outline="")
+                pic_heures = heures_depuis_debut_cycle(cycle, cycle.get("pic_date"))
+                if pic_heures is not None and pic_heures <= max_heures:
+                    pic_valeur = valeur_cycle(cycle, "pic_humidite")
+                    if pic_valeur is not None:
+                        x_pic = x_depuis_heures(pic_heures)
+                        y_pic = y_depuis_valeur(pic_valeur)
+                        graphique_cycles.create_oval(x_pic - 6, y_pic - 6, x_pic + 6, y_pic + 6, fill=couleurs["ORANGE"], outline=couleurs["CARD"], width=2)
                 x_fin, y_fin = coords[-2], coords[-1]
-                graphique_cycles.create_oval(x_fin - 4, y_fin - 4, x_fin + 4, y_fin + 4, fill=couleur, outline=couleurs["CARD"], width=1)
-                graphique_cycles.create_text(x_fin + 6, y_fin, text=etiquette, anchor="w", fill=couleur, font=("Segoe UI", 8, "bold"))
+                graphique_cycles.create_oval(x_fin - 5, y_fin - 5, x_fin + 5, y_fin + 5, fill=couleur, outline=couleurs["CARD"], width=1)
+                graphique_cycles.create_text(x_fin + 7, y_fin, text=etiquette, anchor="w", fill=couleur, font=("Segoe UI", 8, "bold"))
 
-            dessiner_ligne(points_a, couleurs["GREEN"], "A")
-            dessiner_ligne(points_b, couleurs["BLUE"], "B")
+            dessiner_ligne(points_a, couleurs["GREEN"], "A", cycle_a)
+            dessiner_ligne(points_b, couleurs["BLUE"], "B", cycle_b)
 
         zone = tk.Text(detail, height=8, wrap="word", bg=couleurs["BG"], fg=couleurs["TEXT"], relief="flat", font=("Segoe UI", 9))
         zone.pack(fill="both", expand=True, padx=18, pady=(0, 12))

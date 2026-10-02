@@ -176,6 +176,9 @@ class TestCyclesArrosage(unittest.TestCase):
         self.assertEqual(len(cycles), 1)
         cycle = cycles[0]
         self.assertEqual(cycle["humidite_avant"], 18)
+        self.assertEqual(cycle["premiere_date"].isoformat(), "2026-09-20T10:30:00")
+        self.assertEqual(cycle["pic_date"].isoformat(), "2026-09-20T11:30:00")
+        self.assertEqual(cycle["derniere_date"].isoformat(), "2026-09-21T11:30:00")
         self.assertEqual(cycle["premiere_humidite"], 24)
         self.assertEqual(cycle["pic_humidite"], 26)
         self.assertEqual(cycle["derniere_humidite"], 22)
@@ -186,6 +189,29 @@ class TestCyclesArrosage(unittest.TestCase):
         self.assertAlmostEqual(cycle["sechage"], -4.0)
         self.assertEqual(cycle["qualite_niveau"], "prudence")
         self.assertEqual(cycle["plus_grand_trou_h"], 24.0)
+
+    def test_reperes_visuels_cycle_place_arrosage_pic_24h_48h(self):
+        vue_historique = importlib.import_module("vue_historique")
+        analyse_arrosage = importlib.import_module("services.analyse_arrosage")
+        arrosages = [
+            (1, 1, "2026-09-20T10:00:00", 80, "normal", None, None, "", "Volvic", None, 0),
+        ]
+        mesures = [
+            (1, "2026-09-20T09:00:00", 24.0, 18, 100, 70, "", 1),
+            (2, "2026-09-20T10:30:00", 24.1, 24, 120, 72, "", 1),
+            (3, "2026-09-20T11:30:00", 24.2, 26, 130, 73, "", 1),
+            (4, "2026-09-21T11:30:00", 24.0, 22, 110, 71, "", 1),
+        ]
+        cycle = analyse_arrosage.calculer_cycles_arrosage(mesures, arrosages)[0]
+
+        reperes = vue_historique.reperes_visuels_cycle(cycle)
+        par_cle = {repere["cle"]: repere for repere in reperes}
+
+        self.assertEqual(par_cle["arrosage"]["heures"], 0)
+        self.assertAlmostEqual(par_cle["pic"]["heures"], 1.5)
+        self.assertEqual(par_cle["24h"]["heures"], 24)
+        self.assertEqual(par_cle["48h"]["heures"], 48)
+        self.assertEqual(par_cle["pic"]["couleur"], "ORANGE")
 
     def test_interpreter_reponse_cycle_retour_depart(self):
         analyse_arrosage = importlib.import_module("services.analyse_arrosage")
