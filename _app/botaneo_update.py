@@ -239,6 +239,23 @@ def construire_diagnostic_mise_a_jour(racine) -> dict:
     }
 
 
+def exporter_diagnostic_mise_a_jour_json(diagnostic) -> str:
+    """Retourne un rapport JSON lisible, sans écrire de fichier."""
+
+    rapport = {
+        "type": "diagnostic_mise_a_jour_botaneo",
+        "statut_global": diagnostic.get("statut_global"),
+        "mode": diagnostic.get("mode"),
+        "application_autorisee": bool(diagnostic.get("application_autorisee", False)),
+        "version": diagnostic.get("version", {}),
+        "verification": diagnostic.get("verification", {}),
+        "elements_presents": list(diagnostic.get("elements_presents", [])),
+        "elements_absents": list(diagnostic.get("elements_absents", [])),
+        "prochaines_actions": list(diagnostic.get("prochaines_actions", [])),
+    }
+    return json.dumps(rapport, ensure_ascii=False, indent=2, sort_keys=True)
+
+
 def formater_diagnostic_mise_a_jour(diagnostic) -> str:
     lignes = [
         "Diagnostic de mise à jour Botaneo",

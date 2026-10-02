@@ -1,5 +1,6 @@
 import gc
 import importlib
+import json
 import os
 import sys
 import tempfile
@@ -562,6 +563,23 @@ class TestPreparationMiseAJour(unittest.TestCase):
         self.assertIn("plantes.db", diagnostic["elements_presents"])
         self.assertIn("Diagnostic de mise à jour Botaneo", texte)
         self.assertIn("Application automatique autorisée : non", texte)
+
+    def test_exporter_diagnostic_mise_a_jour_json(self):
+        botaneo_update = importlib.import_module("botaneo_update")
+        with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as dossier:
+            racine = Path(dossier)
+            (racine / "_config").mkdir()
+            (racine / "_security_backups").mkdir()
+            (racine / "plantes.db").write_text("sqlite fictif", encoding="utf-8")
+            diagnostic = botaneo_update.construire_diagnostic_mise_a_jour(racine)
+            texte = botaneo_update.exporter_diagnostic_mise_a_jour_json(diagnostic)
+            donnees = json.loads(texte)
+
+        self.assertEqual(donnees["type"], "diagnostic_mise_a_jour_botaneo")
+        self.assertEqual(donnees["statut_global"], "pret_a_verifier")
+        self.assertFalse(donnees["application_autorisee"])
+        self.assertIn("plantes.db", donnees["elements_presents"])
+        self.assertNotIn("netatmo_config.json", texte)
 
     def test_diagnostic_mise_a_jour_signale_bloquant(self):
         botaneo_update = importlib.import_module("botaneo_update")

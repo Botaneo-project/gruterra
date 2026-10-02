@@ -229,6 +229,7 @@ Objectif : préparer une évolution sans casser l’enregistrement actuel des ar
 - [x] Ajouter un exemple public `version_manifest.example.json` et ignorer le vrai manifeste local.
 - [x] Afficher dans `À propos` les notes et le lien informatif du manifeste local quand ils existent, sans action automatique.
 - [x] Préparer un diagnostic structuré de mise à jour : état global, protections, version, blocages, éléments détectés et prochaines actions.
+- [x] Préparer un export JSON en mémoire du diagnostic de mise à jour, sans écriture automatique de fichier.
 - [ ] Afficher plus tard la dernière version disponible depuis GitHub quand la vérification réseau réelle sera ajoutée.
 
 - [x] Installation neuve : créer le schéma principal `plantes`, `capteurs`, `mesures` directement dans `database.py`, avec clés étrangères actives et index utiles.
