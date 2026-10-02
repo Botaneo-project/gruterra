@@ -438,6 +438,27 @@ class TestHistoriqueZerosSuspects(unittest.TestCase):
         self.assertEqual(mesures_filtrees, mesures)
 
 
+class TestPreparationMiseAJour(unittest.TestCase):
+    def test_plan_mise_a_jour_preserve_les_donnees_personnelles(self):
+        botaneo_update = importlib.import_module("botaneo_update")
+        with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as dossier:
+            racine = Path(dossier)
+            (racine / "_config").mkdir()
+            (racine / "_app" / "data").mkdir(parents=True)
+            (racine / "plantes.db").write_text("sqlite fictif", encoding="utf-8")
+
+            plan = botaneo_update.construire_plan_mise_a_jour(racine)
+            texte = botaneo_update.formater_plan_mise_a_jour(plan)
+
+        elements = {element.chemin: element for element in plan["elements_personnels"]}
+        self.assertTrue(elements["plantes.db"].existe)
+        self.assertTrue(elements["_config"].existe)
+        self.assertTrue(elements["_app/data"].existe)
+        self.assertIn("préserver _config", texte)
+        self.assertIn("Interdit sans validation explicite", texte)
+
+
+
 class TestDatesBotaneo(unittest.TestCase):
     def test_parse_z_et_formatage_local(self):
         dates = importlib.import_module("botaneo_dates")

@@ -214,9 +214,9 @@ Objectif : préparer une évolution sans casser l’enregistrement actuel des ar
 ## Installation, mises à jour et distribution
 
 - [ ] Prévoir un système d’auto-upgrade pour les utilisateurs ayant déjà téléchargé Botaneo.
-- [ ] Avant toute mise à jour automatique, sauvegarder la base locale, la configuration et les fichiers de secrets ignorés par Git.
-- [ ] Distinguer mise à jour du programme et conservation des données personnelles : base réelle, tokens Netatmo, favoris, paramètres Raspberry, alertes.
-- [ ] Garantir que le dossier personnel de l’utilisateur reste conservé pendant les mises à jour : données, configuration locale, favoris, secrets, sauvegardes et éventuelles images/cache local.
+- [x] Préparer un plan de protection avant mise à jour : base locale, configuration, secrets ignorés, sauvegardes et données runtime.
+- [x] Distinguer dans le plan de mise à jour le programme et les données personnelles : base réelle, tokens, favoris, paramètres Raspberry, alertes.
+- [x] Lister explicitement les éléments personnels à conserver pendant les mises à jour : données, configuration locale, favoris, secrets, sauvegardes et caches locaux.
 - [ ] Séparer clairement le dossier programme du dossier utilisateur pour faciliter les mises à jour sans perte de données.
 - [ ] Prévoir un mode simple : vérifier la version disponible sur GitHub, proposer la mise à jour, puis appliquer seulement après validation.
 - [ ] Prévoir un mode avancé plus tard : script de mise à jour Windows et script de mise à jour Raspberry.
