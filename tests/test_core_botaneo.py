@@ -129,6 +129,34 @@ class TestCyclesArrosage(unittest.TestCase):
         self.assertAlmostEqual(cycle["sechage"], -4.0)
 
 
+    def test_cycle_fractionne_part_du_debut_de_session(self):
+        vue_historique = importlib.import_module("vue_historique")
+        arrosages = [
+            (1, 1, "2026-09-20T10:00:00", 40, "normal", None, None, "début", "Volvic", None, 0),
+            (2, 1, "2026-09-20T10:33:00", 55, "normal", None, None, "complément", "Volvic", None, 0),
+        ]
+        mesures = [
+            (1, "2026-09-20T09:30:00", 24.0, 18, 100, 70, "", 1),
+            (2, "2026-09-20T10:20:00", 24.1, 22, 110, 72, "", 1),
+            (3, "2026-09-20T10:45:00", 24.2, 25, 120, 73, "", 1),
+            (4, "2026-09-20T12:00:00", 24.3, 24, 115, 72, "", 1),
+        ]
+
+        cycles = vue_historique.calculer_cycles_arrosage(mesures, arrosages)
+
+        self.assertEqual(len(cycles), 1)
+        cycle = cycles[0]
+        self.assertEqual(cycle["date"].isoformat(), "2026-09-20T10:00:00")
+        self.assertTrue(cycle["arrosage"]["fractionnee"])
+        self.assertEqual(cycle["arrosage"]["quantite_totale_ml"], 95)
+        self.assertEqual([apport[0] for apport in cycle["arrosage"]["apports"]], [1, 2])
+        self.assertEqual([mesure[0] for mesure in cycle["mesures"]], [2, 3, 4])
+        self.assertEqual(cycle["humidite_avant"], 18)
+        self.assertEqual(cycle["premiere_humidite"], 22)
+        self.assertEqual(cycle["pic_humidite"], 25)
+        self.assertEqual(cycle["derniere_humidite"], 24)
+
+
 class TestImportRaspberry(BaseTemporaireMixin, unittest.TestCase):
     def test_import_batch_est_idempotent_pour_mesure_courante(self):
         db = self.database

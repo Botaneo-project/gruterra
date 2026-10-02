@@ -70,7 +70,8 @@ Ce fichier sert à garder une trace claire des idées et des prochaines étapes.
 - [x] Étendre les tests automatisés aux zéros suspects : un 0 % isolé est conservé dans les données, mais exclu des graphiques/statistiques d’humidité.
 - [x] Étendre les tests automatisés aux cycles d’arrosage simples : humidité avant, première mesure, pic, fin et vitesse de séchage.
 - [x] Étendre les tests automatisés à l’import Raspberry : ajout d’une mesure courante et déduplication idempotente.
-- [ ] Étendre plus tard les tests aux cycles d’arrosage fractionnés détaillés et à l’historique Raspberry brut.
+- [x] Étendre les tests aux cycles d’arrosage fractionnés simples : début de session, total 40 + 55 ml, mesures entre deux apports et cohérence temporelle.
+- [ ] Étendre plus tard les tests à l’analyse séparée de chaque fraction et à l’historique Raspberry brut.
 - [ ] Extraire la logique d’arrosage vers `_app/services/analyse_arrosage.py` une fois les tests posés.
 - [ ] Extraire ensuite la logique lumière vers `_app/services/analyse_lumiere.py` : intérieur, balcon, future lampe horticole, hors balcon.
 - [ ] Préparer progressivement la réduction de `interface.py` et `vue_historique.py`, sans découpage brutal de l’interface graphique.
@@ -147,7 +148,7 @@ Objectif : préparer une évolution sans casser l’enregistrement actuel des ar
 - [x] Conserver l’état du substrat au début de la session uniquement ; les compléments peuvent rester `non renseigné`.
 - [x] Ajouter des champs facultatifs : arrosage progressif, eau utilisée, pot sorti du cache-pot, répartition de l’eau, drainage observé, délai avant drainage, commentaire libre.
 - [x] Basculer l’analyse post-arrosage sur le début de session.
-- [ ] Ajouter plus tard une vraie analyse séparée de la réaction à chaque fraction d’une session.
+- [ ] Ajouter plus tard une vraie analyse séparée de la réaction à chaque fraction d’une session ; le regroupement logique de la session est maintenant couvert par test.
 - [x] Ne plus afficher seulement `arrosage 55 ml` si cet apport appartient à une session totale de 95 ml.
 - [x] Conserver les données originales en base : le regroupement est logique, pas une fusion destructive des lignes.
 - [x] Garantir la cohérence temporelle : l’analyse post-arrosage part du début de session, une mesure antérieure à un complément n’est pas attribuée à ce complément.
