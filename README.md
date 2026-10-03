@@ -287,6 +287,11 @@ La configuration privée est dans `_config/raspberry.local.json`. La clé SSH re
 
 Les scripts Raspberry sont dans `raspberry/`. Une base d’installation et de mise à jour est disponible dans `raspberry/install/`, sans secrets ni configuration privée. Voir [la fiche Raspberry](RASPBERRY.md) pour les limites et les vérifications. Relancer Gruterra après une mise à jour pour charger les nouveaux modules.
 
+
+## Dépôt GitHub
+
+Le dépôt public/privé attendu pour Gruterra est `https://github.com/Botaneo-project/gruterra`. L’ancien dépôt `Botaneo-project/botaneo` peut continuer à rediriger côté GitHub après renommage, mais les liens de documentation et les scripts d’installation pointent désormais vers `gruterra`.
+
 ## Compatibilité technique avec l’ancien nom Botaneo
 
 Le nom officiel du projet est désormais **Gruterra**. Pour éviter de casser les installations existantes, certains éléments techniques conservent temporairement le nom historique `botaneo` : noms de fichiers Python, variables d’environnement `BOTANEO_*`, fichier local `_config/botaneo.local.json`, scripts d’audit, services Raspberry `botaneo-*` et chemin Raspberry `~/botaneo`. Ces noms sont gardés volontairement pour la compatibilité et pourront être migrés plus tard avec une procédure dédiée.

@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-REPO_RAW_BASE="${BOTANEO_REPO_RAW_BASE:-https://raw.githubusercontent.com/Botaneo-project/botaneo/main}"
+REPO_RAW_BASE="${BOTANEO_REPO_RAW_BASE:-https://raw.githubusercontent.com/Botaneo-project/gruterra/main}"
 BOTANEO_HOME="${BOTANEO_HOME:-$HOME/botaneo}"
 COLLECTOR_DIR="$BOTANEO_HOME/collector"
 SYSTEMD_USER_DIR="$HOME/.config/systemd/user"

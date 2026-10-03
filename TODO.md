@@ -4,6 +4,8 @@ Ce fichier sert à garder une trace claire des idées et des prochaines étapes.
 
 ## État actuel déjà en place
 
+- Dépôt GitHub cible préparé : `Botaneo-project/gruterra`; renommage GitHub à valider côté interface ou outil GitHub configuré.
+
 - Nom officiel du projet : Gruterra.
 - Mémoire de compatibilité conservée avec l’ancien nom technique `botaneo` pour les fichiers, variables, services Raspberry et chemins existants.
 

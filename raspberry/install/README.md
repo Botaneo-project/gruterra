@@ -7,7 +7,7 @@ Ces scripts installent ou mettent à jour la partie Raspberry de Gruterra depuis
 Méthode conseillée : télécharger, relire, puis lancer.
 
 ```bash
-curl -O https://raw.githubusercontent.com/Gruterra-project/botaneo/main/raspberry/install/install_raspberry.sh
+curl -O https://raw.githubusercontent.com/Botaneo-project/gruterra/main/raspberry/install/install_raspberry.sh
 less install_raspberry.sh
 bash install_raspberry.sh
 ```
@@ -30,7 +30,7 @@ Copiez ce fichier en `collector.json`, puis renseignez les capteurs. Ne publiez 
 ## Mise à jour
 
 ```bash
-curl -O https://raw.githubusercontent.com/Gruterra-project/botaneo/main/raspberry/install/update_raspberry.sh
+curl -O https://raw.githubusercontent.com/Botaneo-project/gruterra/main/raspberry/install/update_raspberry.sh
 less update_raspberry.sh
 bash update_raspberry.sh
 ```

@@ -3,7 +3,7 @@
 Ce guide permet de découvrir l’interface avec des données fictives, sans capteur, Raspberry ni compte Netatmo.
 
 1. Acceptez l’invitation GitHub et connectez-vous avec le compte invité.
-2. Ouvrez https://github.com/Gruterra-project/botaneo puis **Code → Download ZIP**. Décompressez le dossier.
+2. Ouvrez https://github.com/Botaneo-project/gruterra puis **Code → Download ZIP**. Décompressez le dossier.
 3. Installez Python pour Windows depuis https://www.python.org/downloads/windows/ avec Tkinter et le lanceur `py`.
 4. Ouvrez PowerShell dans le dossier décompressé contenant `requirements.txt` et exécutez :
 
