@@ -2,10 +2,9 @@
 
 Ce guide permet de découvrir l’interface avec des données fictives, sans capteur, Raspberry ni compte Netatmo.
 
-1. Acceptez l’invitation GitHub et connectez-vous avec le compte invité.
-2. Ouvrez https://github.com/Botaneo-project/gruterra puis **Code → Download ZIP**. Décompressez le dossier.
-3. Installez Python pour Windows depuis https://www.python.org/downloads/windows/ avec Tkinter et le lanceur `py`.
-4. Ouvrez PowerShell dans le dossier décompressé contenant `requirements.txt` et exécutez :
+1. Ouvrez https://github.com/Botaneo-project/gruterra puis **Code → Download ZIP**. Décompressez le dossier.
+2. Installez Python pour Windows depuis https://www.python.org/downloads/windows/ avec Tkinter et le lanceur `py`.
+3. Ouvrez PowerShell dans le dossier décompressé contenant `requirements.txt` et exécutez :
 
 ```powershell
 py -m venv .venv
@@ -25,4 +24,4 @@ La démonstration utilise `_app/data/demo/plantes_demo.db` et sa propre configur
 
 Cette commande réinitialise la base de démonstration. Ne transmettez aucune base personnelle ni configuration contenant des identifiants.
 
-Pour un retour utile, indiquez l’écran concerné, l’action effectuée, ce que vous attendiez et ce qui s’est produit. Ajoutez une capture sans données personnelles si nécessaire. L’accès GitHub en lecture seule permet de consulter et télécharger le projet.
+Pour un retour utile, indiquez l’écran concerné, l’action effectuée, ce que vous attendiez et ce qui s’est produit. Ajoutez une capture sans données personnelles si nécessaire. Le dépôt public permet de consulter et télécharger le projet.

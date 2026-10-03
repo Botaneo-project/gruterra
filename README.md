@@ -1,13 +1,63 @@
 # Gruterra
 
+Gruterra est une application locale de suivi des plantes. Elle aide à centraliser les plantes, les mesures Mi Flora, l’historique, les arrosages, les rappels, la météo locale et les premières analyses de cycles d’arrosage.
+
+Le projet est né d’un besoin simple : ne pas seulement afficher des mesures, mais comprendre ce qui se passe pour une plante au fil du temps. Par exemple : est-ce qu’un arrosage a réellement fait monter l’humidité dans la zone du capteur ? Combien de temps faut-il pour revenir au niveau de départ ? Est-ce qu’une journée lumineuse vient d’une vraie exposition ou seulement d’un pic ponctuel ?
+
 > Nom officiel du projet : **Gruterra**. Certains fichiers, variables d’environnement, services Raspberry et chemins conservent encore le nom technique historique `botaneo` pour préserver la compatibilité avec les installations existantes.
 
-Pour découvrir le projet sans matériel : [guide du mode démonstration](GUIDE_DEMO.md).
+## Tester rapidement sans matériel
 
-Gruterra est une application locale de suivi des plantes. Elle centralise les plantes, les capteurs Mi Flora, les mesures enregistrées dans SQLite, les arrosages, les rappels et les données météo Netatmo.
+Le plus simple pour découvrir Gruterra est le mode démonstration. Il ne demande ni capteur Mi Flora, ni Raspberry Pi, ni compte Netatmo, ni base personnelle.
 
-Le projet est prévu d’abord pour un usage local sous Windows. Les données réelles, les tokens et la base SQLite personnelle restent sur le PC de l’utilisateur.
+```powershell
+py -m pip install -r requirements.txt
+py _app\lancer_demo.py
+```
 
+Le guide détaillé est ici : [GUIDE_DEMO.md](GUIDE_DEMO.md).
+
+## Ce que Gruterra sait déjà faire
+
+- Suivre des plantes avec ou sans capteur actif.
+- Associer un capteur Mi Flora à une plante.
+- Lire les mesures Mi Flora : humidité du sol, température, luminosité, conductivité, batterie.
+- Importer l’historique interne Mi Flora sans effacer les données du capteur.
+- Afficher un historique graphique avec qualité des données, repères d’arrosage et sélection de journée.
+- Enregistrer des arrosages manuels, des rappels et des observations.
+- Analyser les cycles d’arrosage : humidité avant, pic, 24 h, 48 h, retour au niveau de départ et qualité des mesures.
+- Distinguer les sorties balcon / retours intérieur pour contextualiser la lumière.
+- Afficher les besoins de base d’une plante depuis une mini base locale.
+- Afficher Netatmo privé/public et une synthèse météo locale quand la configuration existe.
+- Synchroniser avec un Raspberry Pi optionnel pour récupérer les mesures plus régulièrement.
+- Préparer une vérification de mise à jour GitHub non destructive.
+
+## État du projet
+
+Gruterra est en développement actif. L’application fonctionne déjà en local pour un usage personnel, mais l’installation pour d’autres utilisateurs est encore en cours de stabilisation.
+
+Priorités actuelles :
+
+- améliorer la lisibilité de l’historique et des cycles d’arrosage ;
+- renforcer le mode démo pour tester le projet sans matériel ;
+- préparer une mise à jour guidée sans risque pour les données personnelles ;
+- documenter plus clairement l’installation Raspberry Pi ;
+- garder les secrets, bases réelles et configurations privées hors du dépôt.
+
+La roadmap courte est dans [ROADMAP.md](ROADMAP.md). Le fichier [TODO.md](TODO.md) garde l’historique détaillé du développement.
+
+## Données personnelles et sécurité
+
+Gruterra est pensé pour fonctionner localement. Les fichiers personnels suivants ne doivent pas être publiés :
+
+- base SQLite réelle ;
+- dossier `_config/` ;
+- tokens Netatmo, Météo-France ou e-mail ;
+- favoris locaux ;
+- sauvegardes ;
+- caches runtime et données collectées.
+
+Le dépôt fournit seulement des fichiers d’exemple anonymes.
 
 ## Audit local avant envoi GitHub
 
