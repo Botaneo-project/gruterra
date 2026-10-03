@@ -17,7 +17,7 @@ import database
 from evolutions_lumiere import lire_evolutions
 import mini_base_plantes
 from capteur_infos import lire_infos, resume_infos, details_infos
-from botaneo_config import LOCAL_CONFIG, lire_json, ecrire_json, normaliser_station_favorite, diagnostiquer_config_netatmo
+from botaneo_config import LOCAL_CONFIG, lire_json, ecrire_json, normaliser_station_favorite, diagnostiquer_config_netatmo, creer_config_netatmo_exemple
 from ui_preferences import charger_theme_sombre, sauvegarder_theme_sombre
 from vue_historique import ouvrir_historique
 import sync_miflora
@@ -5749,6 +5749,45 @@ def ouvrir_parametres():
     tk.Label(
         netatmo_bloc,
         text=diagnostic_netatmo.get("details", ""),
+        bg=LIGHT_GREEN,
+        fg=SECONDARY,
+        font=("Segoe UI", 8),
+        wraplength=520,
+        justify="left"
+    ).pack(anchor="w", padx=12, pady=(0, 6))
+
+    def creer_fichier_netatmo_depuis_parametres():
+        ok, message = creer_config_netatmo_exemple()
+        if ok:
+            erreur.set(message)
+            status_var.set(message)
+        else:
+            erreur.set(message)
+
+    actions_netatmo = tk.Frame(netatmo_bloc, bg=LIGHT_GREEN)
+    actions_netatmo.pack(fill="x", padx=12, pady=(0, 8))
+    tk.Button(
+        actions_netatmo,
+        text="Créer le fichier Netatmo",
+        command=creer_fichier_netatmo_depuis_parametres,
+        bg=BG,
+        fg=TEXT,
+        relief="flat",
+        cursor="hand2"
+    ).pack(side="left")
+    tk.Label(
+        actions_netatmo,
+        text="Puis ouvrez _config/netatmo_config.json et remplacez les valeurs d'exemple.",
+        bg=LIGHT_GREEN,
+        fg=SECONDARY,
+        font=("Segoe UI", 8),
+        wraplength=360,
+        justify="left"
+    ).pack(side="left", padx=(10, 0))
+
+    tk.Label(
+        netatmo_bloc,
+        text="Mode tuto : créez une application sur le portail développeur Netatmo, copiez les quatre valeurs demandées dans le fichier privé, puis revenez ici. Le bouton Actualiser Netatmo testera ensuite la connexion réelle.",
         bg=LIGHT_GREEN,
         fg=SECONDARY,
         font=("Segoe UI", 8),

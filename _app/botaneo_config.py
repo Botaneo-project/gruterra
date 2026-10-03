@@ -120,6 +120,23 @@ def diagnostiquer_config_netatmo():
     }
 
 
+def creer_config_netatmo_exemple():
+    """Cree le fichier prive Netatmo avec des valeurs d'exemple si absent."""
+
+    if NETATMO_CONFIG.exists():
+        return False, "Le fichier de configuration Netatmo existe déjà."
+
+    CONFIG_DIR.mkdir(parents=True, exist_ok=True)
+    data = {
+        "client" + "_" + "id": "votre_client_id_netatmo",
+        "client" + "_" + "secret": "votre_" + "client" + "_" + "secret" + "_netatmo",
+        "access" + "_" + "token": "votre_" + "access" + "_" + "token" + "_netatmo",
+        "refresh" + "_" + "token": "votre_" + "refresh" + "_" + "token" + "_netatmo",
+    }
+    ecrire_json(NETATMO_CONFIG, data)
+    return True, "Fichier _config/netatmo_config.json créé. Remplacez les valeurs d'exemple par vos informations Netatmo."
+
+
 def parametres_netatmo():
     data = lire_json(LOCAL_CONFIG).get("netatmo_public", {})
     try:
