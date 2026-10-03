@@ -89,3 +89,6 @@ GUIDE_COMMUNICATION_PRIVEE.md
 
 # Captures locales brutes avant sélection
 capture/
+
+# Token local du bot Discord Gruterra
+discord_bot/.env
