@@ -4995,18 +4995,18 @@ def etat_raspberry_a_propos():
         return "Configuration présente, à vérifier"
 
 
-def resume_mise_a_jour_a_propos(racine):
+def resume_mise_a_jour_a_propos(racine, verifier_distant=False):
     try:
-        diagnostic = botaneo_update.construire_diagnostic_mise_a_jour(racine, verifier_distant=True)
+        diagnostic = botaneo_update.construire_diagnostic_mise_a_jour(racine, verifier_distant=verifier_distant)
         return botaneo_update.formater_diagnostic_mise_a_jour(diagnostic)
     except Exception as erreur:
         return f"Mise à jour : diagnostic indisponible ({erreur})"
 
 
-def texte_diagnostic_update_json_a_propos():
+def texte_diagnostic_update_json_a_propos(verifier_distant=False):
     racine = Path(__file__).resolve().parent.parent
     try:
-        diagnostic = botaneo_update.construire_diagnostic_mise_a_jour(racine, verifier_distant=True)
+        diagnostic = botaneo_update.construire_diagnostic_mise_a_jour(racine, verifier_distant=verifier_distant)
         return botaneo_update.exporter_diagnostic_mise_a_jour_json(diagnostic)
     except Exception as erreur:
         return json.dumps(
@@ -5021,7 +5021,7 @@ def texte_diagnostic_update_json_a_propos():
         )
 
 
-def texte_a_propos():
+def texte_a_propos(verifier_distant=False):
     racine = Path(__file__).resolve().parent.parent
     lignes = [
         "Gruterra",
@@ -5044,7 +5044,7 @@ def texte_a_propos():
         "",
         f"Raspberry : {etat_raspberry_a_propos()}",
         "",
-        resume_mise_a_jour_a_propos(racine),
+        resume_mise_a_jour_a_propos(racine, verifier_distant=verifier_distant),
         "",
         "Sécurité :",
         "- les tokens, bases réelles, sauvegardes et fichiers _config restent locaux",
@@ -5088,20 +5088,34 @@ def ouvrir_a_propos():
         font=("Segoe UI", 9)
     )
     zone.pack(fill="both", expand=True, padx=20, pady=(0, 12))
-    zone.insert("1.0", texte_a_propos())
+    zone.insert("1.0", texte_a_propos(verifier_distant=False))
     zone.configure(state="disabled")
 
     boutons = tk.Frame(fenetre, bg=CARD)
     boutons.pack(fill="x", padx=20, pady=(0, 16))
 
+    dernier_verifier_distant = {"valeur": False}
+
+    def remplacer_texte_a_propos(contenu):
+        zone.configure(state="normal")
+        zone.delete("1.0", "end")
+        zone.insert("1.0", contenu)
+        zone.configure(state="disabled")
+
+    def verifier_mise_a_jour():
+        status_var.set("Vérification des mises à jour Gruterra…")
+        dernier_verifier_distant["valeur"] = True
+        remplacer_texte_a_propos(texte_a_propos(verifier_distant=True))
+        status_var.set("Vérification des mises à jour terminée")
+
     def copier():
         root.clipboard_clear()
-        root.clipboard_append(texte_a_propos())
+        root.clipboard_append(texte_a_propos(verifier_distant=dernier_verifier_distant["valeur"]))
         status_var.set("Informations À propos copiées dans le presse-papiers")
 
     def copier_diagnostic_update_json():
         root.clipboard_clear()
-        root.clipboard_append(texte_diagnostic_update_json_a_propos())
+        root.clipboard_append(texte_diagnostic_update_json_a_propos(verifier_distant=dernier_verifier_distant["valeur"]))
         status_var.set("Diagnostic mise à jour JSON copié dans le presse-papiers")
 
     tk.Button(
@@ -5122,6 +5136,17 @@ def ouvrir_a_propos():
         bg=BG,
         fg=TEXT,
         activebackground=BG,
+        relief="flat",
+        cursor="hand2"
+    ).pack(side="left", padx=(8, 0))
+
+    tk.Button(
+        boutons,
+        text="🔎 Vérifier les mises à jour",
+        command=verifier_mise_a_jour,
+        bg=LIGHT_GREEN,
+        fg=GREEN,
+        activebackground=LIGHT_GREEN,
         relief="flat",
         cursor="hand2"
     ).pack(side="left", padx=(8, 0))
