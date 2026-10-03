@@ -40,6 +40,22 @@ Il y a aussi :
 
 Le projet est encore en développement. Je serais intéressé par des retours sur l’interface, les graphiques, la logique d’analyse après arrosage, et les usages que vous verriez pour un suivi de plantes en local.
 
+## Version Discord
+
+Salut, je travaille sur Gruterra, une application locale pour suivre les plantes avec des capteurs Mi Flora, des arrosages manuels, l’historique du capteur, la lumière reçue et des données météo.
+
+Le projet commence à analyser les cycles après arrosage : humidité avant arrosage, pic observé, évolution après 24 h / 48 h et comparaison entre cycles. Il y a aussi un mode démo sans capteur pour tester l’interface.
+
+Je cherche surtout des retours sur :
+
+- la lisibilité de l’interface ;
+- les graphiques d’historique ;
+- les infos utiles à afficher pour une plante ;
+- la logique d’analyse après arrosage ;
+- les idées pour rendre le suivi plus simple au quotidien.
+
+Le projet est encore en développement, donc les retours pratiques sont les bienvenus.
+
 ## Points à mettre en avant
 
 - Application locale : les données personnelles restent sur la machine de l’utilisateur.

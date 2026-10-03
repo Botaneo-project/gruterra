@@ -72,7 +72,7 @@ SENSITIVE_FILE_PATTERNS = [
 
 TEXT_EXTENSIONS = {
     ".py", ".md", ".txt", ".json", ".toml", ".yml", ".yaml",
-    ".ps1", ".bat", ".cmd", ".ini", ".cfg", ".gitignore"
+    ".ps1", ".bat", ".cmd", ".ini", ".cfg", ".gitignore", ".svg"
 }
 
 SECRET_PATTERNS = [
@@ -98,6 +98,7 @@ ALLOWLIST_CONTENT = {
 }
 
 ALLOWLIST_PATHS = {
+    "docs/images/netatmo_tokens_schema.svg",
     "_app/creer_base_demo.py",
     "_app/lancer_demo.py",
     "backup_botaneo.py",
