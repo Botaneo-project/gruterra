@@ -17,6 +17,22 @@ py _app\lancer_demo.py
 
 Le guide détaillé est ici : [GUIDE_DEMO.md](GUIDE_DEMO.md).
 
+## Aperçu de la démo
+
+Les captures ci-dessous utilisent uniquement les données fictives du mode démo.
+
+### Accueil
+
+![Accueil Gruterra en mode démo](docs/screenshots/accueil-demo.png)
+
+### Historique des mesures
+
+![Historique des mesures démo](docs/screenshots/historique-demo.png)
+
+### Comparaison des cycles d’arrosage
+
+![Cycles d’arrosage démo](docs/screenshots/cycles-arrosage-demo.png)
+
 ## Ce que Gruterra sait déjà faire
 
 - Suivre des plantes avec ou sans capteur actif.
