@@ -70,6 +70,10 @@ Catégories et salons :
   - `plant-tracking`
   - `sensors-and-data`
   - `installation-help`
+- `🇫🇷 FRANÇAIS`
+  - `discussion-fr`
+  - `aide-installation-fr`
+  - `retours-fr`
 - `🧪 TESTS & FEEDBACK`
   - `demo-feedback`
   - `bugs-feedback`

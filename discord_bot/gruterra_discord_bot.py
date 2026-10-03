@@ -52,6 +52,15 @@ SERVER_STRUCTURE = [
         "public",
     ),
     (
+        "🇫🇷 FRANÇAIS",
+        [
+            ("discussion-fr", "Discussion en français autour de Gruterra."),
+            ("aide-installation-fr", "Aide en français pour installer ou lancer Gruterra."),
+            ("retours-fr", "Retours, idées et bugs en français."),
+        ],
+        "public",
+    ),
+    (
         "🧪 TESTS & FEEDBACK",
         [
             ("demo-feedback", "Feedback from the demo mode."),
