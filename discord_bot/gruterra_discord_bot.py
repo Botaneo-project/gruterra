@@ -121,10 +121,17 @@ async def get_or_create_text_channel(
 def overwrites_for(guild: discord.Guild, mode: str, admin_role: discord.Role) -> dict:
     everyone = guild.default_role
     if mode == "private_admin":
-        return {
+        overwrites = {
             everyone: discord.PermissionOverwrite(view_channel=False),
             admin_role: discord.PermissionOverwrite(view_channel=True, send_messages=True, manage_messages=True),
         }
+        if guild.me is not None:
+            overwrites[guild.me] = discord.PermissionOverwrite(
+                view_channel=True,
+                send_messages=True,
+                read_message_history=True,
+            )
+        return overwrites
     if mode == "read_only":
         return {
             everyone: discord.PermissionOverwrite(view_channel=True, send_messages=False),
