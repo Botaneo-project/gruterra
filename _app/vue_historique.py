@@ -464,7 +464,7 @@ def comparer_deux_cycles(cycle_a, cycle_b):
     comparabilite = comparer_conditions_cycles(cycle_a, cycle_b)
 
     lignes = [
-        "Comparaison Botaneo — cycles d’arrosage",
+        "Comparaison Gruterra — cycles d’arrosage",
         "",
         f"Cycle A : {libelle_cycle(cycle_a)}",
         f"Cycle B : {libelle_cycle(cycle_b)}",
@@ -520,7 +520,7 @@ def comparer_deux_jours(mesures, arrosages, jour_a, jour_b):
     stats_a = resume_stats_jour_dict(mesures_a, arrosages_a)
     stats_b = resume_stats_jour_dict(mesures_b, arrosages_b)
     lignes = [
-        f"Comparaison Botaneo — {libelle_jour(jour_a)} / {libelle_jour(jour_b)}",
+        f"Comparaison Gruterra — {libelle_jour(jour_a)} / {libelle_jour(jour_b)}",
         "",
         f"Mesures : {stats_a['mesures']} / {stats_b['mesures']}",
         f"Arrosages : {stats_a['arrosages']} / {stats_b['arrosages']}",
@@ -1643,7 +1643,7 @@ def ouvrir_historique(parent, plante_id, action_synchroniser=None):
             return
         texte_expositions = bilan_jour_courant.get("expositions") or ""
         lignes = [
-            f"Botaneo — Bilan journalier {nom_plante}",
+            f"Gruterra — Bilan journalier {nom_plante}",
             "",
             texte_jour,
         ]
@@ -1661,7 +1661,7 @@ def ouvrir_historique(parent, plante_id, action_synchroniser=None):
     def copier_resume_historique():
         nom_plante = plante[1] if plante else "Plante"
         lignes = [
-            f"Historique Botaneo — {nom_plante}",
+            f"Historique Gruterra — {nom_plante}",
             f"Période affichée : {periode.get()}",
             f"Mesure affichée : {serie.get()}",
             "",

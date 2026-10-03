@@ -64,7 +64,7 @@ def analyser_plante(plante_id):
 
     print()
     print("=" * 60)
-    print("🧠 ANALYSE BOTANEO")
+    print("🧠 ANALYSE GRUTERRA")
     print("=" * 60)
 
     print()

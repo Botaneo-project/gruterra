@@ -24,7 +24,7 @@ def config_path():
 
 def owned(address):
     # Keep ownership independent of availability/away: no surprise BLE fallback.
-    # If Raspberry is not configured on this installation, Botaneo must behave like a PC-only app.
+    # If Raspberry is not configured on this installation, Gruterra must behave like a PC-only app.
     try:
         path = config_path()
         if not path.exists():

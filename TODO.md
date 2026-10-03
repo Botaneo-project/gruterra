@@ -1,11 +1,14 @@
-# TODO Botaneo
+# TODO Gruterra
 
 Ce fichier sert à garder une trace claire des idées et des prochaines étapes. Les éléments déjà en place sont conservés ici uniquement pour savoir où on en est, mais ils ne doivent plus être relancés sauf bug ou amélioration ciblée.
 
 ## État actuel déjà en place
 
+- Nom officiel du projet : Gruterra.
+- Mémoire de compatibilité conservée avec l’ancien nom technique `botaneo` pour les fichiers, variables, services Raspberry et chemins existants.
+
 - Interface graphique principale avec mode sombre et plusieurs teintes.
-- Mode clair harmonisé avec une palette Botaneo plus douce et cohérente avec le mode sombre.
+- Mode clair harmonisé avec une palette Gruterra plus douce et cohérente avec le mode sombre.
 - Possibilité d’ajouter une plante depuis l’interface.
 - Possibilité d’avoir une plante sans capteur actif.
 - Affichage de l’état d’une plante : avec capteur, sans capteur, ancien capteur conservé.
@@ -36,7 +39,7 @@ Ce fichier sert à garder une trace claire des idées et des prochaines étapes.
 - Synchronisation automatique quotidienne validée : heure, jours, réarmement et date de dernière exécution.
 - Protection contre deux synchronisations lancées exactement en même temps.
 - README initial prévu pour préparer un futur dépôt GitHub.
-- Mode démo ajouté pour tester Botaneo avec une base fictive, sans capteur, token ou données personnelles.
+- Mode démo ajouté pour tester Gruterra avec une base fictive, sans capteur, token ou données personnelles.
 - Script `verifier_avant_github.py` ajouté pour contrôler les fichiers sensibles avant commit ou push.
 - Script `audit_botaneo.py` ajouté pour lancer tests automatisés, vérification avant GitHub, contrôle du diff et affichage des fichiers modifiés en une commande.
 - Tests ajoutés pour le script d’audit local afin de vérifier ses retours OK/échec et son comportement sans Git disponible.
@@ -92,7 +95,7 @@ Ce fichier sert à garder une trace claire des idées et des prochaines étapes.
 - [x] Historique : ajouter les repères 24 h et 48 h dans le graphique comparatif des cycles.
 - [x] Historique : améliorer la vue graphique des cycles avec repères visuels dédiés : arrosage, pic A/B, 24 h, 48 h, légende simple et moins de texte brut.
 - [x] Historique : afficher les valeurs d’humidité proches de 24 h et 48 h dans la comparaison des cycles, sans inventer de valeur si aucune mesure proche n’existe.
-- [x] État Botaneo : afficher un contrôle explicite des mesures et synthèses entièrement à zéro.
+- [x] État Gruterra : afficher un contrôle explicite des mesures et synthèses entièrement à zéro.
 - [x] Analyse des cycles d’arrosage : version simple et prudente, centrée sur hausse observée, retour au départ et séchage après pic.
 - [x] Pour chaque cycle : repérer l’humidité avant arrosage, le pic observé, la baisse après pic et la qualité des mesures disponibles.
 - [x] Stabiliser l’analyse plante autour de l’arrosage : phrase courte, repères 10 min / 1 h / 24 h / 48 h et comparaison avant/après.
@@ -217,7 +220,7 @@ Objectif : préparer une évolution sans casser l’enregistrement actuel des ar
 
 ## Installation, mises à jour et distribution
 
-- [ ] Prévoir un système d’auto-upgrade pour les utilisateurs ayant déjà téléchargé Botaneo.
+- [ ] Prévoir un système d’auto-upgrade pour les utilisateurs ayant déjà téléchargé Gruterra.
 - [x] Préparer un plan de protection avant mise à jour : base locale, configuration, secrets ignorés, sauvegardes et données runtime.
 - [x] Distinguer dans le plan de mise à jour le programme et les données personnelles : base réelle, tokens, favoris, paramètres Raspberry, alertes.
 - [x] Lister explicitement les éléments personnels à conserver pendant les mises à jour : données, configuration locale, favoris, secrets, sauvegardes et caches locaux.
@@ -275,7 +278,7 @@ Objectif : préparer une évolution sans casser l’enregistrement actuel des ar
 ## Idées graphiques à garder de côté
 
 - Continuer plus tard à harmoniser finement les cartes météo avec les cartes plantes : mêmes marges et espacements.
-- Garder des couleurs dans les tuiles météo, mais utiliser seulement la palette Botaneo pour éviter un rendu instable.
+- Garder des couleurs dans les tuiles météo, mais utiliser seulement la palette Gruterra pour éviter un rendu instable.
 - Organiser la météo en trois niveaux : synthèse météo locale, stations favorites, stations proches repliées.
 - Ajouter un statut météo court en haut, par exemple : `Météo locale : sec prévu · vent faible · station favorite active`.
 - Réduire le bruit visuel dans Netatmo : moins d’emojis répétés, titres plus courts, valeurs mieux alignées.
@@ -294,13 +297,13 @@ Objectif : préparer une évolution sans casser l’enregistrement actuel des ar
 - [ ] Tester d’abord sur Raspberry, plus adapté à l’écoute régulière que le PC Windows.
 - [ ] Vérifier que les mesures passives contiennent bien toutes les valeurs utiles selon le firmware du capteur ; Home Assistant indique qu’un firmware trop ancien peut ne pas diffuser les bons beacons.
 - [ ] Prévoir un prototype isolé : scan BLE passif, journalisation des service data bruts par adresse, puis décodage hors base avant tout enregistrement automatique.
-- [ ] Éviter de dépendre de Home Assistant comme source directe : s’inspirer de sa méthode, mais garder Botaneo autonome.
+- [ ] Éviter de dépendre de Home Assistant comme source directe : s’inspirer de sa méthode, mais garder Gruterra autonome.
 
 ## Raspberry et synchronisation
 
 État actuel : le PC récupère les données du Raspberry en priorité, confirme les mesures après enregistrement, évite les doublons et copie la dernière sauvegarde quotidienne du Pi. Le Raspberry demande maintenant une collecte Mi Flora quatre fois par jour : 06 h, 12 h, 18 h et 23 h. Le PC peut encore faire une lecture Bluetooth manuelle de secours si le Raspberry ne fournit pas de mesure fraîche.
 
-- [x] Carte de disponibilité Raspberry dans Botaneo, contrôle SSH manuel et quotidien.
+- [x] Carte de disponibilité Raspberry dans Gruterra, contrôle SSH manuel et quotidien.
 - [x] Récupération prioritaire des mesures Raspberry vers le PC.
 - [x] Accusé après transaction, reprise et déduplication.
 - [x] Sauvegarde quotidienne du Pi copiée et vérifiée côté PC.

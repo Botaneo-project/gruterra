@@ -9,7 +9,7 @@ from capteurs.netatmo import recuperer_netatmo
 async def synchroniser_miflora():
     print()
     print("=" * 60)
-    print("🌿 BOTANEO - SYNCHRONISATION MI FLORA")
+    print("🌿 GRUTERRA - SYNCHRONISATION MI FLORA")
     print("=" * 60)
 
     capteurs = database.get_capteurs()
@@ -79,7 +79,7 @@ async def synchroniser_miflora():
 def synchroniser_netatmo():
     print()
     print("=" * 60)
-    print("🏠 BOTANEO - SYNCHRONISATION NETATMO")
+    print("🏠 GRUTERRA - SYNCHRONISATION NETATMO")
     print("=" * 60)
 
     try:
@@ -138,7 +138,7 @@ async def main():
 
     print()
     print("=" * 60)
-    print("🌿 BOTANEO")
+    print("🌿 GRUTERRA")
     print("SYNCHRONISATION GLOBALE")
     print("=" * 60)
 
@@ -167,7 +167,7 @@ async def main():
     print("=" * 60)
 
     if resultat_miflora and resultat_netatmo:
-        print("🎉 SYNCHRONISATION BOTANEO RÉUSSIE")
+        print("🎉 SYNCHRONISATION GRUTERRA RÉUSSIE")
     else:
         print("⚠️ SYNCHRONISATION PARTIELLE")
 

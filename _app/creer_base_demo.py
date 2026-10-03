@@ -1,4 +1,4 @@
-"""Crée une base de démonstration Botaneo avec des données fictives.
+"""Crée une base de démonstration Gruterra avec des données fictives.
 
 Cette base sert aux captures, essais et démonstrations GitHub.
 Elle ne copie aucune donnée personnelle de l'utilisateur.

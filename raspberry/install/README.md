@@ -1,13 +1,13 @@
-# Installation Raspberry Botaneo
+# Installation Raspberry Gruterra
 
-Ces scripts installent ou mettent à jour la partie Raspberry de Botaneo depuis GitHub.
+Ces scripts installent ou mettent à jour la partie Raspberry de Gruterra depuis GitHub.
 
 ## Installation
 
 Méthode conseillée : télécharger, relire, puis lancer.
 
 ```bash
-curl -O https://raw.githubusercontent.com/Botaneo-project/botaneo/main/raspberry/install/install_raspberry.sh
+curl -O https://raw.githubusercontent.com/Gruterra-project/botaneo/main/raspberry/install/install_raspberry.sh
 less install_raspberry.sh
 bash install_raspberry.sh
 ```
@@ -30,7 +30,7 @@ Copiez ce fichier en `collector.json`, puis renseignez les capteurs. Ne publiez 
 ## Mise à jour
 
 ```bash
-curl -O https://raw.githubusercontent.com/Botaneo-project/botaneo/main/raspberry/install/update_raspberry.sh
+curl -O https://raw.githubusercontent.com/Gruterra-project/botaneo/main/raspberry/install/update_raspberry.sh
 less update_raspberry.sh
 bash update_raspberry.sh
 ```
@@ -45,7 +45,7 @@ systemctl --user status botaneo-backup.timer
 
 ## Notes
 
-Les scripts n’installent pas encore un système complet depuis zéro. Ils supposent que Python, systemd utilisateur et la base du collecteur Botaneo existent ou peuvent être créés. L’objectif est de rendre la partie Raspberry reproductible sans inclure de secrets.
+Les scripts n’installent pas encore un système complet depuis zéro. Ils supposent que Python, systemd utilisateur et la base du collecteur Gruterra existent ou peuvent être créés. L’objectif est de rendre la partie Raspberry reproductible sans inclure de secrets.
 
 ## Test passif Mi Flora
 
@@ -64,3 +64,8 @@ journalctl --user -u botaneo-passive-test.service -n 80 --no-pager
 ```
 
 Ce test utilise la base Raspberry existante. Il ne crée pas de base séparée et ne remplace pas la collecte active ni l'import historique.
+
+
+## Note de compatibilité Gruterra / `botaneo`
+
+Le produit visible s’appelle **Gruterra**, mais les scripts Raspberry gardent encore `botaneo` dans les noms de dossiers, services systemd et variables pour préserver les installations existantes. Ne renommez pas ces services manuellement sans procédure de migration.

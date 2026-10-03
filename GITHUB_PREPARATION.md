@@ -1,4 +1,4 @@
-# Préparation GitHub Botaneo
+# Préparation GitHub Gruterra
 
 Ce fichier sert de checklist avant de créer ou publier le dépôt GitHub.
 
@@ -83,4 +83,4 @@ Conclusion : la préparation GitHub peut servir de copie propre du code, pendant
 
 ## Favoris Netatmo publics
 
-Les favoris Netatmo publics peuvent être ajoutés localement soit avec un identifiant de station, soit en collant un lien `https://weathermap.netatmo.com/?stationid=...`. Botaneo extrait uniquement l’identifiant utile et l’enregistre dans `_config/botaneo.local.json`, qui reste ignoré par GitHub.
+Les favoris Netatmo publics peuvent être ajoutés localement soit avec un identifiant de station, soit en collant un lien `https://weathermap.netatmo.com/?stationid=...`. Gruterra extrait uniquement l’identifiant utile et l’enregistre dans `_config/botaneo.local.json`, qui reste ignoré par GitHub.

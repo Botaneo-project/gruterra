@@ -33,7 +33,7 @@ def snapshot(path):
 
 HTML = '''<!doctype html><html lang="fr"><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>Botanéo · Raspberry</title><style>
+<title>Gruterra · Raspberry</title><style>
 body{font:17px system-ui;margin:0;background:#f2f6f1;color:#223228}main{max-width:650px;margin:auto;padding:24px 18px}
 h1{margin-bottom:4px}p{line-height:1.5}.card{background:white;padding:20px;border-radius:18px;margin:16px 0}
 .grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}.value{font-size:27px;font-weight:650}
@@ -48,10 +48,10 @@ button:focus-visible{outline:3px solid #bd7c20;outline-offset:3px}#refresh{backg
 #collect-state{min-height:48px;font-size:15px}h2{overflow-wrap:anywhere}.badge{display:inline-block;padding:5px 9px;border-radius:8px;background:#e0eddf;color:#24583b;font-size:13px}.badge.warning{background:#fff0d9;color:#794600}
 details{margin-top:15px;font-size:14px}summary{padding:10px 0;cursor:pointer;color:#536459}.warning{line-height:1.5}
 @media(prefers-reduced-motion:no-preference){button{transition:background .2s}}
-</style><main><h1>Botanéo</h1>
+</style><main><h1>Gruterra</h1>
 <p class="muted">Votre collecteur Raspberry</p><p id="connection" role="status">Chargement…</p>
 <button id="collect">Lire les capteurs maintenant</button><p id="collect-state" aria-live="polite"></p><div id="sensors"></div><section class="card"><h2>Synchronisation PC</h2><p id="pending">—</p>
-<p class="muted">Les relevés restent conservés sur le Raspberry. Le PC les récupère lorsque Botanéo est ouvert et que les deux appareils peuvent communiquer.</p></section>
+<p class="muted">Les relevés restent conservés sur le Raspberry. Le PC les récupère lorsque Gruterra est ouvert et que les deux appareils peuvent communiquer.</p></section>
 <button id="refresh">Actualiser l’affichage</button><p class="muted">Actualiser affiche les données déjà enregistrées. « Lire les capteurs » demande une nouvelle lecture, qui peut prendre plusieurs minutes. Actualisation automatique tant que cette page est visible.</p></main>
 <script>
 const byId=id=>document.getElementById(id);
@@ -99,7 +99,7 @@ class Handler(BaseHTTPRequestHandler):
             allowed = False
         if not allowed:
             self.send_response(401)
-            self.send_header('WWW-Authenticate', 'Basic realm="Botaneo", charset="UTF-8"')
+            self.send_header('WWW-Authenticate', 'Basic realm="Gruterra", charset="UTF-8"')
             self.send_header('Cache-Control', 'no-store')
             self.send_header('Content-Length', '0')
             self.end_headers()

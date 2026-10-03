@@ -1,11 +1,16 @@
 # Raspberry Pi — état et vérifications
 
+## Compatibilité du nom technique `botaneo`
+
+Même si le projet s’appelle maintenant **Gruterra**, la partie Raspberry conserve pour l’instant les appels techniques `botaneo` : dossier `~/botaneo`, services `botaneo-collect.timer`, `botaneo-backup.timer`, scripts d’installation et chemins SSH. C’est volontaire : le Raspberry déjà installé continuerait de fonctionner sans migration. Une bascule complète de ces noms devra être faite plus tard avec une procédure de migration et de test dédiée.
+
+
 Le Pi actuel est un collecteur autonome. L’interface mobile, la collecte et les sauvegardes démarrent sans session SSH. Le fonctionnement sur partage de connexion iPhone a été validé par l’utilisateur. Au retour, la synchronisation PC nécessite que les deux appareils puissent se joindre.
 
 ## Deux rythmes distincts
 
-- Lecture des capteurs : quatre demandes planifiées par jour sur le Pi, plus une lecture manuelle depuis son interface ou depuis Botaneo PC.
-- Récupération par le PC : à l’ouverture de Botaneo puis toutes les quinze minutes, réglables, sans réveiller les capteurs.
+- Lecture des capteurs : quatre demandes planifiées par jour sur le Pi, plus une lecture manuelle depuis son interface ou depuis Gruterra PC.
+- Récupération par le PC : à l’ouverture de Gruterra puis toutes les quinze minutes, réglables, sans réveiller les capteurs.
 
 PC éteint ou application fermée : les mesures restent sur le Raspberry et seront récupérées plus tard. Un transfert réussi ne garantit pas qu’une nouvelle mesure vient d’être prise.
 
@@ -24,14 +29,14 @@ Les sauvegardes contiennent l’état de confirmation des transferts. Leur resta
 ## Contrôle après retour au domicile
 
 1. Arrêter le partage de connexion et vérifier le retour du Pi sur le Wi-Fi enregistré.
-2. Ouvrir Botaneo sur le PC ; consulter le résultat dans la carte Raspberry.
+2. Ouvrir Gruterra sur le PC ; consulter le résultat dans la carte Raspberry.
 3. Vérifier la date des mesures et le message de sauvegarde copiée ou déjà vérifiée.
 4. Pour un nouveau capteur, vérifier son association à la bonne plante avant l’import.
 
 
 ## Sécurité de la page web locale
 
-La page web Raspberry est prévue pour un réseau domestique privé. Elle peut fonctionner en HTTP clair, par exemple sur le port local du collecteur, parce qu’elle sert à consulter ou déclencher Botaneo depuis le même réseau.
+La page web Raspberry est prévue pour un réseau domestique privé. Elle peut fonctionner en HTTP clair, par exemple sur le port local du collecteur, parce qu’elle sert à consulter ou déclencher Gruterra depuis le même réseau.
 
 Ne pas exposer cette page à Internet, ne pas ouvrir de redirection de port vers elle et ne pas la publier derrière un nom de domaine public sans ajouter une vraie couche HTTPS, une authentification adaptée et une revue de sécurité. Sur un réseau inconnu ou partagé, préférer l’accès SSH/VPN maîtrisé ou garder la consultation depuis le PC.
 
@@ -70,4 +75,4 @@ Le service `botaneo-passive-test.service` est installé avec les scripts Raspber
 python3 ~/botaneo/collector/passive_ble.py --duration 300 --store
 ```
 
-Il écrit dans la table `measurements` existante seulement si une mesure complète est reçue. La source est conservée dans le champ brut avec `source=passive_mibeacon`, ce qui permettra ensuite de distinguer ces mesures dans Botaneo.
+Il écrit dans la table `measurements` existante seulement si une mesure complète est reçue. La source est conservée dans le champ brut avec `source=passive_mibeacon`, ce qui permettra ensuite de distinguer ces mesures dans Gruterra.

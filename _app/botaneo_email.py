@@ -1,4 +1,4 @@
-"""Préparation des alertes e-mail Botaneo, sans envoi automatique.
+"""Préparation des alertes e-mail Gruterra, sans envoi automatique.
 
 Ce module prépare le terrain pour un SMTP sécurisé local. Par défaut, il ne
 transmet rien : il valide la configuration et construit un aperçu de message.
@@ -55,7 +55,7 @@ def charger_parametres_email(path=EMAIL_CONFIG) -> EmailSettings:
         secret_env=str(smtp.get("secret_env", "BOTANEO_SMTP_SECRET")).strip(),
         sender=str(message.get("sender", "")).strip(),
         recipients=recipients,
-        subject_prefix=str(message.get("subject_prefix", "[Botaneo]")).strip() or "[Botaneo]",
+        subject_prefix=str(message.get("subject_prefix", "[Gruterra]")).strip() or "[Gruterra]",
         min_delay_hours_same_alert=int(rules.get("min_delay_hours_same_alert", 24)),
         require_manual_validation=bool(rules.get("require_manual_validation", True)),
     )
@@ -108,7 +108,7 @@ def apercu_message_alerte(titre: str, lignes: Iterable[str], settings: EmailSett
 def email_actif_pour_envoi(settings: EmailSettings | None = None) -> bool:
     """Indique si la configuration autorise théoriquement un envoi réel.
 
-    Même si cette fonction retourne True, Botaneo doit encore demander une
+    Même si cette fonction retourne True, Gruterra doit encore demander une
     validation explicite avant le premier envoi réel.
     """
 

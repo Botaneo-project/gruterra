@@ -1,8 +1,10 @@
-# Botaneo
+# Gruterra
+
+> Nom officiel du projet : **Gruterra**. Certains fichiers, variables d’environnement, services Raspberry et chemins conservent encore le nom technique historique `botaneo` pour préserver la compatibilité avec les installations existantes.
 
 Pour découvrir le projet sans matériel : [guide du mode démonstration](GUIDE_DEMO.md).
 
-Botaneo est une application locale de suivi des plantes. Elle centralise les plantes, les capteurs Mi Flora, les mesures enregistrées dans SQLite, les arrosages, les rappels et les données météo Netatmo.
+Gruterra est une application locale de suivi des plantes. Elle centralise les plantes, les capteurs Mi Flora, les mesures enregistrées dans SQLite, les arrosages, les rappels et les données météo Netatmo.
 
 Le projet est prévu d’abord pour un usage local sous Windows. Les données réelles, les tokens et la base SQLite personnelle restent sur le PC de l’utilisateur.
 
@@ -40,7 +42,7 @@ Elle exécute les tests automatisés, la vérification avant GitHub, un contrôl
 
 ## Installation
 
-Botaneo nécessite Python 3.14 ou une version compatible.
+Gruterra nécessite Python 3.14 ou une version compatible.
 
 Installer les dépendances :
 
@@ -91,7 +93,7 @@ Cette base reste locale et n’est pas publiée dans Git. Les données sont volo
 ## Structure principale
 
 ```text
-Botaneo/
+Gruterra/
 ├── README.md
 ├── TODO.md
 ├── requirements.txt
@@ -129,7 +131,7 @@ Le script affiche les fichiers qui vont partir, bloque si un fichier sensible es
 
 ### Alertes e-mail SMTP local
 
-Botaneo prépare une future option d’alertes e-mail via SMTP sécurisé local. Les paramètres réels doivent rester dans `_config/email.local.json`, ignoré par Git. Le dépôt contient seulement `email.local.example.json`, avec des valeurs fictives. Par défaut, le mode prévu est `preview` : Botaneo prépare le message sans l’envoyer. L’envoi réel ne devra être activé qu’après validation du destinataire, des plantes concernées et des règles d’alerte.
+Gruterra prépare une future option d’alertes e-mail via SMTP sécurisé local. Les paramètres réels doivent rester dans `_config/email.local.json`, ignoré par Git. Le dépôt contient seulement `email.local.example.json`, avec des valeurs fictives. Par défaut, le mode prévu est `preview` : Gruterra prépare le message sans l’envoyer. L’envoi réel ne devra être activé qu’après validation du destinataire, des plantes concernées et des règles d’alerte.
 
 ## Configuration locale
 
@@ -201,7 +203,7 @@ _app/capteurs/netatmo.py
 
 Les tokens Netatmo doivent rester dans `_config/netatmo_config.json`.
 
-Botaneo peut afficher :
+Gruterra peut afficher :
 
 - les équipements Netatmo privés ;
 - les stations publiques proches ;
@@ -236,7 +238,7 @@ Le fichier `.gitignore` exclut notamment :
 
 ## Mise à jour future
 
-Botaneo prépare un futur système de mise à jour, mais aucun auto-upgrade réel n’est lancé pour l’instant.
+Gruterra prépare un futur système de mise à jour, mais aucun auto-upgrade réel n’est lancé pour l’instant.
 
 Le module `_app/botaneo_update.py` prépare seulement les garde-fous :
 
@@ -254,7 +256,7 @@ Toute future mise à jour devra rester précédée d’une sauvegarde locale et 
 
 ## Analyse des cycles d’arrosage
 
-Botaneo analyse les cycles d’arrosage sans conclure pour toute la motte : le Mi Flora mesure seulement sa zone. L’analyse compare l’humidité avant arrosage, le pic, la fin de cycle, la hausse après arrosage, l’écart final par rapport au départ, la baisse après pic, la vitesse observée et la qualité des mesures disponibles.
+Gruterra analyse les cycles d’arrosage sans conclure pour toute la motte : le Mi Flora mesure seulement sa zone. L’analyse compare l’humidité avant arrosage, le pic, la fin de cycle, la hausse après arrosage, l’écart final par rapport au départ, la baisse après pic, la vitesse observée et la qualité des mesures disponibles.
 
 ## Maintenance
 
@@ -273,7 +275,7 @@ Aucune licence n’est encore définie. Avant une publication publique, choisir 
 
 Le Raspberry demande une collecte Mi Flora quatre fois par jour, à 06 h, 12 h, 18 h et 23 h, et conserve les mesures localement. Son interface mobile permet de demander une lecture immédiate. Le PC reste actuellement le centre de consultation ; le remplacement du PC par un serveur Raspberry et les collecteurs ESP32 sont des évolutions futures.
 
-Botaneo récupère les mesures à chaque ouverture, puis toutes les quinze minutes par défaut tant que l’application est ouverte. Cet intervalle est réglable et ne déclenche pas une nouvelle lecture Bluetooth. Le mode déplacement suspend les transferts. Aucun service Windows permanent n’est nécessaire.
+Gruterra récupère les mesures à chaque ouverture, puis toutes les quinze minutes par défaut tant que l’application est ouverte. Cet intervalle est réglable et ne déclenche pas une nouvelle lecture Bluetooth. Le mode déplacement suspend les transferts. Aucun service Windows permanent n’est nécessaire.
 
 La réception est confirmée après enregistrement dans la base PC. Les reprises évitent les doublons ; les données sans date fiable restent archivées. Pour une synchronisation manuelle, le PC récupère d’abord les données Raspberry puis peut tenter une lecture Bluetooth locale de secours. Les collectes régulières restent confiées au Raspberry.
 
@@ -283,4 +285,8 @@ Après une récupération réussie, le PC copie la dernière sauvegarde quotidie
 
 La configuration privée est dans `_config/raspberry.local.json`. La clé SSH reste sur le PC ; l’identité du Raspberry est vérifiée. Le suivi est conservé dans `_app/data/raspberry_sync_suivi.sqlite3`. La connexion locale doit être disponible ; aucun port Internet n’est requis pour ce fonctionnement.
 
-Les scripts Raspberry sont dans `raspberry/`. Une base d’installation et de mise à jour est disponible dans `raspberry/install/`, sans secrets ni configuration privée. Voir [la fiche Raspberry](RASPBERRY.md) pour les limites et les vérifications. Relancer Botaneo après une mise à jour pour charger les nouveaux modules.
+Les scripts Raspberry sont dans `raspberry/`. Une base d’installation et de mise à jour est disponible dans `raspberry/install/`, sans secrets ni configuration privée. Voir [la fiche Raspberry](RASPBERRY.md) pour les limites et les vérifications. Relancer Gruterra après une mise à jour pour charger les nouveaux modules.
+
+## Compatibilité technique avec l’ancien nom Botaneo
+
+Le nom officiel du projet est désormais **Gruterra**. Pour éviter de casser les installations existantes, certains éléments techniques conservent temporairement le nom historique `botaneo` : noms de fichiers Python, variables d’environnement `BOTANEO_*`, fichier local `_config/botaneo.local.json`, scripts d’audit, services Raspberry `botaneo-*` et chemin Raspberry `~/botaneo`. Ces noms sont gardés volontairement pour la compatibilité et pourront être migrés plus tard avec une procédure dédiée.

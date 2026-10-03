@@ -203,7 +203,7 @@ def afficher_analyse(capteur_id, heures=24):
 
     print()
     print("=" * 60)
-    print("🌿 BOTANEO - ANALYSE DE LA PLANTE")
+    print("🌿 GRUTERRA - ANALYSE DE LA PLANTE")
     print("=" * 60)
 
     print()
@@ -267,7 +267,7 @@ def afficher_analyse(capteur_id, heures=24):
     if humidite["etat"] == "sec":
         print("   🔴 Le sol est actuellement très sec.")
         print("   ⚠️ Arrosage à envisager.")
-        print("   ℹ️ Botaneo ne donne pas encore de délai")
+        print("   ℹ️ Gruterra ne donne pas encore de délai")
         print("      précis : l'historique doit encore s'enrichir.")
 
     elif humidite["etat"] == "en_dessechement":
@@ -276,7 +276,7 @@ def afficher_analyse(capteur_id, heures=24):
 
     elif humidite["etat"] == "a_surveille":
         print("   🟡 Humidité à surveiller.")
-        print("   👀 Botaneo observe actuellement l'évolution.")
+        print("   👀 Gruterra observe actuellement l'évolution.")
 
     else:
         print("   🟢 Pas d'action immédiate sur l'humidité.")

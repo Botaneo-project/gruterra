@@ -99,7 +99,7 @@ class SuiviRaspberry:
             f"Dernière tentative : {local_date(state.get('last_attempt'))} · {state.get('last_error') or 'Aucune erreur de contact'}\n"
             f"{self.last_result or 'Les données reçues sont conservées sur le PC et sur le Pi.'}\n"
             f"{attente}"
-            'Synchronisation active quand Botaneo est ouvert. Une synchronisation ne garantit pas une collecte récente.')
+            'Synchronisation active quand Gruterra est ouvert. Une synchronisation ne garantit pas une collecte récente.')
         self.buttons = [button for button in self.buttons if button.winfo_exists()]
         for button in self.buttons:
             button.configure(state='disabled' if self.busy else 'normal')
@@ -136,7 +136,7 @@ class SuiviRaspberry:
             value = tk.StringVar(window, value=str(config.get(key, default)))
             tk.Entry(window, textvariable=value, width=65).pack(fill='x', padx=16)
             fields[key] = value
-        tk.Label(window, text='Récupération à chaque ouverture, puis à intervalle régulier, même après un succès.\nBotaneo doit rester ouvert. Aucun e-mail ne sera envoyé.', justify='left').pack(padx=16, pady=10)
+        tk.Label(window, text='Récupération à chaque ouverture, puis à intervalle régulier, même après un succès.\nGruterra doit rester ouvert. Aucun e-mail ne sera envoyé.', justify='left').pack(padx=16, pady=10)
         def save():
             if self.busy:
                 messagebox.showinfo('Suivi Raspberry', 'Attendez la fin du contrôle en cours.', parent=window)

@@ -662,7 +662,7 @@ class TestPreparationMiseAJour(unittest.TestCase):
         self.assertEqual(diagnostic["statut_global"], "pret_a_verifier")
         self.assertFalse(diagnostic["application_autorisee"])
         self.assertIn("plantes.db", diagnostic["elements_presents"])
-        self.assertIn("Diagnostic de mise à jour Botaneo", texte)
+        self.assertIn("Diagnostic de mise à jour Gruterra", texte)
         self.assertIn("Prêt pour vérification manuelle", texte)
         self.assertIn("Application automatique autorisée : non", texte)
 

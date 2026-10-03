@@ -1,4 +1,4 @@
-"""Préparation des mises à jour Botaneo, sans application automatique.
+"""Préparation des mises à jour Gruterra, sans application automatique.
 
 Ce module ne télécharge rien et ne modifie pas le programme. Il sert à préparer
 un futur auto-upgrade en listant clairement ce qui doit être préservé avant
@@ -72,7 +72,7 @@ def construire_separation_programme_donnees(racine) -> dict:
         ],
         "donnees_utilisateur_actuelles": list(ELEMENTS_PERSONNELS),
         "donnees_utilisateur_futures": [
-            "dossier utilisateur Botaneo dédié",
+            "dossier utilisateur Gruterra dédié",
             "base SQLite réelle",
             "configuration privée",
             "secrets et tokens",
@@ -98,7 +98,7 @@ def construire_plan_mise_a_jour(racine) -> dict:
         "fichiers_exemple": exemples,
         "statut_version": construire_statut_version_depuis_manifest("0.1.0-dev", racine / "version_manifest.json"),
         "actions_avant_update": [
-            "fermer Botaneo",
+            "fermer Gruterra",
             "lancer une sauvegarde locale",
             "vérifier que la base SQLite personnelle est sauvegardée",
             "préserver _config et les fichiers *.local.json",
@@ -278,7 +278,7 @@ def exporter_diagnostic_mise_a_jour_json(diagnostic) -> str:
 def formater_diagnostic_mise_a_jour(diagnostic) -> str:
     statut_global = diagnostic.get('statut_global', 'inconnu')
     lignes = [
-        "Diagnostic de mise à jour Botaneo",
+        "Diagnostic de mise à jour Gruterra",
         f"État : {libelle_statut_global(statut_global)}",
         f"Code état : {statut_global}",
         f"Mode : {diagnostic.get('mode', 'préparation uniquement')}",
@@ -294,7 +294,7 @@ def formater_diagnostic_mise_a_jour(diagnostic) -> str:
 
 def formater_plan_mise_a_jour(plan) -> str:
     lignes = [
-        "Plan de mise à jour Botaneo",
+        "Plan de mise à jour Gruterra",
         f"Mode : {plan.get('mode', 'préparation')}",
         f"Racine : {plan.get('racine', 'inconnue')}",
         plan.get("statut_version", {}).get("message", "Vérification de version non configurée."),

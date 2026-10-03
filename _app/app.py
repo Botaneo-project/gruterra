@@ -51,7 +51,7 @@ def afficher_etat():
 
     print()
     print("=" * 55)
-    print("🌿 ÉTAT DE BOTANEO")
+    print("🌿 ÉTAT DE GRUTERRA")
     print("=" * 55)
 
     if not plantes:
@@ -169,7 +169,7 @@ def menu():
 
         print()
         print("=" * 55)
-        print("🌿 BOTANEO")
+        print("🌿 GRUTERRA")
         print("=" * 55)
         print()
         print("1. 📊 Afficher l'état")
@@ -195,7 +195,7 @@ def menu():
         elif choix == "4":
 
             print()
-            print("👋 Fermeture de Botaneo.")
+            print("👋 Fermeture de Gruterra.")
             break
 
         else:

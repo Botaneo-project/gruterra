@@ -37,7 +37,7 @@ APP_VERSION = "0.1.0-dev"
 
 root = tk.Tk()
 
-root.title("Botaneo")
+root.title("Gruterra")
 root.geometry("1100x850")
 root.minsize(900, 650)
 
@@ -3212,9 +3212,9 @@ def ajouter_favori_netatmo_config(station_saisie, nom_local=""):
         sauvegarder_preferences_netatmo()
 
     if deja_present:
-        return True, "Station déjà présente dans les favoris Botaneo."
+        return True, "Station déjà présente dans les favoris Gruterra."
 
-    return True, "Station ajoutée aux favoris Botaneo. Lance Actualiser Netatmo pour charger ses données."
+    return True, "Station ajoutée aux favoris Gruterra. Lance Actualiser Netatmo pour charger ses données."
 
 
 def renommer_station_netatmo(station):
@@ -4547,7 +4547,7 @@ def afficher_netatmo():
         creer_titre_netatmo_liste(
             netatmo_frame,
             "Stations favorites",
-            "Toujours affichées en haut. Les boutons ↑ ↓ changent leur ordre local, Renommer change seulement le nom affiché dans Botaneo."
+            "Toujours affichées en haut. Les boutons ↑ ↓ changent leur ordre local, Renommer change seulement le nom affiché dans Gruterra."
         )
 
         for station_publique in stations_favorites:
@@ -5024,7 +5024,7 @@ def texte_diagnostic_update_json_a_propos():
 def texte_a_propos():
     racine = Path(__file__).resolve().parent.parent
     lignes = [
-        "Botaneo",
+        "Gruterra",
         f"Version locale : {APP_VERSION}",
         f"Révision Git : {git_revision_courte()}",
         "",
@@ -5056,14 +5056,14 @@ def texte_a_propos():
 
 def ouvrir_a_propos():
     fenetre = tk.Toplevel(root)
-    fenetre.title("À propos de Botaneo")
+    fenetre.title("À propos de Gruterra")
     fenetre.configure(bg=CARD)
     fenetre.resizable(False, False)
     fenetre.transient(root)
 
     tk.Label(
         fenetre,
-        text="🌿 Botaneo",
+        text="🌿 Gruterra",
         font=("Segoe UI", 18, "bold"),
         fg=GREEN,
         bg=CARD
@@ -5192,7 +5192,7 @@ def texte_maintenance():
 
     etat = "compactage à envisager" if diagnostic.get("compactage_conseille") else "aucune action nécessaire"
     lignes = [
-        "Base & synthèses Botaneo",
+        "Base & synthèses Gruterra",
         "",
         f"Base active : {database.DB_PATH}",
         f"Taille actuelle : {format_octets(diagnostic.get('taille_octets'))}",
@@ -5215,7 +5215,7 @@ def texte_maintenance():
 
 def ouvrir_maintenance():
     fenetre = tk.Toplevel(root)
-    fenetre.title("Base & synthèses Botaneo")
+    fenetre.title("Base & synthèses Gruterra")
     fenetre.configure(bg=CARD)
     fenetre.resizable(False, False)
     fenetre.transient(root)
@@ -5439,7 +5439,7 @@ def lignes_sante_raspberry(etat=None):
         f"- Disque libre : {disque.get('free_percent', 'n/d')} % ({format_octets(disque.get('free_bytes'))} libres)",
         f"- Mémoire disponible : {memoire.get('available_percent', 'n/d')} % ({format_octets(memoire.get('available_bytes'))})",
         f"- Charge : {charge.get('1m', 'n/d')} / {charge.get('5m', 'n/d')} / {charge.get('15m', 'n/d')}",
-        f"- Dossier Botaneo inscriptible : {'oui' if etat.get('writable') else 'non'}",
+        f"- Dossier Gruterra inscriptible : {'oui' if etat.get('writable') else 'non'}",
         f"- Sauvegardes locales Raspberry : {etat.get('backup_files', 0)} fichier(s)",
         f"- Fonctionne depuis : {format_duree_courte(etat.get('uptime_seconds'))}",
     ])
@@ -5459,7 +5459,7 @@ def texte_sante_systeme(etat_raspberry=None):
     base = diagnostic["base"]
     syntheses = diagnostic["syntheses"]
     lignes = [
-        "État Botaneo & Raspberry",
+        "État Gruterra & Raspberry",
         "",
         f"Base : {database.DB_PATH}",
         f"Taille base : {format_octets(base.get('taille_octets'))} / seuil {format_octets(base.get('seuil_octets'))}",
@@ -5483,12 +5483,12 @@ def texte_sante_systeme(etat_raspberry=None):
 
 def ouvrir_sante_systeme():
     fenetre = tk.Toplevel(root)
-    fenetre.title("État Botaneo & Raspberry")
+    fenetre.title("État Gruterra & Raspberry")
     fenetre.configure(bg=CARD)
     fenetre.resizable(True, True)
     fenetre.transient(root)
 
-    tk.Label(fenetre, text="🩺 État Botaneo & Raspberry", font=("Segoe UI", 18, "bold"), fg=GREEN, bg=CARD).pack(anchor="w", padx=20, pady=(18, 4))
+    tk.Label(fenetre, text="🩺 État Gruterra & Raspberry", font=("Segoe UI", 18, "bold"), fg=GREEN, bg=CARD).pack(anchor="w", padx=20, pady=(18, 4))
     tk.Label(fenetre, text="Vue globale de l’application, de la base, des capteurs, du Raspberry et des sauvegardes", font=("Segoe UI", 10), fg=SECONDARY, bg=CARD).pack(anchor="w", padx=20, pady=(0, 12))
 
     resume_raspberry_var = tk.StringVar(value="Raspberry : contrôle en cours…")
@@ -5552,7 +5552,7 @@ def ouvrir_sante_systeme():
         texte = texte_sante_systeme()
         root.clipboard_clear()
         root.clipboard_append(texte)
-        status_var.set("État Botaneo & Raspberry copié dans le presse-papiers")
+        status_var.set("État Gruterra & Raspberry copié dans le presse-papiers")
 
     rafraichir()
 
@@ -5564,7 +5564,7 @@ def ouvrir_sante_systeme():
 
 def ouvrir_parametres():
     fenetre = tk.Toplevel(root)
-    fenetre.title("Paramètres Botaneo")
+    fenetre.title("Paramètres Gruterra")
     fenetre.configure(bg=CARD)
     fenetre.resizable(False, False)
     fenetre.transient(root)
@@ -5746,7 +5746,7 @@ def ouvrir_parametres():
                       bg=LIGHT_ORANGE, fg=TEXT, activebackground=LIGHT_ORANGE,
                       activeforeground=TEXT, selectcolor=CARD).pack(anchor="w")
 
-    tk.Label(alertes_bloc, text="Mode test uniquement : Botaneo prépare un aperçu. Le SMTP sécurisé local sera prioritaire plus tard ; Outlook restera une option secondaire si nécessaire.",
+    tk.Label(alertes_bloc, text="Mode test uniquement : Gruterra prépare un aperçu. Le SMTP sécurisé local sera prioritaire plus tard ; Outlook restera une option secondaire si nécessaire.",
              bg=LIGHT_ORANGE, fg=SECONDARY, font=("Segoe UI", 8), wraplength=520,
              justify="left").pack(anchor="w", padx=12, pady=(0, 8))
 
@@ -6364,7 +6364,7 @@ def _ajouter_contexte_lumiere_export(lignes, mesures, evenements):
 def generer_texte_analyse_plante(plante_id):
     plante = database.get_plante(plante_id)
     if not plante:
-        return "Plante introuvable dans Botaneo."
+        return "Plante introuvable dans Gruterra."
     _, nom, espece, emplacement, zone = plante
     capteur = obtenir_capteur_plante(plante_id)
     mesures = database.get_mesures(plante_id=plante_id, limite=-1)
@@ -6468,7 +6468,7 @@ def generer_texte_analyse_plante(plante_id):
 
     suivi = analyser_apres_arrosage(plante_id)
     if suivi:
-        lignes.append("Lecture Botaneo :")
+        lignes.append("Lecture Gruterra :")
         lignes.append(f"- {suivi['titre']} : {suivi['detail']}")
         lignes.append("")
 
@@ -6930,7 +6930,7 @@ def construire_alertes(plantes):
 
 def lignes_email_depuis_alertes(alertes):
     lignes = [
-        "Aperçu des alertes Botaneo.",
+        "Aperçu des alertes Gruterra.",
         "",
         "Aucun e-mail n'a été envoyé automatiquement.",
         "La mémoire locale sert seulement à éviter de reproposer trop souvent la même alerte.",
@@ -6947,7 +6947,7 @@ def lignes_email_depuis_alertes(alertes):
 
     for alerte in alertes:
         niveau = alerte.get("niveau", "info")
-        titre = alerte.get("titre", "Alerte Botaneo")
+        titre = alerte.get("titre", "Alerte Gruterra")
         detail = alerte.get("detail", "")
         try:
             statut_email = botaneo_email.resume_memoire_alerte(
@@ -7003,14 +7003,14 @@ def ouvrir_apercu_email_alertes(alertes):
 
     try:
         apercu = botaneo_email.apercu_message_alerte(
-            "Alertes Botaneo",
+            "Alertes Gruterra",
             lignes_email_depuis_alertes(alertes)
         )
     except Exception as erreur:
         lignes = [
             "Configuration e-mail locale absente ou incomplète.",
             "",
-            "C'est normal tant que le compte dédié Botaneo n'est pas créé.",
+            "C'est normal tant que le compte dédié Gruterra n'est pas créé.",
             "Le futur fichier privé devra être placé ici :",
             r"C:\Plantes\_config\email.local.json",
             "",
@@ -7187,7 +7187,7 @@ def actualiser_interface():
 
         tk.Label(
             content_frame,
-            text="🌱 Aucune plante dans Botaneo",
+            text="🌱 Aucune plante dans Gruterra",
             font=("Segoe UI", 16, "bold"),
             fg=TEXT,
             bg=BG
@@ -7270,7 +7270,7 @@ def actualiser_interface():
 
 def ouvrir_vue_plantes():
     fenetre = tk.Toplevel(root)
-    fenetre.title("Plantes — Botaneo")
+    fenetre.title("Plantes — Gruterra")
     largeur = min(1040, max(860, fenetre.winfo_screenwidth() - 120))
     hauteur = min(760, max(620, fenetre.winfo_screenheight() - 140))
     fenetre.geometry(f"{largeur}x{hauteur}+60+45")
@@ -7383,7 +7383,7 @@ if logo_image:
 
 tk.Label(
     header,
-    text="BOTANEO",
+    text="GRUTERRA",
     font=("Segoe UI", 21, "bold"),
     fg=GREEN,
     bg=CARD
@@ -7544,7 +7544,7 @@ about_button.pack(side="right", padx=(8, 0))
 
 health_button = tk.Button(
     toolbar,
-    text="🩺 État Botaneo",
+    text="🩺 État Gruterra",
     command=ouvrir_sante_systeme,
     font=("Segoe UI", 9, "bold"),
     bg=CARD,
@@ -7582,7 +7582,7 @@ sync_frame = tk.Frame(
 
 tk.Label(
     sync_frame,
-    text="📡 Synchronisation Botaneo",
+    text="📡 Synchronisation Gruterra",
     font=("Segoe UI", 10, "bold"),
     fg=BLUE,
     bg=LIGHT_BLUE,
@@ -7806,7 +7806,7 @@ footer.pack_propagate(False)
 
 tk.Label(
     footer,
-    text="Botaneo",
+    text="Gruterra",
     font=("Segoe UI", 8),
     fg=SECONDARY,
     bg=CARD

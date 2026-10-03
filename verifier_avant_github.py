@@ -240,7 +240,7 @@ def afficher_liste(titre: str, lignes: list[str]) -> None:
 
 def main() -> int:
     os.chdir(ROOT)
-    print("Botaneo — vérification avant GitHub")
+    print("Gruterra — vérification avant GitHub")
     print(f"Dossier : {ROOT}")
 
     status = status_porcelain()

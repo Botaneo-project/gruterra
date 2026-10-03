@@ -91,7 +91,7 @@ def date_heure_valide(valeur):
 def supprimer_mesures_sans_date():
     """Supprime les mesures et archives Mi Flora sans date fiable.
 
-    Règle Botaneo : une mesure sans date exploitable ne doit pas participer
+    Règle Gruterra : une mesure sans date exploitable ne doit pas participer
     aux statistiques, même si elle contient des valeurs plausibles.
     """
     conn = get_connection()

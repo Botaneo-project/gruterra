@@ -1,6 +1,6 @@
 
 # ============================================================
-# BOTANEO - NETATMO
+# GRUTERRA - NETATMO
 # Récupération des données Netatmo
 #
 # Gestion OAuth automatique :
@@ -15,7 +15,7 @@
 # - détecte automatiquement les stations
 # - détecte automatiquement les modules
 # - récupère leurs mesures
-# - retourne une structure utilisable par Botaneo
+# - retourne une structure utilisable par Gruterra
 #
 # Aucun nom de station ou de module n'est codé en dur.
 # ============================================================
@@ -879,7 +879,7 @@ def extraire_mesures(element):
 
 def recuperer_netatmo():
     """
-    Fonction principale utilisée par Botaneo.
+    Fonction principale utilisée par Gruterra.
 
     Retourne une liste de stations avec leurs modules.
     """
@@ -1029,7 +1029,7 @@ def afficher_resultat(stations):
 
     print()
     print("=" * 60)
-    print("🌦️ BOTANEO - NETATMO")
+    print("🌦️ GRUTERRA - NETATMO")
     print("=" * 60)
     print()
 
@@ -1075,7 +1075,7 @@ def main():
 
         print()
         print("=" * 60)
-        print("🌦️ BOTANEO - NETATMO")
+        print("🌦️ GRUTERRA - NETATMO")
         print("=" * 60)
         print()
 

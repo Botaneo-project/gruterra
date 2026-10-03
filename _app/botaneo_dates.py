@@ -1,6 +1,6 @@
-"""Utilitaires centralisés pour les dates Botaneo.
+"""Utilitaires centralisés pour les dates Gruterra.
 
-Botaneo mélange des mesures locales affichées à l'utilisateur et des données
+Gruterra mélange des mesures locales affichées à l'utilisateur et des données
 Raspberry souvent horodatées en UTC. Ce module fournit des conversions simples
 pour éviter de réimplémenter le parsing ISO dans chaque écran.
 """
@@ -11,7 +11,7 @@ from datetime import datetime, timezone
 
 
 def maintenant_local() -> datetime:
-    """Retourne l'heure locale sous forme naïve, compatible avec les dates historiques Botaneo."""
+    """Retourne l'heure locale sous forme naïve, compatible avec les dates historiques Gruterra."""
     return datetime.now().astimezone().replace(tzinfo=None)
 
 

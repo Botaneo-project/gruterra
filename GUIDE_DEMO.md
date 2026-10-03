@@ -1,9 +1,9 @@
-# Tester Botanéo sous Windows
+# Tester Gruterra sous Windows
 
 Ce guide permet de découvrir l’interface avec des données fictives, sans capteur, Raspberry ni compte Netatmo.
 
 1. Acceptez l’invitation GitHub et connectez-vous avec le compte invité.
-2. Ouvrez https://github.com/Botaneo-project/botaneo puis **Code → Download ZIP**. Décompressez le dossier.
+2. Ouvrez https://github.com/Gruterra-project/botaneo puis **Code → Download ZIP**. Décompressez le dossier.
 3. Installez Python pour Windows depuis https://www.python.org/downloads/windows/ avec Tkinter et le lanceur `py`.
 4. Ouvrez PowerShell dans le dossier décompressé contenant `requirements.txt` et exécutez :
 
@@ -17,7 +17,7 @@ Pour les prochains lancements, seule la dernière commande est nécessaire. Aucu
 
 La démonstration utilise `_app/data/demo/plantes_demo.db` et sa propre configuration. Les collectes automatiques au démarrage sont désactivées en démo. Les boutons de synchronisation ne simulent pas de capteurs : n’en lancez pas pour ce premier essai.
 
-À explorer : les fiches des plantes, leurs historiques et graphiques, les arrosages et le journal. Vous pouvez modifier les données fictives. Pour recommencer, fermez Botanéo puis lancez :
+À explorer : les fiches des plantes, leurs historiques et graphiques, les arrosages et le journal. Vous pouvez modifier les données fictives. Pour recommencer, fermez Gruterra puis lancez :
 
 ```powershell
 .\.venv\Scripts\python.exe _app\creer_base_demo.py

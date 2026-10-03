@@ -1,4 +1,4 @@
-"""Lance Botaneo avec une base fictive de démonstration."""
+"""Lance Gruterra avec une base fictive de démonstration."""
 
 from __future__ import annotations
 

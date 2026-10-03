@@ -78,7 +78,7 @@ def afficher_status_git(git: str | None) -> None:
 
 
 def main() -> int:
-    print("Botaneo — audit local")
+    print("Gruterra — audit local")
     print(f"Dossier : {ROOT}")
 
     etapes: list[tuple[str, list[str]]] = [

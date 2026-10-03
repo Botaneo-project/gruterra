@@ -1,4 +1,4 @@
-# Tests Botaneo
+# Tests Gruterra
 
 Les tests automatisés couvrent les briques pures qui peuvent être vérifiées sans capteur, sans token et sans vraie base utilisateur.
 

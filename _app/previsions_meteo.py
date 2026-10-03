@@ -137,7 +137,7 @@ def recuperer_prevision_2h():
     }
 
     url = URL_OPEN_METEO + "?" + urlencode(params)
-    request = Request(url, headers={"User-Agent": "Botaneo/1.0"})
+    request = Request(url, headers={"User-Agent": "Gruterra/1.0"})
 
     with urlopen(request, timeout=12) as response:
         data = json.loads(response.read().decode("utf-8"))
