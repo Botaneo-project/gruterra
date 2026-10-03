@@ -116,13 +116,22 @@ async def get_or_create_category(
     guild: discord.Guild,
     name: str,
     overwrites: dict | None = None,
-) -> discord.CategoryChannel:
+) -> tuple[discord.CategoryChannel, str | None]:
     category = discord.utils.get(guild.categories, name=name)
     if category is not None:
         if overwrites is not None:
-            await category.edit(overwrites=overwrites, reason="Gruterra setup")
-        return category
-    return await guild.create_category(name=name, overwrites=overwrites, reason="Gruterra setup")
+            try:
+                await category.edit(overwrites=overwrites, reason="Gruterra setup")
+            except discord.Forbidden:
+                return category, f"Accès insuffisant pour mettre à jour la catégorie {category.name}."
+        return category, None
+    try:
+        return await guild.create_category(name=name, overwrites=overwrites, reason="Gruterra setup"), None
+    except discord.Forbidden:
+        raise commands.CommandError(
+            "Le bot n'a pas la permission de créer ou modifier les catégories. "
+            "Vérifiez ses permissions Discord : Gérer les salons, Voir les salons, Envoyer des messages."
+        )
 
 
 async def get_or_create_text_channel(
@@ -130,13 +139,22 @@ async def get_or_create_text_channel(
     category: discord.CategoryChannel,
     name: str,
     topic: str,
-) -> discord.TextChannel:
+) -> tuple[discord.TextChannel, str | None]:
     existing = discord.utils.get(guild.text_channels, name=name)
     if existing is not None:
         if existing.category_id != category.id or existing.topic != topic:
-            await existing.edit(category=category, topic=topic, reason="Gruterra setup")
-        return existing
-    return await guild.create_text_channel(name=name, category=category, topic=topic, reason="Gruterra setup")
+            try:
+                await existing.edit(category=category, topic=topic, reason="Gruterra setup")
+            except discord.Forbidden:
+                return existing, f"Accès insuffisant pour mettre à jour #{existing.name}."
+        return existing, None
+    try:
+        return await guild.create_text_channel(name=name, category=category, topic=topic, reason="Gruterra setup"), None
+    except discord.Forbidden:
+        raise commands.CommandError(
+            f"Le bot n'a pas la permission de créer le salon #{name}. "
+            "Vérifiez ses permissions Discord : Gérer les salons, Voir les salons, Envoyer des messages."
+        )
 
 
 async def find_invite_channel(guild: discord.Guild) -> discord.TextChannel | None:
@@ -158,12 +176,15 @@ async def publish_presentation_message(guild: discord.Guild) -> str:
     if channel is None:
         return "Message de présentation non publié : aucun salon public trouvé."
 
-    async for message in channel.history(limit=30):
-        if message.author == guild.me and "Welcome to Gruterra" in message.content:
-            await message.edit(content=PRESENTATION_MESSAGE)
-            return f"Message de présentation mis à jour dans #{channel.name}."
+    try:
+        async for message in channel.history(limit=30):
+            if message.author == guild.me and "Welcome to Gruterra" in message.content:
+                await message.edit(content=PRESENTATION_MESSAGE)
+                return f"Message de présentation mis à jour dans #{channel.name}."
 
-    await channel.send(PRESENTATION_MESSAGE)
+        await channel.send(PRESENTATION_MESSAGE)
+    except discord.Forbidden:
+        return f"Message de présentation non publié : accès insuffisant à #{channel.name}."
     return f"Message de présentation publié dans #{channel.name}."
 
 
@@ -217,24 +238,32 @@ async def setup_gruterra(ctx: commands.Context) -> None:
     admin_role = roles["Gruterra Admin"]
 
     created_or_checked = []
+    warnings = []
     for category_name, channels, mode in SERVER_STRUCTURE:
-        category = await get_or_create_category(
+        category, warning = await get_or_create_category(
             guild,
             category_name,
             overwrites_for(guild, mode, admin_role),
         )
+        if warning:
+            warnings.append(warning)
         created_or_checked.append(category.name)
         for channel_name, topic in channels:
-            channel = await get_or_create_text_channel(guild, category, channel_name, topic)
+            channel, warning = await get_or_create_text_channel(guild, category, channel_name, topic)
+            if warning:
+                warnings.append(warning)
             created_or_checked.append(f"#{channel.name}")
 
     presentation_status = await publish_presentation_message(guild)
 
-    await ctx.reply(
+    message = (
         "Structure Gruterra prête. Rôles et salons vérifiés :\n"
         + "\n".join(f"- {item}" for item in created_or_checked)
         + f"\n\n{presentation_status}"
     )
+    if warnings:
+        message += "\n\nPoints à vérifier manuellement :\n" + "\n".join(f"- {item}" for item in warnings)
+    await ctx.reply(message[:1900])
 
 
 @bot.command(name="invite_gruterra")
@@ -252,12 +281,19 @@ async def invite_gruterra(ctx: commands.Context) -> None:
         await ctx.reply("Aucun salon public disponible pour créer une invitation.")
         return
 
-    invite = await channel.create_invite(
-        max_age=0,
-        max_uses=0,
-        unique=False,
-        reason="Invitation publique Gruterra",
-    )
+    try:
+        invite = await channel.create_invite(
+            max_age=0,
+            max_uses=0,
+            unique=False,
+            reason="Invitation publique Gruterra",
+        )
+    except discord.Forbidden:
+        await ctx.reply(
+            f"Impossible de créer une invitation dans #{channel.name}. "
+            "Ajoutez au bot la permission Créer une invitation instantanée sur ce salon."
+        )
+        return
     await ctx.reply(
         "Invitation Gruterra pour utilisateurs de base :\n"
         f"{invite.url}\n\n"
