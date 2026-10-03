@@ -58,6 +58,7 @@ CLEANUP_COMMAND_PREFIXES = (
     "!setup_gruterra",
     "!invite_gruterra",
     "!clean_gruterra_messages",
+    "!clean_here",
 )
 
 PRESENTATION_MESSAGE = """🌱 **Welcome to Gruterra**
@@ -329,6 +330,35 @@ async def publish_channel_starter_messages(guild: discord.Guild) -> list[str]:
     return results
 
 
+def is_cleanup_target(message: discord.Message, guild: discord.Guild) -> bool:
+    return (
+        message.author == guild.me
+        or (
+            not message.author.bot
+            and any(message.content.startswith(prefix) for prefix in CLEANUP_COMMAND_PREFIXES)
+        )
+    )
+
+
+async def cleanup_channel_messages(
+    channel: discord.TextChannel,
+    guild: discord.Guild,
+    limit: int,
+) -> tuple[int, str | None]:
+    try:
+        deleted = await channel.purge(
+            limit=limit,
+            check=lambda message: is_cleanup_target(message, guild),
+            reason="Nettoyage des messages techniques Gruterra",
+            bulk=True,
+        )
+    except discord.Forbidden:
+        return 0, f"#{channel.name} : accès insuffisant pour supprimer les messages."
+    except discord.HTTPException as exc:
+        return 0, f"#{channel.name} : nettoyage impossible ({exc})."
+    return len(deleted), None
+
+
 async def publish_bot_log(guild: discord.Guild, title: str, lines: list[str]) -> str:
     channel = discord.utils.get(guild.text_channels, name="bot-log")
     if channel is None:
@@ -500,22 +530,8 @@ async def clean_gruterra_messages(ctx: commands.Context, limit: int = 100) -> No
         if channel is None:
             continue
         checked_channels += 1
-        try:
-            deleted = await channel.purge(
-                limit=limit,
-                check=lambda message: (
-                    message.author == guild.me
-                    or (
-                        not message.author.bot
-                        and any(message.content.startswith(prefix) for prefix in CLEANUP_COMMAND_PREFIXES)
-                    )
-                ),
-                reason="Nettoyage des messages techniques Gruterra",
-                bulk=True,
-            )
-        except discord.Forbidden:
-            continue
-        deleted_total += len(deleted)
+        deleted_count, warning = await cleanup_channel_messages(channel, guild, limit)
+        deleted_total += deleted_count
 
     bot_log_status = await publish_bot_log(
         guild,
@@ -532,12 +548,51 @@ async def clean_gruterra_messages(ctx: commands.Context, limit: int = 100) -> No
     )
 
 
+@bot.command(name="clean_here")
+@commands.has_permissions(manage_messages=True)
+async def clean_here(ctx: commands.Context, limit: int = 100) -> None:
+    """Nettoie les messages techniques Gruterra seulement dans le salon actuel."""
+
+    guild = ctx.guild
+    channel = ctx.channel
+    if guild is None or not isinstance(channel, discord.TextChannel):
+        await ctx.reply("Cette commande doit être lancée dans un salon texte Discord.")
+        return
+
+    limit = max(10, min(limit, 300))
+    deleted_count, warning = await cleanup_channel_messages(channel, guild, limit)
+    if warning:
+        await ctx.reply(warning)
+        return
+
+    bot_log_status = await publish_bot_log(
+        guild,
+        "🤖 **Nettoyage local Gruterra exécuté**",
+        [
+            f"Salon nettoyé : #{channel.name}.",
+            f"{deleted_count} message(s) technique(s) supprimé(s).",
+        ],
+    )
+    await ctx.send(
+        f"Nettoyage de #{channel.name} terminé : {deleted_count} message(s) supprimé(s).\n"
+        f"{bot_log_status}"
+    )
+
+
 @setup_gruterra.error
 async def setup_gruterra_error(ctx: commands.Context, error: commands.CommandError) -> None:
     if isinstance(error, commands.MissingPermissions):
         await ctx.reply("Il faut la permission de gérer le serveur pour lancer cette commande.")
         return
     await ctx.reply(f"Erreur pendant le setup Gruterra : {error}")
+
+
+@clean_here.error
+async def clean_here_error(ctx: commands.Context, error: commands.CommandError) -> None:
+    if isinstance(error, commands.MissingPermissions):
+        await ctx.reply("Il faut la permission de gérer les messages pour nettoyer ce salon.")
+        return
+    await ctx.reply(f"Erreur pendant le nettoyage de ce salon : {error}")
 
 
 @clean_gruterra_messages.error
