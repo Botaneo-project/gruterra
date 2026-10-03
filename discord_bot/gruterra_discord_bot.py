@@ -52,11 +52,100 @@ GitHub: https://github.com/Botaneo-project/gruterra
 French-speaking users are welcome in the French channels.
 """
 
+CHANNEL_STARTER_MESSAGES = {
+    "welcome": """🌱 **Welcome to Gruterra**
+
+Say hi here when you join. You can tell us what brought you here: demo mode, Mi Flora / Flower Care, Raspberry Pi, Netatmo, plant care tracking, or curiosity.
+
+A few useful first steps:
+- try the demo mode if you do not have sensors yet;
+- check #useful-links for GitHub and documentation;
+- use #installation-help if the app does not start;
+- use #discussion-fr if you prefer French.
+""",
+    "useful-links": """🔗 **Useful links**
+
+GitHub repository:
+https://github.com/Botaneo-project/gruterra
+
+Start here:
+- README for the project overview;
+- GUIDE_DEMO for testing without real sensors;
+- GUIDE_NETATMO for Netatmo setup;
+- ROADMAP and TODO for upcoming work.
+""",
+    "installation-help": """🛠️ **Installation help**
+
+If you need help, please include:
+- Windows / Raspberry Pi / other;
+- how you launched Gruterra;
+- the exact error message or a screenshot;
+- whether you use demo mode, Mi Flora, Raspberry Pi or Netatmo.
+
+Never share private tokens, passwords, refresh tokens or API secrets.
+""",
+    "sensors-and-data": """📡 **Sensors and data**
+
+This channel is for Mi Flora / Flower Care, Raspberry Pi collection, Netatmo data, Bluetooth issues and data quality.
+
+Helpful details when reporting a problem:
+- sensor type;
+- PC or Raspberry Pi collection;
+- last successful sync time;
+- whether history import worked;
+- suspicious values such as missing dates or all-zero measurements.
+""",
+    "demo-feedback": """🧪 **Demo feedback**
+
+Use this channel if you tested Gruterra without real sensors. Useful feedback:
+- what was clear or confusing;
+- whether the screenshots and demo data helped;
+- what you expected to click first;
+- what information was missing.
+""",
+    "bugs-feedback": """🐛 **Bug reports**
+
+When possible, include:
+- what you clicked;
+- what you expected;
+- what happened instead;
+- the visible error message;
+- whether the issue is reproducible.
+
+Please avoid posting secrets or private configuration files.
+""",
+    "ideas": """💡 **Ideas**
+
+Share ideas for plant analysis, watering cycles, light tracking, Raspberry Pi collection, Netatmo, UI improvements or documentation.
+
+Small practical ideas are welcome too.
+""",
+    "discussion-fr": """🇫🇷 **Bienvenue dans l'espace français**
+
+Vous pouvez faire un petit coucou ici, poser vos questions en français et dire ce que vous testez : mode démo, Mi Flora, Raspberry Pi, Netatmo ou suivi des plantes.
+""",
+    "aide-installation-fr": """🛠️ **Aide installation en français**
+
+Pour demander de l'aide, indiquez si possible :
+- Windows ou Raspberry Pi ;
+- comment vous lancez Gruterra ;
+- le message d'erreur exact ;
+- si vous utilisez le mode démo, Mi Flora, Raspberry Pi ou Netatmo.
+
+Ne partagez jamais vos tokens, mots de passe ou secrets API.
+""",
+    "retours-fr": """💬 **Retours en français**
+
+Vous pouvez poster ici vos retours, idées, bugs, captures d'écran non sensibles et remarques sur l'interface.
+""",
+}
+
 SERVER_STRUCTURE = [
     (
         "📢 INFORMATION",
         [
             ("announcements", "Project announcements and important updates."),
+            ("welcome", "Welcome message and first steps for new members."),
             ("changelog", "Visible changes, releases and notable fixes."),
             ("useful-links", "GitHub, demo guide, documentation and community links."),
         ],
@@ -188,6 +277,28 @@ async def publish_presentation_message(guild: discord.Guild) -> str:
     return f"Message de présentation publié dans #{channel.name}."
 
 
+async def publish_channel_starter_messages(guild: discord.Guild) -> list[str]:
+    results = []
+    for channel_name, content in CHANNEL_STARTER_MESSAGES.items():
+        channel = discord.utils.get(guild.text_channels, name=channel_name)
+        if channel is None:
+            results.append(f"#{channel_name} introuvable : message non publié.")
+            continue
+        marker = content.splitlines()[0].replace("**", "")
+        try:
+            async for message in channel.history(limit=30):
+                if message.author == guild.me and marker in message.content:
+                    await message.edit(content=content)
+                    results.append(f"#{channel.name} : message mis à jour.")
+                    break
+            else:
+                await channel.send(content)
+                results.append(f"#{channel.name} : message publié.")
+        except discord.Forbidden:
+            results.append(f"#{channel.name} : accès insuffisant pour publier le message.")
+    return results
+
+
 def overwrites_for(guild: discord.Guild, mode: str, admin_role: discord.Role) -> dict:
     everyone = guild.default_role
     if mode == "private_admin":
@@ -255,12 +366,17 @@ async def setup_gruterra(ctx: commands.Context) -> None:
             created_or_checked.append(f"#{channel.name}")
 
     presentation_status = await publish_presentation_message(guild)
+    starter_statuses = await publish_channel_starter_messages(guild)
 
     message = (
         "Structure Gruterra prête. Rôles et salons vérifiés :\n"
         + "\n".join(f"- {item}" for item in created_or_checked)
         + f"\n\n{presentation_status}"
     )
+    if starter_statuses:
+        message += "\n\nMessages d'accueil et d'aide :\n" + "\n".join(f"- {item}" for item in starter_statuses[:8])
+        if len(starter_statuses) > 8:
+            message += f"\n- {len(starter_statuses) - 8} autre(s) message(s) vérifié(s)."
     if warnings:
         message += "\n\nPoints à vérifier manuellement :\n" + "\n".join(f"- {item}" for item in warnings)
     await ctx.reply(message[:1900])
