@@ -579,6 +579,107 @@ async def clean_here(ctx: commands.Context, limit: int = 100) -> None:
     )
 
 
+@bot.command(name="help_gruterra")
+async def help_gruterra(ctx: commands.Context) -> None:
+    """Affiche les premières commandes utiles du serveur Gruterra."""
+
+    await ctx.reply(
+        "🌱 **Gruterra — aide rapide**\n"
+        "- `!github_gruterra` : liens GitHub et guides.\n"
+        "- `!report_bug` : modèle pour signaler un bug.\n"
+        "- `!idea` : modèle pour proposer une idée.\n"
+        "- `!netatmo_help` : aide connexion Netatmo.\n"
+        "- `!raspberry_help` : aide Raspberry Pi.\n"
+        "- `!invite_gruterra` : générer une invitation, réservé aux personnes pouvant gérer le serveur.\n"
+        "- `!clean_here` : nettoyer les messages techniques du salon, réservé à la modération.\n\n"
+        "Start with #welcome, #useful-links and #installation-help. French help is available in #discussion-fr and #aide-installation-fr."
+    )
+
+
+@bot.command(name="github_gruterra")
+async def github_gruterra(ctx: commands.Context) -> None:
+    """Affiche les liens utiles du projet Gruterra."""
+
+    await ctx.reply(
+        "🔗 **Gruterra links**\n"
+        "GitHub: https://github.com/Botaneo-project/gruterra\n\n"
+        "Useful files to start with:\n"
+        "- `README.md` : project overview.\n"
+        "- `GUIDE_DEMO.md` : try Gruterra without sensors.\n"
+        "- `GUIDE_NETATMO.md` : Netatmo setup.\n"
+        "- `ROADMAP.md` and `TODO.md` : upcoming work."
+    )
+
+
+@bot.command(name="report_bug")
+async def report_bug(ctx: commands.Context) -> None:
+    """Donne un modèle simple de signalement de bug."""
+
+    await ctx.reply(
+        "🐛 **Bug report template**\n"
+        "Please include:\n"
+        "1. What you clicked or launched.\n"
+        "2. What you expected.\n"
+        "3. What happened instead.\n"
+        "4. Screenshot or exact error message.\n"
+        "5. Setup: demo / Mi Flora / Raspberry Pi / Netatmo / Windows.\n\n"
+        "Do not share tokens, passwords, refresh tokens or private config files."
+    )
+
+
+@bot.command(name="idea")
+async def idea(ctx: commands.Context) -> None:
+    """Donne un modèle simple pour proposer une idée."""
+
+    await ctx.reply(
+        "💡 **Idea template**\n"
+        "You can describe:\n"
+        "1. The problem or need.\n"
+        "2. Your proposed feature.\n"
+        "3. Why it would help plant tracking.\n"
+        "4. Whether it concerns UI, sensors, Raspberry Pi, Netatmo, alerts or analysis."
+    )
+
+
+@bot.command(name="netatmo_help")
+async def netatmo_help(ctx: commands.Context) -> None:
+    """Rappelle les bases de la configuration Netatmo."""
+
+    await ctx.reply(
+        "🌦️ **Netatmo setup help**\n"
+        "Gruterra can use Netatmo data when you configure your own API access locally.\n\n"
+        "Start with `GUIDE_NETATMO.md` in the GitHub repository.\n"
+        "Keep credentials only in your private local `_config` folder.\n"
+        "Never post client secrets, access tokens or refresh tokens on Discord, GitHub or Reddit."
+    )
+
+
+@bot.command(name="raspberry_help")
+async def raspberry_help(ctx: commands.Context) -> None:
+    """Rappelle les bases de la configuration Raspberry Pi."""
+
+    await ctx.reply(
+        "🍓 **Raspberry Pi help**\n"
+        "The Raspberry Pi collector is meant to collect Mi Flora / Flower Care data regularly and let the PC app import it later.\n\n"
+        "Useful details when asking for help:\n"
+        "- Raspberry Pi model and OS.\n"
+        "- Bluetooth status.\n"
+        "- Sensor address if relevant.\n"
+        "- Last sync message from Gruterra.\n"
+        "- Whether the PC app can reach the Raspberry Pi on the local network."
+    )
+
+
+@help_gruterra.error
+@github_gruterra.error
+@report_bug.error
+@idea.error
+@netatmo_help.error
+@raspberry_help.error
+async def public_help_command_error(ctx: commands.Context, error: commands.CommandError) -> None:
+    await ctx.reply(f"Erreur pendant l'aide Gruterra : {error}")
+
+
 @setup_gruterra.error
 async def setup_gruterra_error(ctx: commands.Context, error: commands.CommandError) -> None:
     if isinstance(error, commands.MissingPermissions):
