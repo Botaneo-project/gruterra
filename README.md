@@ -245,6 +245,8 @@ Il faut éviter de modifier cette partie sans test réel avec le capteur.
 
 ## Netatmo et météo
 
+Pour configurer une station ou un compte Netatmo, consultez [GUIDE_NETATMO.md](GUIDE_NETATMO.md).
+
 Le module Netatmo est :
 
 ```text
