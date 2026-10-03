@@ -51,6 +51,20 @@ Dans Discord, un administrateur peut ensuite lancer :
 
 Le bot crée alors les rôles et salons manquants. Il ne supprime pas les salons existants.
 
+Pendant le setup, le bot publie aussi un message de présentation dans `#useful-links` si ce salon existe. Si un ancien message de présentation du bot existe déjà, il est mis à jour au lieu d'être dupliqué.
+
+## Créer une invitation utilisateur
+
+Un administrateur peut demander au bot une invitation permanente vers un salon public :
+
+```text
+!invite_gruterra
+```
+
+Cette invitation donne seulement accès au serveur avec les droits normaux du rôle `@everyone`. Elle ne donne pas les rôles `Gruterra Admin`, `Tester` ou `Contributor`.
+
+Pour que cette commande fonctionne, le bot doit avoir la permission Discord `Créer une invitation instantanée` sur le salon utilisé.
+
 ## Structure créée
 
 Rôles :

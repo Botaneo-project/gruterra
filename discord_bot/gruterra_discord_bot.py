@@ -31,6 +31,27 @@ ROLE_NAMES = [
     "Contributor",
 ]
 
+INVITE_CHANNEL_CANDIDATES = [
+    "general",
+    "discussion-fr",
+    "useful-links",
+]
+
+PRESENTATION_MESSAGE = """🌱 **Welcome to Gruterra**
+
+Gruterra is an open-source plant tracking app focused on real measurements, watering history, light exposure and practical plant care decisions.
+
+What you can find here:
+- installation help and demo feedback;
+- Mi Flora / Flower Care, Raspberry Pi and Netatmo discussions;
+- watering cycle analysis and plant observations;
+- ideas, bugs and roadmap suggestions.
+
+GitHub: https://github.com/Botaneo-project/gruterra
+
+French-speaking users are welcome in the French channels.
+"""
+
 SERVER_STRUCTURE = [
     (
         "📢 INFORMATION",
@@ -118,6 +139,34 @@ async def get_or_create_text_channel(
     return await guild.create_text_channel(name=name, category=category, topic=topic, reason="Gruterra setup")
 
 
+async def find_invite_channel(guild: discord.Guild) -> discord.TextChannel | None:
+    for name in INVITE_CHANNEL_CANDIDATES:
+        channel = discord.utils.get(guild.text_channels, name=name)
+        if channel is not None:
+            return channel
+    for channel in guild.text_channels:
+        permissions = channel.permissions_for(guild.default_role)
+        if permissions.view_channel:
+            return channel
+    return None
+
+
+async def publish_presentation_message(guild: discord.Guild) -> str:
+    channel = discord.utils.get(guild.text_channels, name="useful-links")
+    if channel is None:
+        channel = await find_invite_channel(guild)
+    if channel is None:
+        return "Message de présentation non publié : aucun salon public trouvé."
+
+    async for message in channel.history(limit=30):
+        if message.author == guild.me and "Welcome to Gruterra" in message.content:
+            await message.edit(content=PRESENTATION_MESSAGE)
+            return f"Message de présentation mis à jour dans #{channel.name}."
+
+    await channel.send(PRESENTATION_MESSAGE)
+    return f"Message de présentation publié dans #{channel.name}."
+
+
 def overwrites_for(guild: discord.Guild, mode: str, admin_role: discord.Role) -> dict:
     everyone = guild.default_role
     if mode == "private_admin":
@@ -179,9 +228,41 @@ async def setup_gruterra(ctx: commands.Context) -> None:
             channel = await get_or_create_text_channel(guild, category, channel_name, topic)
             created_or_checked.append(f"#{channel.name}")
 
+    presentation_status = await publish_presentation_message(guild)
+
     await ctx.reply(
         "Structure Gruterra prête. Rôles et salons vérifiés :\n"
         + "\n".join(f"- {item}" for item in created_or_checked)
+        + f"\n\n{presentation_status}"
+    )
+
+
+@bot.command(name="invite_gruterra")
+@commands.has_permissions(manage_guild=True)
+async def invite_gruterra(ctx: commands.Context) -> None:
+    """Crée une invitation pour des utilisateurs de base."""
+
+    guild = ctx.guild
+    if guild is None:
+        await ctx.reply("Cette commande doit être lancée dans un serveur Discord.")
+        return
+
+    channel = await find_invite_channel(guild)
+    if channel is None:
+        await ctx.reply("Aucun salon public disponible pour créer une invitation.")
+        return
+
+    invite = await channel.create_invite(
+        max_age=0,
+        max_uses=0,
+        unique=False,
+        reason="Invitation publique Gruterra",
+    )
+    await ctx.reply(
+        "Invitation Gruterra pour utilisateurs de base :\n"
+        f"{invite.url}\n\n"
+        "Elle donne accès au serveur avec les droits normaux du rôle @everyone. "
+        "Les droits administrateur restent séparés."
     )
 
 
@@ -191,6 +272,14 @@ async def setup_gruterra_error(ctx: commands.Context, error: commands.CommandErr
         await ctx.reply("Il faut la permission de gérer le serveur pour lancer cette commande.")
         return
     await ctx.reply(f"Erreur pendant le setup Gruterra : {error}")
+
+
+@invite_gruterra.error
+async def invite_gruterra_error(ctx: commands.Context, error: commands.CommandError) -> None:
+    if isinstance(error, commands.MissingPermissions):
+        await ctx.reply("Il faut la permission de gérer le serveur pour créer une invitation Gruterra.")
+        return
+    await ctx.reply(f"Erreur pendant la création de l'invitation Gruterra : {error}")
 
 
 def main() -> None:
