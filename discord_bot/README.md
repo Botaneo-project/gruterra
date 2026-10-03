@@ -144,3 +144,27 @@ Dans le portail Discord Developer :
 7. Ouvrir cette URL et choisir le serveur Discord Gruterra.
 
 Après le setup, on pourra réduire les permissions si nécessaire.
+
+## Désactiver la commande de setup
+
+La commande `!setup_gruterra` sert seulement à créer la structure initiale du serveur.
+
+Par sécurité, elle est désactivée par défaut avec :
+
+```text
+DISCORD_SETUP_ENABLED=0
+```
+
+Pour la réactiver temporairement, modifier `discord_bot/.env` :
+
+```text
+DISCORD_SETUP_ENABLED=1
+```
+
+Relancer le bot, lancer `!setup_gruterra`, puis remettre :
+
+```text
+DISCORD_SETUP_ENABLED=0
+```
+
+La commande demande aussi la permission Discord `Gérer le serveur`.

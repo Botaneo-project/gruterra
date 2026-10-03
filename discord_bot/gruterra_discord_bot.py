@@ -17,6 +17,7 @@ load_dotenv(BASE_DIR / ".env")
 
 TOKEN = os.environ.get("DISCORD_BOT_TOKEN", "").strip()
 COMMAND_PREFIX = "!"
+SETUP_ENABLED = os.environ.get("DISCORD_SETUP_ENABLED", "0").strip().lower() in {"1", "true", "yes", "on"}
 
 INTENTS = discord.Intents.default()
 INTENTS.guilds = True
@@ -135,6 +136,10 @@ async def on_ready() -> None:
 @commands.has_permissions(manage_guild=True)
 async def setup_gruterra(ctx: commands.Context) -> None:
     """Crée la structure Discord Gruterra sans supprimer l'existant."""
+
+    if not SETUP_ENABLED:
+        await ctx.reply("La commande de setup Gruterra est désactivée. Réactivez-la temporairement dans discord_bot/.env si nécessaire.")
+        return
 
     guild = ctx.guild
     if guild is None:
