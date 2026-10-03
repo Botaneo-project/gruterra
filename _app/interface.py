@@ -4997,7 +4997,7 @@ def etat_raspberry_a_propos():
 
 def resume_mise_a_jour_a_propos(racine):
     try:
-        diagnostic = botaneo_update.construire_diagnostic_mise_a_jour(racine)
+        diagnostic = botaneo_update.construire_diagnostic_mise_a_jour(racine, verifier_distant=True)
         return botaneo_update.formater_diagnostic_mise_a_jour(diagnostic)
     except Exception as erreur:
         return f"Mise à jour : diagnostic indisponible ({erreur})"
@@ -5006,7 +5006,7 @@ def resume_mise_a_jour_a_propos(racine):
 def texte_diagnostic_update_json_a_propos():
     racine = Path(__file__).resolve().parent.parent
     try:
-        diagnostic = botaneo_update.construire_diagnostic_mise_a_jour(racine)
+        diagnostic = botaneo_update.construire_diagnostic_mise_a_jour(racine, verifier_distant=True)
         return botaneo_update.exporter_diagnostic_mise_a_jour_json(diagnostic)
     except Exception as erreur:
         return json.dumps(

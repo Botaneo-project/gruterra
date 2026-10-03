@@ -250,7 +250,7 @@ Le module `_app/botaneo_update.py` prépare seulement les garde-fous :
 
 La fenêtre `À propos` affiche l’état de cette préparation et permet de copier un diagnostic JSON. Ce diagnostic reste informatif : il regroupe l’état global, les blocages, les données détectées et les prochaines actions, sans écrire de fichier automatiquement et sans autoriser une mise à jour.
 
-La comparaison de version est préparée avec un manifeste local. Le format public est documenté dans `version_manifest.example.json` avec version, notes et URL informative ; le vrai `version_manifest.json` est ignoré par Git. Aucune vérification GitHub réelle, aucun téléchargement et aucune application automatique ne sont encore actifs.
+La comparaison de version lit maintenant le manifeste public `version_manifest.json` publié sur GitHub, avec version, notes et lien informatif. Si GitHub n’est pas joignable, Gruterra peut retomber sur un manifeste local. Aucun téléchargement de programme et aucune application automatique ne sont encore actifs : la vérification reste informative.
 
 Toute future mise à jour devra rester précédée d’une sauvegarde locale et d’une validation explicite.
 

@@ -10,6 +10,8 @@ from __future__ import annotations
 import json
 from dataclasses import dataclass
 from pathlib import Path
+from urllib.error import HTTPError, URLError
+from urllib.request import Request, urlopen
 
 
 ELEMENTS_PERSONNELS = (
@@ -25,6 +27,10 @@ FICHIERS_CONFIG_EXEMPLE = (
     "netatmo_config.example.json",
     "email.local.example.json",
 )
+
+VERSION_LOCALE_DEFAUT = "0.1.0-dev"
+MANIFEST_DISTANT_DEFAUT = "https://raw.githubusercontent.com/Botaneo-project/gruterra/main/version_manifest.json"
+TIMEOUT_MANIFEST_SECONDES = 5
 
 
 @dataclass(frozen=True)
@@ -84,7 +90,7 @@ def construire_separation_programme_donnees(racine) -> dict:
     }
 
 
-def construire_plan_mise_a_jour(racine) -> dict:
+def construire_plan_mise_a_jour(racine, verifier_distant=False) -> dict:
     """Construit un plan de mise à jour en lecture seule."""
 
     racine = Path(racine)
@@ -96,7 +102,12 @@ def construire_plan_mise_a_jour(racine) -> dict:
         "separation_programme_donnees": construire_separation_programme_donnees(racine),
         "elements_personnels": elements,
         "fichiers_exemple": exemples,
-        "statut_version": construire_statut_version_depuis_manifest("0.1.0-dev", racine / "version_manifest.json"),
+        "statut_version": construire_statut_version(
+            version_locale=VERSION_LOCALE_DEFAUT,
+            chemin_manifest_local=racine / "version_manifest.json",
+            url_manifest_distant=MANIFEST_DISTANT_DEFAUT,
+            verifier_distant=verifier_distant,
+        ),
         "actions_avant_update": [
             "fermer Gruterra",
             "lancer une sauvegarde locale",
@@ -204,14 +215,14 @@ def resume_court_mise_a_jour(plan) -> str:
     return "\n".join(lignes)
 
 
-def construire_diagnostic_mise_a_jour(racine) -> dict:
+def construire_diagnostic_mise_a_jour(racine, verifier_distant=False) -> dict:
     """Construit un diagnostic global, lisible par l'interface ou un futur script.
 
     Le diagnostic reste strictement en lecture seule : il ne télécharge rien, ne
     modifie aucun fichier et n'autorise jamais l'application automatique.
     """
 
-    plan = construire_plan_mise_a_jour(racine)
+    plan = construire_plan_mise_a_jour(racine, verifier_distant=verifier_distant)
     verification = plan.get("verification", {})
     statut_version = plan.get("statut_version", {})
     elements = plan.get("elements_personnels", [])
@@ -365,6 +376,37 @@ def message_version(statut, version_locale, version_distante):
     return f"Version locale {version_locale} plus récente que la version distante {version_distante}."
 
 
+def analyser_manifest_version(donnees, source):
+    """Valide un manifeste de version déjà chargé."""
+
+    if not isinstance(donnees, dict):
+        return {
+            "disponible": False,
+            "version": None,
+            "source": str(source),
+            "message": "Manifeste de version au format invalide.",
+        }
+    version = donnees.get("version")
+    if not version:
+        return {
+            "disponible": False,
+            "version": None,
+            "source": str(source),
+            "message": "Manifeste de version sans champ version exploitable.",
+        }
+    return {
+        "disponible": True,
+        "version": str(version),
+        "source": str(source),
+        "notes": str(donnees.get("notes", "")),
+        "url": str(donnees.get("url", "")),
+        "archive_url": str(donnees.get("archive_url", "")),
+        "sha256": str(donnees.get("sha256", "")),
+        "mise_a_jour_automatique": bool(donnees.get("mise_a_jour_automatique", False)),
+        "message": f"Version distante déclarée : {version}",
+    }
+
+
 def lire_manifest_version(chemin_manifest):
     """Lit un manifeste de version local, sans accès réseau."""
 
@@ -374,7 +416,7 @@ def lire_manifest_version(chemin_manifest):
             "disponible": False,
             "version": None,
             "source": str(chemin),
-            "message": "Manifeste de version absent ; vérification distante non configurée.",
+            "message": "Manifeste de version local absent.",
         }
     try:
         donnees = json.loads(chemin.read_text(encoding="utf-8"))
@@ -383,47 +425,98 @@ def lire_manifest_version(chemin_manifest):
             "disponible": False,
             "version": None,
             "source": str(chemin),
-            "message": f"Manifeste de version illisible : {erreur}",
+            "message": f"Manifeste de version local illisible : {erreur}",
         }
-    version = donnees.get("version") if isinstance(donnees, dict) else None
-    if not version:
+    return analyser_manifest_version(donnees, chemin)
+
+
+def lire_manifest_version_distant(url, timeout=TIMEOUT_MANIFEST_SECONDES, ouvreur=urlopen):
+    """Lit le manifeste public GitHub avec délai court, sans télécharger d'archive."""
+
+    if not url:
         return {
             "disponible": False,
             "version": None,
-            "source": str(chemin),
-            "message": "Manifeste de version sans champ version exploitable.",
+            "source": "",
+            "message": "URL de manifeste distant non configurée.",
         }
-    return {
-        "disponible": True,
-        "version": str(version),
-        "source": str(chemin),
-        "notes": str(donnees.get("notes", "")),
-        "url": str(donnees.get("url", "")),
-        "message": f"Version distante déclarée : {version}",
-    }
+    try:
+        requete = Request(str(url), headers={"User-Agent": "Gruterra-update-check/1.0"})
+        with ouvreur(requete, timeout=timeout) as reponse:
+            contenu = reponse.read(64 * 1024).decode("utf-8")
+        donnees = json.loads(contenu)
+    except HTTPError as erreur:
+        return {
+            "disponible": False,
+            "version": None,
+            "source": str(url),
+            "message": f"Manifeste distant indisponible : HTTP {erreur.code}.",
+        }
+    except (URLError, TimeoutError, OSError, json.JSONDecodeError, UnicodeDecodeError) as erreur:
+        return {
+            "disponible": False,
+            "version": None,
+            "source": str(url),
+            "message": f"Manifeste distant non vérifié : {erreur}",
+        }
+    manifest = analyser_manifest_version(donnees, url)
+    if manifest.get("disponible"):
+        manifest["message"] = f"Version distante GitHub déclarée : {manifest.get('version')}"
+    return manifest
 
 
 def construire_statut_version_depuis_manifest(version_locale, chemin_manifest):
     manifest = lire_manifest_version(chemin_manifest)
+    return construire_statut_version_depuis_manifest_charge(version_locale, manifest)
+
+
+def construire_statut_version_depuis_manifest_charge(version_locale, manifest):
     if not manifest.get("disponible"):
-        statut = construire_statut_version(version_locale)
+        statut = construire_statut_version_base(version_locale)
         statut["source"] = manifest.get("source")
         statut["message"] = manifest.get("message", statut.get("message"))
         return statut
-    statut = construire_statut_version(version_locale, manifest.get("version"))
+    statut = comparer_versions(version_locale, manifest.get("version"))
     statut["source"] = manifest.get("source")
     statut["notes"] = manifest.get("notes", "")
     statut["url"] = manifest.get("url", "")
+    statut["archive_url"] = manifest.get("archive_url", "")
+    statut["sha256"] = manifest.get("sha256", "")
+    statut["manifest_auto_update"] = bool(manifest.get("mise_a_jour_automatique", False))
+    statut["application_autorisee"] = False
     return statut
 
 
-def construire_statut_version(version_locale, version_distante=None):
-    if not version_distante:
-        return {
-            "version_locale": str(version_locale),
-            "version_distante": None,
-            "statut": "verification_non_configuree",
-            "application_autorisee": False,
-            "message": "Vérification distante non configurée ; aucune mise à jour automatique active.",
-        }
-    return comparer_versions(version_locale, version_distante)
+def construire_statut_version(version_locale, version_distante=None, chemin_manifest_local=None, url_manifest_distant=None, verifier_distant=False):
+    if version_distante:
+        return comparer_versions(version_locale, version_distante)
+
+    if verifier_distant and url_manifest_distant:
+        manifest = lire_manifest_version_distant(url_manifest_distant)
+        if manifest.get("disponible"):
+            return construire_statut_version_depuis_manifest_charge(version_locale, manifest)
+        if chemin_manifest_local:
+            local = lire_manifest_version(chemin_manifest_local)
+            statut = construire_statut_version_depuis_manifest_charge(version_locale, local)
+            statut["message"] = manifest.get("message", statut.get("message"))
+            statut["source_distante"] = manifest.get("source")
+            return statut
+        statut = construire_statut_version_base(version_locale)
+        statut["source"] = manifest.get("source")
+        statut["message"] = manifest.get("message", statut.get("message"))
+        return statut
+
+    if chemin_manifest_local:
+        return construire_statut_version_depuis_manifest(version_locale, chemin_manifest_local)
+
+    return construire_statut_version_base(version_locale)
+
+
+def construire_statut_version_base(version_locale):
+    return {
+        "version_locale": str(version_locale),
+        "version_distante": None,
+        "statut": "verification_non_configuree",
+        "application_autorisee": False,
+        "message": "Vérification distante non configurée ; aucune mise à jour automatique active.",
+    }

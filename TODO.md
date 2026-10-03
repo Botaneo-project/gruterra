@@ -229,20 +229,20 @@ Objectif : préparer une évolution sans casser l’enregistrement actuel des ar
 - [x] Préparer dans le plan de mise à jour la séparation logique entre programme remplaçable et données utilisateur à préserver.
 - [ ] Déplacer réellement plus tard les données utilisateur vers un dossier dédié, avec migration et sauvegarde.
 - [x] Préparer le comparateur de versions pour un futur mode simple : version locale / version distante, sans application automatique.
-- [ ] Brancher plus tard la vérification distante GitHub et proposer la mise à jour seulement après validation.
+- [x] Brancher la vérification distante GitHub via `version_manifest.json`, sans téléchargement ni application automatique.
 - [ ] Prévoir un mode avancé plus tard : script de mise à jour Windows et script de mise à jour Raspberry.
 - [x] Afficher dans `À propos` la version locale, la révision Git et le résumé du plan de protection avant mise à jour.
 - [x] Ajouter une vérification préparatoire du plan de mise à jour : prêt, prudence ou bloqué selon la présence de la base, de la configuration et des sauvegardes locales.
 - [x] Afficher un résumé court et lisible du plan de mise à jour dans `À propos`, sans noms de fichiers secrets et sans activation automatique.
 - [x] Préparer une lecture de manifeste de version local pour tester la comparaison de versions avant le branchement GitHub réel.
-- [x] Ajouter un exemple public `version_manifest.example.json` et ignorer le vrai manifeste local.
+- [x] Ajouter un exemple public `version_manifest.example.json` et publier un manifeste public `version_manifest.json` sans secret.
 - [x] Afficher dans `À propos` les notes et le lien informatif du manifeste local quand ils existent, sans action automatique.
 - [x] Préparer un diagnostic structuré de mise à jour : état global, protections, version, blocages, éléments détectés et prochaines actions.
 - [x] Préparer un export JSON en mémoire du diagnostic de mise à jour, sans écriture automatique de fichier.
 - [x] Ajouter dans `À propos` un bouton pour copier le diagnostic de mise à jour JSON.
 - [x] Remplacer les codes techniques du diagnostic update par des libellés plus lisibles dans l’affichage utilisateur.
 - [x] Bloquer le diagnostic update si la séparation programme/données ou la liste des données personnelles à préserver manque dans le plan.
-- [ ] Afficher plus tard la dernière version disponible depuis GitHub quand la vérification réseau réelle sera ajoutée.
+- [x] Afficher la dernière version disponible depuis GitHub dans le diagnostic À propos quand le manifeste distant répond.
 
 - [x] Installation neuve : créer le schéma principal `plantes`, `capteurs`, `mesures` directement dans `database.py`, avec clés étrangères actives et index utiles.
 

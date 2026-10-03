@@ -2,5 +2,7 @@
   "version": "0.1.0",
   "notes": "Exemple public. Décrire ici les changements visibles pour l'utilisateur.",
   "url": "https://github.com/Botaneo-project/gruterra/releases",
+  "archive_url": "https://github.com/Botaneo-project/gruterra/releases/download/v0.1.0/gruterra.zip",
+  "sha256": "exemple_sha256_a_remplacer",
   "mise_a_jour_automatique": false
 }

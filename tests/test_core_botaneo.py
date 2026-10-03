@@ -538,7 +538,7 @@ class TestPreparationMiseAJour(unittest.TestCase):
         self.assertTrue(elements["_app/data"].existe)
         self.assertIn("préserver _config", texte)
         self.assertIn("Interdit sans validation explicite", texte)
-        self.assertIn("vérification distante non configurée", texte.lower())
+        self.assertIn("manifeste de version local absent", texte.lower())
         self.assertIn("Séparation programme / données", texte)
         self.assertIn("programme remplaçable", texte)
 
@@ -640,6 +640,56 @@ class TestPreparationMiseAJour(unittest.TestCase):
         self.assertIn("source", disponible)
         self.assertEqual(disponible["notes"], "Correction test")
         self.assertEqual(disponible["url"], "https://example.invalid/release")
+
+    def test_statut_version_depuis_manifest_distant_reste_non_applicatif(self):
+        botaneo_update = importlib.import_module("botaneo_update")
+
+        class ReponseFictive:
+            def __enter__(self):
+                return self
+            def __exit__(self, exc_type, exc, tb):
+                return False
+            def read(self, _taille):
+                return b'{"version":"0.3.0","notes":"Test distant","url":"https://example.invalid/release","archive_url":"https://example.invalid/app.zip","sha256":"abc","mise_a_jour_automatique":true}'
+
+        def ouvreur(_requete, timeout=0):
+            return ReponseFictive()
+
+        manifest = botaneo_update.lire_manifest_version_distant("https://example.invalid/version.json", ouvreur=ouvreur)
+        statut = botaneo_update.construire_statut_version_depuis_manifest_charge("0.1.0", manifest)
+
+        self.assertTrue(manifest["disponible"])
+        self.assertEqual(statut["statut"], "mise_a_jour_disponible")
+        self.assertEqual(statut["notes"], "Test distant")
+        self.assertEqual(statut["archive_url"], "https://example.invalid/app.zip")
+        self.assertFalse(statut["application_autorisee"])
+        self.assertTrue(statut["manifest_auto_update"])
+
+    def test_statut_version_distant_indisponible_retombe_sur_local(self):
+        botaneo_update = importlib.import_module("botaneo_update")
+        with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as dossier:
+            manifest = Path(dossier) / "version_manifest.json"
+            manifest.write_text('{"version": "0.2.0", "notes": "Fallback local"}', encoding="utf-8")
+
+            def ouvreur(_requete, timeout=0):
+                raise OSError("réseau indisponible")
+
+            original = botaneo_update.lire_manifest_version_distant
+            try:
+                botaneo_update.lire_manifest_version_distant = lambda url, timeout=5: original(url, timeout=timeout, ouvreur=ouvreur)
+                statut = botaneo_update.construire_statut_version(
+                    "0.1.0",
+                    chemin_manifest_local=manifest,
+                    url_manifest_distant="https://example.invalid/version.json",
+                    verifier_distant=True,
+                )
+            finally:
+                botaneo_update.lire_manifest_version_distant = original
+
+        self.assertEqual(statut["statut"], "mise_a_jour_disponible")
+        self.assertIn("Manifeste distant non vérifié", statut["message"])
+        self.assertEqual(statut["notes"], "Fallback local")
+        self.assertFalse(statut["application_autorisee"])
 
     def test_libelle_statut_global_est_lisible(self):
         botaneo_update = importlib.import_module("botaneo_update")
