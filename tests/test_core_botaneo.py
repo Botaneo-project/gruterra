@@ -687,7 +687,8 @@ class TestPreparationMiseAJour(unittest.TestCase):
                 botaneo_update.lire_manifest_version_distant = original
 
         self.assertEqual(statut["statut"], "mise_a_jour_disponible")
-        self.assertIn("Manifeste distant non vérifié", statut["message"])
+        self.assertIn("manifeste local utilisé", statut["message"].lower())
+        self.assertIn("Manifeste distant non vérifié", statut["avertissement_distant"])
         self.assertEqual(statut["notes"], "Fallback local")
         self.assertFalse(statut["application_autorisee"])
 

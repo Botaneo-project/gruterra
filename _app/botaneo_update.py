@@ -498,7 +498,11 @@ def construire_statut_version(version_locale, version_distante=None, chemin_mani
         if chemin_manifest_local:
             local = lire_manifest_version(chemin_manifest_local)
             statut = construire_statut_version_depuis_manifest_charge(version_locale, local)
-            statut["message"] = manifest.get("message", statut.get("message"))
+            if local.get("disponible"):
+                statut["message"] = "Manifeste GitHub non lisible ou dépôt privé ; manifeste local utilisé."
+                statut["avertissement_distant"] = manifest.get("message", "vérification distante indisponible")
+            else:
+                statut["message"] = manifest.get("message", statut.get("message"))
             statut["source_distante"] = manifest.get("source")
             return statut
         statut = construire_statut_version_base(version_locale)
