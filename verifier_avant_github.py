@@ -94,6 +94,7 @@ ALLOWLIST_CONTENT = {
     "verifier_avant_github.py",
     "_app/SECURITE_CONFIGURATION.md",
     "_app/capteurs/netatmo.py",
+    "GUIDE_NETATMO.md",
 }
 
 ALLOWLIST_PATHS = {

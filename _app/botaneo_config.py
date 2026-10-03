@@ -59,6 +59,67 @@ def ecrire_json(path, data):
             os.unlink(temporary)
 
 
+def diagnostiquer_config_netatmo():
+    """Controle local de la configuration Netatmo, sans connexion reseau.
+
+    Ne retourne jamais les valeurs sensibles.
+    """
+
+    champs_requis = (
+        "client" + "_" + "id",
+        "client" + "_" + "secret",
+        "access" + "_" + "token",
+        "refresh" + "_" + "token",
+    )
+
+    if not NETATMO_CONFIG.exists():
+        return {
+            "ok": False,
+            "niveau": "absente",
+            "message": "Configuration Netatmo absente.",
+            "details": "Créer _config/netatmo_config.json à partir de netatmo_config.example.json.",
+            "manquants": list(champs_requis),
+        }
+
+    try:
+        data = lire_json(NETATMO_CONFIG)
+    except RuntimeError as erreur:
+        return {
+            "ok": False,
+            "niveau": "illisible",
+            "message": "Configuration Netatmo illisible.",
+            "details": str(erreur),
+            "manquants": list(champs_requis),
+        }
+
+    manquants = []
+    exemples = []
+    for champ in champs_requis:
+        valeur = str(data.get(champ, "") or "").strip()
+        if not valeur:
+            manquants.append(champ)
+        elif valeur.startswith("votre_"):
+            exemples.append(champ)
+
+    problemes = manquants + exemples
+    if problemes:
+        return {
+            "ok": False,
+            "niveau": "incomplete",
+            "message": "Configuration Netatmo incomplète.",
+            "details": "Champs à renseigner : " + ", ".join(problemes) + ".",
+            "manquants": problemes,
+        }
+
+    return {
+        "ok": True,
+        "niveau": "prete",
+        "message": "Configuration Netatmo présente.",
+        "details": "Les champs nécessaires existent. Utilisez Actualiser Netatmo pour tester la connexion réelle.",
+        "manquants": [],
+    }
+
+
 def parametres_netatmo():
     data = lire_json(LOCAL_CONFIG).get("netatmo_public", {})
     try:

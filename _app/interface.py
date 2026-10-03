@@ -17,7 +17,7 @@ import database
 from evolutions_lumiere import lire_evolutions
 import mini_base_plantes
 from capteur_infos import lire_infos, resume_infos, details_infos
-from botaneo_config import LOCAL_CONFIG, lire_json, ecrire_json, normaliser_station_favorite
+from botaneo_config import LOCAL_CONFIG, lire_json, ecrire_json, normaliser_station_favorite, diagnostiquer_config_netatmo
 from ui_preferences import charger_theme_sombre, sauvegarder_theme_sombre
 from vue_historique import ouvrir_historique
 import sync_miflora
@@ -5734,6 +5734,27 @@ def ouvrir_parametres():
     tk.Label(netatmo_bloc, text="À gauche : lien ou stationid. À droite : nom local optionnel.",
              bg=LIGHT_GREEN, fg=SECONDARY, font=("Segoe UI", 8), wraplength=420,
              justify="left").pack(anchor="w", padx=12, pady=(0, 8))
+
+    diagnostic_netatmo = diagnostiquer_config_netatmo()
+    couleur_netatmo = GREEN if diagnostic_netatmo.get("ok") else ORANGE
+    tk.Label(
+        netatmo_bloc,
+        text="Configuration privée : " + diagnostic_netatmo.get("message", "état inconnu"),
+        bg=LIGHT_GREEN,
+        fg=couleur_netatmo,
+        font=("Segoe UI", 9, "bold"),
+        wraplength=520,
+        justify="left"
+    ).pack(anchor="w", padx=12, pady=(0, 2))
+    tk.Label(
+        netatmo_bloc,
+        text=diagnostic_netatmo.get("details", ""),
+        bg=LIGHT_GREEN,
+        fg=SECONDARY,
+        font=("Segoe UI", 8),
+        wraplength=520,
+        justify="left"
+    ).pack(anchor="w", padx=12, pady=(0, 8))
 
     alertes_bloc = tk.Frame(fenetre, bg=LIGHT_ORANGE, highlightbackground=BORDER, highlightthickness=1)
     alertes_bloc.pack(fill="x", padx=20, pady=(0, 12))
