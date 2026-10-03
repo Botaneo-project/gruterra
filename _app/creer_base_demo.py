@@ -67,7 +67,8 @@ CREATE TABLE IF NOT EXISTS arrosages (
     fertilisant TEXT,
     dosage TEXT,
     rappel_date TEXT,
-    rappel_fait INTEGER NOT NULL DEFAULT 0
+    rappel_fait INTEGER NOT NULL DEFAULT 0,
+    type_eau TEXT
 );
 
 CREATE TABLE IF NOT EXISTS journal_plantes (
@@ -156,24 +157,57 @@ def creer_base_demo(force: bool = True) -> Path:
         ))
 
         now = datetime.now().replace(minute=0, second=0, microsecond=0)
-        for i in range(96):
-            date = now - timedelta(hours=95 - i)
-            jour = i / 24
-            lumiere_jour = max(25, 210 + 130 * math.sin((date.hour - 7) / 12 * math.pi)) if 7 <= date.hour <= 20 else 18
-            humidite = max(16, 35 - jour * 3.4 + 2 * math.sin(i / 5))
-            temperature = 22.4 + 1.8 * math.sin((date.hour - 8) / 24 * 2 * math.pi)
-            conductivite = 118 - jour * 2 + math.sin(i / 7) * 4
-            executer(conn, """
-                INSERT INTO mesures (date_heure, temperature, humidite, luminosite, conductivite, donnees_brutes, capteur_id)
-                VALUES (?, ?, ?, ?, ?, ?, ?)
-            """, (date.isoformat(timespec="seconds"), round(temperature, 1), round(humidite, 1), round(lumiere_jour, 0), round(conductivite, 0), "demo", capteur_crassula))
+        debut_historique = now - timedelta(days=10)
+        ancien_arrosage = now - timedelta(days=8, hours=2)
+        arrosage_recent_1 = now - timedelta(days=3, hours=2)
+        arrosage_recent_2 = arrosage_recent_1 + timedelta(minutes=35)
+        sortie_balcon = now - timedelta(days=1, hours=5)
+        retour_balcon = sortie_balcon + timedelta(hours=2, minutes=15)
 
-            humidite_m = 48 + 4 * math.sin(i / 9)
-            lumiere_m = max(45, 520 + 260 * math.sin((date.hour - 7) / 12 * math.pi)) if 7 <= date.hour <= 20 else 35
+        def lumiere_interieure(date: datetime, base: float = 220) -> float:
+            if not 7 <= date.hour <= 20:
+                return 14
+            courbe = math.sin((date.hour - 7) / 13 * math.pi)
+            return max(35, base + 165 * courbe + 22 * math.sin(date.timestamp() / 18000))
+
+        def lumiere_crassula(date: datetime) -> float:
+            if sortie_balcon <= date <= retour_balcon:
+                progression = (date - sortie_balcon).total_seconds() / max(1, (retour_balcon - sortie_balcon).total_seconds())
+                return 8200 + 9400 * math.sin(progression * math.pi)
+            return lumiere_interieure(date, 160)
+
+        def reponse_arrosage(date: datetime, debut: datetime, pic: float, duree_h: float) -> float:
+            h = (date - debut).total_seconds() / 3600
+            if h < 0 or h > duree_h:
+                return 0
+            if h <= 5:
+                return pic * (h / 5)
+            return max(0, pic * (1 - (h - 5) / (duree_h - 5)))
+
+        for i in range(10 * 24 + 1):
+            date = debut_historique + timedelta(hours=i)
+            temperature = 22.0 + 1.8 * math.sin((date.hour - 8) / 24 * 2 * math.pi)
+            if sortie_balcon <= date <= retour_balcon:
+                temperature += 1.1
+
+            humidite = 18.5 + 0.6 * math.sin(i / 9)
+            humidite += reponse_arrosage(date, ancien_arrosage, 13.5, 92)
+            humidite += reponse_arrosage(date, arrosage_recent_1, 7.2, 54)
+            humidite += reponse_arrosage(date, arrosage_recent_2, 4.1, 42)
+            humidite = min(34, max(16, humidite))
+            conductivite = 82 + 6 * math.sin(i / 17) - max(0, (date - ancien_arrosage).total_seconds() / 86400) * 0.45
+
             executer(conn, """
                 INSERT INTO mesures (date_heure, temperature, humidite, luminosite, conductivite, donnees_brutes, capteur_id)
                 VALUES (?, ?, ?, ?, ?, ?, ?)
-            """, (date.isoformat(timespec="seconds"), round(temperature + 0.4, 1), round(humidite_m, 1), round(lumiere_m, 0), round(210 + math.sin(i / 6) * 18, 0), "demo", capteur_monstera))
+            """, (date.isoformat(timespec="seconds"), round(temperature, 1), round(humidite, 1), round(lumiere_crassula(date), 0), round(conductivite, 0), "demo", capteur_crassula))
+
+            humidite_m = 48 + 4 * math.sin(i / 18)
+            lumiere_m = lumiere_interieure(date, 520)
+            executer(conn, """
+                INSERT INTO mesures (date_heure, temperature, humidite, luminosite, conductivite, donnees_brutes, capteur_id)
+                VALUES (?, ?, ?, ?, ?, ?, ?)
+            """, (date.isoformat(timespec="seconds"), round(temperature + 0.4, 1), round(humidite_m, 1), round(lumiere_m, 0), round(210 + math.sin(i / 13) * 18, 0), "demo", capteur_monstera))
 
         besoins = [
             (crassula, "Succulente", "Très lumineux, soleil doux possible", "Espacé, laisser sécher", "Plutôt sec", "15 à 26 °C", "Données fictives pour démonstration.", None),
@@ -187,20 +221,24 @@ def creer_base_demo(force: bool = True) -> Path:
         """, besoins)
 
         arrosages = [
-            (crassula, now - timedelta(days=5, hours=2), 80, "normal", None, None, "Arrosage de démonstration", None, 0),
-            (monstera, now - timedelta(days=2, hours=4), 180, "normal", None, None, "Substrat maintenu légèrement humide", None, 0),
-            (cactus, now - timedelta(days=18), 40, "normal", None, None, "Plante sans capteur, suivi manuel", (now + timedelta(days=10)).isoformat(timespec="seconds"), 0),
+            (crassula, ancien_arrosage, 80, "normal", None, None, "Premier cycle démo : hausse nette puis séchage progressif", None, 0, "eau filtrée démo"),
+            (crassula, arrosage_recent_1, 40, "normal", None, None, "Session fractionnée démo : premier apport", None, 0, "Volvic démo"),
+            (crassula, arrosage_recent_2, 55, "normal", None, None, "Session fractionnée démo : complément, total logique 95 ml", None, 0, "Volvic démo"),
+            (monstera, now - timedelta(days=2, hours=4), 180, "normal", None, None, "Substrat maintenu légèrement humide", None, 0, "eau du robinet reposée démo"),
+            (cactus, now - timedelta(days=18), 40, "normal", None, None, "Plante sans capteur, suivi manuel", (now + timedelta(days=10)).isoformat(timespec="seconds"), 0, "eau minérale démo"),
         ]
         conn.executemany("""
-            INSERT INTO arrosages (plante_id, date_heure, quantite_ml, type, fertilisant, dosage, commentaire, rappel_date, rappel_fait)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-        """, [(p, d.isoformat(timespec="seconds") if hasattr(d, 'isoformat') else d, q, t, f, dosage, c, r, fait) for p, d, q, t, f, dosage, c, r, fait in arrosages])
+            INSERT INTO arrosages (plante_id, date_heure, quantite_ml, type, fertilisant, dosage, commentaire, rappel_date, rappel_fait, type_eau)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """, [(p, d.isoformat(timespec="seconds") if hasattr(d, 'isoformat') else d, q, t, f, dosage, c, r, fait, eau) for p, d, q, t, f, dosage, c, r, fait, eau in arrosages])
 
         conn.executemany("""
             INSERT INTO journal_plantes (plante_id, date_heure, type, titre, commentaire, source)
             VALUES (?, ?, ?, ?, ?, ?)
         """, [
-            (crassula, (now - timedelta(days=4)).isoformat(timespec="seconds"), "observation", "Feuilles tombées", "Deux feuilles vertes et fermes tombées. Observation fictive pour tester le journal.", "demo"),
+            (crassula, (now - timedelta(days=9)).isoformat(timespec="seconds"), "observation", "Feuilles tombées", "Deux feuilles vertes et fermes tombées. Observation fictive pour tester le journal.", "demo"),
+            (crassula, sortie_balcon.isoformat(timespec="seconds"), "exposition", "Sortie balcon", "Plante sortie avec son capteur pour tester la lumière extérieure.", "demo"),
+            (crassula, retour_balcon.isoformat(timespec="seconds"), "exposition", "Retour intérieur", "Retour au salon après exposition naturelle.", "demo"),
             (monstera, (now - timedelta(days=1)).isoformat(timespec="seconds"), "observation", "Croissance", "Nouvelle feuille visible.", "demo"),
             (cactus, (now - timedelta(days=3)).isoformat(timespec="seconds"), "rappel", "Contrôle balcon", "Vérifier visuellement le substrat et l'exposition.", "demo"),
         ])

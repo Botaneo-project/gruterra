@@ -16,7 +16,15 @@ Pour les prochains lancements, seule la dernière commande est nécessaire. Aucu
 
 La démonstration utilise `_app/data/demo/plantes_demo.db` et sa propre configuration. Les collectes automatiques au démarrage sont désactivées en démo. Les boutons de synchronisation ne simulent pas de capteurs : n’en lancez pas pour ce premier essai.
 
-À explorer : les fiches des plantes, leurs historiques et graphiques, les arrosages et le journal. Vous pouvez modifier les données fictives. Pour recommencer, fermez Gruterra puis lancez :
+À explorer en priorité :
+
+- **Crassula démo** : historique riche sur dix jours, deux cycles d’arrosage, une session fractionnée 40 + 55 ml, repères 24 h / 48 h et pic de lumière lié à une sortie balcon.
+- **Historique** : sélection d’une journée, graphique lumière, comparaison de cycles d’arrosage et synthèse copiable pour analyse.
+- **Cactus balcon démo** : plante sans capteur, avec arrosage manuel et rappel futur.
+- **Pothos démo** : exemple d’ancien capteur conservé, utile pour vérifier l’état “ancien capteur”.
+- **Monstera démo** : plante suivie avec des valeurs plus régulières pour comparer avec la Crassula.
+
+Vous pouvez modifier les données fictives. Pour recommencer avec une démo propre, fermez Gruterra puis lancez :
 
 ```powershell
 .\.venv\Scripts\python.exe _app\creer_base_demo.py
