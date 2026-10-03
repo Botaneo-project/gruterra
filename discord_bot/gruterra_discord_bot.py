@@ -37,6 +37,29 @@ INVITE_CHANNEL_CANDIDATES = [
     "useful-links",
 ]
 
+CLEANUP_CHANNEL_CANDIDATES = [
+    "announcements",
+    "welcome",
+    "changelog",
+    "bot-log",
+    "useful-links",
+    "general",
+    "installation-help",
+    "sensors-and-data",
+    "discussion-fr",
+    "aide-installation-fr",
+    "retours-fr",
+    "demo-feedback",
+    "bugs-feedback",
+    "ideas",
+]
+
+CLEANUP_COMMAND_PREFIXES = (
+    "!setup_gruterra",
+    "!invite_gruterra",
+    "!clean_gruterra_messages",
+)
+
 PRESENTATION_MESSAGE = """🌱 **Welcome to Gruterra**
 
 Gruterra is an open-source plant tracking app focused on real measurements, watering history, light exposure and practical plant care decisions.
@@ -73,6 +96,12 @@ Start here:
 - GUIDE_DEMO for testing without real sensors;
 - GUIDE_NETATMO for Netatmo setup;
 - ROADMAP and TODO for upcoming work.
+""",
+    "bot-log": """🤖 **Bot log**
+
+This channel is dedicated to automated Gruterra bot messages: setup results, structure updates, invite generation notes and future maintenance messages.
+
+Keeping bot messages here avoids mixing technical setup details with public discussion channels.
 """,
     "installation-help": """🛠️ **Installation help**
 
@@ -147,6 +176,7 @@ SERVER_STRUCTURE = [
             ("announcements", "Project announcements and important updates."),
             ("welcome", "Welcome message and first steps for new members."),
             ("changelog", "Visible changes, releases and notable fixes."),
+            ("bot-log", "Automated setup notes and bot messages."),
             ("useful-links", "GitHub, demo guide, documentation and community links."),
         ],
         "read_only",
@@ -299,6 +329,18 @@ async def publish_channel_starter_messages(guild: discord.Guild) -> list[str]:
     return results
 
 
+async def publish_bot_log(guild: discord.Guild, title: str, lines: list[str]) -> str:
+    channel = discord.utils.get(guild.text_channels, name="bot-log")
+    if channel is None:
+        return "Journal bot non publié : #bot-log introuvable."
+    content = title + "\n" + "\n".join(f"- {line}" for line in lines)
+    try:
+        await channel.send(content[:1900])
+    except discord.Forbidden:
+        return "Journal bot non publié : accès insuffisant à #bot-log."
+    return "Journal bot publié dans #bot-log."
+
+
 def overwrites_for(guild: discord.Guild, mode: str, admin_role: discord.Role) -> dict:
     everyone = guild.default_role
     if mode == "private_admin":
@@ -379,6 +421,16 @@ async def setup_gruterra(ctx: commands.Context) -> None:
             message += f"\n- {len(starter_statuses) - 8} autre(s) message(s) vérifié(s)."
     if warnings:
         message += "\n\nPoints à vérifier manuellement :\n" + "\n".join(f"- {item}" for item in warnings)
+
+    log_lines = [
+        f"{len(created_or_checked)} rôle(s), catégorie(s) ou salon(s) vérifié(s).",
+        presentation_status,
+        f"{len(starter_statuses)} message(s) d'accueil ou d'aide vérifié(s).",
+    ]
+    if warnings:
+        log_lines.extend(warnings)
+    bot_log_status = await publish_bot_log(guild, "🤖 **Setup Gruterra exécuté**", log_lines)
+    message += f"\n\n{bot_log_status}"
     await ctx.reply(message[:1900])
 
 
@@ -410,11 +462,73 @@ async def invite_gruterra(ctx: commands.Context) -> None:
             "Ajoutez au bot la permission Créer une invitation instantanée sur ce salon."
         )
         return
+    bot_log_status = await publish_bot_log(
+        guild,
+        "🤖 **Invitation Gruterra générée**",
+        [
+            f"Salon utilisé : #{channel.name}.",
+            "Invitation pour utilisateurs de base, sans rôle administrateur automatique.",
+        ],
+    )
     await ctx.reply(
         "Invitation Gruterra pour utilisateurs de base :\n"
         f"{invite.url}\n\n"
         "Elle donne accès au serveur avec les droits normaux du rôle @everyone. "
-        "Les droits administrateur restent séparés."
+        "Les droits administrateur restent séparés.\n\n"
+        f"{bot_log_status}"
+    )
+
+
+@bot.command(name="clean_gruterra_messages")
+@commands.has_permissions(manage_messages=True)
+async def clean_gruterra_messages(ctx: commands.Context, limit: int = 100) -> None:
+    """Nettoie les anciens messages techniques du bot et les commandes de setup."""
+
+    guild = ctx.guild
+    if guild is None:
+        await ctx.reply("Cette commande doit être lancée dans un serveur Discord.")
+        return
+
+    limit = max(10, min(limit, 300))
+    deleted_total = 0
+    checked_channels = 0
+
+    await ctx.reply(f"Nettoyage Gruterra en cours sur les {limit} derniers messages des salons connus…")
+
+    for channel_name in CLEANUP_CHANNEL_CANDIDATES:
+        channel = discord.utils.get(guild.text_channels, name=channel_name)
+        if channel is None:
+            continue
+        checked_channels += 1
+        try:
+            deleted = await channel.purge(
+                limit=limit,
+                check=lambda message: (
+                    message.author == guild.me
+                    or (
+                        not message.author.bot
+                        and any(message.content.startswith(prefix) for prefix in CLEANUP_COMMAND_PREFIXES)
+                    )
+                ),
+                reason="Nettoyage des messages techniques Gruterra",
+                bulk=True,
+            )
+        except discord.Forbidden:
+            continue
+        deleted_total += len(deleted)
+
+    bot_log_status = await publish_bot_log(
+        guild,
+        "🤖 **Nettoyage des messages Gruterra exécuté**",
+        [
+            f"{checked_channels} salon(s) vérifié(s).",
+            f"{deleted_total} message(s) technique(s) supprimé(s).",
+            "Messages ciblés : messages du bot et commandes Gruterra visibles.",
+        ],
+    )
+    await ctx.reply(
+        f"Nettoyage terminé : {deleted_total} message(s) technique(s) supprimé(s).\n"
+        f"{bot_log_status}"
     )
 
 
@@ -424,6 +538,14 @@ async def setup_gruterra_error(ctx: commands.Context, error: commands.CommandErr
         await ctx.reply("Il faut la permission de gérer le serveur pour lancer cette commande.")
         return
     await ctx.reply(f"Erreur pendant le setup Gruterra : {error}")
+
+
+@clean_gruterra_messages.error
+async def clean_gruterra_messages_error(ctx: commands.Context, error: commands.CommandError) -> None:
+    if isinstance(error, commands.MissingPermissions):
+        await ctx.reply("Il faut la permission de gérer les messages pour nettoyer les messages Gruterra.")
+        return
+    await ctx.reply(f"Erreur pendant le nettoyage des messages Gruterra : {error}")
 
 
 @invite_gruterra.error
