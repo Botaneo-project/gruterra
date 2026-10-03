@@ -46,6 +46,10 @@ Copiez ce modèle vers `_config/netatmo_config.json`, puis remplacez les valeurs
 
 Ne copiez jamais ce fichier dans une discussion publique, une issue GitHub ou un commit.
 
+## Schéma simple des deux tokens
+
+![Schéma des tokens Netatmo](docs/images/netatmo_tokens_schema.svg)
+
 ## À quoi servent les champs
 
 ### `client_id`
