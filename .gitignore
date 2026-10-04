@@ -92,3 +92,5 @@ capture/
 
 # Token local du bot Discord Gruterra
 discord_bot/.env
+# Archives de release générées localement
+_dist/
