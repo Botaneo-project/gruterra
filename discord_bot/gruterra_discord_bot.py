@@ -61,42 +61,50 @@ CLEANUP_COMMAND_PREFIXES = (
     "!clean_here",
 )
 
-PRESENTATION_MESSAGE = """🌱 **Welcome to Gruterra**
+PRESENTATION_MESSAGE = """🌱 **Bienvenue sur Gruterra / Welcome to Gruterra**
 
-Gruterra is an open-source plant tracking app focused on real measurements, watering history, light exposure and practical plant care decisions.
+Gruterra est un projet open-source né en français, autour du suivi des plantes, des capteurs Mi Flora / Flower Care, du Raspberry Pi, de Netatmo, de l'historique d'arrosage et de la lumière.
 
-What you can find here:
-- installation help and demo feedback;
-- Mi Flora / Flower Care, Raspberry Pi and Netatmo discussions;
-- watering cycle analysis and plant observations;
-- ideas, bugs and roadmap suggestions.
+L'anglais est bienvenu pour ouvrir le projet à plus de monde, mais le cœur du projet, les tests et le suivi quotidien sont francophones.
+
+Vous pouvez utiliser ce serveur pour :
+- demander de l'aide à l'installation ;
+- tester le mode démo ;
+- parler Mi Flora, Raspberry Pi, Netatmo et données locales ;
+- signaler un bug ou proposer une idée ;
+- discuter plantes, arrosage et lumière.
+
+Gruterra is an open-source plant monitoring project originally built in French. English-speaking users are welcome too.
 
 GitHub: https://github.com/Botaneo-project/gruterra
-
-French-speaking users are welcome in the French channels.
 """
 
 CHANNEL_STARTER_MESSAGES = {
-    "welcome": """🌱 **Welcome to Gruterra**
+    "welcome": """🌱 **Bienvenue sur Gruterra / Welcome to Gruterra**
 
-Say hi here when you join. You can tell us what brought you here: demo mode, Mi Flora / Flower Care, Raspberry Pi, Netatmo, plant care tracking, or curiosity.
+Gruterra est d'abord un projet francophone, ouvert aux utilisateurs anglophones. Vous pouvez faire un petit coucou ici et dire ce que vous venez tester : mode démo, Mi Flora / Flower Care, Raspberry Pi, Netatmo, suivi des plantes ou simple curiosité.
 
-A few useful first steps:
-- try the demo mode if you do not have sensors yet;
-- check #useful-links for GitHub and documentation;
-- use #installation-help if the app does not start;
-- use #discussion-fr if you prefer French.
+Premiers pas utiles :
+- #useful-links pour GitHub et les guides ;
+- #installation-help pour l'aide technique générale ;
+- #discussion-fr pour échanger en français ;
+- #aide-installation-fr pour l'aide en français.
+
+Gruterra is mainly built in French, but English is welcome too.
 """,
-    "useful-links": """🔗 **Useful links**
+    "useful-links": """🔗 **Liens utiles / Useful links**
 
-GitHub repository:
+Dépôt GitHub / GitHub repository:
 https://github.com/Botaneo-project/gruterra
 
-Start here:
-- README for the project overview;
-- GUIDE_DEMO for testing without real sensors;
-- GUIDE_NETATMO for Netatmo setup;
-- ROADMAP and TODO for upcoming work.
+Pour commencer :
+- `README.md` : présentation du projet ;
+- `GUIDE_DEMO.md` : tester sans capteur ;
+- `GUIDE_NETATMO.md` : configurer Netatmo ;
+- `RASPBERRY.md` : comprendre la partie Raspberry Pi ;
+- `ROADMAP.md` et `TODO.md` : suivre les prochaines étapes.
+
+English users can start with the README and demo guide too.
 """,
     "bot-log": """🤖 **Bot log**
 
@@ -104,51 +112,53 @@ This channel is dedicated to automated Gruterra bot messages: setup results, str
 
 Keeping bot messages here avoids mixing technical setup details with public discussion channels.
 """,
-    "installation-help": """🛠️ **Installation help**
+    "installation-help": """🛠️ **Aide installation / Installation help**
 
-If you need help, please include:
-- Windows / Raspberry Pi / other;
-- how you launched Gruterra;
-- the exact error message or a screenshot;
-- whether you use demo mode, Mi Flora, Raspberry Pi or Netatmo.
+Vous pouvez demander de l'aide ici en français ou en anglais.
+
+Pour faciliter le diagnostic, indiquez si possible :
+- Windows, Raspberry Pi ou autre ;
+- comment vous lancez Gruterra ;
+- le message d'erreur exact ou une capture ;
+- si vous utilisez le mode démo, Mi Flora, Raspberry Pi ou Netatmo.
 
 Never share private tokens, passwords, refresh tokens or API secrets.
 """,
-    "sensors-and-data": """📡 **Sensors and data**
+    "sensors-and-data": """📡 **Capteurs et données / Sensors and data**
 
-This channel is for Mi Flora / Flower Care, Raspberry Pi collection, Netatmo data, Bluetooth issues and data quality.
+Salon pour Mi Flora / Flower Care, Raspberry Pi, Netatmo, Bluetooth, historique capteur et qualité des données.
 
-Helpful details when reporting a problem:
-- sensor type;
-- PC or Raspberry Pi collection;
-- last successful sync time;
-- whether history import worked;
-- suspicious values such as missing dates or all-zero measurements.
+Infos utiles en cas de souci :
+- type de capteur ;
+- collecte PC ou Raspberry Pi ;
+- dernière synchronisation réussie ;
+- import historique réussi ou non ;
+- valeurs suspectes : dates manquantes, mesures à zéro, trous dans l'historique.
 """,
-    "demo-feedback": """🧪 **Demo feedback**
+    "demo-feedback": """🧪 **Retours mode démo / Demo feedback**
 
-Use this channel if you tested Gruterra without real sensors. Useful feedback:
-- what was clear or confusing;
-- whether the screenshots and demo data helped;
-- what you expected to click first;
-- what information was missing.
+Utilisez ce salon si vous testez Gruterra sans capteur réel. Retours utiles :
+- ce qui est clair ou confus ;
+- si les captures et données démo aident ;
+- où vous avez eu envie de cliquer en premier ;
+- ce qui manque pour comprendre le projet.
 """,
-    "bugs-feedback": """🐛 **Bug reports**
+    "bugs-feedback": """🐛 **Bugs / Bug reports**
 
-When possible, include:
-- what you clicked;
-- what you expected;
-- what happened instead;
-- the visible error message;
-- whether the issue is reproducible.
+Quand c'est possible, indiquez :
+- ce que vous avez cliqué ou lancé ;
+- ce que vous attendiez ;
+- ce qui s'est passé ;
+- le message d'erreur exact ;
+- si le problème se reproduit.
 
 Please avoid posting secrets or private configuration files.
 """,
-    "ideas": """💡 **Ideas**
+    "ideas": """💡 **Idées / Ideas**
 
-Share ideas for plant analysis, watering cycles, light tracking, Raspberry Pi collection, Netatmo, UI improvements or documentation.
+Partagez vos idées pour l'analyse des plantes, les cycles d'arrosage, la lumière, le Raspberry Pi, Netatmo, l'interface ou la documentation.
 
-Small practical ideas are welcome too.
+Les petites idées pratiques sont aussi les bienvenues.
 """,
     "discussion-fr": """🇫🇷 **Bienvenue dans l'espace français**
 
@@ -579,20 +589,21 @@ async def clean_here(ctx: commands.Context, limit: int = 100) -> None:
     )
 
 
-@bot.command(name="help_gruterra")
+@bot.command(name="help_gruterra", aliases=["aide_gruterra"])
 async def help_gruterra(ctx: commands.Context) -> None:
     """Affiche les premières commandes utiles du serveur Gruterra."""
 
     await ctx.reply(
-        "🌱 **Gruterra — aide rapide**\n"
+        "🌱 **Gruterra — aide rapide / quick help**\n"
+        "Projet francophone ouvert aux échanges en anglais.\n\n"
         "- `!github_gruterra` : liens GitHub et guides.\n"
-        "- `!report_bug` : modèle pour signaler un bug.\n"
-        "- `!idea` : modèle pour proposer une idée.\n"
-        "- `!netatmo_help` : aide connexion Netatmo.\n"
-        "- `!raspberry_help` : aide Raspberry Pi.\n"
+        "- `!report_bug` ou `!bug` : modèle pour signaler un bug.\n"
+        "- `!idea` ou `!idee` : modèle pour proposer une idée.\n"
+        "- `!netatmo_help` ou `!aide_netatmo` : aide connexion Netatmo.\n"
+        "- `!raspberry_help` ou `!aide_raspberry` : aide Raspberry Pi.\n"
         "- `!invite_gruterra` : générer une invitation, réservé aux personnes pouvant gérer le serveur.\n"
         "- `!clean_here` : nettoyer les messages techniques du salon, réservé à la modération.\n\n"
-        "Start with #welcome, #useful-links and #installation-help. French help is available in #discussion-fr and #aide-installation-fr."
+        "Commencez par #welcome, #useful-links, #discussion-fr ou #installation-help."
     )
 
 
@@ -611,7 +622,7 @@ async def github_gruterra(ctx: commands.Context) -> None:
     )
 
 
-@bot.command(name="report_bug")
+@bot.command(name="report_bug", aliases=["bug"])
 async def report_bug(ctx: commands.Context) -> None:
     """Donne un modèle simple de signalement de bug."""
 
@@ -627,7 +638,7 @@ async def report_bug(ctx: commands.Context) -> None:
     )
 
 
-@bot.command(name="idea")
+@bot.command(name="idea", aliases=["idee"])
 async def idea(ctx: commands.Context) -> None:
     """Donne un modèle simple pour proposer une idée."""
 
@@ -641,7 +652,7 @@ async def idea(ctx: commands.Context) -> None:
     )
 
 
-@bot.command(name="netatmo_help")
+@bot.command(name="netatmo_help", aliases=["aide_netatmo"])
 async def netatmo_help(ctx: commands.Context) -> None:
     """Rappelle les bases de la configuration Netatmo."""
 
@@ -654,7 +665,7 @@ async def netatmo_help(ctx: commands.Context) -> None:
     )
 
 
-@bot.command(name="raspberry_help")
+@bot.command(name="raspberry_help", aliases=["aide_raspberry"])
 async def raspberry_help(ctx: commands.Context) -> None:
     """Rappelle les bases de la configuration Raspberry Pi."""
 
