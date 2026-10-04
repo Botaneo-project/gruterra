@@ -56,6 +56,12 @@ Commande à lancer dans Discord, idéalement depuis `#bot-commands`, salon priv�
 !post_guides_gruterra
 ```
 
+Si des doublons existent après plusieurs essais ou changements de texte, repartir proprement avec :
+
+```text
+!reset_guides_gruterra
+```
+
 Cette commande vérifie les salons connus (`#welcome`, `#useful-links`, `#installation-help`, `#sensors-and-data`, `#discussion-fr`, `#aide-installation-fr`, etc.), puis publie le message adapté ou met à jour l’ancien message du bot si celui-ci existe déjà.
 
 Elle ne recrée pas la structure du serveur et ne touche pas aux rôles. Pour refaire toute la structure, utiliser seulement ponctuellement `!setup_gruterra` avec `DISCORD_SETUP_ENABLED=1`.

@@ -73,6 +73,7 @@ CLEANUP_COMMAND_PREFIXES = (
     "!clean_gruterra_messages",
     "!clean_here",
     "!post_guides_gruterra",
+    "!reset_guides_gruterra",
 )
 
 PRESENTATION_MESSAGE = """🌱 **Bienvenue sur Gruterra / Welcome to Gruterra**
@@ -126,6 +127,7 @@ Utilisez ce salon pour lancer les commandes Gruterra sans polluer le général.
 
 Commandes utiles :
 - `!post_guides_gruterra` : publier ou mettre à jour les messages d’accueil et de tutoriel ;
+- `!reset_guides_gruterra` : nettoyer les anciens messages de guide et republier proprement ;
 - `!invite_gruterra` : générer une invitation publique ;
 - `!release_gruterra` : publier manuellement une annonce de release ;
 - `!auto_release_check` : tester l’annonce automatique anti-spam ;
@@ -207,6 +209,31 @@ Ne partagez jamais vos tokens, mots de passe ou secrets API.
 Vous pouvez poster ici vos retours, idées, bugs, captures d'écran non sensibles et remarques sur l'interface.
 """,
 }
+
+GUIDE_MESSAGE_MARKERS = [
+    "Bienvenue sur Gruterra",
+    "Welcome to Gruterra",
+    "Liens utiles",
+    "Useful links",
+    "Commandes bot",
+    "Bot commands",
+    "Bot log",
+    "Aide installation",
+    "Installation help",
+    "Capteurs et données",
+    "Sensors and data",
+    "Retours mode démo",
+    "Demo feedback",
+    "Bugs / Bug reports",
+    "Idées / Ideas",
+    "Bienvenue dans l'espace français",
+    "Aide installation en français",
+    "Retours en français",
+]
+
+GUIDE_CHANNEL_NAMES = sorted(CHANNEL_STARTER_MESSAGES.keys())
+
+
 
 SERVER_STRUCTURE = [
     (
@@ -464,6 +491,12 @@ async def publish_presentation_message(guild: discord.Guild) -> str:
     return f"Message de présentation publié dans #{channel.name}."
 
 
+async def is_guide_message(message: discord.Message) -> bool:
+    if message.author != message.guild.me:
+        return False
+    return any(marker in message.content for marker in GUIDE_MESSAGE_MARKERS)
+
+
 async def publish_channel_starter_messages(guild: discord.Guild) -> list[str]:
     results = []
     for channel_name, content in CHANNEL_STARTER_MESSAGES.items():
@@ -471,20 +504,47 @@ async def publish_channel_starter_messages(guild: discord.Guild) -> list[str]:
         if channel is None:
             results.append(f"#{channel_name} introuvable : message non publié.")
             continue
+
         marker = content.splitlines()[0].replace("**", "")
         try:
-            async for message in channel.history(limit=30):
-                if message.author == guild.me and marker in message.content:
-                    await message.edit(content=content)
-                    results.append(f"#{channel.name} : message mis à jour.")
+            matching_messages = []
+            async for message in channel.history(limit=80):
+                if message.author == guild.me and (marker in message.content or await is_guide_message(message)):
+                    matching_messages.append(message)
+
+            target_message = None
+            for message in matching_messages:
+                if marker in message.content:
+                    target_message = message
                     break
-            else:
+            if target_message is None and matching_messages:
+                target_message = matching_messages[0]
+
+            if target_message is None:
                 await channel.send(content)
                 results.append(f"#{channel.name} : message publié.")
+                continue
+
+            if target_message.content != content:
+                await target_message.edit(content=content)
+            deleted_duplicates = 0
+            for message in matching_messages:
+                if message.id == target_message.id or message.pinned:
+                    continue
+                try:
+                    await message.delete()
+                    deleted_duplicates += 1
+                except discord.Forbidden:
+                    pass
+                except discord.HTTPException:
+                    pass
+            if deleted_duplicates:
+                results.append(f"#{channel.name} : message mis à jour, {deleted_duplicates} doublon(s) supprimé(s).")
+            else:
+                results.append(f"#{channel.name} : message mis à jour.")
         except discord.Forbidden:
             results.append(f"#{channel.name} : accès insuffisant pour publier le message.")
     return results
-
 
 async def ensure_pinned_bot_commands_message(guild: discord.Guild) -> str:
     channel = discord.utils.get(guild.text_channels, name="bot-commands")
@@ -739,6 +799,66 @@ async def setup_gruterra(ctx: commands.Context) -> None:
     bot_log_status = await publish_bot_log(guild, "🤖 **Setup Gruterra exécuté**", log_lines)
     message += f"\n\n{bot_log_status}"
     await ctx.reply(message[:1900])
+
+
+@bot.command(name="reset_guides_gruterra")
+@commands.has_permissions(manage_messages=True)
+async def reset_guides_gruterra(ctx: commands.Context, limit: int = 120) -> None:
+    """Supprime les anciens messages de guide du bot puis les republie proprement."""
+
+    guild = ctx.guild
+    if guild is None:
+        await safe_reply(ctx, "Cette commande doit être lancée dans un serveur Discord.")
+        return
+
+    limit = max(30, min(limit, 300))
+    await safe_reply(ctx, f"Reset des guides Gruterra en cours sur les {limit} derniers messages des salons connus…")
+
+    deleted_total = 0
+    warnings = []
+    for channel_name in GUIDE_CHANNEL_NAMES:
+        channel = discord.utils.get(guild.text_channels, name=channel_name)
+        if channel is None:
+            continue
+        try:
+            deleted = await channel.purge(
+                limit=limit,
+                check=lambda message: (
+                    message.author == guild.me
+                    and not message.pinned
+                    and any(marker in message.content for marker in GUIDE_MESSAGE_MARKERS)
+                ),
+                reason="Reset des guides Gruterra",
+                bulk=True,
+            )
+            deleted_total += len(deleted)
+        except discord.Forbidden:
+            warnings.append(f"#{channel.name} : accès insuffisant pour nettoyer.")
+        except discord.HTTPException as exc:
+            warnings.append(f"#{channel.name} : nettoyage impossible ({exc}).")
+
+    presentation_status = await publish_presentation_message(guild)
+    starter_statuses = await publish_channel_starter_messages(guild)
+    commands_pin_status = await ensure_pinned_bot_commands_message(guild)
+
+    lines = [
+        f"{deleted_total} ancien(s) message(s) de guide supprimé(s).",
+        presentation_status,
+        commands_pin_status,
+        *starter_statuses,
+        *warnings,
+    ]
+    bot_log_status = await publish_bot_log(
+        guild,
+        "🤖 **Reset des guides Gruterra exécuté**",
+        lines[:12],
+    )
+
+    message = "Reset guides terminé :\n" + "\n".join(f"- {line}" for line in lines[:12])
+    if len(lines) > 12:
+        message += f"\n- {len(lines) - 12} autre(s) résultat(s)."
+    message += f"\n\n{bot_log_status}"
+    await safe_reply(ctx, message)
 
 
 @bot.command(name="post_guides_gruterra")
