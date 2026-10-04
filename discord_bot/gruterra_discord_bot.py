@@ -75,6 +75,8 @@ CLEANUP_COMMAND_PREFIXES = (
     "!post_guides_gruterra",
     "!reset_guides_gruterra",
     "!fix_bot_commands",
+    "!post_tutos_gruterra",
+    "!reset_tutos_gruterra",
 )
 
 PRESENTATION_MESSAGE = """🌱 **Bienvenue sur Gruterra / Welcome to Gruterra**
@@ -136,6 +138,8 @@ Commandes utiles :
 - `!post_guides_gruterra` : publier ou mettre à jour les messages d’accueil et de tutoriel ;
 - `!reset_guides_gruterra` : nettoyer les anciens messages de guide et republier proprement ;
 - `!fix_bot_commands` : réparer les droits du salon privé de commandes ;
+- `!post_tutos_gruterra` : publier les tutos complets avec captures si disponibles ;
+- `!reset_tutos_gruterra` : nettoyer puis republier les tutos complets ;
 - `!invite_gruterra` : générer une invitation publique ;
 - `!release_gruterra` : publier manuellement une annonce de release ;
 - `!auto_release_check` : tester l’annonce automatique anti-spam ;
@@ -278,6 +282,190 @@ GUIDE_MESSAGE_MARKERS = [
 ]
 
 GUIDE_CHANNEL_NAMES = sorted(CHANNEL_STARTER_MESSAGES.keys())
+
+
+TUTORIAL_MARKER_PREFIX = "[GRUTERRA_TUTO:"
+
+TUTORIAL_POSTS = [
+    {
+        "key": "links-main",
+        "channel": "useful-links",
+        "title": "🔗 Start here / Commencer ici",
+        "content": """[GRUTERRA_TUTO:links-main]
+🔗 **Start here / Commencer ici**
+
+GitHub: https://github.com/Botaneo-project/gruterra
+Reddit profile: https://www.reddit.com/user/Gruterra_app/
+
+Main guides:
+- `README.md` / `README_EN.md`: project overview;
+- `GUIDE_INSTALLATION.md`: install from a release ZIP;
+- `GUIDE_DEMO.md`: test without sensors;
+- `GUIDE_NETATMO.md`: configure Netatmo;
+- `RASPBERRY.md`: optional Raspberry Pi collector;
+- `ROADMAP.md` and `TODO.md`: planned work.
+
+FR : les guides principaux sont sur GitHub. Le projet est encore français-first, mais les retours en anglais sont bienvenus.
+""",
+        "attachments": [],
+    },
+    {
+        "key": "install-en",
+        "channel": "installation-help",
+        "title": "🛠️ Install Gruterra",
+        "content": """[GRUTERRA_TUTO:install-en]
+🛠️ **Install Gruterra**
+
+Recommended path for new testers:
+
+1. Open the GitHub repository: https://github.com/Botaneo-project/gruterra
+2. Download the latest release ZIP when available, or use GitHub's Download ZIP for testing.
+3. Install Python for Windows: https://www.python.org/downloads/windows/
+4. Install dependencies from the project folder.
+5. Start with demo mode before connecting sensors.
+
+Useful docs:
+- `GUIDE_INSTALLATION.md`
+- `GUIDE_DEMO.md`
+- `README_EN.md`
+
+If install fails, post the exact error message here and say whether you are using Windows only, Raspberry Pi, Mi Flora or Netatmo.
+""",
+        "attachments": [],
+    },
+    {
+        "key": "install-fr",
+        "channel": "aide-installation-fr",
+        "title": "🛠️ Installer Gruterra",
+        "content": """[GRUTERRA_TUTO:install-fr]
+🛠️ **Installer Gruterra**
+
+Chemin conseillé pour tester :
+
+1. Ouvrir le dépôt GitHub : https://github.com/Botaneo-project/gruterra
+2. Télécharger la release ZIP quand elle est disponible, ou utiliser Download ZIP pour tester.
+3. Installer Python pour Windows : https://www.python.org/downloads/windows/
+4. Installer les dépendances depuis le dossier du projet.
+5. Commencer par le mode démo avant de brancher les capteurs.
+
+Guides utiles :
+- `GUIDE_INSTALLATION.md`
+- `GUIDE_DEMO.md`
+- `README.md`
+
+Si ça bloque, postez le message d’erreur exact et précisez si vous utilisez Windows seul, Raspberry Pi, Mi Flora ou Netatmo.
+""",
+        "attachments": [],
+    },
+    {
+        "key": "demo-overview",
+        "channel": "demo-feedback",
+        "title": "🧪 Demo mode overview",
+        "content": """[GRUTERRA_TUTO:demo-overview]
+🧪 **Demo mode overview**
+
+Demo mode is the easiest way to test Gruterra without hardware.
+
+What to look at first:
+- home screen with plants and local summaries;
+- demo Crassula with watering cycles;
+- history view with day selection;
+- light and soil moisture charts;
+- manual watering and reminders for plants without sensors.
+
+Guide: `GUIDE_DEMO.md`
+GitHub: https://github.com/Botaneo-project/gruterra
+
+Screenshots are attached when available from the local `capture/` folder.
+""",
+        "attachments": ["capture/grutera.png", "capture/grutera2.png"],
+    },
+    {
+        "key": "history-cycles",
+        "channel": "plant-tracking",
+        "title": "🌿 History and watering cycles",
+        "content": """[GRUTERRA_TUTO:history-cycles]
+🌿 **History and watering cycles**
+
+Gruterra is meant to show more than the current sensor value. Useful views include:
+
+- day selection in history;
+- light graph and daily averages;
+- watering markers;
+- cycle comparison after watering;
+- humidity before watering, observed peak, 24 h and 48 h markers;
+- data quality warnings when history is incomplete.
+
+This is the main area for feedback about whether the analysis is actually useful for plant care.
+""",
+        "attachments": ["capture/historique.png", "capture/cycle_arrossage.png"],
+    },
+    {
+        "key": "sensors-netatmo-raspberry",
+        "channel": "sensors-and-data",
+        "title": "📡 Sensors, Netatmo and Raspberry Pi",
+        "content": """[GRUTERRA_TUTO:sensors-netatmo-raspberry]
+📡 **Sensors, Netatmo and Raspberry Pi**
+
+Gruterra can work step by step:
+
+- no hardware: demo mode;
+- Mi Flora / Flower Care: soil moisture, temperature, light, conductivity, battery;
+- Netatmo: private/public weather context when configured;
+- Raspberry Pi: optional collector for more regular measurements.
+
+Useful docs:
+- `GUIDE_NETATMO.md`
+- `RASPBERRY.md`
+- `GUIDE_DEMO.md`
+
+Never post API tokens, refresh tokens, passwords or private config files.
+""",
+        "attachments": ["capture/ajout_CAPTEURE.png"],
+    },
+    {
+        "key": "plants-without-sensor-fr",
+        "channel": "retours-fr",
+        "title": "🌱 Plantes avec ou sans capteur",
+        "content": """[GRUTERRA_TUTO:plants-without-sensor-fr]
+🌱 **Plantes avec ou sans capteur**
+
+Gruterra peut aussi servir pour les plantes sans capteur actif :
+
+- fiche plante manuelle ;
+- arrosage manuel ;
+- rappel futur ;
+- commentaires et observations ;
+- association possible d’un capteur plus tard.
+
+C’est utile pour tester l’interface même avec une plante hors domicile ou un capteur pas encore acheté.
+""",
+        "attachments": ["capture/ajout_plante.png"],
+    },
+    {
+        "key": "bugs-howto",
+        "channel": "bugs-feedback",
+        "title": "🐛 How to report a useful bug",
+        "content": """[GRUTERRA_TUTO:bugs-howto]
+🐛 **How to report a useful bug**
+
+Please include:
+
+- what you clicked or launched;
+- what you expected;
+- what happened instead;
+- the exact error message;
+- whether it happens again;
+- whether you use demo mode, Mi Flora, Netatmo or Raspberry Pi.
+
+Please do not post tokens, passwords, private database files or config files.
+""",
+        "attachments": [],
+    },
+]
+
+TUTORIAL_CHANNEL_NAMES = sorted({post["channel"] for post in TUTORIAL_POSTS})
+TUTORIAL_MESSAGE_MARKERS = [f"{TUTORIAL_MARKER_PREFIX}{post['key']}]" for post in TUTORIAL_POSTS]
 
 
 
@@ -591,6 +779,80 @@ async def publish_channel_starter_messages(guild: discord.Guild) -> list[str]:
         except discord.Forbidden:
             results.append(f"#{channel.name} : accès insuffisant pour publier le message.")
     return results
+def tutorial_marker(post: dict) -> str:
+    return f"{TUTORIAL_MARKER_PREFIX}{post['key']}]"
+
+
+def tutorial_attachment_files(post: dict) -> list[discord.File]:
+    files = []
+    for raw_path in post.get("attachments", []):
+        path = BASE_DIR.parent / raw_path
+        if path.exists() and path.is_file():
+            files.append(discord.File(path, filename=path.name))
+    return files
+
+
+async def is_tutorial_message(message: discord.Message) -> bool:
+    if message.author != message.guild.me:
+        return False
+    return any(marker in message.content for marker in TUTORIAL_MESSAGE_MARKERS)
+
+
+async def delete_tutorial_messages(channel: discord.TextChannel, guild: discord.Guild, limit: int = 120) -> tuple[int, str | None]:
+    try:
+        deleted = await channel.purge(
+            limit=limit,
+            check=lambda message: (
+                message.author == guild.me
+                and not message.pinned
+                and any(marker in message.content for marker in TUTORIAL_MESSAGE_MARKERS)
+            ),
+            reason="Reset des tutoriels Gruterra",
+            bulk=True,
+        )
+        return len(deleted), None
+    except discord.Forbidden:
+        return 0, f"#{channel.name} : accès insuffisant pour nettoyer les tutos."
+    except discord.HTTPException as exc:
+        return 0, f"#{channel.name} : nettoyage tutos impossible ({exc})."
+
+
+async def publish_tutorial_messages(guild: discord.Guild, *, reset_existing: bool = False, limit: int = 120) -> list[str]:
+    results = []
+    for post in TUTORIAL_POSTS:
+        channel_name = post["channel"]
+        channel = discord.utils.get(guild.text_channels, name=channel_name)
+        if channel is None:
+            results.append(f"#{channel_name} introuvable : tuto {post['key']} non publié.")
+            continue
+
+        marker = tutorial_marker(post)
+        try:
+            if reset_existing:
+                await delete_tutorial_messages(channel, guild, limit=limit)
+            else:
+                already_exists = False
+                async for message in channel.history(limit=80):
+                    if message.author == guild.me and marker in message.content:
+                        already_exists = True
+                        break
+                if already_exists:
+                    results.append(f"#{channel.name} : tuto {post['key']} déjà présent.")
+                    continue
+
+            files = tutorial_attachment_files(post)
+            await channel.send(post["content"][:1900], files=files)
+            if files:
+                results.append(f"#{channel.name} : tuto {post['key']} publié avec {len(files)} image(s).")
+            else:
+                results.append(f"#{channel.name} : tuto {post['key']} publié.")
+        except discord.Forbidden:
+            results.append(f"#{channel.name} : accès insuffisant pour publier le tuto {post['key']}.")
+        except discord.HTTPException as exc:
+            results.append(f"#{channel.name} : publication tuto {post['key']} impossible ({exc}).")
+    return results
+
+
 
 async def ensure_bot_commands_permissions(
     guild: discord.Guild,
@@ -1012,6 +1274,55 @@ async def post_guides_gruterra(ctx: commands.Context) -> None:
     message = "Guides Gruterra vérifiés :\n" + "\n".join(f"- {line}" for line in lines[:12])
     if len(lines) > 12:
         message += f"\n- {len(lines) - 12} autre(s) résultat(s)."
+    message += f"\n\n{bot_log_status}"
+    await safe_reply(ctx, message)
+
+
+@bot.command(name="post_tutos_gruterra")
+@commands.has_permissions(manage_guild=True)
+async def post_tutos_gruterra(ctx: commands.Context) -> None:
+    """Publie les tutoriels Gruterra dans les salons adaptés."""
+
+    guild = ctx.guild
+    if guild is None:
+        await safe_reply(ctx, "Cette commande doit être lancée dans un serveur Discord.")
+        return
+
+    await safe_reply(ctx, "Publication des tutoriels Gruterra en cours…")
+    results = await publish_tutorial_messages(guild, reset_existing=False)
+    bot_log_status = await publish_bot_log(
+        guild,
+        "🤖 **Tutoriels Gruterra publiés**",
+        results[:12],
+    )
+    message = "Tutoriels Gruterra :\n" + "\n".join(f"- {line}" for line in results[:12])
+    if len(results) > 12:
+        message += f"\n- {len(results) - 12} autre(s) résultat(s)."
+    message += f"\n\n{bot_log_status}"
+    await safe_reply(ctx, message)
+
+
+@bot.command(name="reset_tutos_gruterra")
+@commands.has_permissions(manage_messages=True)
+async def reset_tutos_gruterra(ctx: commands.Context, limit: int = 120) -> None:
+    """Nettoie puis republie les tutoriels Gruterra dans les salons adaptés."""
+
+    guild = ctx.guild
+    if guild is None:
+        await safe_reply(ctx, "Cette commande doit être lancée dans un serveur Discord.")
+        return
+
+    limit = max(30, min(limit, 300))
+    await safe_reply(ctx, f"Reset des tutoriels Gruterra en cours sur les {limit} derniers messages…")
+    results = await publish_tutorial_messages(guild, reset_existing=True, limit=limit)
+    bot_log_status = await publish_bot_log(
+        guild,
+        "🤖 **Reset tutoriels Gruterra exécuté**",
+        results[:12],
+    )
+    message = "Reset tutoriels terminé :\n" + "\n".join(f"- {line}" for line in results[:12])
+    if len(results) > 12:
+        message += f"\n- {len(results) - 12} autre(s) résultat(s)."
     message += f"\n\n{bot_log_status}"
     await safe_reply(ctx, message)
 
