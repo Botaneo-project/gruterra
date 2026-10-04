@@ -74,6 +74,7 @@ CLEANUP_COMMAND_PREFIXES = (
     "!clean_here",
     "!post_guides_gruterra",
     "!reset_guides_gruterra",
+    "!fix_bot_commands",
 )
 
 PRESENTATION_MESSAGE = """🌱 **Bienvenue sur Gruterra / Welcome to Gruterra**
@@ -128,6 +129,7 @@ Utilisez ce salon pour lancer les commandes Gruterra sans polluer le général.
 Commandes utiles :
 - `!post_guides_gruterra` : publier ou mettre à jour les messages d’accueil et de tutoriel ;
 - `!reset_guides_gruterra` : nettoyer les anciens messages de guide et republier proprement ;
+- `!fix_bot_commands` : réparer les droits du salon privé de commandes ;
 - `!invite_gruterra` : générer une invitation publique ;
 - `!release_gruterra` : publier manuellement une annonce de release ;
 - `!auto_release_check` : tester l’annonce automatique anti-spam ;
@@ -546,6 +548,58 @@ async def publish_channel_starter_messages(guild: discord.Guild) -> list[str]:
             results.append(f"#{channel.name} : accès insuffisant pour publier le message.")
     return results
 
+async def ensure_bot_commands_permissions(
+    guild: discord.Guild,
+    admin_role: discord.Role,
+    command_author: discord.abc.User | None = None,
+) -> str:
+    """Force les droits utiles sur #bot-commands, même si le salon existait déjà."""
+
+    channel = discord.utils.get(guild.text_channels, name="bot-commands")
+    if channel is None:
+        return "#bot-commands introuvable : permissions non vérifiées."
+
+    try:
+        await channel.set_permissions(
+            guild.default_role,
+            view_channel=False,
+            send_messages=False,
+            read_message_history=False,
+            reason="Gruterra bot-commands private setup",
+        )
+        await channel.set_permissions(
+            admin_role,
+            view_channel=True,
+            send_messages=True,
+            read_message_history=True,
+            manage_messages=True,
+            reason="Gruterra bot-commands admin access",
+        )
+        if guild.me is not None:
+            await channel.set_permissions(
+                guild.me,
+                view_channel=True,
+                send_messages=True,
+                read_message_history=True,
+                manage_messages=True,
+                reason="Gruterra bot-commands bot access",
+            )
+        if isinstance(command_author, discord.Member):
+            await channel.set_permissions(
+                command_author,
+                view_channel=True,
+                send_messages=True,
+                read_message_history=True,
+                manage_messages=True,
+                reason="Gruterra bot-commands command author access",
+            )
+        return "#bot-commands : permissions privées vérifiées pour admin, bot et lanceur de commande."
+    except discord.Forbidden:
+        return "#bot-commands : permissions non modifiées, accès insuffisant pour le bot."
+    except discord.HTTPException as exc:
+        return f"#bot-commands : permissions non modifiées ({exc})."
+
+
 async def ensure_pinned_bot_commands_message(guild: discord.Guild) -> str:
     channel = discord.utils.get(guild.text_channels, name="bot-commands")
     if channel is None:
@@ -771,6 +825,7 @@ async def setup_gruterra(ctx: commands.Context) -> None:
                 warnings.append(warning)
             created_or_checked.append(f"#{channel.name}")
 
+    bot_commands_perm_status = await ensure_bot_commands_permissions(guild, admin_role, ctx.author)
     presentation_status = await publish_presentation_message(guild)
     starter_statuses = await publish_channel_starter_messages(guild)
     commands_pin_status = await ensure_pinned_bot_commands_message(guild)
@@ -779,6 +834,7 @@ async def setup_gruterra(ctx: commands.Context) -> None:
         "Structure Gruterra prête. Rôles et salons vérifiés :\n"
         + "\n".join(f"- {item}" for item in created_or_checked)
         + f"\n\n{presentation_status}"
+        + f"\n{bot_commands_perm_status}"
         + f"\n{commands_pin_status}"
     )
     if starter_statuses:
@@ -792,6 +848,7 @@ async def setup_gruterra(ctx: commands.Context) -> None:
         f"{len(created_or_checked)} rôle(s), catégorie(s) ou salon(s) vérifié(s).",
         presentation_status,
         f"{len(starter_statuses)} message(s) d'accueil ou d'aide vérifié(s).",
+        bot_commands_perm_status,
         commands_pin_status,
     ]
     if warnings:
@@ -799,6 +856,25 @@ async def setup_gruterra(ctx: commands.Context) -> None:
     bot_log_status = await publish_bot_log(guild, "🤖 **Setup Gruterra exécuté**", log_lines)
     message += f"\n\n{bot_log_status}"
     await ctx.reply(message[:1900])
+
+
+@bot.command(name="fix_bot_commands")
+@commands.has_permissions(manage_guild=True)
+async def fix_bot_commands(ctx: commands.Context) -> None:
+    """Répare les droits du salon privé #bot-commands."""
+
+    guild = ctx.guild
+    if guild is None:
+        await safe_reply(ctx, "Cette commande doit être lancée dans un serveur Discord.")
+        return
+
+    admin_role = find_role(guild, "Gruterra Admin")
+    if admin_role is None:
+        admin_role = await get_or_create_role(guild, "Gruterra Admin")
+
+    perm_status = await ensure_bot_commands_permissions(guild, admin_role, ctx.author)
+    pin_status = await ensure_pinned_bot_commands_message(guild)
+    await safe_reply(ctx, f"Réparation #bot-commands terminée.\n- {perm_status}\n- {pin_status}")
 
 
 @bot.command(name="reset_guides_gruterra")

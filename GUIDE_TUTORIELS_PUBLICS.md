@@ -62,6 +62,12 @@ Si des doublons existent après plusieurs essais ou changements de texte, repart
 !reset_guides_gruterra
 ```
 
+Si `#bot-commands` est invisible ou inutilisable, lancer depuis un autre salon accessible :
+
+```text
+!fix_bot_commands
+```
+
 Cette commande vérifie les salons connus (`#welcome`, `#useful-links`, `#installation-help`, `#sensors-and-data`, `#discussion-fr`, `#aide-installation-fr`, etc.), puis publie le message adapté ou met à jour l’ancien message du bot si celui-ci existe déjà.
 
 Elle ne recrée pas la structure du serveur et ne touche pas aux rôles. Pour refaire toute la structure, utiliser seulement ponctuellement `!setup_gruterra` avec `DISCORD_SETUP_ENABLED=1`.
