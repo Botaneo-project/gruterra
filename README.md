@@ -138,6 +138,12 @@ py app.py
 
 Pour un raccourci Windows, utiliser `pythonw.exe` avec `_app\interface.py` comme cible et `_app` comme dossier de démarrage.
 
+## Langue et traduction
+
+Gruterra est pour l'instant un projet principalement francophone. L'interface, les analyses métier et une partie importante de la documentation sont d'abord rédigées en français.
+
+L'anglais est accueilli pour GitHub, Reddit et Discord, mais la traduction complète de l'application n'est pas encore terminée. Les contributions de traduction seront possibles plus tard, après stabilisation des textes et de la structure de l'interface.
+
 ## Mode démo
 
 Le mode démo permet de tester l’interface sans capteur Mi Flora, sans compte Netatmo et sans base personnelle. Il crée une base SQLite fictive dans `_app/data/demo/plantes_demo.db`, avec quelques plantes, mesures, arrosages et observations d’exemple.

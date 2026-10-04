@@ -440,3 +440,9 @@ La remise en attente a été effectuée uniquement sur une copie de la base Pi. 
 - [x] Préparer la mémoire de dernière alerte envoyée et le délai minimal avant tout envoi SMTP réel.
 
 - [x] Améliorer le graphique historique : graduations horaires et repère sélectionnable avec heure/valeur du point le plus proche.
+## Langue, traduction et internationalisation
+
+- [ ] Assumer Gruterra comme projet francophone tant que l'interface n'est pas traduite.
+- [ ] Préparer plus tard un vrai système de traduction de l'interface, sans dupliquer toute la logique métier.
+- [ ] Identifier les textes publics à traduire en priorité : README court, guide démo, aide installation, messages Discord, erreurs fréquentes.
+- [ ] Éviter de présenter Discord ou GitHub comme entièrement anglophones tant que l'application reste française.

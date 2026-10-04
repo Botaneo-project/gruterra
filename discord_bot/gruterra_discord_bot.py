@@ -65,7 +65,7 @@ PRESENTATION_MESSAGE = """🌱 **Bienvenue sur Gruterra / Welcome to Gruterra**
 
 Gruterra est un projet open-source né en français, autour du suivi des plantes, des capteurs Mi Flora / Flower Care, du Raspberry Pi, de Netatmo, de l'historique d'arrosage et de la lumière.
 
-L'anglais est bienvenu pour ouvrir le projet à plus de monde, mais le cœur du projet, les tests et le suivi quotidien sont francophones.
+L'anglais est bienvenu pour ouvrir le projet à plus de monde, mais l'application et la documentation restent principalement en français pour l'instant. La traduction sera progressive.
 
 Vous pouvez utiliser ce serveur pour :
 - demander de l'aide à l'installation ;
@@ -74,7 +74,7 @@ Vous pouvez utiliser ce serveur pour :
 - signaler un bug ou proposer une idée ;
 - discuter plantes, arrosage et lumière.
 
-Gruterra is an open-source plant monitoring project originally built in French. English-speaking users are welcome too.
+Gruterra is an open-source plant monitoring project originally built in French. English-speaking users are welcome, but the app is not fully translated yet.
 
 GitHub: https://github.com/Botaneo-project/gruterra
 """
@@ -82,7 +82,7 @@ GitHub: https://github.com/Botaneo-project/gruterra
 CHANNEL_STARTER_MESSAGES = {
     "welcome": """🌱 **Bienvenue sur Gruterra / Welcome to Gruterra**
 
-Gruterra est d'abord un projet francophone, ouvert aux utilisateurs anglophones. Vous pouvez faire un petit coucou ici et dire ce que vous venez tester : mode démo, Mi Flora / Flower Care, Raspberry Pi, Netatmo, suivi des plantes ou simple curiosité.
+Gruterra est d'abord un projet francophone. Les utilisateurs anglophones sont bienvenus, mais l'application n'est pas encore entièrement traduite. Vous pouvez faire un petit coucou ici et dire ce que vous venez tester : mode démo, Mi Flora / Flower Care, Raspberry Pi, Netatmo, suivi des plantes ou simple curiosité.
 
 Premiers pas utiles :
 - #useful-links pour GitHub et les guides ;
@@ -90,7 +90,7 @@ Premiers pas utiles :
 - #discussion-fr pour échanger en français ;
 - #aide-installation-fr pour l'aide en français.
 
-Gruterra is mainly built in French, but English is welcome too.
+Gruterra is mainly built in French. English help is welcome, but translation is still in progress.
 """,
     "useful-links": """🔗 **Liens utiles / Useful links**
 
@@ -104,7 +104,7 @@ Pour commencer :
 - `RASPBERRY.md` : comprendre la partie Raspberry Pi ;
 - `ROADMAP.md` et `TODO.md` : suivre les prochaines étapes.
 
-English users can start with the README and demo guide too.
+English users can start with the README and demo guide, but some parts of the app and documentation are still French-first.
 """,
     "bot-log": """🤖 **Bot log**
 
