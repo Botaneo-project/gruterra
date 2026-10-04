@@ -232,6 +232,7 @@ Objectif : préparer une évolution sans casser l’enregistrement actuel des ar
 - [x] Brancher la vérification distante GitHub via `version_manifest.json`, sans téléchargement ni application automatique.
 - [x] Ajouter un script public `update_gruterra.py` de validation non destructive, utilisable sans Git.
 - [x] Étendre `update_gruterra.py` avec `--dry-run` et `--apply`, archive officielle, contrôle SHA256 et sauvegarde avant remplacement.
+- [x] Ajouter un guide public d'installation depuis une release ZIP, avec lancement démo, lancement principal et rappel des données privées à préserver.
 - [ ] Publier une première release ZIP officielle avec SHA256 pour activer réellement `--apply`.
 - [x] Préparer un script Windows `update_gruterra.py` avec simulation, application contrôlée, SHA256 obligatoire et sauvegarde locale.
 - [ ] Prévoir plus tard l’équivalent Raspberry complet côté `raspberry/install/`.

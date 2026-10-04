@@ -21,7 +21,7 @@ py -m pip install -r requirements.txt
 py _app\lancer_demo.py
 ```
 
-Detailed demo guide: [GUIDE_DEMO_EN.md](GUIDE_DEMO_EN.md).
+Detailed demo guide: [GUIDE_DEMO_EN.md](GUIDE_DEMO_EN.md). ZIP release installation guide: [GUIDE_INSTALLATION.md](GUIDE_INSTALLATION.md).
 
 French README: [README.md](README.md).
 

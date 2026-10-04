@@ -18,7 +18,7 @@ py -m pip install -r requirements.txt
 py _app\lancer_demo.py
 ```
 
-Le guide détaillé est ici : [GUIDE_DEMO.md](GUIDE_DEMO.md).
+Le guide détaillé est ici : [GUIDE_DEMO.md](GUIDE_DEMO.md). Pour installer depuis une archive ZIP de release, voir [GUIDE_INSTALLATION.md](GUIDE_INSTALLATION.md).
 
 ## Aperçu de la démo
 
