@@ -37,9 +37,10 @@ ROLE_NAMES = [
 ]
 
 INVITE_CHANNEL_CANDIDATES = [
+    "welcome",
+    "useful-links",
     "general",
     "discussion-fr",
-    "useful-links",
 ]
 
 RELEASE_CHANNEL_CANDIDATES = [
@@ -52,6 +53,7 @@ CLEANUP_CHANNEL_CANDIDATES = [
     "announcements",
     "welcome",
     "changelog",
+    "bot-commands",
     "bot-log",
     "useful-links",
     "general",
@@ -118,11 +120,25 @@ Pour commencer :
 
 English users can start with the README and demo guide, but some parts of the app and documentation are still French-first.
 """,
+    "bot-commands": """⌨️ **Commandes bot / Bot commands**
+
+Utilisez ce salon pour lancer les commandes Gruterra sans polluer le général.
+
+Commandes utiles :
+- `!post_guides_gruterra` : publier ou mettre à jour les messages d’accueil et de tutoriel ;
+- `!invite_gruterra` : générer une invitation publique ;
+- `!release_gruterra` : publier manuellement une annonce de release ;
+- `!auto_release_check` : tester l’annonce automatique anti-spam ;
+- `!clean_here` : nettoyer les messages techniques du salon courant ;
+- `!help_gruterra` ou `!aide_gruterra` : afficher l’aide.
+
+Les résultats techniques détaillés restent envoyés dans #bot-log quand c’est possible.
+""",
     "bot-log": """🤖 **Bot log**
 
 This channel is dedicated to automated Gruterra bot messages: setup results, structure updates, invite generation notes and future maintenance messages.
 
-Keeping bot messages here avoids mixing technical setup details with public discussion channels.
+Keeping bot messages here avoids mixing technical setup details with public discussion channels. Use #bot-commands to type commands manually.
 """,
     "installation-help": """🛠️ **Aide installation / Installation help**
 
@@ -199,6 +215,7 @@ SERVER_STRUCTURE = [
             ("announcements", "Project announcements and important updates."),
             ("welcome", "Welcome message and first steps for new members."),
             ("changelog", "Visible changes, releases and notable fixes."),
+            ("bot-commands", "Manual bot commands, kept away from general discussion."),
             ("bot-log", "Automated setup notes and bot messages."),
             ("useful-links", "GitHub, demo guide, documentation and community links."),
         ],
@@ -411,7 +428,7 @@ async def safe_reply(ctx: commands.Context, content: str) -> bool:
             await ctx.author.send(
                 "Je n’ai pas le droit d’écrire dans le salon où la commande a été lancée. "
                 "Ajoutez au bot les permissions Voir le salon, Envoyer des messages et Voir les anciens messages, "
-                "ou relancez la commande dans #bot-log."
+                "ou relancez la commande dans #bot-commands."
             )
             return True
         except discord.Forbidden:

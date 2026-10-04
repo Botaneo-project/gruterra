@@ -50,7 +50,7 @@ But : accueillir quelqu’un qui arrive sur le serveur et lui permettre de teste
 
 Le bot peut publier ou mettre à jour les messages d’accueil et de tutoriel dans les salons prévus.
 
-Commande à lancer dans Discord, depuis un salon où le bot peut répondre :
+Commande à lancer dans Discord, idéalement depuis `#bot-commands` :
 
 ```text
 !post_guides_gruterra
