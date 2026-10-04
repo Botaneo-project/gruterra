@@ -815,6 +815,58 @@ class TestAssistantMiseAJour(unittest.TestCase):
         self.assertNotIn("discord_bot/.env", fichiers)
         self.assertNotIn("plantes.db", fichiers)
 
+
+class TestPreparationRelease(unittest.TestCase):
+    def test_validation_release_detecte_manifest_et_sha256_coherents(self):
+        prepare_release = importlib.import_module("prepare_release")
+        with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as dossier:
+            racine = Path(dossier)
+            archive = racine / "gruterra-9.9.9.zip"
+            archive.write_bytes(b"archive fictive")
+            sha256 = prepare_release.calculer_sha256(archive)
+            manifest = racine / "version_manifest-9.9.9-ready.json"
+            manifest.write_text(
+                json.dumps(
+                    {
+                        "version": "9.9.9",
+                        "archive_url": "https://github.com/Botaneo-project/gruterra/releases/download/v9.9.9/gruterra-9.9.9.zip",
+                        "sha256": sha256,
+                        "mise_a_jour_automatique": True,
+                    }
+                ),
+                encoding="utf-8",
+            )
+            changelog = racine / "gruterra-9.9.9-changelog.md"
+            changelog.write_text("# Gruterra 9.9.9\n\n## Changements importants\n- Test\n", encoding="utf-8")
+
+            erreurs = prepare_release.valider_sortie_release("9.9.9", archive, sha256, manifest, changelog)
+
+        self.assertEqual(erreurs, [])
+
+    def test_validation_release_refuse_sha256_incoherent(self):
+        prepare_release = importlib.import_module("prepare_release")
+        with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as dossier:
+            racine = Path(dossier)
+            archive = racine / "gruterra-9.9.9.zip"
+            archive.write_bytes(b"archive fictive")
+            manifest = racine / "version_manifest-9.9.9-ready.json"
+            manifest.write_text(
+                json.dumps(
+                    {
+                        "version": "9.9.9",
+                        "archive_url": "https://github.com/Botaneo-project/gruterra/releases/download/v9.9.9/gruterra-9.9.9.zip",
+                        "sha256": "0" * 64,
+                        "mise_a_jour_automatique": True,
+                    }
+                ),
+                encoding="utf-8",
+            )
+            changelog = racine / "gruterra-9.9.9-changelog.md"
+            changelog.write_text("# Gruterra 9.9.9\n\n## Changements importants\n- Test\n", encoding="utf-8")
+
+            erreurs = prepare_release.valider_sortie_release("9.9.9", archive, "0" * 64, manifest, changelog)
+
+        self.assertTrue(any("SHA256 recalculé" in erreur for erreur in erreurs))
 class TestPreferencesInterface(unittest.TestCase):
     def test_i18n_normalise_langue_et_traduit(self):
         i18n = importlib.import_module("i18n")
