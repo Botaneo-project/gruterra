@@ -814,3 +814,36 @@ class TestAssistantMiseAJour(unittest.TestCase):
         self.assertNotIn("_config/secret.json", fichiers)
         self.assertNotIn("discord_bot/.env", fichiers)
         self.assertNotIn("plantes.db", fichiers)
+
+class TestPreferencesInterface(unittest.TestCase):
+    def test_i18n_normalise_langue_et_traduit(self):
+        i18n = importlib.import_module("i18n")
+
+        self.assertEqual(i18n.normaliser_langue("en"), "en")
+        self.assertEqual(i18n.normaliser_langue("fr"), "fr")
+        self.assertEqual(i18n.normaliser_langue("de"), "fr")
+        self.assertEqual(i18n.traduire("settings", "en"), "⚙ Settings")
+        self.assertEqual(i18n.traduire("settings", "fr"), "⚙ Paramètres")
+
+    def test_preferences_langue_interface_sont_locales(self):
+        with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as dossier:
+            os.environ["BOTANEO_CONFIG_DIR"] = dossier
+            try:
+                if "botaneo_config" in sys.modules:
+                    importlib.reload(sys.modules["botaneo_config"])
+                if "ui_preferences" in sys.modules:
+                    ui_preferences = importlib.reload(sys.modules["ui_preferences"])
+                else:
+                    ui_preferences = importlib.import_module("ui_preferences")
+
+                self.assertEqual(ui_preferences.charger_langue_interface(), "fr")
+                self.assertTrue(ui_preferences.sauvegarder_langue_interface("en"))
+                self.assertEqual(ui_preferences.charger_langue_interface(), "en")
+                self.assertTrue(ui_preferences.sauvegarder_langue_interface("invalide"))
+                self.assertEqual(ui_preferences.charger_langue_interface(), "fr")
+            finally:
+                os.environ.pop("BOTANEO_CONFIG_DIR", None)
+                if "botaneo_config" in sys.modules:
+                    importlib.reload(sys.modules["botaneo_config"])
+                if "ui_preferences" in sys.modules:
+                    importlib.reload(sys.modules["ui_preferences"])

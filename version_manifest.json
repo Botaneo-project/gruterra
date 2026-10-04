@@ -1,6 +1,6 @@
 {
-  "version": "0.1.1-dev",
-  "notes": "Ajout des premiers documents anglais README_EN.md et GUIDE_DEMO_EN.md. L'application reste principalement francophone ; la traduction est progressive.",
+  "version": "0.1.2-dev",
+  "notes": "Ajout du choix de langue français/anglais dans les paramètres et première base i18n. Traduction progressive : seuls les textes globaux commencent à basculer.",
   "url": "https://github.com/Botaneo-project/gruterra",
   "archive_url": "",
   "sha256": "",

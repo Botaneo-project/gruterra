@@ -446,7 +446,9 @@ La remise en attente a été effectuée uniquement sur une copie de la base Pi. 
 ## Langue, traduction et internationalisation
 
 - [ ] Assumer Gruterra comme projet francophone tant que l'interface n'est pas traduite.
-- [ ] Préparer plus tard un vrai système de traduction de l'interface, sans dupliquer toute la logique métier.
+- [x] Ajouter une préférence de langue français/anglais dans les paramètres.
+- [x] Créer un premier module `i18n.py` pour centraliser les textes traduits.
+- [ ] Étendre progressivement la traduction écran par écran, sans dupliquer toute la logique métier.
 - [x] Ajouter un premier README anglais `README_EN.md` et un guide démo anglais `GUIDE_DEMO_EN.md`.
 - [ ] Identifier les prochains textes publics à traduire : aide installation, Netatmo, Raspberry, erreurs fréquentes.
 - [ ] Éviter de présenter Discord ou GitHub comme entièrement anglophones tant que l'application reste française.

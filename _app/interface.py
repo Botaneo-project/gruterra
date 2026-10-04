@@ -18,7 +18,7 @@ from evolutions_lumiere import lire_evolutions
 import mini_base_plantes
 from capteur_infos import lire_infos, resume_infos, details_infos
 from botaneo_config import LOCAL_CONFIG, lire_json, ecrire_json, normaliser_station_favorite, diagnostiquer_config_netatmo, creer_config_netatmo_exemple
-from ui_preferences import charger_theme_sombre, sauvegarder_theme_sombre
+from ui_preferences import charger_theme_sombre, sauvegarder_theme_sombre, charger_langue_interface, sauvegarder_langue_interface
 from vue_historique import ouvrir_historique
 import sync_miflora
 import raspberry_sync
@@ -27,13 +27,14 @@ import botaneo_update
 from capteurs import netatmo
 import previsions_meteo
 from suivi_raspberry_ui import SuiviRaspberry
+from i18n import traduire, normaliser_langue
 from botaneo_config import CONFIG_DIR
 
 # ============================================================
 # CONFIGURATION
 # ============================================================
 
-APP_VERSION = "0.1.0-dev"
+APP_VERSION = "0.1.1-dev"
 
 root = tk.Tk()
 
@@ -88,6 +89,7 @@ THEME_SOMBRE = {
 }
 
 theme_sombre_actif = charger_theme_sombre()
+langue_interface = normaliser_langue(charger_langue_interface())
 globals().update(THEME_SOMBRE if theme_sombre_actif else THEME_CLAIR)
 
 ASSETS_DIR = Path(__file__).resolve().parent / "assets"
@@ -97,14 +99,18 @@ logo_image = None
 root.configure(bg=BG)
 
 
+def t(cle):
+    return traduire(cle, langue_interface)
+
+
 # ============================================================
 # VARIABLES
 # ============================================================
 
-status_var = tk.StringVar(value="● Système actif")
+status_var = tk.StringVar(value=t("system_active"))
 
 sync_var = tk.StringVar(
-    value="Aucune synchronisation effectuée"
+    value=t("no_sync")
 )
 
 sync_detail_var = tk.StringVar(value="")
@@ -565,12 +571,12 @@ def basculer_theme():
     if theme_sombre_actif:
         appliquer_palette(THEME_SOMBRE)
         theme_button.config(
-            text="☀️ Mode clair"
+            text=t("light_mode")
         )
     else:
         appliquer_palette(THEME_CLAIR)
         theme_button.config(
-            text="🌙 Mode sombre"
+            text=t("dark_mode")
         )
 
     appliquer_theme_interface()
@@ -1796,8 +1802,8 @@ def ouvrir_exposition_balcon_passee(plante_id, nom_plante):
 
     boutons = tk.Frame(fenetre, bg=CARD)
     boutons.pack(fill="x", padx=20, pady=(0, 15))
-    tk.Button(boutons, text="Enregistrer", command=enregistrer, bg=LIGHT_GREEN, fg=GREEN, activebackground=LIGHT_GREEN, relief="flat", cursor="hand2").pack(side="right")
-    tk.Button(boutons, text="Annuler", command=fenetre.destroy, bg=BG, fg=TEXT, relief="flat", cursor="hand2").pack(side="left")
+    tk.Button(boutons, text=t("save"), command=enregistrer, bg=LIGHT_GREEN, fg=GREEN, activebackground=LIGHT_GREEN, relief="flat", cursor="hand2").pack(side="right")
+    tk.Button(boutons, text=t("cancel"), command=fenetre.destroy, bg=BG, fg=TEXT, relief="flat", cursor="hand2").pack(side="left")
 
     sortie_entry.focus_set()
 
@@ -2088,8 +2094,8 @@ def ouvrir_arrosage_plante(plante_id, nom_plante):
 
     boutons = tk.Frame(fenetre, bg=CARD)
     boutons.pack(fill="x", padx=20, pady=(0, 15))
-    tk.Button(boutons, text="Enregistrer", command=enregistrer, bg=LIGHT_GREEN, fg=TEXT, activebackground=LIGHT_GREEN, relief="flat", cursor="hand2").pack(side="right")
-    tk.Button(boutons, text="Annuler", command=fenetre.destroy, bg=BG, fg=TEXT, relief="flat", cursor="hand2").pack(side="left")
+    tk.Button(boutons, text=t("save"), command=enregistrer, bg=LIGHT_GREEN, fg=TEXT, activebackground=LIGHT_GREEN, relief="flat", cursor="hand2").pack(side="right")
+    tk.Button(boutons, text=t("cancel"), command=fenetre.destroy, bg=BG, fg=TEXT, relief="flat", cursor="hand2").pack(side="left")
 
     quantite_entry.focus_set()
 
@@ -5245,7 +5251,7 @@ def ouvrir_maintenance():
     fenetre.resizable(False, False)
     fenetre.transient(root)
 
-    tk.Label(fenetre, text="🧰 Base & synthèses", font=("Segoe UI", 18, "bold"), fg=GREEN, bg=CARD).pack(anchor="w", padx=20, pady=(18, 4))
+    tk.Label(fenetre, text=t("maintenance"), font=("Segoe UI", 18, "bold"), fg=GREEN, bg=CARD).pack(anchor="w", padx=20, pady=(18, 4))
     tk.Label(fenetre, text="Suivi de la taille de la base, des mesures brutes et des synthèses journalières", font=("Segoe UI", 10), fg=SECONDARY, bg=CARD).pack(anchor="w", padx=20, pady=(0, 12))
 
     zone = tk.Text(fenetre, width=86, height=14, wrap="word", bg=BG, fg=TEXT, relief="flat", font=("Segoe UI", 9))
@@ -5589,7 +5595,7 @@ def ouvrir_sante_systeme():
 
 def ouvrir_parametres():
     fenetre = tk.Toplevel(root)
-    fenetre.title("Paramètres Gruterra")
+    fenetre.title(t("settings_title"))
     fenetre.configure(bg=CARD)
     fenetre.resizable(False, False)
     fenetre.transient(root)
@@ -5597,7 +5603,7 @@ def ouvrir_parametres():
 
     tk.Label(
         fenetre,
-        text="⚙ Paramètres",
+        text=t("settings_header"),
         font=("Segoe UI", 16, "bold"),
         fg=TEXT,
         bg=CARD
@@ -5608,11 +5614,32 @@ def ouvrir_parametres():
 
     tk.Label(
         affichage_bloc,
-        text="Affichage",
+        text=t("display"),
         font=("Segoe UI", 11, "bold"),
         fg=GREEN,
         bg=LIGHT_GREEN
     ).pack(anchor="w", padx=12, pady=(10, 4))
+
+    langue_var = tk.StringVar(value=langue_interface)
+    ligne_langue = tk.Frame(affichage_bloc, bg=LIGHT_GREEN)
+    ligne_langue.pack(fill="x", padx=12, pady=(0, 8))
+    tk.Label(ligne_langue, text=t("language"), bg=LIGHT_GREEN, fg=TEXT, font=("Segoe UI", 9, "bold")).pack(side="left")
+    ttk.Combobox(
+        ligne_langue,
+        textvariable=langue_var,
+        values=("fr", "en"),
+        width=8,
+        state="readonly",
+    ).pack(side="left", padx=(10, 8))
+    tk.Label(
+        affichage_bloc,
+        text=t("language_note"),
+        bg=LIGHT_GREEN,
+        fg=SECONDARY,
+        font=("Segoe UI", 8),
+        wraplength=420,
+        justify="left",
+    ).pack(anchor="w", padx=12, pady=(0, 8))
 
     meteo_haut_var = tk.BooleanVar(value=meteo_affichee_en_haut())
     tk.Checkbutton(
@@ -5853,6 +5880,7 @@ def ouvrir_parametres():
     tk.Button(raccourcis, text="Lundi à vendredi", command=jours_semaine, bg=BG, fg=TEXT, relief="flat", cursor="hand2").pack(side="left")
 
     def enregistrer():
+        global langue_interface
         heure = heure_var.get().strip()
         try:
             heure_part, minute_part = heure.split(":", 1)
@@ -5919,26 +5947,31 @@ def ouvrir_parametres():
         alertes_config["seuil_batterie"] = seuil_batterie
         alertes_config["plantes_rappel_email"] = [pid for pid, var in plantes_alertes_vars if var.get()]
 
+        nouvelle_langue = normaliser_langue(langue_var.get())
+
         sauvegarde_sync = sauvegarder_config_sync_auto()
         sauvegarde_layout = sauvegarder_layout_interface()
         sauvegarde_alertes = sauvegarder_config_alertes()
+        sauvegarde_langue = sauvegarder_langue_interface(nouvelle_langue)
 
-        if sauvegarde_sync and sauvegarde_layout and sauvegarde_alertes:
+        if sauvegarde_sync and sauvegarde_layout and sauvegarde_alertes and sauvegarde_langue:
+            langue_interface = nouvelle_langue
+            actualiser_textes_interface()
             actualiser_affichage_sync_auto()
             fenetre.destroy()
             actualiser_interface()
             if station_favorite_saisie:
                 status_var.set(favori_message)
             else:
-                status_var.set("Paramètres enregistrés.")
+                status_var.set(t("settings_saved"))
         else:
             erreur.set("Impossible d'enregistrer tous les paramètres.")
 
     boutons = tk.Frame(fenetre, bg=CARD)
     boutons.pack(fill="x", padx=20, pady=(0, 15))
 
-    tk.Button(boutons, text="Enregistrer", command=enregistrer, bg=LIGHT_GREEN, fg=TEXT, activebackground=LIGHT_GREEN, relief="flat", cursor="hand2").pack(side="right")
-    tk.Button(boutons, text="Annuler", command=fenetre.destroy, bg=BG, fg=TEXT, relief="flat", cursor="hand2").pack(side="left")
+    tk.Button(boutons, text=t("save"), command=enregistrer, bg=LIGHT_GREEN, fg=TEXT, activebackground=LIGHT_GREEN, relief="flat", cursor="hand2").pack(side="right")
+    tk.Button(boutons, text=t("cancel"), command=fenetre.destroy, bg=BG, fg=TEXT, relief="flat", cursor="hand2").pack(side="left")
 
     heure_entry.focus_set()
 
@@ -6253,7 +6286,7 @@ def ouvrir_ajout_capteur():
         status_var.set("Capteur ajouté. Cliquez sur Synchroniser pour effectuer sa première lecture.")
     tk.Button(fenetre, text="Ajouter", command=enregistrer, bg=LIGHT_GREEN, fg=TEXT,
               activebackground=LIGHT_GREEN, activeforeground=TEXT).pack(side='right', padx=20, pady=15)
-    tk.Button(fenetre, text="Annuler", command=fenetre.destroy, bg=BG, fg=TEXT).pack(side='left', padx=20, pady=15)
+    tk.Button(fenetre, text=t("cancel"), command=fenetre.destroy, bg=BG, fg=TEXT).pack(side='left', padx=20, pady=15)
     champs[0].focus_set()
 
 
@@ -7364,7 +7397,7 @@ def ouvrir_vue_plantes():
 
     entete = tk.Frame(fenetre, bg=CARD, highlightbackground=BORDER, highlightthickness=1)
     entete.pack(fill="x")
-    tk.Label(entete, text="🌱 Plantes", font=("Segoe UI", 18, "bold"), fg=GREEN, bg=CARD).pack(side="left", padx=18, pady=14)
+    tk.Label(entete, text=t("plants"), font=("Segoe UI", 18, "bold"), fg=GREEN, bg=CARD).pack(side="left", padx=18, pady=14)
     tk.Button(entete, text="Actualiser", command=lambda: remplir(), bg=BG, fg=TEXT, relief="flat", cursor="hand2").pack(side="right", padx=(0, 18), pady=12)
 
     conteneur = tk.Frame(fenetre, bg=BG)
@@ -7508,7 +7541,7 @@ toolbar.pack(
 
 refresh_button = tk.Button(
     toolbar,
-    text="⟳ Actualiser",
+    text=t("refresh"),
     font=("Segoe UI", 9, "bold"),
     bg=CARD,
     fg=TEXT,
@@ -7544,7 +7577,7 @@ sync_button.pack(
 
 add_plant_button = tk.Button(
     toolbar,
-    text="＋ Ajouter une plante",
+    text=t("add_plant"),
     command=ouvrir_ajout_plante,
     font=("Segoe UI", 9, "bold"),
     bg=CARD,
@@ -7561,12 +7594,12 @@ add_plant_button.pack(
 )
 
 
-add_sensor_button = tk.Button(toolbar, text="＋ Ajouter un capteur", command=ouvrir_ajout_capteur,
+add_sensor_button = tk.Button(toolbar, text=t("add_sensor"), command=ouvrir_ajout_capteur,
                               font=("Segoe UI", 9, "bold"), bg=CARD, fg=TEXT,
                               activebackground=CARD, activeforeground=TEXT, relief="flat", cursor="hand2")
 add_sensor_button.pack(side="left", padx=8)
 
-plants_view_button = tk.Button(toolbar, text="🌱 Plantes", command=ouvrir_vue_plantes,
+plants_view_button = tk.Button(toolbar, text=t("plants"), command=ouvrir_vue_plantes,
                                font=("Segoe UI", 9, "bold"), bg=CARD, fg=TEXT,
                                activebackground=CARD, activeforeground=TEXT, relief="flat", cursor="hand2")
 plants_view_button.pack(side="left", padx=(0, 8))
@@ -7574,7 +7607,7 @@ plants_view_button.pack(side="left", padx=(0, 8))
 
 settings_button = tk.Button(
     toolbar,
-    text="⚙ Paramètres",
+    text=t("settings"),
     command=ouvrir_parametres,
     font=("Segoe UI", 9, "bold"),
     bg=CARD,
@@ -7598,7 +7631,7 @@ auto_sync_label.pack(side="left", padx=(0, 8))
 
 theme_button = tk.Button(
     toolbar,
-    text="☀️ Mode clair" if theme_sombre_actif else "🌙 Mode sombre",
+    text=t("light_mode") if theme_sombre_actif else t("dark_mode"),
     font=("Segoe UI", 9, "bold"),
     bg=CARD,
     fg=TEXT,
@@ -7615,7 +7648,7 @@ theme_button.pack(
 
 about_button = tk.Button(
     toolbar,
-    text="ℹ À propos",
+    text=t("about"),
     command=ouvrir_a_propos,
     font=("Segoe UI", 9, "bold"),
     bg=CARD,
@@ -7629,7 +7662,7 @@ about_button.pack(side="right", padx=(8, 0))
 
 health_button = tk.Button(
     toolbar,
-    text="🩺 État Gruterra",
+    text=t("health"),
     command=ouvrir_sante_systeme,
     font=("Segoe UI", 9, "bold"),
     bg=CARD,
@@ -7642,7 +7675,7 @@ health_button = tk.Button(
 health_button.pack(side="right", padx=(8, 0))
 maintenance_button = tk.Button(
     toolbar,
-    text="🧰 Base & synthèses",
+    text=t("maintenance"),
     command=ouvrir_maintenance,
     font=("Segoe UI", 9, "bold"),
     bg=CARD,
@@ -7653,6 +7686,19 @@ maintenance_button = tk.Button(
     cursor="hand2"
 )
 maintenance_button.pack(side="right", padx=(8, 0))
+
+
+def actualiser_textes_interface():
+    root.title(t("app_title"))
+    add_plant_button.config(text=t("add_plant"))
+    add_sensor_button.config(text=t("add_sensor"))
+    plants_view_button.config(text=t("plants"))
+    settings_button.config(text=t("settings"))
+    about_button.config(text=t("about"))
+    health_button.config(text=t("health"))
+    maintenance_button.config(text=t("maintenance"))
+    theme_button.config(text=t("light_mode") if theme_sombre_actif else t("dark_mode"))
+
 
 # ============================================================
 # PANNEAU SYNCHRONISATION
