@@ -34,7 +34,7 @@ from botaneo_config import CONFIG_DIR
 # CONFIGURATION
 # ============================================================
 
-APP_VERSION = "0.1.1-dev"
+APP_VERSION = "0.1.3-dev"
 
 root = tk.Tk()
 
@@ -5027,6 +5027,44 @@ def texte_diagnostic_update_json_a_propos(verifier_distant=False):
         )
 
 
+
+def executer_assistant_update_a_propos(appliquer=False):
+    racine = Path(__file__).resolve().parent.parent
+    script = racine / "update_gruterra.py"
+    if not script.exists():
+        return "Assistant update introuvable : update_gruterra.py"
+    commande = ["py", str(script), "--apply" if appliquer else "--dry-run"]
+    try:
+        resultat = subprocess.run(
+            commande,
+            cwd=str(racine),
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            errors="replace",
+            timeout=180,
+            creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0),
+        )
+    except subprocess.TimeoutExpired:
+        return "Assistant update interrompu : délai dépassé."
+    except Exception as erreur:
+        return f"Assistant update indisponible : {erreur}"
+
+    sortie = (resultat.stdout or "").strip()
+    erreur = (resultat.stderr or "").strip()
+    lignes = [
+        "Assistant update Gruterra",
+        f"Mode : {'application' if appliquer else 'simulation'}",
+        f"Code retour : {resultat.returncode}",
+        "",
+    ]
+    if sortie:
+        lignes.append(sortie)
+    if erreur:
+        lignes.extend(["", "Erreurs :", erreur])
+    return "\n".join(lignes).strip()
+
+
 def texte_a_propos(verifier_distant=False):
     racine = Path(__file__).resolve().parent.parent
     lignes = [
@@ -5109,24 +5147,50 @@ def ouvrir_a_propos():
         zone.configure(state="disabled")
 
     def verifier_mise_a_jour():
-        status_var.set("Vérification des mises à jour Gruterra…")
+        status_var.set(t("update_checking"))
         dernier_verifier_distant["valeur"] = True
         remplacer_texte_a_propos(texte_a_propos(verifier_distant=True))
-        status_var.set("Vérification des mises à jour terminée")
+        status_var.set(t("update_check_done"))
+
+    def lancer_update_simule():
+        status_var.set(t("update_sim_running"))
+
+        def tache():
+            contenu = executer_assistant_update_a_propos(appliquer=False)
+            root.after(0, lambda: remplacer_texte_a_propos(contenu))
+            root.after(0, lambda: status_var.set(t("update_sim_done")))
+
+        threading.Thread(target=tache, daemon=True).start()
+
+    def appliquer_update():
+        if not messagebox.askyesno(
+            t("update_apply_title"),
+            t("update_apply_confirm"),
+            parent=fenetre,
+        ):
+            return
+        status_var.set(t("update_apply_running"))
+
+        def tache():
+            contenu = executer_assistant_update_a_propos(appliquer=True)
+            root.after(0, lambda: remplacer_texte_a_propos(contenu))
+            root.after(0, lambda: status_var.set(t("update_apply_done")))
+
+        threading.Thread(target=tache, daemon=True).start()
 
     def copier():
         root.clipboard_clear()
         root.clipboard_append(texte_a_propos(verifier_distant=dernier_verifier_distant["valeur"]))
-        status_var.set("Informations À propos copiées dans le presse-papiers")
+        status_var.set(t("about_copied"))
 
     def copier_diagnostic_update_json():
         root.clipboard_clear()
         root.clipboard_append(texte_diagnostic_update_json_a_propos(verifier_distant=dernier_verifier_distant["valeur"]))
-        status_var.set("Diagnostic mise à jour JSON copié dans le presse-papiers")
+        status_var.set(t("update_json_copied"))
 
     tk.Button(
         boutons,
-        text="📋 Copier",
+        text=t("copy"),
         command=copier,
         bg=LIGHT_BLUE,
         fg=BLUE,
@@ -5137,7 +5201,7 @@ def ouvrir_a_propos():
 
     tk.Button(
         boutons,
-        text="Copier diagnostic update JSON",
+        text=t("copy_update_json"),
         command=copier_diagnostic_update_json,
         bg=BG,
         fg=TEXT,
@@ -5148,7 +5212,7 @@ def ouvrir_a_propos():
 
     tk.Button(
         boutons,
-        text="🔎 Vérifier les mises à jour",
+        text=t("check_updates"),
         command=verifier_mise_a_jour,
         bg=LIGHT_GREEN,
         fg=GREEN,
@@ -5159,7 +5223,29 @@ def ouvrir_a_propos():
 
     tk.Button(
         boutons,
-        text="Fermer",
+        text=t("update"),
+        command=lancer_update_simule,
+        bg=LIGHT_ORANGE,
+        fg=ORANGE,
+        activebackground=LIGHT_ORANGE,
+        relief="flat",
+        cursor="hand2"
+    ).pack(side="left", padx=(8, 0))
+
+    tk.Button(
+        boutons,
+        text=t("apply_update"),
+        command=appliquer_update,
+        bg=LIGHT_RED,
+        fg=RED,
+        activebackground=LIGHT_RED,
+        relief="flat",
+        cursor="hand2"
+    ).pack(side="left", padx=(8, 0))
+
+    tk.Button(
+        boutons,
+        text=t("close"),
         command=fenetre.destroy,
         bg=BG,
         fg=TEXT,
@@ -5376,8 +5462,8 @@ def ouvrir_maintenance():
             root.clipboard_append(texte_detail)
             status_var.set("Détail de synthèse copié dans le presse-papiers")
 
-        tk.Button(boutons_detail, text="📋 Copier", command=copier_detail, bg=LIGHT_BLUE, fg=BLUE, activebackground=LIGHT_BLUE, relief="flat", cursor="hand2").pack(side="left")
-        tk.Button(boutons_detail, text="Fermer", command=detail.destroy, bg=BG, fg=TEXT, relief="flat", cursor="hand2").pack(side="right")
+        tk.Button(boutons_detail, text=t("copy"), command=copier_detail, bg=LIGHT_BLUE, fg=BLUE, activebackground=LIGHT_BLUE, relief="flat", cursor="hand2").pack(side="left")
+        tk.Button(boutons_detail, text=t("close"), command=detail.destroy, bg=BG, fg=TEXT, relief="flat", cursor="hand2").pack(side="right")
 
     def preparer_syntheses():
         if not messagebox.askyesno(
@@ -5402,10 +5488,10 @@ def ouvrir_maintenance():
     boutons = tk.Frame(fenetre, bg=CARD)
     boutons.pack(fill="x", padx=20, pady=(0, 16))
     tk.Button(boutons, text="⟳ Rafraîchir", command=rafraichir, bg=LIGHT_GREEN, fg=GREEN, activebackground=LIGHT_GREEN, relief="flat", cursor="hand2").pack(side="left", padx=(0, 8))
-    tk.Button(boutons, text="📋 Copier", command=copier, bg=LIGHT_BLUE, fg=BLUE, activebackground=LIGHT_BLUE, relief="flat", cursor="hand2").pack(side="left", padx=(0, 8))
+    tk.Button(boutons, text=t("copy"), command=copier, bg=LIGHT_BLUE, fg=BLUE, activebackground=LIGHT_BLUE, relief="flat", cursor="hand2").pack(side="left", padx=(0, 8))
     tk.Button(boutons, text="Préparer les synthèses", command=preparer_syntheses, bg=LIGHT_ORANGE, fg=ORANGE, activebackground=LIGHT_ORANGE, relief="flat", cursor="hand2").pack(side="left", padx=(0, 8))
     tk.Button(boutons, text="Détail synthèse", command=ouvrir_detail_synthese, bg=BG, fg=TEXT, activebackground=BG, relief="flat", cursor="hand2").pack(side="left")
-    tk.Button(boutons, text="Fermer", command=fenetre.destroy, bg=BG, fg=TEXT, relief="flat", cursor="hand2").pack(side="right")
+    tk.Button(boutons, text=t("close"), command=fenetre.destroy, bg=BG, fg=TEXT, relief="flat", cursor="hand2").pack(side="right")
 
 def format_duree_courte(secondes):
     if secondes is None:
@@ -5590,8 +5676,8 @@ def ouvrir_sante_systeme():
     boutons = tk.Frame(fenetre, bg=CARD)
     boutons.pack(fill="x", padx=20, pady=(0, 16))
     tk.Button(boutons, text="⟳ Rafraîchir", command=rafraichir, bg=LIGHT_GREEN, fg=GREEN, activebackground=LIGHT_GREEN, relief="flat", cursor="hand2").pack(side="left", padx=(0, 8))
-    tk.Button(boutons, text="📋 Copier", command=copier, bg=LIGHT_BLUE, fg=BLUE, activebackground=LIGHT_BLUE, relief="flat", cursor="hand2").pack(side="left")
-    tk.Button(boutons, text="Fermer", command=fenetre.destroy, bg=BG, fg=TEXT, relief="flat", cursor="hand2").pack(side="right")
+    tk.Button(boutons, text=t("copy"), command=copier, bg=LIGHT_BLUE, fg=BLUE, activebackground=LIGHT_BLUE, relief="flat", cursor="hand2").pack(side="left")
+    tk.Button(boutons, text=t("close"), command=fenetre.destroy, bg=BG, fg=TEXT, relief="flat", cursor="hand2").pack(side="right")
 
 def ouvrir_parametres():
     fenetre = tk.Toplevel(root)
@@ -6846,7 +6932,7 @@ def afficher_raccourcis_historique(plante_id):
 
     tk.Button(
         contenu,
-        text="Fermer",
+        text=t("close"),
         font=("Segoe UI", 9, "bold"),
         bg=BG,
         fg=TEXT,
@@ -7162,7 +7248,7 @@ def ouvrir_apercu_email_alertes(alertes):
     ).pack(side="left")
     tk.Button(
         boutons,
-        text="Fermer",
+        text=t("close"),
         command=fenetre.destroy,
         bg=BG,
         fg=TEXT,

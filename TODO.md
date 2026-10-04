@@ -248,6 +248,7 @@ Objectif : préparer une évolution sans casser l’enregistrement actuel des ar
 - [x] Bloquer le diagnostic update si la séparation programme/données ou la liste des données personnelles à préserver manque dans le plan.
 - [x] Afficher la dernière version disponible depuis GitHub dans le diagnostic À propos quand le manifeste distant répond.
 - [x] Ajouter dans `À propos` un bouton `Vérifier les mises à jour`, à la demande, sans téléchargement ni application automatique.
+- [x] Ajouter dans `À propos` un bouton `Update` qui lance la simulation du script de mise à jour et un bouton d’application contrôlée avec confirmation.
 
 - [x] Installation neuve : créer le schéma principal `plantes`, `capteurs`, `mesures` directement dans `database.py`, avec clés étrangères actives et index utiles.
 
