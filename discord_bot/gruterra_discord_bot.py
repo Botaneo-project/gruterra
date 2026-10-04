@@ -355,6 +355,16 @@ def save_release_state(state: dict) -> None:
     AUTO_RELEASE_STATE_FILE.write_text(json.dumps(state, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
 
 
+def load_release_changelog(version: str) -> str:
+    chemin = BASE_DIR.parent / "_dist" / f"gruterra-{version}-changelog.md"
+    if not chemin.exists():
+        return ""
+    try:
+        return chemin.read_text(encoding="utf-8").strip()
+    except OSError:
+        return ""
+
+
 def build_release_message(version_arg: str | None = None) -> str:
     manifest = load_release_manifest()
     version = str(version_arg or manifest.get("version") or "version à préciser").strip()
@@ -364,6 +374,9 @@ def build_release_message(version_arg: str | None = None) -> str:
     sha256 = str(manifest.get("sha256") or "").strip()
     tag = version if version.startswith("v") else f"v{version}"
     release_url = f"https://github.com/Botaneo-project/gruterra/releases/tag/{tag}"
+    changelog = load_release_changelog(version)
+    if changelog:
+        notes = changelog[:1200]
 
     lignes = [
         f"🌿 **Gruterra {version}**",

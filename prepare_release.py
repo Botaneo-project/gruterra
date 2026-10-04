@@ -114,7 +114,77 @@ def ecrire_manifest_pret(version: str, sha256: str) -> Path:
     return chemin
 
 
-def ecrire_note_release(version: str, archive: Path, sha256: str, fichiers: list[Path], manifest_ready: Path) -> Path:
+
+MOTS_CLES_IMPORTANTS = (
+    "update",
+    "release",
+    "raspberry",
+    "historique",
+    "analyse",
+    "cycle",
+    "discord",
+    "netatmo",
+    "secur",
+    "schema",
+    "base",
+)
+
+MOTS_CLES_TECHNIQUES = (
+    "todo",
+    "readme",
+    "guide",
+    "documenter",
+    "doc",
+    "typo",
+)
+
+
+def commits_depuis_dernier_tag() -> list[str]:
+    try:
+        dernier_tag = lancer_git(["describe", "--tags", "--abbrev=0"])
+        plage = f"{dernier_tag}..HEAD"
+        sortie = lancer_git(["log", "--pretty=format:%s", plage])
+    except subprocess.CalledProcessError:
+        sortie = lancer_git(["log", "--pretty=format:%s", "--max-count=40"])
+    return [ligne.strip() for ligne in sortie.splitlines() if ligne.strip()]
+
+
+def classer_commits(commits: list[str]) -> tuple[list[str], list[str]]:
+    importants = []
+    autres = []
+    for commit in commits:
+        normalise = commit.lower()
+        cible = importants if any(mot in normalise for mot in MOTS_CLES_IMPORTANTS) else autres
+        if any(mot in normalise for mot in MOTS_CLES_TECHNIQUES) and not any(mot in normalise for mot in MOTS_CLES_IMPORTANTS):
+            cible = autres
+        cible.append(commit)
+    return importants, autres
+
+
+def ecrire_changelog_release(version: str) -> Path:
+    commits = commits_depuis_dernier_tag()
+    importants, autres = classer_commits(commits)
+    chemin = DIST_DIR / f"gruterra-{version}-changelog.md"
+    lignes = [f"# Gruterra {version}", "", "## Changements importants"]
+    lignes.extend(f"- {item}" for item in importants[:12])
+    if not importants:
+        lignes.append("- Préparation de la release Gruterra.")
+    lignes.extend(["", "## Autres changements inclus"])
+    lignes.extend(f"- {item}" for item in autres[:20])
+    if not autres:
+        lignes.append("- Aucun autre changement listé.")
+    lignes.extend([
+        "",
+        "## Sécurité de mise à jour",
+        "- Archive officielle vérifiée par SHA256.",
+        "- Données locales et configuration privée préservées.",
+        "- Redémarrage manuel conseillé après application.",
+    ])
+    chemin.write_text("\n".join(lignes) + "\n", encoding="utf-8")
+    return chemin
+
+
+def ecrire_note_release(version: str, archive: Path, sha256: str, fichiers: list[Path], manifest_ready: Path, changelog: Path) -> Path:
     horodatage = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     note = DIST_DIR / f"gruterra-{version}-release-info.txt"
     url = construire_release_url(version)
@@ -126,8 +196,12 @@ def ecrire_note_release(version: str, archive: Path, sha256: str, fichiers: list
         f"SHA256 : {sha256}",
         f"Fichiers inclus : {len(fichiers)}",
         f"Manifeste prêt : {manifest_ready.name}",
+        f"Changelog prêt : {changelog.name}",
         "",
-        "Après publication GitHub Release, vous pouvez copier le contenu du manifeste prêt :",
+        "Après publication GitHub Release, vous pouvez copier le changelog prêt dans la description :",
+        f"  {changelog}",
+        "",
+        "Puis copier le contenu du manifeste prêt :",
         f"  {manifest_ready}",
         "",
         "Ou renseigner version_manifest.json ainsi :",
@@ -156,7 +230,8 @@ def main(argv: list[str] | None = None) -> int:
     archive = construire_archive(version, fichiers)
     sha256 = calculer_sha256(archive)
     manifest_ready = ecrire_manifest_pret(version, sha256)
-    note = ecrire_note_release(version, archive, sha256, fichiers, manifest_ready)
+    changelog = ecrire_changelog_release(version)
+    note = ecrire_note_release(version, archive, sha256, fichiers, manifest_ready, changelog)
 
     print("Archive Gruterra préparée")
     print(f"Version : {version}")
@@ -164,6 +239,7 @@ def main(argv: list[str] | None = None) -> int:
     print(f"SHA256 : {sha256}")
     print(f"Fichiers inclus : {len(fichiers)}")
     print(f"Manifeste prêt : {manifest_ready}")
+    print(f"Changelog prêt : {changelog}")
     print(f"Note release : {note}")
     return 0
 

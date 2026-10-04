@@ -16,7 +16,8 @@ Le résultat est créé dans `_dist/` :
 
 - `gruterra-<version>.zip` : archive à envoyer dans GitHub Release ;
 - `gruterra-<version>-release-info.txt` : SHA256 et lignes à reporter dans `version_manifest.json` ;
-- `version_manifest-<version>-ready.json` : manifeste complet prêt à copier après publication de la release.
+- `version_manifest-<version>-ready.json` : manifeste complet prêt à copier après publication de la release ;
+- `gruterra-<version>-changelog.md` : note de release groupée, avec les changements importants en haut.
 
 Le dossier `_dist/` est ignoré par Git.
 
