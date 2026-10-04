@@ -771,3 +771,46 @@ class TestDatesBotaneo(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+class TestAssistantMiseAJour(unittest.TestCase):
+    def test_manifest_incomplet_refuse_application(self):
+        update_gruterra = importlib.import_module("update_gruterra")
+        diagnostic = {
+            "statut_global": "pret_a_verifier",
+            "version": {
+                "manifest_auto_update": False,
+                "archive_url": "",
+                "sha256": "",
+            },
+        }
+
+        ok, erreurs = update_gruterra.valider_manifest_applicable(diagnostic)
+
+        self.assertFalse(ok)
+        self.assertIn("mise_a_jour_automatique vaut false dans le manifeste", erreurs)
+        self.assertIn("archive_url absent du manifeste", erreurs)
+        self.assertIn("sha256 absent ou invalide dans le manifeste", erreurs)
+
+    def test_listing_update_preserve_les_donnees_personnelles(self):
+        update_gruterra = importlib.import_module("update_gruterra")
+        with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as dossier:
+            source = Path(dossier)
+            (source / "_app").mkdir()
+            (source / "_app" / "data").mkdir()
+            (source / "_config").mkdir()
+            (source / "discord_bot").mkdir()
+            (source / "README.md").write_text("nouveau readme", encoding="utf-8")
+            (source / "_app" / "interface.py").write_text("print('ok')", encoding="utf-8")
+            (source / "_app" / "data" / "demo.db").write_text("demo", encoding="utf-8")
+            (source / "_config" / "secret.json").write_text("secret", encoding="utf-8")
+            (source / "discord_bot" / ".env").write_text("token", encoding="utf-8")
+            (source / "plantes.db").write_text("base", encoding="utf-8")
+
+            fichiers = {item.as_posix() for item in update_gruterra.lister_fichiers_programme(source)}
+
+        self.assertIn("README.md", fichiers)
+        self.assertIn("_app/interface.py", fichiers)
+        self.assertNotIn("_app/data/demo.db", fichiers)
+        self.assertNotIn("_config/secret.json", fichiers)
+        self.assertNotIn("discord_bot/.env", fichiers)
+        self.assertNotIn("plantes.db", fichiers)

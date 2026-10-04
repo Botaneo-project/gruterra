@@ -222,7 +222,7 @@ Objectif : préparer une évolution sans casser l’enregistrement actuel des ar
 
 ## Installation, mises à jour et distribution
 
-- [ ] Prévoir un système d’auto-upgrade pour les utilisateurs ayant déjà téléchargé Gruterra.
+- [x] Prévoir un système d’auto-upgrade pour les utilisateurs ayant déjà téléchargé Gruterra.
 - [x] Préparer un plan de protection avant mise à jour : base locale, configuration, secrets ignorés, sauvegardes et données runtime.
 - [x] Distinguer dans le plan de mise à jour le programme et les données personnelles : base réelle, tokens, favoris, paramètres Raspberry, alertes.
 - [x] Lister explicitement les éléments personnels à conserver pendant les mises à jour : données, configuration locale, favoris, secrets, sauvegardes et caches locaux.
@@ -231,7 +231,10 @@ Objectif : préparer une évolution sans casser l’enregistrement actuel des ar
 - [x] Préparer le comparateur de versions pour un futur mode simple : version locale / version distante, sans application automatique.
 - [x] Brancher la vérification distante GitHub via `version_manifest.json`, sans téléchargement ni application automatique.
 - [x] Ajouter un script public `update_gruterra.py` de validation non destructive, utilisable sans Git.
-- [ ] Prévoir un mode avancé plus tard : script de mise à jour Windows et script de mise à jour Raspberry.
+- [x] Étendre `update_gruterra.py` avec `--dry-run` et `--apply`, archive officielle, contrôle SHA256 et sauvegarde avant remplacement.
+- [ ] Publier une première release ZIP officielle avec SHA256 pour activer réellement `--apply`.
+- [x] Préparer un script Windows `update_gruterra.py` avec simulation, application contrôlée, SHA256 obligatoire et sauvegarde locale.
+- [ ] Prévoir plus tard l’équivalent Raspberry complet côté `raspberry/install/`.
 - [x] Afficher dans `À propos` la version locale, la révision Git et le résumé du plan de protection avant mise à jour.
 - [x] Ajouter une vérification préparatoire du plan de mise à jour : prêt, prudence ou bloqué selon la présence de la base, de la configuration et des sauvegardes locales.
 - [x] Afficher un résumé court et lisible du plan de mise à jour dans `À propos`, sans noms de fichiers secrets et sans activation automatique.

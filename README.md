@@ -328,7 +328,16 @@ La fenêtre `À propos` affiche l’état de cette préparation, permet de copie
 py update_gruterra.py
 ```
 
-La comparaison de version lit maintenant le manifeste public `version_manifest.json` publié sur GitHub, avec version, notes et lien informatif. Si GitHub n’est pas joignable, Gruterra peut retomber sur un manifeste local. Aucun téléchargement de programme et aucune application automatique ne sont encore actifs : la vérification reste informative.
+Quand une release officielle fournira une archive et une empreinte SHA256 dans `version_manifest.json`, le même assistant pourra simuler puis appliquer la mise à jour :
+
+```powershell
+py update_gruterra.py --dry-run
+py update_gruterra.py --apply
+```
+
+Le mode `--apply` reste volontairement strict : il refuse toute mise à jour sans `mise_a_jour_automatique=true`, sans `archive_url`, sans SHA256 valide ou si les protections locales sont bloquantes. Avant de remplacer les fichiers programme, il crée une archive de sauvegarde dans `_security_backups/` et préserve les données personnelles (`plantes.db`, `_config/`, `_historique/`, `_app/data/`, `.env` Discord et dépôt Git local).
+
+La comparaison de version lit maintenant le manifeste public `version_manifest.json` publié sur GitHub, avec version, notes et lien informatif. Si GitHub n’est pas joignable, Gruterra peut retomber sur un manifeste local. Tant qu’aucune archive officielle et aucun SHA256 ne sont publiés, l’assistant reste en vérification ou simulation refusée.
 
 Toute future mise à jour devra rester précédée d’une sauvegarde locale et d’une validation explicite.
 
