@@ -456,3 +456,5 @@ La remise en attente a été effectuée uniquement sur une copie de la base Pi. 
 - [x] Ajouter un premier README anglais `README_EN.md` et un guide démo anglais `GUIDE_DEMO_EN.md`.
 - [ ] Identifier les prochains textes publics à traduire : aide installation, Netatmo, Raspberry, erreurs fréquentes.
 - [ ] Éviter de présenter Discord ou GitHub comme entièrement anglophones tant que l'application reste française.
+
+- [x] Continuer la traduction progressive : boutons plante, historique, ajout plante, vue plantes, synchronisation et messages update visibles en démo.

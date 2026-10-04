@@ -131,7 +131,7 @@ def copier_statut_synchronisation():
     texte = texte_synchronisation_copiable()
     root.clipboard_clear()
     root.clipboard_append(texte)
-    status_var.set("Statut de synchronisation copié dans le presse-papiers")
+    status_var.set(t("sync_status_copied"))
 
 
 def rafraichir_texte_synchronisation(*_):
@@ -520,7 +520,7 @@ def lancer_sync_auto():
         return
 
     auto_sync_en_cours = True
-    status_var.set("📡 Synchronisation automatique en cours")
+    status_var.set(t("auto_sync_running"))
     synchroniser()
 
 
@@ -582,7 +582,7 @@ def basculer_theme():
     appliquer_theme_interface()
     actualiser_interface()
     if not sauvegarder_theme_sombre(theme_sombre_actif):
-        status_var.set("Thème appliqué · préférence non enregistrée")
+        status_var.set(t("theme_applied_unsaved"))
 
 
 def configurer_widget(widget, **options):
@@ -1595,7 +1595,7 @@ def afficher_resume_arrosage(parent, plante_id):
 
     tk.Label(
         bloc,
-        text="💧 Arrosage",
+        text=t("watering"),
         font=("Segoe UI", 10, "bold"),
         fg=BLUE,
         bg=LIGHT_BLUE,
@@ -2241,7 +2241,7 @@ def afficher_filtres_plantes(parent, plantes, plantes_filtrees, commande=None):
 
     tk.Label(
         haut,
-        text="🔎 Filtrer les plantes",
+        text=t("search_plants"),
         font=("Segoe UI", 11, "bold"),
         fg=GREEN,
         bg=CARD
@@ -2266,7 +2266,7 @@ def afficher_filtres_plantes(parent, plantes, plantes_filtrees, commande=None):
 
     tk.Button(
         ligne,
-        text="Réinitialiser",
+        text=t("reset"),
         command=lambda: reinitialiser_filtres_plantes(action),
         bg=BG,
         fg=TEXT,
@@ -2355,13 +2355,13 @@ def creer_carte_plante_compacte(parent, plante):
 
     boutons = tk.Frame(carte, bg=CARD)
     boutons.pack(fill="x", padx=14, pady=(0, 10))
-    tk.Button(boutons, text="💧 Arrosage", font=("Segoe UI", 8, "bold"), bg=LIGHT_BLUE, fg=BLUE, relief="flat", cursor="hand2", command=lambda pid=plante_id, n=nom: ouvrir_arrosage_plante(pid, n)).pack(side="left", padx=(0, 8))
-    tk.Button(boutons, text="☀️ Sortie balcon", font=("Segoe UI", 8, "bold"), bg=BG, fg=ORANGE, relief="flat", cursor="hand2", command=lambda pid=plante_id, n=nom: enregistrer_evenement_balcon(pid, n, "sortie")).pack(side="left", padx=(0, 8))
-    tk.Button(boutons, text="🏠 Retour intérieur", font=("Segoe UI", 8, "bold"), bg=BG, fg=BLUE, relief="flat", cursor="hand2", command=lambda pid=plante_id, n=nom: enregistrer_evenement_balcon(pid, n, "retour")).pack(side="left", padx=(0, 8))
-    tk.Button(boutons, text="🕘 Exposition passée", font=("Segoe UI", 8, "bold"), bg=BG, fg=SECONDARY, relief="flat", cursor="hand2", command=lambda pid=plante_id, n=nom: ouvrir_exposition_balcon_passee(pid, n)).pack(side="left", padx=(0, 8))
-    tk.Button(boutons, text="🔎 Analyse", font=("Segoe UI", 8, "bold"), bg=LIGHT_GREEN, fg=GREEN, relief="flat", cursor="hand2", command=lambda pid=plante_id: afficher_message_analyse(pid)).pack(side="left", padx=(0, 8))
-    tk.Button(boutons, text="📋 Copier analyse", font=("Segoe UI", 8, "bold"), bg=BG, fg=BLUE, relief="flat", cursor="hand2", command=lambda pid=plante_id: copier_analyse_plante(pid)).pack(side="left", padx=(0, 8))
-    tk.Button(boutons, text="📈 Historique", font=("Segoe UI", 8, "bold"), bg=BG, fg=TEXT, relief="flat", cursor="hand2", command=lambda pid=plante_id: afficher_message_historique(pid)).pack(side="left")
+    tk.Button(boutons, text=t("watering"), font=("Segoe UI", 8, "bold"), bg=LIGHT_BLUE, fg=BLUE, relief="flat", cursor="hand2", command=lambda pid=plante_id, n=nom: ouvrir_arrosage_plante(pid, n)).pack(side="left", padx=(0, 8))
+    tk.Button(boutons, text=t("balcony_out"), font=("Segoe UI", 8, "bold"), bg=BG, fg=ORANGE, relief="flat", cursor="hand2", command=lambda pid=plante_id, n=nom: enregistrer_evenement_balcon(pid, n, "sortie")).pack(side="left", padx=(0, 8))
+    tk.Button(boutons, text=t("back_inside"), font=("Segoe UI", 8, "bold"), bg=BG, fg=BLUE, relief="flat", cursor="hand2", command=lambda pid=plante_id, n=nom: enregistrer_evenement_balcon(pid, n, "retour")).pack(side="left", padx=(0, 8))
+    tk.Button(boutons, text=t("past_exposure"), font=("Segoe UI", 8, "bold"), bg=BG, fg=SECONDARY, relief="flat", cursor="hand2", command=lambda pid=plante_id, n=nom: ouvrir_exposition_balcon_passee(pid, n)).pack(side="left", padx=(0, 8))
+    tk.Button(boutons, text=t("analysis"), font=("Segoe UI", 8, "bold"), bg=LIGHT_GREEN, fg=GREEN, relief="flat", cursor="hand2", command=lambda pid=plante_id: afficher_message_analyse(pid)).pack(side="left", padx=(0, 8))
+    tk.Button(boutons, text=t("copy_plant_analysis"), font=("Segoe UI", 8, "bold"), bg=BG, fg=BLUE, relief="flat", cursor="hand2", command=lambda pid=plante_id: copier_analyse_plante(pid)).pack(side="left", padx=(0, 8))
+    tk.Button(boutons, text=t("history"), font=("Segoe UI", 8, "bold"), bg=BG, fg=TEXT, relief="flat", cursor="hand2", command=lambda pid=plante_id: afficher_message_historique(pid)).pack(side="left")
 
 
 def creer_carte_plante(parent, plante):
@@ -2837,7 +2837,7 @@ def creer_carte_plante(parent, plante):
 
     tk.Button(
         boutons,
-        text="📈 Historique / analyse",
+        text=t("history_analysis"),
         font=("Segoe UI", 9, "bold"),
         bg=LIGHT_GREEN,
         fg=GREEN,
@@ -2853,7 +2853,7 @@ def creer_carte_plante(parent, plante):
 
     tk.Button(
         boutons,
-        text="📋 Copier analyse plante",
+        text=t("copy_plant_analysis"),
         font=("Segoe UI", 9, "bold"),
         bg=BG,
         fg=BLUE,
@@ -2870,7 +2870,7 @@ def creer_carte_plante(parent, plante):
 
     tk.Button(
         boutons,
-        text="💧 Arrosage",
+        text=t("watering"),
         font=("Segoe UI", 9, "bold"),
         bg=LIGHT_BLUE,
         fg=TEXT,
@@ -2887,7 +2887,7 @@ def creer_carte_plante(parent, plante):
 
     tk.Button(
         boutons,
-        text="☀️ Sortie balcon",
+        text=t("balcony_out"),
         font=("Segoe UI", 9, "bold"),
         bg=BG,
         fg=ORANGE,
@@ -2904,7 +2904,7 @@ def creer_carte_plante(parent, plante):
 
     tk.Button(
         boutons,
-        text="🏠 Retour intérieur",
+        text=t("back_inside"),
         font=("Segoe UI", 9, "bold"),
         bg=BG,
         fg=BLUE,
@@ -2921,7 +2921,7 @@ def creer_carte_plante(parent, plante):
 
     tk.Button(
         boutons,
-        text="🕘 Exposition passée",
+        text=t("past_exposure"),
         font=("Segoe UI", 9, "bold"),
         bg=BG,
         fg=SECONDARY,
@@ -2965,7 +2965,7 @@ def creer_carte_plante(parent, plante):
 
         tk.Button(
             boutons,
-            text="📥 Importer historique simplifié",
+            text=t("import_simple_history"),
             font=("Segoe UI", 9, "bold"),
             bg=LIGHT_GREEN,
             fg=GREEN,
@@ -2984,7 +2984,7 @@ def creer_carte_plante(parent, plante):
 
         tk.Button(
             boutons,
-            text="＋ Associer un capteur",
+            text=t("associate_sensor"),
             font=("Segoe UI", 9, "bold"),
             bg=LIGHT_BLUE,
             fg=TEXT,
@@ -4654,7 +4654,7 @@ def synchroniser():
 
     sync_button.config(
         state="disabled",
-        text="⏳ Synchronisation..."
+        text=t("syncing")
     )
 
     status_var.set(
@@ -4942,7 +4942,7 @@ def synchronisation_terminee(resultat_miflora, resultats_meteo):
 
     sync_button.config(
         state="normal",
-        text="📡 Synchroniser"
+        text=t("sync_plain")
     )
 
     if auto_sync_en_cours:
@@ -5104,17 +5104,17 @@ def verifier_update_au_demarrage():
             )
             if notes:
                 message += f"\n\nNotes : {notes[:500]}"
-            if not messagebox.askyesno("Mise à jour Gruterra disponible", message, parent=root):
-                status_var.set("Mise à jour disponible ignorée pour cette session")
+            if not messagebox.askyesno(t("update_available_title"), message, parent=root):
+                status_var.set(t("update_ignored"))
                 return
 
-            status_var.set("Téléchargement et application de la mise à jour Gruterra…")
+            status_var.set(t("update_downloading"))
 
             def appliquer():
                 resultat = executer_assistant_update_a_propos(appliquer=True)
 
                 def terminer():
-                    status_var.set("Mise à jour terminée · redémarrage manuel conseillé")
+                    status_var.set(t("update_restart_advised"))
                     messagebox.showinfo(
                         "Mise à jour Gruterra",
                         resultat + "\n\nSi la mise à jour a été appliquée, fermez puis relancez Gruterra.",
@@ -6134,7 +6134,7 @@ def ouvrir_parametres():
 def ouvrir_ajout_plante():
 
     fenetre = tk.Toplevel(root)
-    fenetre.title("Ajouter une plante")
+    fenetre.title(t("add_plant_title"))
     fenetre.configure(bg=CARD)
     fenetre.resizable(False, False)
     fenetre.transient(root)
@@ -6145,7 +6145,7 @@ def ouvrir_ajout_plante():
 
     tk.Label(
         fenetre,
-        text="Nom de la plante",
+        text=t("plant_name"),
         bg=CARD,
         fg=TEXT,
         font=("Segoe UI", 9, "bold")
@@ -6211,7 +6211,7 @@ def ouvrir_ajout_plante():
 
     tk.Label(
         fenetre,
-        text="Besoins connus",
+        text=t("known_needs"),
         bg=CARD,
         fg=TEXT,
         font=("Segoe UI", 9, "bold")
@@ -6283,7 +6283,7 @@ def ouvrir_ajout_plante():
 
     tk.Label(
         fenetre,
-        text="Emplacement",
+        text=t("location"),
         bg=CARD,
         fg=TEXT,
         font=("Segoe UI", 9, "bold")
@@ -6368,7 +6368,7 @@ def ouvrir_ajout_plante():
 
     tk.Button(
         boutons,
-        text="Ajouter",
+        text=t("add"),
         command=enregistrer,
         bg=LIGHT_GREEN,
         fg=TEXT,
@@ -6435,7 +6435,7 @@ def ouvrir_ajout_capteur():
         fenetre.destroy()
         actualiser_interface()
         status_var.set("Capteur ajouté. Cliquez sur Synchroniser pour effectuer sa première lecture.")
-    tk.Button(fenetre, text="Ajouter", command=enregistrer, bg=LIGHT_GREEN, fg=TEXT,
+    tk.Button(fenetre, text=t("add"), command=enregistrer, bg=LIGHT_GREEN, fg=TEXT,
               activebackground=LIGHT_GREEN, activeforeground=TEXT).pack(side='right', padx=20, pady=15)
     tk.Button(fenetre, text=t("cancel"), command=fenetre.destroy, bg=BG, fg=TEXT).pack(side='left', padx=20, pady=15)
     champs[0].focus_set()
@@ -7456,7 +7456,7 @@ def actualiser_interface():
 
         tk.Label(
             content_frame,
-            text="🌱 Aucune plante dans Gruterra",
+            text=t("no_plants"),
             font=("Segoe UI", 16, "bold"),
             fg=TEXT,
             bg=BG
@@ -7481,7 +7481,7 @@ def actualiser_interface():
         if not plantes_filtrees:
             tk.Label(
                 content_frame,
-                text="Aucune plante ne correspond aux filtres actuels.",
+                text=t("no_plant_filters"),
                 font=("Segoe UI", 11, "bold"),
                 fg=SECONDARY,
                 bg=BG
@@ -7509,7 +7509,7 @@ def actualiser_interface():
         bloc_plantes_masquees.pack(fill="x", padx=20, pady=(0, 12))
         tk.Label(
             bloc_plantes_masquees,
-            text="Les plantes sont masquées sur l'accueil. Vous pouvez les consulter dans une vue dédiée ou les réafficher depuis Paramètres > Affichage.",
+            text=t("plants_hidden_home"),
             font=("Segoe UI", 10),
             fg=SECONDARY,
             bg=CARD,
@@ -7519,7 +7519,7 @@ def actualiser_interface():
         ).pack(fill="x", padx=12, pady=(10, 6))
         tk.Button(
             bloc_plantes_masquees,
-            text="Ouvrir la vue Plantes",
+            text=t("open_plants_view"),
             command=ouvrir_vue_plantes,
             bg=LIGHT_GREEN,
             fg=GREEN,
@@ -7539,7 +7539,7 @@ def actualiser_interface():
 
 def ouvrir_vue_plantes():
     fenetre = tk.Toplevel(root)
-    fenetre.title("Plantes — Gruterra")
+    fenetre.title(t("plants_view_title"))
     largeur = min(1040, max(860, fenetre.winfo_screenwidth() - 120))
     hauteur = min(760, max(620, fenetre.winfo_screenheight() - 140))
     fenetre.geometry(f"{largeur}x{hauteur}+60+45")
@@ -7549,7 +7549,7 @@ def ouvrir_vue_plantes():
     entete = tk.Frame(fenetre, bg=CARD, highlightbackground=BORDER, highlightthickness=1)
     entete.pack(fill="x")
     tk.Label(entete, text=t("plants"), font=("Segoe UI", 18, "bold"), fg=GREEN, bg=CARD).pack(side="left", padx=18, pady=14)
-    tk.Button(entete, text="Actualiser", command=lambda: remplir(), bg=BG, fg=TEXT, relief="flat", cursor="hand2").pack(side="right", padx=(0, 18), pady=12)
+    tk.Button(entete, text=t("refresh_plain"), command=lambda: remplir(), bg=BG, fg=TEXT, relief="flat", cursor="hand2").pack(side="right", padx=(0, 18), pady=12)
 
     conteneur = tk.Frame(fenetre, bg=BG)
     conteneur.pack(fill="both", expand=True)
@@ -7599,7 +7599,7 @@ def ouvrir_vue_plantes():
         if not plantes_filtrees:
             tk.Label(
                 interieur,
-                text="Aucune plante ne correspond aux filtres actuels.",
+                text=t("no_plant_filters"),
                 font=("Segoe UI", 11, "bold"),
                 fg=SECONDARY,
                 bg=BG
@@ -7710,7 +7710,7 @@ refresh_button.pack(
 
 sync_button = tk.Button(
     toolbar,
-    text="📡 Synchroniser",
+    text=t("sync_plain"),
     font=("Segoe UI", 9, "bold"),
     bg=GREEN,
     fg="white",
@@ -7881,7 +7881,7 @@ sync_detail_header.pack(fill="x", padx=15)
 
 tk.Button(
     sync_detail_header,
-    text="📋 Copier le statut",
+    text=t("copy_status"),
     font=("Segoe UI", 8, "bold"),
     bg=CARD,
     fg=BLUE,
@@ -7893,7 +7893,7 @@ tk.Button(
 
 tk.Label(
     sync_detail_header,
-    text="Statut copiable",
+    text=t("copyable_status"),
     font=("Segoe UI", 8, "bold"),
     fg=SECONDARY,
     bg=LIGHT_BLUE,
