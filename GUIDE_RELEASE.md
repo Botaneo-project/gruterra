@@ -15,7 +15,8 @@ Le script refuse de travailler si Git contient des changements non validés. C�
 Le résultat est créé dans `_dist/` :
 
 - `gruterra-<version>.zip` : archive à envoyer dans GitHub Release ;
-- `gruterra-<version>-release-info.txt` : SHA256 et lignes à reporter dans `version_manifest.json`.
+- `gruterra-<version>-release-info.txt` : SHA256 et lignes à reporter dans `version_manifest.json` ;
+- `version_manifest-<version>-ready.json` : manifeste complet prêt à copier après publication de la release.
 
 Le dossier `_dist/` est ignoré par Git.
 

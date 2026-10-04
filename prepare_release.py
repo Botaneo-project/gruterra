@@ -52,8 +52,12 @@ def verifier_arbre_propre() -> None:
         )
 
 
+def lire_manifest() -> dict:
+    return json.loads(MANIFEST.read_text(encoding="utf-8"))
+
+
 def lire_version() -> str:
-    donnees = json.loads(MANIFEST.read_text(encoding="utf-8"))
+    donnees = lire_manifest()
     version = str(donnees.get("version") or "").strip()
     if not version:
         raise RuntimeError("version_manifest.json ne contient pas de version exploitable.")
@@ -96,10 +100,24 @@ def construire_archive(version: str, fichiers: list[Path]) -> Path:
     return archive
 
 
-def ecrire_note_release(version: str, archive: Path, sha256: str, fichiers: list[Path]) -> Path:
+def construire_release_url(version: str) -> str:
+    return f"https://github.com/Botaneo-project/gruterra/releases/download/v{version}/gruterra-{version}.zip"
+
+
+def ecrire_manifest_pret(version: str, sha256: str) -> Path:
+    donnees = lire_manifest()
+    donnees["archive_url"] = construire_release_url(version)
+    donnees["sha256"] = sha256
+    donnees["mise_a_jour_automatique"] = True
+    chemin = DIST_DIR / f"version_manifest-{version}-ready.json"
+    chemin.write_text(json.dumps(donnees, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    return chemin
+
+
+def ecrire_note_release(version: str, archive: Path, sha256: str, fichiers: list[Path], manifest_ready: Path) -> Path:
     horodatage = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     note = DIST_DIR / f"gruterra-{version}-release-info.txt"
-    url = f"https://github.com/Botaneo-project/gruterra/releases/download/v{version}/gruterra-{version}.zip"
+    url = construire_release_url(version)
     lignes = [
         "Gruterra - préparation release",
         f"Date locale : {horodatage}",
@@ -107,8 +125,12 @@ def ecrire_note_release(version: str, archive: Path, sha256: str, fichiers: list
         f"Archive : {archive.name}",
         f"SHA256 : {sha256}",
         f"Fichiers inclus : {len(fichiers)}",
+        f"Manifeste prêt : {manifest_ready.name}",
         "",
-        "Après publication GitHub Release, renseigner version_manifest.json ainsi :",
+        "Après publication GitHub Release, vous pouvez copier le contenu du manifeste prêt :",
+        f"  {manifest_ready}",
+        "",
+        "Ou renseigner version_manifest.json ainsi :",
         f'  "archive_url": "{url}",',
         f'  "sha256": "{sha256}",',
         '  "mise_a_jour_automatique": true',
@@ -133,13 +155,15 @@ def main(argv: list[str] | None = None) -> int:
         raise RuntimeError("Aucun fichier suivi par Git à archiver.")
     archive = construire_archive(version, fichiers)
     sha256 = calculer_sha256(archive)
-    note = ecrire_note_release(version, archive, sha256, fichiers)
+    manifest_ready = ecrire_manifest_pret(version, sha256)
+    note = ecrire_note_release(version, archive, sha256, fichiers, manifest_ready)
 
     print("Archive Gruterra préparée")
     print(f"Version : {version}")
     print(f"Archive : {archive}")
     print(f"SHA256 : {sha256}")
     print(f"Fichiers inclus : {len(fichiers)}")
+    print(f"Manifeste prêt : {manifest_ready}")
     print(f"Note release : {note}")
     return 0
 
