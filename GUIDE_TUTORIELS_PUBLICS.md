@@ -60,7 +60,7 @@ Cette commande vérifie les salons connus (`#welcome`, `#useful-links`, `#instal
 
 Elle ne recrée pas la structure du serveur et ne touche pas aux rôles. Pour refaire toute la structure, utiliser seulement ponctuellement `!setup_gruterra` avec `DISCORD_SETUP_ENABLED=1`.
 
-Le salon `#bot-commands` est prévu comme salon privé : seuls les admins Gruterra doivent pouvoir y écrire et y lire les commandes. Le bot y publie aussi un mémo des commandes utiles et tente de l’épingler automatiquement. Les commandes de nettoyage ne suppriment pas les messages épinglés ; après un nettoyage, le bot vérifie aussi que le mémo des commandes existe encore.
+Le salon `#bot-commands` est prévu comme salon privé : seuls les admins Gruterra doivent pouvoir y écrire et y lire les commandes. Le bot y publie aussi un mémo des commandes utiles et tente de l’épingler automatiquement. Les commandes de nettoyage ne suppriment pas les messages épinglés ; après un nettoyage, le bot vérifie aussi que le mémo des commandes existe encore. Dans les salons en lecture seule comme `#welcome`, `#useful-links` ou `#bot-log`, `@everyone` reste bloqué en écriture, mais le bot doit recevoir explicitement le droit d’envoyer et de gérer ses messages.
 
 ### Message Discord court prêt à adapter
 

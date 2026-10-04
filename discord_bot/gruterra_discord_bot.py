@@ -604,14 +604,29 @@ def overwrites_for(guild: discord.Guild, mode: str, admin_role: discord.Role) ->
             )
         return overwrites
     if mode == "read_only":
-        return {
+        overwrites = {
             everyone: discord.PermissionOverwrite(view_channel=True, send_messages=False),
             admin_role: discord.PermissionOverwrite(view_channel=True, send_messages=True, manage_messages=True),
         }
-    return {
+        if guild.me is not None:
+            overwrites[guild.me] = discord.PermissionOverwrite(
+                view_channel=True,
+                send_messages=True,
+                read_message_history=True,
+                manage_messages=True,
+            )
+        return overwrites
+    overwrites = {
         everyone: discord.PermissionOverwrite(view_channel=True, send_messages=True),
         admin_role: discord.PermissionOverwrite(view_channel=True, send_messages=True, manage_messages=True),
     }
+    if guild.me is not None:
+        overwrites[guild.me] = discord.PermissionOverwrite(
+            view_channel=True,
+            send_messages=True,
+            read_message_history=True,
+        )
+    return overwrites
 
 
 @bot.event
