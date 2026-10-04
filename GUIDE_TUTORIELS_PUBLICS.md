@@ -90,6 +90,12 @@ Une fois les messages d’introduction propres, le bot peut publier des tutoriel
 ```
 
 
+Si les salons privés équipe refusent le bot (`#admin-notes`, `#dev-follow-up`, `#bot-commands`) :
+
+```text
+!fix_private_channels
+```
+
 Protection des messages socle : les introductions et tutoriels publiés par le bot sont épinglés automatiquement. Les commandes de nettoyage ignorent les messages épinglés. Pour vérifier ou ré-épingler tous les messages importants :
 
 ```text
