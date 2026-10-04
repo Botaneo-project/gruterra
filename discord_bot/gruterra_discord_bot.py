@@ -215,7 +215,6 @@ SERVER_STRUCTURE = [
             ("announcements", "Project announcements and important updates."),
             ("welcome", "Welcome message and first steps for new members."),
             ("changelog", "Visible changes, releases and notable fixes."),
-            ("bot-commands", "Manual bot commands, kept away from general discussion."),
             ("bot-log", "Automated setup notes and bot messages."),
             ("useful-links", "GitHub, demo guide, documentation and community links."),
         ],
@@ -252,6 +251,7 @@ SERVER_STRUCTURE = [
     (
         "🔒 TEAM",
         [
+            ("bot-commands", "Private manual bot commands for Gruterra admins."),
             ("admin-notes", "Private notes for server/project admins."),
             ("dev-follow-up", "Private development follow-up."),
         ],
@@ -486,7 +486,39 @@ async def publish_channel_starter_messages(guild: discord.Guild) -> list[str]:
     return results
 
 
+async def ensure_pinned_bot_commands_message(guild: discord.Guild) -> str:
+    channel = discord.utils.get(guild.text_channels, name="bot-commands")
+    if channel is None:
+        return "#bot-commands introuvable : mémo des commandes non épinglé."
+
+    content = CHANNEL_STARTER_MESSAGES.get("bot-commands", "").strip()
+    if not content:
+        return "Mémo des commandes vide : rien à épingler."
+
+    marker = "Commandes bot / Bot commands"
+    try:
+        target_message = None
+        async for message in channel.history(limit=50):
+            if message.author == guild.me and marker in message.content:
+                target_message = message
+                if message.content != content:
+                    await message.edit(content=content)
+                break
+        if target_message is None:
+            target_message = await channel.send(content)
+
+        if not target_message.pinned:
+            await target_message.pin(reason="Mémo des commandes Gruterra")
+        return "Mémo des commandes épinglé dans #bot-commands."
+    except discord.Forbidden:
+        return "#bot-commands : accès insuffisant pour publier ou épingler le mémo des commandes."
+    except discord.HTTPException as exc:
+        return f"#bot-commands : épinglage impossible ({exc})."
+
+
 def is_cleanup_target(message: discord.Message, guild: discord.Guild) -> bool:
+    if message.pinned:
+        return False
     return (
         message.author == guild.me
         or (
@@ -666,11 +698,13 @@ async def setup_gruterra(ctx: commands.Context) -> None:
 
     presentation_status = await publish_presentation_message(guild)
     starter_statuses = await publish_channel_starter_messages(guild)
+    commands_pin_status = await ensure_pinned_bot_commands_message(guild)
 
     message = (
         "Structure Gruterra prête. Rôles et salons vérifiés :\n"
         + "\n".join(f"- {item}" for item in created_or_checked)
         + f"\n\n{presentation_status}"
+        + f"\n{commands_pin_status}"
     )
     if starter_statuses:
         message += "\n\nMessages d'accueil et d'aide :\n" + "\n".join(f"- {item}" for item in starter_statuses[:8])
@@ -683,6 +717,7 @@ async def setup_gruterra(ctx: commands.Context) -> None:
         f"{len(created_or_checked)} rôle(s), catégorie(s) ou salon(s) vérifié(s).",
         presentation_status,
         f"{len(starter_statuses)} message(s) d'accueil ou d'aide vérifié(s).",
+        commands_pin_status,
     ]
     if warnings:
         log_lines.extend(warnings)
@@ -705,14 +740,16 @@ async def post_guides_gruterra(ctx: commands.Context) -> None:
 
     presentation_status = await publish_presentation_message(guild)
     starter_statuses = await publish_channel_starter_messages(guild)
+    commands_pin_status = await ensure_pinned_bot_commands_message(guild)
 
-    lines = [presentation_status, *starter_statuses]
+    lines = [presentation_status, commands_pin_status, *starter_statuses]
     bot_log_status = await publish_bot_log(
         guild,
         "🤖 **Guides Gruterra publiés**",
         [
             presentation_status,
             f"{len(starter_statuses)} salon(s) de guide vérifié(s).",
+            commands_pin_status,
             "Commande utilisée : !post_guides_gruterra.",
         ],
     )
@@ -793,13 +830,15 @@ async def clean_gruterra_messages(ctx: commands.Context, limit: int = 100) -> No
         deleted_count, warning = await cleanup_channel_messages(channel, guild, limit)
         deleted_total += deleted_count
 
+    commands_pin_status = await ensure_pinned_bot_commands_message(guild)
     bot_log_status = await publish_bot_log(
         guild,
         "🤖 **Nettoyage des messages Gruterra exécuté**",
         [
             f"{checked_channels} salon(s) vérifié(s).",
             f"{deleted_total} message(s) technique(s) supprimé(s).",
-            "Messages ciblés : messages du bot et commandes Gruterra visibles.",
+            "Messages ciblés : messages du bot et commandes Gruterra visibles non épinglées.",
+            commands_pin_status,
         ],
     )
     await ctx.reply(
@@ -825,12 +864,15 @@ async def clean_here(ctx: commands.Context, limit: int = 100) -> None:
         await ctx.reply(warning)
         return
 
+    commands_pin_status = await ensure_pinned_bot_commands_message(guild)
     bot_log_status = await publish_bot_log(
         guild,
         "🤖 **Nettoyage local Gruterra exécuté**",
         [
             f"Salon nettoyé : #{channel.name}.",
             f"{deleted_count} message(s) technique(s) supprimé(s).",
+            "Les messages épinglés sont conservés.",
+            commands_pin_status,
         ],
     )
     await ctx.send(

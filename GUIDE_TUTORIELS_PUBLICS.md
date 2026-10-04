@@ -50,7 +50,7 @@ But : accueillir quelqu’un qui arrive sur le serveur et lui permettre de teste
 
 Le bot peut publier ou mettre à jour les messages d’accueil et de tutoriel dans les salons prévus.
 
-Commande à lancer dans Discord, idéalement depuis `#bot-commands` :
+Commande à lancer dans Discord, idéalement depuis `#bot-commands`, salon privé réservé aux admins :
 
 ```text
 !post_guides_gruterra
@@ -59,6 +59,8 @@ Commande à lancer dans Discord, idéalement depuis `#bot-commands` :
 Cette commande vérifie les salons connus (`#welcome`, `#useful-links`, `#installation-help`, `#sensors-and-data`, `#discussion-fr`, `#aide-installation-fr`, etc.), puis publie le message adapté ou met à jour l’ancien message du bot si celui-ci existe déjà.
 
 Elle ne recrée pas la structure du serveur et ne touche pas aux rôles. Pour refaire toute la structure, utiliser seulement ponctuellement `!setup_gruterra` avec `DISCORD_SETUP_ENABLED=1`.
+
+Le salon `#bot-commands` est prévu comme salon privé : seuls les admins Gruterra doivent pouvoir y écrire et y lire les commandes. Le bot y publie aussi un mémo des commandes utiles et tente de l’épingler automatiquement. Les commandes de nettoyage ne suppriment pas les messages épinglés ; après un nettoyage, le bot vérifie aussi que le mémo des commandes existe encore.
 
 ### Message Discord court prêt à adapter
 
