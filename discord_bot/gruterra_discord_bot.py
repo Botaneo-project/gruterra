@@ -400,6 +400,34 @@ def build_release_message(version_arg: str | None = None) -> str:
     return "\n".join(lignes)
 
 
+async def safe_reply(ctx: commands.Context, content: str) -> bool:
+    """Répond à une commande sans faire planter le bot si le salon refuse l'écriture."""
+
+    try:
+        await ctx.reply(content[:1900])
+        return True
+    except discord.Forbidden:
+        try:
+            await ctx.author.send(
+                "Je n’ai pas le droit d’écrire dans le salon où la commande a été lancée. "
+                "Ajoutez au bot les permissions Voir le salon, Envoyer des messages et Voir les anciens messages, "
+                "ou relancez la commande dans #bot-log."
+            )
+            return True
+        except discord.Forbidden:
+            return False
+
+
+async def safe_send_channel(channel: discord.TextChannel, content: str) -> bool:
+    """Envoie un message dans un salon sans lever Forbidden vers les commandes."""
+
+    try:
+        await channel.send(content[:1900])
+        return True
+    except discord.Forbidden:
+        return False
+
+
 async def publish_presentation_message(guild: discord.Guild) -> str:
     channel = discord.utils.get(guild.text_channels, name="useful-links")
     if channel is None:
@@ -538,6 +566,27 @@ def overwrites_for(guild: discord.Guild, mode: str, admin_role: discord.Role) ->
 
 
 @bot.event
+async def on_command_error(ctx: commands.Context, error: commands.CommandError) -> None:
+    if isinstance(error, commands.CommandNotFound):
+        return
+    if isinstance(error, commands.MissingPermissions):
+        await safe_reply(ctx, "Commande refusée : votre compte n’a pas la permission Discord nécessaire.")
+        return
+    if isinstance(error, commands.BotMissingPermissions):
+        await safe_reply(ctx, "Commande impossible : il manque une permission Discord au bot sur ce salon.")
+        return
+    if isinstance(error, commands.CommandInvokeError) and isinstance(error.original, discord.Forbidden):
+        await safe_reply(
+            ctx,
+            "Commande interrompue : Discord refuse une action du bot. "
+            "Vérifiez ses permissions sur ce salon : Voir le salon, Envoyer des messages, Voir les anciens messages, "
+            "Gérer les messages si nettoyage, Créer une invitation si invitation."
+        )
+        return
+    raise error
+
+
+@bot.event
 async def on_ready() -> None:
     print(f"Gruterra Discord bot connecté : {bot.user}")
     if AUTO_RELEASE_ENABLED and not auto_release_watcher.is_running():
@@ -635,7 +684,7 @@ async def post_guides_gruterra(ctx: commands.Context) -> None:
         await ctx.reply("Cette commande doit être lancée dans un serveur Discord.")
         return
 
-    await ctx.reply("Publication ou mise à jour des guides Gruterra en cours…")
+    await safe_reply(ctx, "Publication ou mise à jour des guides Gruterra en cours…")
 
     presentation_status = await publish_presentation_message(guild)
     starter_statuses = await publish_channel_starter_messages(guild)
@@ -655,7 +704,7 @@ async def post_guides_gruterra(ctx: commands.Context) -> None:
     if len(lines) > 12:
         message += f"\n- {len(lines) - 12} autre(s) résultat(s)."
     message += f"\n\n{bot_log_status}"
-    await ctx.reply(message[:1900])
+    await safe_reply(ctx, message)
 
 
 @bot.command(name="invite_gruterra")
