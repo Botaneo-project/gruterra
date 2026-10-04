@@ -78,6 +78,7 @@ CLEANUP_COMMAND_PREFIXES = (
     "!post_tutos_gruterra",
     "!reset_tutos_gruterra",
     "!fix_info_channels",
+    "!pin_base_messages",
 )
 
 PRESENTATION_MESSAGE = """🌱 **Bienvenue sur Gruterra / Welcome to Gruterra**
@@ -142,6 +143,7 @@ Commandes utiles :
 - `!post_tutos_gruterra` : publier les tutos complets avec captures si disponibles ;
 - `!reset_tutos_gruterra` : nettoyer puis republier les tutos complets ;
 - `!fix_info_channels` : réparer les droits du bot dans les salons d’information ;
+- `!pin_base_messages` : vérifier et épingler tous les messages socle ;
 - `!invite_gruterra` : générer une invitation publique ;
 - `!release_gruterra` : publier manuellement une annonce de release ;
 - `!auto_release_check` : tester l’annonce automatique anti-spam ;
@@ -281,6 +283,7 @@ GUIDE_MESSAGE_MARKERS = [
     "Retours en français",
     "Admin notes",
     "Dev follow-up",
+    "Admin command memo",
 ]
 
 GUIDE_CHANNEL_NAMES = sorted(CHANNEL_STARTER_MESSAGES.keys())
@@ -443,6 +446,42 @@ Gruterra peut aussi servir pour les plantes sans capteur actif :
 C’est utile pour tester l’interface même avec une plante hors domicile ou un capteur pas encore acheté.
 """,
         "attachments": ["capture/ajout_plante.png"],
+    },
+
+    {
+        "key": "admin-commands",
+        "channel": "admin-notes",
+        "title": "🔒 Admin command memo",
+        "content": """[GRUTERRA_TUTO:admin-commands]
+🔒 **Admin command memo**
+
+Discord bot commands:
+- `!fix_bot_commands` : repair access to the private command channel;
+- `!fix_info_channels` : repair bot permissions in read-only info channels;
+- `!post_guides_gruterra` : publish or update channel intro messages;
+- `!reset_guides_gruterra 300` : clean and republish channel intro messages;
+- `!post_tutos_gruterra` : publish tutorial posts with screenshots;
+- `!reset_tutos_gruterra 300` : clean and republish tutorial posts;
+- `!pin_base_messages` : verify and pin all base messages;
+- `!invite_gruterra` : create a public invite;
+- `!release_gruterra` : manually announce a release;
+- `!auto_release_check` : test automatic release announcement;
+- `!clean_here 300` : clean technical bot messages in the current channel.
+
+Local Gruterra checks before publication:
+- `py audit_botaneo.py`
+- `py prepare_release.py`
+- `py verifier_avant_github.py`
+
+Useful files:
+- `GUIDE_RELEASE.md`
+- `GUIDE_INSTALLATION.md`
+- `GUIDE_TUTORIELS_PUBLICS.md`
+- `discord_bot/.env.example`
+
+Never post secrets in Discord. Keep real tokens in local private files only.
+""",
+        "attachments": [],
     },
     {
         "key": "bugs-howto",
@@ -708,6 +747,18 @@ async def safe_send_channel(channel: discord.TextChannel, content: str) -> bool:
         return False
 
 
+
+async def safe_pin_message(message: discord.Message, reason: str) -> str | None:
+    if message.pinned:
+        return None
+    try:
+        await message.pin(reason=reason)
+        return None
+    except discord.Forbidden:
+        return f"#{message.channel.name} : accès insuffisant pour épingler un message."
+    except discord.HTTPException as exc:
+        return f"#{message.channel.name} : épinglage impossible ({exc})."
+
 async def publish_presentation_message(guild: discord.Guild) -> str:
     channel = discord.utils.get(guild.text_channels, name="useful-links")
     if channel is None:
@@ -719,9 +770,14 @@ async def publish_presentation_message(guild: discord.Guild) -> str:
         async for message in channel.history(limit=30):
             if message.author == guild.me and "Welcome to Gruterra" in message.content:
                 await message.edit(content=PRESENTATION_MESSAGE)
-                return f"Message de présentation mis à jour dans #{channel.name}."
+                warning = await safe_pin_message(message, "Message de présentation Gruterra")
+                suffix = f" ({warning})" if warning else ""
+                return f"Message de présentation mis à jour et épinglé dans #{channel.name}." + suffix
 
-        await channel.send(PRESENTATION_MESSAGE)
+        message = await channel.send(PRESENTATION_MESSAGE)
+        warning = await safe_pin_message(message, "Message de présentation Gruterra")
+        if warning:
+            return f"Message de présentation publié dans #{channel.name}, mais non épinglé ({warning})."
     except discord.Forbidden:
         return f"Message de présentation non publié : accès insuffisant à #{channel.name}."
     return f"Message de présentation publié dans #{channel.name}."
@@ -757,12 +813,17 @@ async def publish_channel_starter_messages(guild: discord.Guild) -> list[str]:
                 target_message = matching_messages[0]
 
             if target_message is None:
-                await channel.send(content)
-                results.append(f"#{channel.name} : message publié.")
+                target_message = await channel.send(content)
+                warning = await safe_pin_message(target_message, "Message d'introduction Gruterra")
+                if warning:
+                    results.append(f"#{channel.name} : message publié, mais non épinglé ({warning}).")
+                else:
+                    results.append(f"#{channel.name} : message publié et épinglé.")
                 continue
 
             if target_message.content != content:
                 await target_message.edit(content=content)
+            pin_warning = await safe_pin_message(target_message, "Message d'introduction Gruterra")
             deleted_duplicates = 0
             for message in matching_messages:
                 if message.id == target_message.id or message.pinned:
@@ -774,10 +835,11 @@ async def publish_channel_starter_messages(guild: discord.Guild) -> list[str]:
                     pass
                 except discord.HTTPException:
                     pass
+            pin_suffix = f", épinglage à vérifier ({pin_warning})" if pin_warning else " et épinglé"
             if deleted_duplicates:
-                results.append(f"#{channel.name} : message mis à jour, {deleted_duplicates} doublon(s) supprimé(s).")
+                results.append(f"#{channel.name} : message mis à jour{pin_suffix}, {deleted_duplicates} doublon(s) supprimé(s).")
             else:
-                results.append(f"#{channel.name} : message mis à jour.")
+                results.append(f"#{channel.name} : message mis à jour{pin_suffix}.")
         except discord.Forbidden:
             results.append(f"#{channel.name} : accès insuffisant pour publier le message.")
     return results
@@ -843,17 +905,55 @@ async def publish_tutorial_messages(guild: discord.Guild, *, reset_existing: boo
                     continue
 
             files = tutorial_attachment_files(post)
-            await channel.send(post["content"][:1900], files=files)
+            message = await channel.send(post["content"][:1900], files=files)
+            pin_warning = await safe_pin_message(message, f"Tutoriel Gruterra {post['key']}")
+            pin_suffix = f", mais non épinglé ({pin_warning})" if pin_warning else " et épinglé"
             if files:
-                results.append(f"#{channel.name} : tuto {post['key']} publié avec {len(files)} image(s).")
+                results.append(f"#{channel.name} : tuto {post['key']} publié avec {len(files)} image(s){pin_suffix}.")
             else:
-                results.append(f"#{channel.name} : tuto {post['key']} publié.")
+                results.append(f"#{channel.name} : tuto {post['key']} publié{pin_suffix}.")
         except discord.Forbidden:
             results.append(f"#{channel.name} : accès insuffisant pour publier le tuto {post['key']}.")
         except discord.HTTPException as exc:
             results.append(f"#{channel.name} : publication tuto {post['key']} impossible ({exc}).")
     return results
 
+
+
+async def pin_existing_base_messages(guild: discord.Guild) -> list[str]:
+    results = []
+    for channel_name in sorted(set(GUIDE_CHANNEL_NAMES) | set(TUTORIAL_CHANNEL_NAMES) | {"useful-links"}):
+        channel = discord.utils.get(guild.text_channels, name=channel_name)
+        if channel is None:
+            continue
+        checked = 0
+        pinned = 0
+        warnings = []
+        try:
+            async for message in channel.history(limit=120):
+                if message.author != guild.me:
+                    continue
+                is_base = await is_guide_message(message) or await is_tutorial_message(message) or "Welcome to Gruterra" in message.content
+                if not is_base:
+                    continue
+                checked += 1
+                warning = await safe_pin_message(message, "Protection message socle Gruterra")
+                if warning:
+                    warnings.append(warning)
+                elif message.pinned:
+                    pinned += 1
+            if checked:
+                if warnings:
+                    results.append(f"#{channel.name} : {checked} message(s) socle trouvé(s), épinglage partiel.")
+                else:
+                    results.append(f"#{channel.name} : {checked} message(s) socle vérifié(s)/épinglé(s).")
+        except discord.Forbidden:
+            results.append(f"#{channel.name} : accès insuffisant pour vérifier les messages socle.")
+        except discord.HTTPException as exc:
+            results.append(f"#{channel.name} : vérification messages socle impossible ({exc}).")
+    if not results:
+        results.append("Aucun message socle trouvé à épingler.")
+    return results
 
 INFO_CHANNELS_REQUIRING_BOT_WRITE = [
     "announcements",
@@ -1236,6 +1336,30 @@ async def fix_bot_commands(ctx: commands.Context) -> None:
     perm_status = await ensure_bot_commands_permissions(guild, admin_role, ctx.author)
     pin_status = await ensure_pinned_bot_commands_message(guild)
     await safe_reply(ctx, f"Réparation #bot-commands terminée.\n- {perm_status}\n- {pin_status}")
+
+
+@bot.command(name="pin_base_messages")
+@commands.has_permissions(manage_messages=True)
+async def pin_base_messages(ctx: commands.Context) -> None:
+    """Vérifie et épingle tous les messages socle Gruterra existants."""
+
+    guild = ctx.guild
+    if guild is None:
+        await safe_reply(ctx, "Cette commande doit être lancée dans un serveur Discord.")
+        return
+
+    await safe_reply(ctx, "Vérification et épinglage des messages socle Gruterra en cours…")
+    results = await pin_existing_base_messages(guild)
+    bot_log_status = await publish_bot_log(
+        guild,
+        "🤖 **Messages socle Gruterra vérifiés**",
+        results[:12],
+    )
+    message = "Messages socle Gruterra :\n" + "\n".join(f"- {line}" for line in results[:12])
+    if len(results) > 12:
+        message += f"\n- {len(results) - 12} autre(s) résultat(s)."
+    message += f"\n\n{bot_log_status}"
+    await safe_reply(ctx, message)
 
 
 @bot.command(name="fix_info_channels")

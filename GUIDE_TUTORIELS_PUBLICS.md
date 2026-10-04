@@ -89,6 +89,13 @@ Une fois les messages d’introduction propres, le bot peut publier des tutoriel
 !post_tutos_gruterra
 ```
 
+
+Protection des messages socle : les introductions et tutoriels publiés par le bot sont épinglés automatiquement. Les commandes de nettoyage ignorent les messages épinglés. Pour vérifier ou ré-épingler tous les messages importants :
+
+```text
+!pin_base_messages
+```
+
 Pour repartir de zéro sur les tutos sans toucher aux messages épinglés :
 
 ```text
@@ -104,7 +111,8 @@ Placement prévu :
 - `#plant-tracking` : historique et cycles d’arrosage avec captures ;
 - `#sensors-and-data` : Mi Flora, Netatmo et Raspberry ;
 - `#retours-fr` : plantes avec ou sans capteur ;
-- `#bugs-feedback` : méthode de rapport de bug.
+- `#bugs-feedback` : méthode de rapport de bug ;
+- `#admin-notes` : mémo privé des commandes utiles Discord et Gruterra.
 
 ### Message Discord court prêt à adapter
 
