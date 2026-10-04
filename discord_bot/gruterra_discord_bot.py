@@ -10,7 +10,7 @@ import os
 from pathlib import Path
 
 import discord
-from discord.ext import commands
+from discord.ext import commands, tasks
 from dotenv import load_dotenv
 
 BASE_DIR = Path(__file__).resolve().parent
@@ -19,6 +19,10 @@ load_dotenv(BASE_DIR / ".env")
 TOKEN = os.environ.get("DISCORD_BOT_TOKEN", "").strip()
 COMMAND_PREFIX = "!"
 SETUP_ENABLED = os.environ.get("DISCORD_SETUP_ENABLED", "0").strip().lower() in {"1", "true", "yes", "on"}
+AUTO_RELEASE_ENABLED = os.environ.get("DISCORD_AUTO_RELEASE_ENABLED", "0").strip().lower() in {"1", "true", "yes", "on"}
+AUTO_RELEASE_GUILD_ID = os.environ.get("DISCORD_AUTO_RELEASE_GUILD_ID", "").strip()
+AUTO_RELEASE_INTERVAL_MINUTES = max(15, int(os.environ.get("DISCORD_AUTO_RELEASE_INTERVAL_MINUTES", "60") or "60"))
+AUTO_RELEASE_STATE_FILE = BASE_DIR / ".release_state.json"
 
 INTENTS = discord.Intents.default()
 INTENTS.guilds = True
@@ -324,6 +328,33 @@ def load_release_manifest() -> dict:
         return {}
 
 
+def release_key_from_manifest(manifest: dict) -> str:
+    version = str(manifest.get("version") or "").strip()
+    sha256 = str(manifest.get("sha256") or "").strip()
+    return f"{version}|{sha256}"
+
+
+def manifest_release_annonceable(manifest: dict) -> bool:
+    version = str(manifest.get("version") or "").strip()
+    archive_url = str(manifest.get("archive_url") or "").strip()
+    sha256 = str(manifest.get("sha256") or "").strip()
+    auto_update = bool(manifest.get("mise_a_jour_automatique", False))
+    return bool(version and archive_url and len(sha256) == 64 and auto_update)
+
+
+def load_release_state() -> dict:
+    if not AUTO_RELEASE_STATE_FILE.exists():
+        return {}
+    try:
+        return json.loads(AUTO_RELEASE_STATE_FILE.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return {}
+
+
+def save_release_state(state: dict) -> None:
+    AUTO_RELEASE_STATE_FILE.write_text(json.dumps(state, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+
+
 def build_release_message(version_arg: str | None = None) -> str:
     manifest = load_release_manifest()
     version = str(version_arg or manifest.get("version") or "version à préciser").strip()
@@ -437,6 +468,36 @@ async def publish_bot_log(guild: discord.Guild, title: str, lines: list[str]) ->
     return "Journal bot publié dans #bot-log."
 
 
+async def announce_release_if_needed(guild: discord.Guild, *, force: bool = False) -> str:
+    manifest = load_release_manifest()
+    if not manifest_release_annonceable(manifest):
+        return "Aucune release annonceable : manifeste incomplet ou auto-update désactivé."
+
+    release_key = release_key_from_manifest(manifest)
+    state = load_release_state()
+    if not force and state.get("last_announced_release") == release_key:
+        return "Release déjà annoncée, aucun message publié."
+
+    channel = await find_release_channel(guild)
+    if channel is None:
+        return "Aucun salon disponible pour publier la release."
+
+    await channel.send(build_release_message()[:1900])
+    state["last_announced_release"] = release_key
+    state["last_announced_version"] = str(manifest.get("version") or "")
+    save_release_state(state)
+    await publish_bot_log(
+        guild,
+        "🤖 **Release Gruterra annoncée automatiquement**",
+        [
+            f"Salon utilisé : #{channel.name}.",
+            f"Version : {manifest.get('version')}.",
+            "Annonce automatique anti-spam : cette version ne sera pas republiée.",
+        ],
+    )
+    return f"Release publiée dans #{channel.name}."
+
+
 def overwrites_for(guild: discord.Guild, mode: str, admin_role: discord.Role) -> dict:
     everyone = guild.default_role
     if mode == "private_admin":
@@ -465,6 +526,26 @@ def overwrites_for(guild: discord.Guild, mode: str, admin_role: discord.Role) ->
 @bot.event
 async def on_ready() -> None:
     print(f"Gruterra Discord bot connecté : {bot.user}")
+    if AUTO_RELEASE_ENABLED and not auto_release_watcher.is_running():
+        auto_release_watcher.change_interval(minutes=AUTO_RELEASE_INTERVAL_MINUTES)
+        auto_release_watcher.start()
+
+
+@tasks.loop(minutes=AUTO_RELEASE_INTERVAL_MINUTES)
+async def auto_release_watcher() -> None:
+    if not AUTO_RELEASE_ENABLED:
+        return
+    guilds = list(bot.guilds)
+    if AUTO_RELEASE_GUILD_ID:
+        guild = bot.get_guild(int(AUTO_RELEASE_GUILD_ID)) if AUTO_RELEASE_GUILD_ID.isdigit() else None
+        guilds = [guild] if guild is not None else []
+    for guild in guilds:
+        try:
+            result = await announce_release_if_needed(guild)
+            if "publiée" in result:
+                print(result)
+        except Exception as exc:
+            print(f"Annonce release automatique impossible pour {guild.name}: {exc}")
 
 
 @bot.command(name="setup_gruterra")
@@ -678,6 +759,19 @@ async def release_gruterra(ctx: commands.Context, version: str | None = None) ->
     await ctx.reply(f"Message de release publié dans #{channel.name}.\n{bot_log_status}")
 
 
+@bot.command(name="auto_release_check")
+@commands.has_permissions(manage_guild=True)
+async def auto_release_check(ctx: commands.Context, force: str = "") -> None:
+    """Vérifie la logique d’annonce automatique de release."""
+
+    guild = ctx.guild
+    if guild is None:
+        await ctx.reply("Cette commande doit être lancée dans un serveur Discord.")
+        return
+    result = await announce_release_if_needed(guild, force=force.lower() in {"force", "forcer", "1"})
+    await ctx.reply(result)
+
+
 @bot.command(name="help_gruterra", aliases=["aide_gruterra"])
 async def help_gruterra(ctx: commands.Context) -> None:
     """Affiche les premières commandes utiles du serveur Gruterra."""
@@ -687,6 +781,7 @@ async def help_gruterra(ctx: commands.Context) -> None:
         "Projet francophone ouvert aux échanges en anglais.\n\n"
         "- `!github_gruterra` : liens GitHub et guides.\n"
         "- `!release_gruterra` : annoncer une release, réservé aux personnes pouvant gérer le serveur.\n"
+        "- `!auto_release_check` : tester l’annonce automatique anti-spam d’une release.\n"
         "- `!report_bug` ou `!bug` : modèle pour signaler un bug.\n"
         "- `!idea` ou `!idee` : modèle pour proposer une idée.\n"
         "- `!netatmo_help` ou `!aide_netatmo` : aide connexion Netatmo.\n"
@@ -779,6 +874,14 @@ async def raspberry_help(ctx: commands.Context) -> None:
 @raspberry_help.error
 async def public_help_command_error(ctx: commands.Context, error: commands.CommandError) -> None:
     await ctx.reply(f"Erreur pendant l'aide Gruterra : {error}")
+
+
+@auto_release_check.error
+async def auto_release_check_error(ctx: commands.Context, error: commands.CommandError) -> None:
+    if isinstance(error, commands.MissingPermissions):
+        await ctx.reply("Il faut la permission de gérer le serveur pour tester l’annonce automatique de release.")
+        return
+    await ctx.reply(f"Erreur pendant le contrôle d’annonce automatique : {error}")
 
 
 @release_gruterra.error

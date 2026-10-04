@@ -94,3 +94,6 @@ capture/
 discord_bot/.env
 # Archives de release générées localement
 _dist/
+
+# État local anti-spam du bot Discord
+discord_bot/.release_state.json

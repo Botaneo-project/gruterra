@@ -81,3 +81,29 @@ L’update reste bloqué si :
 - les protections locales ne sont pas détectées.
 
 Les données utilisateur sont préservées : base locale, configuration privée, sauvegardes, historique, dossier de données et token Discord local.
+
+### Annonce Discord automatique anti-bruit
+
+Le bot peut annoncer automatiquement une vraie release si `DISCORD_AUTO_RELEASE_ENABLED=1` dans `discord_bot/.env`.
+
+La publication reste limitée :
+
+- pas d'annonce pour les petits commits ;
+- pas d'annonce si `version_manifest.json` n'a pas d'archive ;
+- pas d'annonce si le SHA256 manque ou est invalide ;
+- pas d'annonce si `mise_a_jour_automatique=false` ;
+- pas de deuxième annonce pour la même version et le même SHA256.
+
+L'état local anti-spam est stocké dans `discord_bot/.release_state.json`, ignoré par Git.
+
+Commande de test manuel :
+
+```text
+!auto_release_check
+```
+
+Forcer une republication seulement si nécessaire :
+
+```text
+!auto_release_check force
+```
