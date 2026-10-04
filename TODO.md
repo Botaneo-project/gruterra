@@ -447,5 +447,6 @@ La remise en attente a été effectuée uniquement sur une copie de la base Pi. 
 
 - [ ] Assumer Gruterra comme projet francophone tant que l'interface n'est pas traduite.
 - [ ] Préparer plus tard un vrai système de traduction de l'interface, sans dupliquer toute la logique métier.
-- [ ] Identifier les textes publics à traduire en priorité : README court, guide démo, aide installation, messages Discord, erreurs fréquentes.
+- [x] Ajouter un premier README anglais `README_EN.md` et un guide démo anglais `GUIDE_DEMO_EN.md`.
+- [ ] Identifier les prochains textes publics à traduire : aide installation, Netatmo, Raspberry, erreurs fréquentes.
 - [ ] Éviter de présenter Discord ou GitHub comme entièrement anglophones tant que l'application reste française.

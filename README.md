@@ -1,5 +1,8 @@
 # Gruterra
 
+English entry point: [README_EN.md](README_EN.md) · Demo guide: [GUIDE_DEMO_EN.md](GUIDE_DEMO_EN.md)
+
+
 Gruterra est une application locale de suivi des plantes. Elle aide à centraliser les plantes, les mesures Mi Flora, l’historique, les arrosages, les rappels, la météo locale et les premières analyses de cycles d’arrosage.
 
 Le projet est né d’un besoin simple : ne pas seulement afficher des mesures, mais comprendre ce qui se passe pour une plante au fil du temps. Par exemple : est-ce qu’un arrosage a réellement fait monter l’humidité dans la zone du capteur ? Combien de temps faut-il pour revenir au niveau de départ ? Est-ce qu’une journée lumineuse vient d’une vraie exposition ou seulement d’un pic ponctuel ?
