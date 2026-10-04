@@ -96,6 +96,12 @@ GitHub: https://github.com/Botaneo-project/gruterra
 """
 
 CHANNEL_STARTER_MESSAGES = {
+    "announcements": """📢 **Announcements**
+
+Official Gruterra announcements will be posted here: public releases, important changes, community updates and project milestones.
+
+This channel is read-only for regular members to keep important information easy to find.
+""",
     "welcome": """🌱 **Bienvenue sur Gruterra / Welcome to Gruterra**
 
 Gruterra est d'abord un projet francophone. Les utilisateurs anglophones sont bienvenus, mais l'application n'est pas encore entièrement traduite. Vous pouvez faire un petit coucou ici et dire ce que vous venez tester : mode démo, Mi Flora / Flower Care, Raspberry Pi, Netatmo, suivi des plantes ou simple curiosité.
@@ -138,59 +144,79 @@ Commandes utiles :
 
 Les résultats techniques détaillés restent envoyés dans #bot-log quand c’est possible.
 """,
+    "changelog": """📝 **Changelog**
+
+Visible changes, releases and notable fixes are posted here.
+
+Use this channel to follow what changed between versions without reading every commit. Larger release notes may link back to GitHub.
+""",
     "bot-log": """🤖 **Bot log**
 
 This channel is dedicated to automated Gruterra bot messages: setup results, structure updates, invite generation notes and future maintenance messages.
 
 Keeping bot messages here avoids mixing technical setup details with public discussion channels. Use #bot-commands to type commands manually.
 """,
-    "installation-help": """🛠️ **Aide installation / Installation help**
+    "general": """🌱 **General discussion**
 
-Vous pouvez demander de l'aide ici en français ou en anglais.
+General Gruterra discussion in English or French. You can introduce yourself, say what you want to test, or ask where to start.
 
-Pour faciliter le diagnostic, indiquez si possible :
-- Windows, Raspberry Pi ou autre ;
-- comment vous lancez Gruterra ;
-- le message d'erreur exact ou une capture ;
-- si vous utilisez le mode démo, Mi Flora, Raspberry Pi ou Netatmo.
+For installation problems, prefer #installation-help or #aide-installation-fr.
+""",
+    "plant-tracking": """🌿 **Plant tracking**
+
+Discuss plant observations, watering logs, light exposure, soil moisture trends and practical care notes.
+
+This is the right place for plant-related context that is not strictly a software bug.
+""",
+    "installation-help": """🛠️ **Installation help**
+
+Ask for setup help here in English. French help has a dedicated channel: #aide-installation-fr.
+
+Please include when possible:
+- Windows, Raspberry Pi or another system;
+- how you started Gruterra;
+- the exact error message or a screenshot;
+- whether you use demo mode, Mi Flora, Raspberry Pi or Netatmo.
 
 Never share private tokens, passwords, refresh tokens or API secrets.
 """,
-    "sensors-and-data": """📡 **Capteurs et données / Sensors and data**
+    "sensors-and-data": """📡 **Sensors and data**
 
-Salon pour Mi Flora / Flower Care, Raspberry Pi, Netatmo, Bluetooth, historique capteur et qualité des données.
+Use this channel for Mi Flora / Flower Care, Raspberry Pi, Netatmo, Bluetooth, sensor history and data quality.
 
-Infos utiles en cas de souci :
-- type de capteur ;
-- collecte PC ou Raspberry Pi ;
-- dernière synchronisation réussie ;
-- import historique réussi ou non ;
-- valeurs suspectes : dates manquantes, mesures à zéro, trous dans l'historique.
+Useful details when reporting an issue:
+- sensor type;
+- PC or Raspberry Pi collection;
+- last successful synchronization;
+- whether historical import worked;
+- suspicious values: missing dates, zero-only readings, gaps in history.
 """,
-    "demo-feedback": """🧪 **Retours mode démo / Demo feedback**
+    "demo-feedback": """🧪 **Demo feedback**
 
-Utilisez ce salon si vous testez Gruterra sans capteur réel. Retours utiles :
-- ce qui est clair ou confus ;
-- si les captures et données démo aident ;
-- où vous avez eu envie de cliquer en premier ;
-- ce qui manque pour comprendre le projet.
+Use this channel if you test Gruterra without real sensors.
+
+Useful feedback:
+- what feels clear or confusing;
+- whether demo screenshots and demo data help;
+- where you wanted to click first;
+- what is missing to understand the project.
 """,
-    "bugs-feedback": """🐛 **Bugs / Bug reports**
+    "bugs-feedback": """🐛 **Bug reports**
 
-Quand c'est possible, indiquez :
-- ce que vous avez cliqué ou lancé ;
-- ce que vous attendiez ;
-- ce qui s'est passé ;
-- le message d'erreur exact ;
-- si le problème se reproduit.
+When possible, include:
+- what you clicked or launched;
+- what you expected;
+- what actually happened;
+- the exact error message;
+- whether the issue happens again.
 
 Please avoid posting secrets or private configuration files.
 """,
-    "ideas": """💡 **Idées / Ideas**
+    "ideas": """💡 **Ideas**
 
-Partagez vos idées pour l'analyse des plantes, les cycles d'arrosage, la lumière, le Raspberry Pi, Netatmo, l'interface ou la documentation.
+Share ideas for plant analysis, watering cycles, light tracking, Raspberry Pi, Netatmo, the interface or documentation.
 
-Les petites idées pratiques sont aussi les bienvenues.
+Small practical ideas are welcome too.
 """,
     "discussion-fr": """🇫🇷 **Bienvenue dans l'espace français**
 
@@ -210,9 +236,25 @@ Ne partagez jamais vos tokens, mots de passe ou secrets API.
 
 Vous pouvez poster ici vos retours, idées, bugs, captures d'écran non sensibles et remarques sur l'interface.
 """,
+    "admin-notes": """🔒 **Admin notes**
+
+Private notes for Gruterra admins: moderation choices, publication reminders, release preparation and server maintenance.
+
+Do not store secrets here. Keep tokens, passwords and private configuration files outside Discord.
+""",
+    "dev-follow-up": """🛠️ **Dev follow-up**
+
+Private development follow-up for Gruterra maintainers: tasks to verify, release checks, known issues and decisions that should not clutter public channels.
+
+Use GitHub for durable project history when something must be tracked publicly.
+""",
 }
 
 GUIDE_MESSAGE_MARKERS = [
+    "Announcements",
+    "Changelog",
+    "General discussion",
+    "Plant tracking",
     "Bienvenue sur Gruterra",
     "Welcome to Gruterra",
     "Liens utiles",
@@ -231,6 +273,8 @@ GUIDE_MESSAGE_MARKERS = [
     "Bienvenue dans l'espace français",
     "Aide installation en français",
     "Retours en français",
+    "Admin notes",
+    "Dev follow-up",
 ]
 
 GUIDE_CHANNEL_NAMES = sorted(CHANNEL_STARTER_MESSAGES.keys())

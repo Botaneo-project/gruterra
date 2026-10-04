@@ -48,7 +48,7 @@ But : accueillir quelqu’un qui arrive sur le serveur et lui permettre de teste
 
 ### Placement automatique avec le bot
 
-Le bot peut publier ou mettre à jour les messages d’accueil et de tutoriel dans les salons prévus.
+Le bot peut publier ou mettre à jour les messages d’accueil et de tutoriel dans les salons prévus. Chaque salon créé par le bot possède un message d’introduction adapté à son usage.
 
 Commande à lancer dans Discord, idéalement depuis `#bot-commands`, salon privé réservé aux admins :
 
