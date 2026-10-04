@@ -5065,6 +5065,71 @@ def executer_assistant_update_a_propos(appliquer=False):
     return "\n".join(lignes).strip()
 
 
+
+def update_installable_depuis_diagnostic(diagnostic):
+    version = diagnostic.get("version", {}) if isinstance(diagnostic, dict) else {}
+    statut_version = version.get("statut")
+    archive_url = str(version.get("archive_url") or "").strip()
+    sha256 = str(version.get("sha256") or "").strip()
+    auto_update = bool(version.get("manifest_auto_update"))
+    version_disponible = statut_version in {"mise_a_jour_disponible", "version_stable_disponible"}
+    protections_ok = diagnostic.get("statut_global") != "bloque"
+    return version_disponible and protections_ok and auto_update and archive_url and len(sha256) == 64
+
+
+def verifier_update_au_demarrage():
+    if os.environ.get("BOTANEO_DEMO") == "1":
+        return
+
+    racine = Path(__file__).resolve().parent.parent
+
+    def tache():
+        try:
+            diagnostic = botaneo_update.construire_diagnostic_mise_a_jour(racine, verifier_distant=True)
+        except Exception:
+            return
+        if not update_installable_depuis_diagnostic(diagnostic):
+            return
+
+        version = diagnostic.get("version", {})
+        version_distante = version.get("version_distante") or version.get("version") or "nouvelle version"
+        notes = str(version.get("notes") or "").strip()
+
+        def proposer():
+            message = (
+                f"Une mise à jour Gruterra est disponible : {version_distante}.\n\n"
+                "Voulez-vous la télécharger et l'appliquer maintenant ?\n\n"
+                "Vous pouvez répondre Non et continuer à utiliser Gruterra normalement, "
+                "y compris synchroniser les capteurs."
+            )
+            if notes:
+                message += f"\n\nNotes : {notes[:500]}"
+            if not messagebox.askyesno("Mise à jour Gruterra disponible", message, parent=root):
+                status_var.set("Mise à jour disponible ignorée pour cette session")
+                return
+
+            status_var.set("Téléchargement et application de la mise à jour Gruterra…")
+
+            def appliquer():
+                resultat = executer_assistant_update_a_propos(appliquer=True)
+
+                def terminer():
+                    status_var.set("Mise à jour terminée · redémarrage manuel conseillé")
+                    messagebox.showinfo(
+                        "Mise à jour Gruterra",
+                        resultat + "\n\nSi la mise à jour a été appliquée, fermez puis relancez Gruterra.",
+                        parent=root,
+                    )
+
+                root.after(0, terminer)
+
+            threading.Thread(target=appliquer, daemon=True).start()
+
+        root.after(0, proposer)
+
+    threading.Thread(target=tache, daemon=True).start()
+
+
 def texte_a_propos(verifier_distant=False):
     racine = Path(__file__).resolve().parent.parent
     lignes = [
@@ -8063,5 +8128,6 @@ if os.environ.get("BOTANEO_DEMO") != "1":
     root.after(1000, suivi_raspberry.start)
     root.after(500, actualiser_netatmo_seul)
     root.after(5000, verifier_sync_auto)
+root.after(3000, verifier_update_au_demarrage)
 
 root.mainloop()
