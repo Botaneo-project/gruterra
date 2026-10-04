@@ -51,7 +51,17 @@ git commit -m "Activer auto update version <version>"
 git push origin main
 ```
 
-## 4. Vérifier côté application
+## 4. Annoncer la release sur Discord
+
+Si le bot Gruterra tourne, lancer dans Discord :
+
+`	ext
+!release_gruterra
+`
+
+La commande publie un message dans #changelog si le salon existe, sinon dans #announcements ou #useful-links.
+
+## 5. Vérifier côté application
 
 Dans Gruterra :
 

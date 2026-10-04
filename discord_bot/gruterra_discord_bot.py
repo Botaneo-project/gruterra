@@ -5,6 +5,7 @@ Le token doit rester dans discord_bot/.env et ne doit jamais être publié.
 
 from __future__ import annotations
 
+import json
 import os
 from pathlib import Path
 
@@ -34,6 +35,12 @@ ROLE_NAMES = [
 INVITE_CHANNEL_CANDIDATES = [
     "general",
     "discussion-fr",
+    "useful-links",
+]
+
+RELEASE_CHANNEL_CANDIDATES = [
+    "changelog",
+    "announcements",
     "useful-links",
 ]
 
@@ -297,6 +304,55 @@ async def find_invite_channel(guild: discord.Guild) -> discord.TextChannel | Non
         if permissions.view_channel:
             return channel
     return None
+
+
+async def find_release_channel(guild: discord.Guild) -> discord.TextChannel | None:
+    for name in RELEASE_CHANNEL_CANDIDATES:
+        channel = discord.utils.get(guild.text_channels, name=name)
+        if channel is not None:
+            return channel
+    return await find_invite_channel(guild)
+
+
+def load_release_manifest() -> dict:
+    manifest_path = BASE_DIR.parent / "version_manifest.json"
+    if not manifest_path.exists():
+        return {}
+    try:
+        return json.loads(manifest_path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return {}
+
+
+def build_release_message(version_arg: str | None = None) -> str:
+    manifest = load_release_manifest()
+    version = str(version_arg or manifest.get("version") or "version à préciser").strip()
+    notes = str(manifest.get("notes") or "Release Gruterra disponible.").strip()
+    github_url = str(manifest.get("url") or "https://github.com/Botaneo-project/gruterra").strip()
+    archive_url = str(manifest.get("archive_url") or "").strip()
+    sha256 = str(manifest.get("sha256") or "").strip()
+    tag = version if version.startswith("v") else f"v{version}"
+    release_url = f"https://github.com/Botaneo-project/gruterra/releases/tag/{tag}"
+
+    lignes = [
+        f"🌿 **Gruterra {version}**",
+        "",
+        notes,
+        "",
+        f"GitHub: {github_url}",
+        f"Release: {release_url}",
+    ]
+    if archive_url:
+        lignes.append(f"Archive update: {archive_url}")
+    if sha256:
+        lignes.append(f"SHA256: `{sha256}`")
+    lignes.extend([
+        "",
+        "Before updating, keep your local data folder and private config safe. The Gruterra updater verifies the archive hash before applying changes.",
+        "",
+        "FR : pensez à garder vos données locales et votre configuration privée. L’updater Gruterra vérifie le SHA256 avant application.",
+    ])
+    return "\n".join(lignes)
 
 
 async def publish_presentation_message(guild: discord.Guild) -> str:
@@ -589,6 +645,39 @@ async def clean_here(ctx: commands.Context, limit: int = 100) -> None:
     )
 
 
+@bot.command(name="release_gruterra")
+@commands.has_permissions(manage_guild=True)
+async def release_gruterra(ctx: commands.Context, version: str | None = None) -> None:
+    """Publie un message de release Gruterra dans le salon changelog."""
+
+    guild = ctx.guild
+    if guild is None:
+        await ctx.reply("Cette commande doit être lancée dans un serveur Discord.")
+        return
+
+    channel = await find_release_channel(guild)
+    if channel is None:
+        await ctx.reply("Aucun salon disponible pour publier la release Gruterra.")
+        return
+
+    message = build_release_message(version)
+    try:
+        await channel.send(message[:1900])
+    except discord.Forbidden:
+        await ctx.reply(f"Impossible de publier la release dans #{channel.name} : accès insuffisant.")
+        return
+
+    bot_log_status = await publish_bot_log(
+        guild,
+        "🤖 **Release Gruterra annoncée**",
+        [
+            f"Salon utilisé : #{channel.name}.",
+            f"Version annoncée : {version or load_release_manifest().get('version') or 'non précisée'}.",
+        ],
+    )
+    await ctx.reply(f"Message de release publié dans #{channel.name}.\n{bot_log_status}")
+
+
 @bot.command(name="help_gruterra", aliases=["aide_gruterra"])
 async def help_gruterra(ctx: commands.Context) -> None:
     """Affiche les premières commandes utiles du serveur Gruterra."""
@@ -597,6 +686,7 @@ async def help_gruterra(ctx: commands.Context) -> None:
         "🌱 **Gruterra — aide rapide / quick help**\n"
         "Projet francophone ouvert aux échanges en anglais.\n\n"
         "- `!github_gruterra` : liens GitHub et guides.\n"
+        "- `!release_gruterra` : annoncer une release, réservé aux personnes pouvant gérer le serveur.\n"
         "- `!report_bug` ou `!bug` : modèle pour signaler un bug.\n"
         "- `!idea` ou `!idee` : modèle pour proposer une idée.\n"
         "- `!netatmo_help` ou `!aide_netatmo` : aide connexion Netatmo.\n"
@@ -689,6 +779,14 @@ async def raspberry_help(ctx: commands.Context) -> None:
 @raspberry_help.error
 async def public_help_command_error(ctx: commands.Context, error: commands.CommandError) -> None:
     await ctx.reply(f"Erreur pendant l'aide Gruterra : {error}")
+
+
+@release_gruterra.error
+async def release_gruterra_error(ctx: commands.Context, error: commands.CommandError) -> None:
+    if isinstance(error, commands.MissingPermissions):
+        await ctx.reply("Il faut la permission de gérer le serveur pour annoncer une release Gruterra.")
+        return
+    await ctx.reply(f"Erreur pendant l’annonce de release Gruterra : {error}")
 
 
 @setup_gruterra.error
