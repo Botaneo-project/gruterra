@@ -46,6 +46,20 @@ But : accueillir quelqu’un qui arrive sur le serveur et lui permettre de teste
    - `#bugs-feedback` : bugs.
    - `#ideas` : idées.
 
+### Placement automatique avec le bot
+
+Le bot peut publier ou mettre à jour les messages d’accueil et de tutoriel dans les salons prévus.
+
+Commande à lancer dans Discord, depuis un salon où le bot peut répondre :
+
+```text
+!post_guides_gruterra
+```
+
+Cette commande vérifie les salons connus (`#welcome`, `#useful-links`, `#installation-help`, `#sensors-and-data`, `#discussion-fr`, `#aide-installation-fr`, etc.), puis publie le message adapté ou met à jour l’ancien message du bot si celui-ci existe déjà.
+
+Elle ne recrée pas la structure du serveur et ne touche pas aux rôles. Pour refaire toute la structure, utiliser seulement ponctuellement `!setup_gruterra` avec `DISCORD_SETUP_ENABLED=1`.
+
 ### Message Discord court prêt à adapter
 
 ```text

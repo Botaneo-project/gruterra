@@ -70,6 +70,7 @@ CLEANUP_COMMAND_PREFIXES = (
     "!invite_gruterra",
     "!clean_gruterra_messages",
     "!clean_here",
+    "!post_guides_gruterra",
 )
 
 PRESENTATION_MESSAGE = """🌱 **Bienvenue sur Gruterra / Welcome to Gruterra**
@@ -620,6 +621,39 @@ async def setup_gruterra(ctx: commands.Context) -> None:
     if warnings:
         log_lines.extend(warnings)
     bot_log_status = await publish_bot_log(guild, "🤖 **Setup Gruterra exécuté**", log_lines)
+    message += f"\n\n{bot_log_status}"
+    await ctx.reply(message[:1900])
+
+
+@bot.command(name="post_guides_gruterra")
+@commands.has_permissions(manage_guild=True)
+async def post_guides_gruterra(ctx: commands.Context) -> None:
+    """Publie ou met à jour les messages d'accueil et de tutoriel dans les bons salons."""
+
+    guild = ctx.guild
+    if guild is None:
+        await ctx.reply("Cette commande doit être lancée dans un serveur Discord.")
+        return
+
+    await ctx.reply("Publication ou mise à jour des guides Gruterra en cours…")
+
+    presentation_status = await publish_presentation_message(guild)
+    starter_statuses = await publish_channel_starter_messages(guild)
+
+    lines = [presentation_status, *starter_statuses]
+    bot_log_status = await publish_bot_log(
+        guild,
+        "🤖 **Guides Gruterra publiés**",
+        [
+            presentation_status,
+            f"{len(starter_statuses)} salon(s) de guide vérifié(s).",
+            "Commande utilisée : !post_guides_gruterra.",
+        ],
+    )
+
+    message = "Guides Gruterra vérifiés :\n" + "\n".join(f"- {line}" for line in lines[:12])
+    if len(lines) > 12:
+        message += f"\n- {len(lines) - 12} autre(s) résultat(s)."
     message += f"\n\n{bot_log_status}"
     await ctx.reply(message[:1900])
 
