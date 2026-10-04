@@ -230,6 +230,7 @@ Objectif : préparer une évolution sans casser l’enregistrement actuel des ar
 - [ ] Déplacer réellement plus tard les données utilisateur vers un dossier dédié, avec migration et sauvegarde.
 - [x] Préparer le comparateur de versions pour un futur mode simple : version locale / version distante, sans application automatique.
 - [x] Brancher la vérification distante GitHub via `version_manifest.json`, sans téléchargement ni application automatique.
+- [x] Ajouter un script public `update_gruterra.py` de validation non destructive, utilisable sans Git.
 - [ ] Prévoir un mode avancé plus tard : script de mise à jour Windows et script de mise à jour Raspberry.
 - [x] Afficher dans `À propos` la version locale, la révision Git et le résumé du plan de protection avant mise à jour.
 - [x] Ajouter une vérification préparatoire du plan de mise à jour : prêt, prudence ou bloqué selon la présence de la base, de la configuration et des sauvegardes locales.
