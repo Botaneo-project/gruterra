@@ -12,6 +12,8 @@ py prepare_release.py
 
 Le script refuse de travailler si Git contient des changements non validés. C’est volontaire : l’archive doit correspondre exactement au code publié.
 
+Le script doit terminer avec `Validation release : OK`.
+
 Le résultat est créé dans `_dist/` :
 
 - `gruterra-<version>.zip` : archive à envoyer dans GitHub Release ;

@@ -216,6 +216,38 @@ def ecrire_note_release(version: str, archive: Path, sha256: str, fichiers: list
     return note
 
 
+
+
+def valider_sortie_release(version: str, archive: Path, sha256: str, manifest_ready: Path, changelog: Path) -> list[str]:
+    erreurs = []
+    if not archive.exists():
+        erreurs.append(f"archive absente : {archive}")
+    elif calculer_sha256(archive) != sha256:
+        erreurs.append("SHA256 recalculé différent du SHA256 annoncé")
+    if not manifest_ready.exists():
+        erreurs.append(f"manifeste prêt absent : {manifest_ready}")
+    else:
+        try:
+            manifest = json.loads(manifest_ready.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError) as erreur:
+            erreurs.append(f"manifeste prêt illisible : {erreur}")
+        else:
+            if manifest.get("version") != version:
+                erreurs.append("version du manifeste prêt différente de la version préparée")
+            if manifest.get("sha256") != sha256:
+                erreurs.append("SHA256 du manifeste prêt différent du SHA256 de l'archive")
+            attendu = construire_release_url(version)
+            if manifest.get("archive_url") != attendu:
+                erreurs.append("URL d'archive du manifeste prêt différente de l'URL attendue")
+            if manifest.get("mise_a_jour_automatique") is not True:
+                erreurs.append("mise_a_jour_automatique n'est pas activé dans le manifeste prêt")
+    if not changelog.exists():
+        erreurs.append(f"changelog absent : {changelog}")
+    elif "## Changements importants" not in changelog.read_text(encoding="utf-8"):
+        erreurs.append("changelog sans section Changements importants")
+    return erreurs
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="Prépare une archive officielle Gruterra et son SHA256.")
     parser.add_argument("--allow-dirty", action="store_true", help="autorise une archive malgré des changements Git non validés")
@@ -232,6 +264,9 @@ def main(argv: list[str] | None = None) -> int:
     manifest_ready = ecrire_manifest_pret(version, sha256)
     changelog = ecrire_changelog_release(version)
     note = ecrire_note_release(version, archive, sha256, fichiers, manifest_ready, changelog)
+    erreurs_release = valider_sortie_release(version, archive, sha256, manifest_ready, changelog)
+    if erreurs_release:
+        raise RuntimeError("Release locale incohérente : " + "; ".join(erreurs_release))
 
     print("Archive Gruterra préparée")
     print(f"Version : {version}")
@@ -241,6 +276,7 @@ def main(argv: list[str] | None = None) -> int:
     print(f"Manifeste prêt : {manifest_ready}")
     print(f"Changelog prêt : {changelog}")
     print(f"Note release : {note}")
+    print("Validation release : OK")
     return 0
 
 
