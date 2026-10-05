@@ -264,6 +264,7 @@ Objectif : préparer une évolution sans casser l’enregistrement actuel des ar
 - Garder uniquement des fichiers `.example.json` anonymes dans GitHub.
 - Lire la liste des fichiers modifiés avant chaque envoi GitHub, même si le dépôt est privé.
 - Ne pas pousser un fichier de contexte interne détaillé sans validation explicite si le contrôle automatique le juge sensible.
+- Bloquer aussi les outils externes hors périmètre public, même sans secret, par exemple scripts de bot Discord, commandes de salons/rôles et assets Discord.
 - Suivre le diagnostic de rétention des sauvegardes Raspberry ; ne nettoyer les anciennes copies qu’après validation manuelle.
 - Garder un dossier historique pour les anciens fichiers non utilisés, sans les supprimer trop vite.
 

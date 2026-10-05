@@ -106,6 +106,16 @@ ALLOWLIST_PATHS = {
     "raspberry/backup_manifest.py",
 }
 
+# Fichiers ou dossiers qui peuvent exister localement, mais qui ne font pas
+# partie du périmètre public Gruterra. Ils sont bloqués même sans secret.
+NON_PUBLIC_PATH_PREFIXES = (
+    "discord_bot/",
+)
+
+NON_PUBLIC_PATH_PATTERNS = (
+    "docs/images/gruterra-discord-*.png",
+)
+
 
 def run_git(args: list[str], check: bool = True) -> str:
     result = subprocess.run(
@@ -173,6 +183,31 @@ def lire_fichier_texte(path: str) -> str | None:
         return local.read_text(encoding="utf-8", errors="replace")
     except OSError:
         return None
+
+
+def est_hors_perimetre_public(path: str) -> bool:
+    p = normaliser(path)
+    for prefix in NON_PUBLIC_PATH_PREFIXES:
+        if p.startswith(prefix):
+            return True
+    for pattern in NON_PUBLIC_PATH_PATTERNS:
+        if fnmatch.fnmatch(p, pattern):
+            return True
+    return False
+
+
+def verifier_fichiers_hors_perimetre_suivis(tracked: list[str]) -> list[str]:
+    return [path for path in tracked if est_hors_perimetre_public(path)]
+
+
+def verifier_fichiers_hors_perimetre_non_ignores(status: list[tuple[str, str]]) -> list[str]:
+    problemes = []
+    for statut, path in status:
+        if statut == "!!":
+            continue
+        if est_hors_perimetre_public(path):
+            problemes.append(f"{statut} {path}")
+    return problemes
 
 
 def verifier_fichiers_sensibles_suivis(tracked: list[str]) -> list[str]:
@@ -252,6 +287,14 @@ def main() -> int:
     afficher_liste("Fichiers modifiés / ajoutés / supprimés", [f"{s} {p}" for s, p in status])
 
     problemes = []
+
+    hors_perimetre_suivis = verifier_fichiers_hors_perimetre_suivis(tracked)
+    afficher_liste("Contrôle fichiers hors périmètre public déjà suivis par Git", hors_perimetre_suivis)
+    problemes.extend(f"Fichier hors périmètre public suivi : {p}" for p in hors_perimetre_suivis)
+
+    hors_perimetre_non_ignores = verifier_fichiers_hors_perimetre_non_ignores(status_ignored)
+    afficher_liste("Contrôle fichiers hors périmètre public non ignorés ou prêts à partir", hors_perimetre_non_ignores)
+    problemes.extend(f"Fichier hors périmètre public non ignoré : {p}" for p in hors_perimetre_non_ignores)
 
     sensibles_suivis = verifier_fichiers_sensibles_suivis(tracked)
     afficher_liste("Contrôle fichiers sensibles déjà suivis par Git", sensibles_suivis)
