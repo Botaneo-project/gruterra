@@ -1116,7 +1116,7 @@ def afficher_zone_decision(parent, plante_id, mesure, analyse_lumiere):
 
     historique = tk.Frame(parent, bg=CARD)
     historique.pack(fill="x", padx=20, pady=(0, 10))
-    tk.Label(historique, text="Évolutions de lumière · 7 derniers jours terminés",
+    tk.Label(historique, text=t("light_history_7d"),
              font=("Segoe UI", 10, "bold"), fg=TEXT, bg=CARD,
              anchor="w").pack(fill="x", padx=10, pady=(8, 4))
     try:
@@ -1187,7 +1187,7 @@ def afficher_besoins_plante(parent, plante_id):
 
     tk.Label(
         bloc,
-        text="📋 Besoins de base",
+        text=t("basic_needs"),
         font=("Segoe UI", 10, "bold"),
         fg=GREEN,
         bg=LIGHT_GREEN,
@@ -1720,7 +1720,7 @@ def ouvrir_exposition_balcon_passee(plante_id, nom_plante):
     sortie_defaut = maintenant - timedelta(hours=2)
 
     fenetre = tk.Toplevel(root)
-    fenetre.title("Exposition balcon passée")
+    fenetre.title(t("past_balcony_exposure_title"))
     fenetre.configure(bg=CARD)
     fenetre.resizable(False, False)
     fenetre.transient(root)
@@ -1736,7 +1736,7 @@ def ouvrir_exposition_balcon_passee(plante_id, nom_plante):
 
     tk.Label(
         fenetre,
-        text="Permet d'ajouter après coup une sortie et un retour, sans modifier les mesures.",
+        text=t("past_balcony_exposure_help"),
         font=("Segoe UI", 9),
         fg=SECONDARY,
         bg=CARD,
@@ -1744,17 +1744,17 @@ def ouvrir_exposition_balcon_passee(plante_id, nom_plante):
         justify="left"
     ).pack(anchor="w", padx=20, pady=(0, 12))
 
-    tk.Label(fenetre, text="Sortie", bg=CARD, fg=TEXT, font=("Segoe UI", 9, "bold")).pack(anchor="w", padx=20, pady=(4, 3))
+    tk.Label(fenetre, text=t("out"), bg=CARD, fg=TEXT, font=("Segoe UI", 9, "bold")).pack(anchor="w", padx=20, pady=(4, 3))
     sortie_var = tk.StringVar(value=sortie_defaut.strftime("%d/%m/%Y %H:%M"))
     sortie_entry = tk.Entry(fenetre, textvariable=sortie_var, width=42, bg=BG, fg=TEXT, insertbackground=TEXT)
     sortie_entry.pack(fill="x", padx=20)
 
-    tk.Label(fenetre, text="Retour", bg=CARD, fg=TEXT, font=("Segoe UI", 9, "bold")).pack(anchor="w", padx=20, pady=(10, 3))
+    tk.Label(fenetre, text=t("return_in"), bg=CARD, fg=TEXT, font=("Segoe UI", 9, "bold")).pack(anchor="w", padx=20, pady=(10, 3))
     retour_var = tk.StringVar(value=maintenant.strftime("%d/%m/%Y %H:%M"))
     retour_entry = tk.Entry(fenetre, textvariable=retour_var, width=42, bg=BG, fg=TEXT, insertbackground=TEXT)
     retour_entry.pack(fill="x", padx=20)
 
-    tk.Label(fenetre, text="Commentaire facultatif", bg=CARD, fg=TEXT, font=("Segoe UI", 9, "bold")).pack(anchor="w", padx=20, pady=(10, 3))
+    tk.Label(fenetre, text=t("optional_comment"), bg=CARD, fg=TEXT, font=("Segoe UI", 9, "bold")).pack(anchor="w", padx=20, pady=(10, 3))
     commentaire_entry = tk.Entry(fenetre, width=42, bg=BG, fg=TEXT, insertbackground=TEXT)
     commentaire_entry.pack(fill="x", padx=20)
 
@@ -1825,7 +1825,7 @@ def enregistrer_evenement_balcon(plante_id, nom_plante, action):
         message = f"Retour intérieur noté pour {nom_plante}."
         question = f"Confirmer le retour intérieur de {nom_plante} maintenant ({heure_lisible}) ?"
 
-    if not messagebox.askyesno("Confirmer l'exposition balcon", question, parent=root):
+    if not messagebox.askyesno(t("confirm_balcony_exposure"), question, parent=root):
         status_var.set(f"{titre} annulé : aucun événement ajouté.")
         return
 
@@ -1848,7 +1848,7 @@ def enregistrer_evenement_balcon(plante_id, nom_plante, action):
 
 def ouvrir_arrosage_plante(plante_id, nom_plante):
     fenetre = tk.Toplevel(root)
-    fenetre.title("Arrosage")
+    fenetre.title(t("watering_title"))
     fenetre.configure(bg=CARD)
     fenetre.resizable(False, False)
     fenetre.transient(root)
@@ -1862,16 +1862,16 @@ def ouvrir_arrosage_plante(plante_id, nom_plante):
         bg=CARD
     ).pack(anchor="w", padx=20, pady=(16, 8))
 
-    tk.Label(fenetre, text="Quantité en ml", bg=CARD, fg=TEXT, font=("Segoe UI", 9, "bold")).pack(anchor="w", padx=20, pady=(6, 3))
+    tk.Label(fenetre, text=t("quantity_ml"), bg=CARD, fg=TEXT, font=("Segoe UI", 9, "bold")).pack(anchor="w", padx=20, pady=(6, 3))
     quantite_entry = tk.Entry(fenetre, width=42, bg=BG, fg=TEXT, insertbackground=TEXT)
     quantite_entry.pack(fill="x", padx=20)
 
-    tk.Label(fenetre, text="Type", bg=CARD, fg=TEXT, font=("Segoe UI", 9, "bold")).pack(anchor="w", padx=20, pady=(10, 3))
+    tk.Label(fenetre, text=t("type"), bg=CARD, fg=TEXT, font=("Segoe UI", 9, "bold")).pack(anchor="w", padx=20, pady=(10, 3))
     type_combo = ttk.Combobox(fenetre, state="readonly", values=["normal", "fertilisant"], width=39)
     type_combo.pack(fill="x", padx=20)
     type_combo.current(0)
 
-    tk.Label(fenetre, text="Type d'eau", bg=CARD, fg=TEXT, font=("Segoe UI", 9, "bold")).pack(anchor="w", padx=20, pady=(10, 3))
+    tk.Label(fenetre, text=t("water_type"), bg=CARD, fg=TEXT, font=("Segoe UI", 9, "bold")).pack(anchor="w", padx=20, pady=(10, 3))
     type_eau_combo = ttk.Combobox(
         fenetre,
         state="readonly",
@@ -1893,9 +1893,9 @@ def ouvrir_arrosage_plante(plante_id, nom_plante):
     contexte_frame = tk.Frame(fenetre, bg=CARD)
     contexte_frame.pack(fill="x", padx=20, pady=(10, 0))
 
-    tk.Label(contexte_frame, text="Contexte facultatif", bg=CARD, fg=TEXT, font=("Segoe UI", 9, "bold")).grid(row=0, column=0, columnspan=2, sticky="w", pady=(0, 3))
+    tk.Label(contexte_frame, text=t("optional_context"), bg=CARD, fg=TEXT, font=("Segoe UI", 9, "bold")).grid(row=0, column=0, columnspan=2, sticky="w", pady=(0, 3))
 
-    tk.Label(contexte_frame, text="Répartition", bg=CARD, fg=SECONDARY, font=("Segoe UI", 8)).grid(row=1, column=0, sticky="w")
+    tk.Label(contexte_frame, text=t("distribution"), bg=CARD, fg=SECONDARY, font=("Segoe UI", 8)).grid(row=1, column=0, sticky="w")
     repartition_combo = ttk.Combobox(
         contexte_frame,
         state="readonly",
@@ -1905,7 +1905,7 @@ def ouvrir_arrosage_plante(plante_id, nom_plante):
     repartition_combo.grid(row=2, column=0, sticky="ew", padx=(0, 8))
     repartition_combo.current(0)
 
-    tk.Label(contexte_frame, text="Écoulement", bg=CARD, fg=SECONDARY, font=("Segoe UI", 8)).grid(row=1, column=1, sticky="w")
+    tk.Label(contexte_frame, text=t("drainage"), bg=CARD, fg=SECONDARY, font=("Segoe UI", 8)).grid(row=1, column=1, sticky="w")
     ecoulement_combo = ttk.Combobox(
         contexte_frame,
         state="readonly",
@@ -1915,7 +1915,7 @@ def ouvrir_arrosage_plante(plante_id, nom_plante):
     ecoulement_combo.grid(row=2, column=1, sticky="ew")
     ecoulement_combo.current(0)
 
-    tk.Label(contexte_frame, text="Cache-pot", bg=CARD, fg=SECONDARY, font=("Segoe UI", 8)).grid(row=3, column=0, sticky="w", pady=(6, 0))
+    tk.Label(contexte_frame, text=t("cache_pot"), bg=CARD, fg=SECONDARY, font=("Segoe UI", 8)).grid(row=3, column=0, sticky="w", pady=(6, 0))
     cachepot_combo = ttk.Combobox(
         contexte_frame,
         state="readonly",
@@ -1925,7 +1925,7 @@ def ouvrir_arrosage_plante(plante_id, nom_plante):
     cachepot_combo.grid(row=4, column=0, sticky="ew", padx=(0, 8))
     cachepot_combo.current(0)
 
-    tk.Label(contexte_frame, text="Substrat", bg=CARD, fg=SECONDARY, font=("Segoe UI", 8)).grid(row=3, column=1, sticky="w", pady=(6, 0))
+    tk.Label(contexte_frame, text=t("substrate"), bg=CARD, fg=SECONDARY, font=("Segoe UI", 8)).grid(row=3, column=1, sticky="w", pady=(6, 0))
     substrat_combo = ttk.Combobox(
         contexte_frame,
         state="readonly",
@@ -1935,7 +1935,7 @@ def ouvrir_arrosage_plante(plante_id, nom_plante):
     substrat_combo.grid(row=4, column=1, sticky="ew")
     substrat_combo.current(0)
 
-    tk.Label(contexte_frame, text="Mode", bg=CARD, fg=SECONDARY, font=("Segoe UI", 8)).grid(row=5, column=0, sticky="w", pady=(6, 0))
+    tk.Label(contexte_frame, text=t("mode"), bg=CARD, fg=SECONDARY, font=("Segoe UI", 8)).grid(row=5, column=0, sticky="w", pady=(6, 0))
     progressif_combo = ttk.Combobox(
         contexte_frame,
         state="readonly",
@@ -1945,7 +1945,7 @@ def ouvrir_arrosage_plante(plante_id, nom_plante):
     progressif_combo.grid(row=6, column=0, sticky="ew", padx=(0, 8))
     progressif_combo.current(0)
 
-    tk.Label(contexte_frame, text="Pot", bg=CARD, fg=SECONDARY, font=("Segoe UI", 8)).grid(row=5, column=1, sticky="w", pady=(6, 0))
+    tk.Label(contexte_frame, text=t("pot"), bg=CARD, fg=SECONDARY, font=("Segoe UI", 8)).grid(row=5, column=1, sticky="w", pady=(6, 0))
     pot_combo = ttk.Combobox(
         contexte_frame,
         state="readonly",
@@ -1955,7 +1955,7 @@ def ouvrir_arrosage_plante(plante_id, nom_plante):
     pot_combo.grid(row=6, column=1, sticky="ew")
     pot_combo.current(0)
 
-    tk.Label(contexte_frame, text="Délai drainage", bg=CARD, fg=SECONDARY, font=("Segoe UI", 8)).grid(row=7, column=0, sticky="w", pady=(6, 0))
+    tk.Label(contexte_frame, text=t("drainage_delay"), bg=CARD, fg=SECONDARY, font=("Segoe UI", 8)).grid(row=7, column=0, sticky="w", pady=(6, 0))
     drainage_delai_entry = tk.Entry(contexte_frame, bg=BG, fg=TEXT, insertbackground=TEXT)
     drainage_delai_entry.grid(row=8, column=0, columnspan=2, sticky="ew")
     drainage_delai_entry.insert(0, "")
@@ -1963,14 +1963,14 @@ def ouvrir_arrosage_plante(plante_id, nom_plante):
     contexte_frame.columnconfigure(0, weight=1)
     contexte_frame.columnconfigure(1, weight=1)
 
-    tk.Label(fenetre, text="Commentaire", bg=CARD, fg=TEXT, font=("Segoe UI", 9, "bold")).pack(anchor="w", padx=20, pady=(10, 3))
+    tk.Label(fenetre, text=t("comment"), bg=CARD, fg=TEXT, font=("Segoe UI", 9, "bold")).pack(anchor="w", padx=20, pady=(10, 3))
     commentaire_entry = tk.Entry(fenetre, width=42, bg=BG, fg=TEXT, insertbackground=TEXT)
     commentaire_entry.pack(fill="x", padx=20)
 
     rappel_var = tk.BooleanVar(value=False)
     tk.Checkbutton(
         fenetre,
-        text="Programmer un rappel",
+        text=t("schedule_reminder"),
         variable=rappel_var,
         bg=CARD,
         fg=TEXT,
@@ -1981,11 +1981,11 @@ def ouvrir_arrosage_plante(plante_id, nom_plante):
 
     rappel_frame = tk.Frame(fenetre, bg=CARD)
     rappel_frame.pack(fill="x", padx=20)
-    tk.Label(rappel_frame, text="Dans", bg=CARD, fg=TEXT).pack(side="left")
+    tk.Label(rappel_frame, text=t("in_days_prefix"), bg=CARD, fg=TEXT).pack(side="left")
     rappel_jours_entry = tk.Entry(rappel_frame, width=6, bg=BG, fg=TEXT, insertbackground=TEXT)
     rappel_jours_entry.pack(side="left", padx=6)
     rappel_jours_entry.insert(0, "7")
-    tk.Label(rappel_frame, text="jours", bg=CARD, fg=TEXT).pack(side="left")
+    tk.Label(rappel_frame, text=t("days"), bg=CARD, fg=TEXT).pack(side="left")
 
     erreur = tk.StringVar()
     tk.Label(fenetre, textvariable=erreur, bg=CARD, fg=RED, wraplength=390).pack(fill="x", padx=20, pady=8)
@@ -2676,7 +2676,7 @@ def creer_carte_plante(parent, plante):
         tk.Label(capteur_frame, text=indication, font=("Segoe UI", 8),
                  fg=SECONDARY, bg=CARD, anchor="w", wraplength=800,
                  justify="left").pack(fill="x")
-        tk.Button(capteur_frame, text="Détails du capteur", bg=LIGHT_BLUE, fg=TEXT,
+        tk.Button(capteur_frame, text=t("sensor_details"), bg=LIGHT_BLUE, fg=TEXT,
                   activebackground=LIGHT_BLUE, activeforeground=TEXT, relief="flat",
                   cursor="hand2", command=lambda a=adresse_ble, n=nom_capteur:
                   afficher_details_capteur(a, n)).pack(anchor="w", pady=(4, 5))
@@ -2741,7 +2741,7 @@ def creer_carte_plante(parent, plante):
 
             tk.Label(
                 capteur_frame,
-                text="⚪ Aucune synchronisation",
+                text=t("no_sync_badge"),
                 font=("Segoe UI", 9),
                 fg=SECONDARY,
                 bg=CARD,
@@ -3062,7 +3062,7 @@ def afficher_prevision_2h(parent):
     entete = tk.Frame(bloc, bg=LIGHT_BLUE)
     entete.pack(fill="x", padx=12, pady=(8, 2))
 
-    tk.Label(entete, text="🔮 Prévision locale +2 h", font=("Segoe UI", 11, "bold"), fg=BLUE, bg=LIGHT_BLUE).pack(side="left")
+    tk.Label(entete, text=t("local_forecast_2h"), font=("Segoe UI", 11, "bold"), fg=BLUE, bg=LIGHT_BLUE).pack(side="left")
 
     source = prevision_2h_data.get("source", "Météo locale") if prevision_2h_data else "Météo locale"
     tk.Label(entete, text=source, font=("Segoe UI", 8), fg=SECONDARY, bg=LIGHT_BLUE).pack(side="right")
@@ -3226,11 +3226,11 @@ def ajouter_favori_netatmo_config(station_saisie, nom_local=""):
 def renommer_station_netatmo(station):
     station_id = id_station_netatmo(station)
     if not station_id:
-        messagebox.showinfo("Netatmo", "Cette station n'a pas d'identifiant local utilisable.", parent=root)
+        messagebox.showinfo(t("netatmo"), "Cette station n'a pas d'identifiant local utilisable.", parent=root)
         return
 
     fenetre = tk.Toplevel(root)
-    fenetre.title("Renommer la station")
+    fenetre.title(t("rename_station_title"))
     fenetre.configure(bg=CARD)
     fenetre.resizable(False, False)
     fenetre.transient(root)
@@ -3238,7 +3238,7 @@ def renommer_station_netatmo(station):
 
     tk.Label(
         fenetre,
-        text="Nom local de la station",
+        text=t("local_station_name"),
         bg=CARD,
         fg=TEXT,
         font=("Segoe UI", 9, "bold")
@@ -3272,7 +3272,7 @@ def renommer_station_netatmo(station):
 
     tk.Button(
         boutons,
-        text="Enregistrer",
+        text=t("save"),
         command=enregistrer,
         bg=LIGHT_GREEN,
         fg=TEXT,
@@ -3283,7 +3283,7 @@ def renommer_station_netatmo(station):
 
     tk.Button(
         boutons,
-        text="Annuler",
+        text=t("cancel"),
         command=fenetre.destroy,
         bg=BG,
         fg=TEXT,
@@ -4036,7 +4036,7 @@ def creer_bloc_station_publique(parent, station):
     if favorite:
         tk.Button(
             bloc_titre,
-            text="Renommer",
+            text=t("rename"),
             command=lambda s=station: renommer_station_netatmo(s),
             bg=CARD,
             fg=BLUE,
@@ -4266,7 +4266,7 @@ def afficher_synthese_netatmo(parent):
 
     tk.Label(
         entete,
-        text="🌍 Synthèse météo locale",
+        text=t("local_weather_summary"),
         font=("Segoe UI", 12, "bold"),
         fg=GREEN,
         bg=LIGHT_GREEN,
@@ -4275,7 +4275,7 @@ def afficher_synthese_netatmo(parent):
 
     tk.Label(
         entete,
-        text="Meilleure source disponible parmi vos stations Netatmo",
+        text=t("best_netatmo_source"),
         font=("Segoe UI", 8),
         fg=SECONDARY,
         bg=LIGHT_GREEN,
@@ -4429,7 +4429,7 @@ def afficher_netatmo():
 
     tk.Label(
         titre_frame,
-        text="🌦️ MÉTÉO NETATMO",
+        text=t("netatmo_title"),
         font=("Segoe UI", 16, "bold"),
         fg=TEXT,
         bg=CARD
@@ -4447,7 +4447,7 @@ def afficher_netatmo():
         side="right"
     )
 
-    tk.Button(titre_frame, text="Actualiser Netatmo", command=actualiser_netatmo_seul,
+    tk.Button(titre_frame, text=t("refresh_netatmo"), command=actualiser_netatmo_seul,
               bg=LIGHT_BLUE, fg=BLUE, relief="flat", cursor="hand2").pack(side="right", padx=12)
 
     # --------------------------------------------------------
@@ -4477,7 +4477,7 @@ def afficher_netatmo():
 
         tk.Label(
             netatmo_frame,
-            text="🌦️ Aucune donnée Netatmo chargée.",
+            text=t("netatmo_no_data"),
             font=("Segoe UI", 10),
             fg=SECONDARY,
             bg=CARD
@@ -5165,7 +5165,7 @@ def texte_a_propos(verifier_distant=False):
 
 def ouvrir_a_propos():
     fenetre = tk.Toplevel(root)
-    fenetre.title("À propos de Gruterra")
+    fenetre.title(t("about_title"))
     fenetre.configure(bg=CARD)
     fenetre.resizable(False, False)
     fenetre.transient(root)
@@ -5180,7 +5180,7 @@ def ouvrir_a_propos():
 
     tk.Label(
         fenetre,
-        text="Application locale de suivi des plantes",
+        text=t("about_subtitle"),
         font=("Segoe UI", 10),
         fg=SECONDARY,
         bg=CARD
@@ -5397,29 +5397,29 @@ def texte_maintenance():
 
 def ouvrir_maintenance():
     fenetre = tk.Toplevel(root)
-    fenetre.title("Base & synthèses Gruterra")
+    fenetre.title(t("maintenance_title"))
     fenetre.configure(bg=CARD)
     fenetre.resizable(False, False)
     fenetre.transient(root)
 
     tk.Label(fenetre, text=t("maintenance"), font=("Segoe UI", 18, "bold"), fg=GREEN, bg=CARD).pack(anchor="w", padx=20, pady=(18, 4))
-    tk.Label(fenetre, text="Suivi de la taille de la base, des mesures brutes et des synthèses journalières", font=("Segoe UI", 10), fg=SECONDARY, bg=CARD).pack(anchor="w", padx=20, pady=(0, 12))
+    tk.Label(fenetre, text=t("maintenance_subtitle"), font=("Segoe UI", 10), fg=SECONDARY, bg=CARD).pack(anchor="w", padx=20, pady=(0, 12))
 
     zone = tk.Text(fenetre, width=86, height=14, wrap="word", bg=BG, fg=TEXT, relief="flat", font=("Segoe UI", 9))
     zone.pack(fill="both", expand=True, padx=20, pady=(0, 12))
 
-    tk.Label(fenetre, text="Dernières synthèses préparées", font=("Segoe UI", 10, "bold"), fg=TEXT, bg=CARD).pack(anchor="w", padx=20, pady=(0, 6))
+    tk.Label(fenetre, text=t("latest_summaries"), font=("Segoe UI", 10, "bold"), fg=TEXT, bg=CARD).pack(anchor="w", padx=20, pady=(0, 6))
     tableau_frame = tk.Frame(fenetre, bg=CARD)
     tableau_frame.pack(fill="both", expand=False, padx=20, pady=(0, 12))
     colonnes = ("jour", "plante", "capteur", "mesures", "humidite", "lumiere", "sources")
     tableau_syntheses = ttk.Treeview(tableau_frame, columns=colonnes, show="headings", height=6)
-    tableau_syntheses.heading("jour", text="Jour")
-    tableau_syntheses.heading("plante", text="Plante")
-    tableau_syntheses.heading("capteur", text="Capteur")
-    tableau_syntheses.heading("mesures", text="Mesures")
-    tableau_syntheses.heading("humidite", text="Humidité")
-    tableau_syntheses.heading("lumiere", text="Lumière max")
-    tableau_syntheses.heading("sources", text="Sources")
+    tableau_syntheses.heading("jour", text=t("day"))
+    tableau_syntheses.heading("plante", text=t("plant"))
+    tableau_syntheses.heading("capteur", text=t("sensor"))
+    tableau_syntheses.heading("mesures", text=t("measurements"))
+    tableau_syntheses.heading("humidite", text=t("humidity"))
+    tableau_syntheses.heading("lumiere", text=t("max_light"))
+    tableau_syntheses.heading("sources", text=t("sources"))
     tableau_syntheses.column("jour", width=95, anchor="center")
     tableau_syntheses.column("plante", width=130, anchor="w")
     tableau_syntheses.column("capteur", width=110, anchor="w")
@@ -5513,7 +5513,7 @@ def ouvrir_maintenance():
         ]
         texte_detail = "\n".join(lignes)
 
-        tk.Label(detail, text="📊 Détail de synthèse", font=("Segoe UI", 16, "bold"), fg=GREEN, bg=CARD).pack(anchor="w", padx=18, pady=(16, 4))
+        tk.Label(detail, text=t("summary_detail_title"), font=("Segoe UI", 16, "bold"), fg=GREEN, bg=CARD).pack(anchor="w", padx=18, pady=(16, 4))
         zone_detail = tk.Text(detail, width=82, height=21, wrap="word", bg=BG, fg=TEXT, relief="flat", font=("Segoe UI", 9))
         zone_detail.pack(fill="both", expand=True, padx=18, pady=(0, 12))
         zone_detail.insert("1.0", texte_detail)
@@ -5552,10 +5552,10 @@ def ouvrir_maintenance():
 
     boutons = tk.Frame(fenetre, bg=CARD)
     boutons.pack(fill="x", padx=20, pady=(0, 16))
-    tk.Button(boutons, text="⟳ Rafraîchir", command=rafraichir, bg=LIGHT_GREEN, fg=GREEN, activebackground=LIGHT_GREEN, relief="flat", cursor="hand2").pack(side="left", padx=(0, 8))
+    tk.Button(boutons, text=t("refresh_button"), command=rafraichir, bg=LIGHT_GREEN, fg=GREEN, activebackground=LIGHT_GREEN, relief="flat", cursor="hand2").pack(side="left", padx=(0, 8))
     tk.Button(boutons, text=t("copy"), command=copier, bg=LIGHT_BLUE, fg=BLUE, activebackground=LIGHT_BLUE, relief="flat", cursor="hand2").pack(side="left", padx=(0, 8))
-    tk.Button(boutons, text="Préparer les synthèses", command=preparer_syntheses, bg=LIGHT_ORANGE, fg=ORANGE, activebackground=LIGHT_ORANGE, relief="flat", cursor="hand2").pack(side="left", padx=(0, 8))
-    tk.Button(boutons, text="Détail synthèse", command=ouvrir_detail_synthese, bg=BG, fg=TEXT, activebackground=BG, relief="flat", cursor="hand2").pack(side="left")
+    tk.Button(boutons, text=t("prepare_summaries"), command=preparer_syntheses, bg=LIGHT_ORANGE, fg=ORANGE, activebackground=LIGHT_ORANGE, relief="flat", cursor="hand2").pack(side="left", padx=(0, 8))
+    tk.Button(boutons, text=t("summary_detail"), command=ouvrir_detail_synthese, bg=BG, fg=TEXT, activebackground=BG, relief="flat", cursor="hand2").pack(side="left")
     tk.Button(boutons, text=t("close"), command=fenetre.destroy, bg=BG, fg=TEXT, relief="flat", cursor="hand2").pack(side="right")
 
 def format_duree_courte(secondes):
@@ -5665,13 +5665,13 @@ def texte_sante_systeme(etat_raspberry=None):
 
 def ouvrir_sante_systeme():
     fenetre = tk.Toplevel(root)
-    fenetre.title("État Gruterra & Raspberry")
+    fenetre.title(t("health_title"))
     fenetre.configure(bg=CARD)
     fenetre.resizable(True, True)
     fenetre.transient(root)
 
-    tk.Label(fenetre, text="🩺 État Gruterra & Raspberry", font=("Segoe UI", 18, "bold"), fg=GREEN, bg=CARD).pack(anchor="w", padx=20, pady=(18, 4))
-    tk.Label(fenetre, text="Vue globale de l’application, de la base, des capteurs, du Raspberry et des sauvegardes", font=("Segoe UI", 10), fg=SECONDARY, bg=CARD).pack(anchor="w", padx=20, pady=(0, 12))
+    tk.Label(fenetre, text=t("health_header"), font=("Segoe UI", 18, "bold"), fg=GREEN, bg=CARD).pack(anchor="w", padx=20, pady=(18, 4))
+    tk.Label(fenetre, text=t("health_subtitle"), font=("Segoe UI", 10), fg=SECONDARY, bg=CARD).pack(anchor="w", padx=20, pady=(0, 12))
 
     resume_raspberry_var = tk.StringVar(value="Raspberry : contrôle en cours…")
     resume_raspberry = tk.Label(
@@ -5740,7 +5740,7 @@ def ouvrir_sante_systeme():
 
     boutons = tk.Frame(fenetre, bg=CARD)
     boutons.pack(fill="x", padx=20, pady=(0, 16))
-    tk.Button(boutons, text="⟳ Rafraîchir", command=rafraichir, bg=LIGHT_GREEN, fg=GREEN, activebackground=LIGHT_GREEN, relief="flat", cursor="hand2").pack(side="left", padx=(0, 8))
+    tk.Button(boutons, text=t("refresh_button"), command=rafraichir, bg=LIGHT_GREEN, fg=GREEN, activebackground=LIGHT_GREEN, relief="flat", cursor="hand2").pack(side="left", padx=(0, 8))
     tk.Button(boutons, text=t("copy"), command=copier, bg=LIGHT_BLUE, fg=BLUE, activebackground=LIGHT_BLUE, relief="flat", cursor="hand2").pack(side="left")
     tk.Button(boutons, text=t("close"), command=fenetre.destroy, bg=BG, fg=TEXT, relief="flat", cursor="hand2").pack(side="right")
 
@@ -5795,7 +5795,7 @@ def ouvrir_parametres():
     meteo_haut_var = tk.BooleanVar(value=meteo_affichee_en_haut())
     tk.Checkbutton(
         affichage_bloc,
-        text="Afficher météo locale et prévisions tout en haut",
+        text=t("show_weather_top"),
         variable=meteo_haut_var,
         bg=LIGHT_GREEN,
         fg=TEXT,
@@ -5807,7 +5807,7 @@ def ouvrir_parametres():
     plantes_accueil_var = tk.BooleanVar(value=plantes_affichees_sur_accueil())
     tk.Checkbutton(
         affichage_bloc,
-        text="Afficher les plantes sur l'accueil",
+        text=t("show_plants_home"),
         variable=plantes_accueil_var,
         bg=LIGHT_GREEN,
         fg=TEXT,
@@ -5819,7 +5819,7 @@ def ouvrir_parametres():
     vue_compacte_var = tk.BooleanVar(value=vue_compacte_plantes_active())
     tk.Checkbutton(
         affichage_bloc,
-        text="Vue compacte des plantes",
+        text=t("compact_plants"),
         variable=vue_compacte_var,
         bg=LIGHT_GREEN,
         fg=TEXT,
@@ -5833,7 +5833,7 @@ def ouvrir_parametres():
 
     tk.Label(
         bloc,
-        text="Synchronisation automatique",
+        text=t("auto_sync"),
         font=("Segoe UI", 11, "bold"),
         fg=BLUE,
         bg=LIGHT_BLUE
@@ -5842,7 +5842,7 @@ def ouvrir_parametres():
     active_var = tk.BooleanVar(value=bool(auto_sync_config.get("active", True)))
     tk.Checkbutton(
         bloc,
-        text="Activer la synchronisation automatique",
+        text=t("enable_auto_sync"),
         variable=active_var,
         bg=LIGHT_BLUE,
         fg=TEXT,
@@ -5854,15 +5854,15 @@ def ouvrir_parametres():
     ligne_heure = tk.Frame(bloc, bg=LIGHT_BLUE)
     ligne_heure.pack(fill="x", padx=12, pady=(0, 8))
 
-    tk.Label(ligne_heure, text="Heure", bg=LIGHT_BLUE, fg=TEXT, font=("Segoe UI", 9, "bold")).pack(side="left")
+    tk.Label(ligne_heure, text=t("time"), bg=LIGHT_BLUE, fg=TEXT, font=("Segoe UI", 9, "bold")).pack(side="left")
     heure_var = tk.StringVar(value=auto_sync_config.get("heure", "18:00"))
     heure_entry = tk.Entry(ligne_heure, textvariable=heure_var, width=8, bg=BG, fg=TEXT, insertbackground=TEXT)
     heure_entry.pack(side="left", padx=(10, 4))
-    tk.Label(ligne_heure, text="format 18:00", bg=LIGHT_BLUE, fg=SECONDARY, font=("Segoe UI", 8)).pack(side="left")
+    tk.Label(ligne_heure, text=t("time_format_hint"), bg=LIGHT_BLUE, fg=SECONDARY, font=("Segoe UI", 8)).pack(side="left")
 
     tk.Label(
         bloc,
-        text="Jours autorisés",
+        text=t("allowed_days"),
         bg=LIGHT_BLUE,
         fg=TEXT,
         font=("Segoe UI", 9, "bold")
@@ -5890,11 +5890,11 @@ def ouvrir_parametres():
     netatmo_bloc = tk.Frame(fenetre, bg=LIGHT_GREEN, highlightbackground=BORDER, highlightthickness=1)
     netatmo_bloc.pack(fill="x", padx=20, pady=(0, 12))
 
-    tk.Label(netatmo_bloc, text="Netatmo", font=("Segoe UI", 11, "bold"), fg=GREEN, bg=LIGHT_GREEN).pack(anchor="w", padx=12, pady=(10, 4))
+    tk.Label(netatmo_bloc, text=t("netatmo"), font=("Segoe UI", 11, "bold"), fg=GREEN, bg=LIGHT_GREEN).pack(anchor="w", padx=12, pady=(10, 4))
 
     tk.Label(
         netatmo_bloc,
-        text="Ajouter une station favorite publique par identifiant ou lien weathermap",
+        text=t("add_public_favorite_station"),
         bg=LIGHT_GREEN,
         fg=TEXT,
         font=("Segoe UI", 9, "bold")
@@ -5909,7 +5909,7 @@ def ouvrir_parametres():
     nom_favori_netatmo_var = tk.StringVar(value="")
     tk.Entry(ligne_favori_netatmo, textvariable=nom_favori_netatmo_var, width=20, bg=BG, fg=TEXT, insertbackground=TEXT).pack(side="left", padx=(8, 0))
 
-    tk.Label(netatmo_bloc, text="À gauche : lien ou stationid. À droite : nom local optionnel.",
+    tk.Label(netatmo_bloc, text=t("netatmo_favorite_hint"),
              bg=LIGHT_GREEN, fg=SECONDARY, font=("Segoe UI", 8), wraplength=420,
              justify="left").pack(anchor="w", padx=12, pady=(0, 8))
 
@@ -5946,7 +5946,7 @@ def ouvrir_parametres():
     actions_netatmo.pack(fill="x", padx=12, pady=(0, 8))
     tk.Button(
         actions_netatmo,
-        text="Créer le fichier Netatmo",
+        text=t("create_netatmo_file"),
         command=creer_fichier_netatmo_depuis_parametres,
         bg=BG,
         fg=TEXT,
@@ -5955,7 +5955,7 @@ def ouvrir_parametres():
     ).pack(side="left")
     tk.Label(
         actions_netatmo,
-        text="Puis ouvrez _config/netatmo_config.json et remplacez les valeurs d'exemple.",
+        text=t("netatmo_file_next_step"),
         bg=LIGHT_GREEN,
         fg=SECONDARY,
         font=("Segoe UI", 8),
@@ -6382,7 +6382,7 @@ def ouvrir_ajout_plante():
 
     tk.Button(
         boutons,
-        text="Annuler",
+        text=t("cancel"),
         command=fenetre.destroy,
         bg=BG,
         fg=TEXT
