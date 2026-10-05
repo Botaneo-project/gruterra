@@ -20,6 +20,13 @@ py Lancer_Demo.py
 
 Le guide détaillé est ici : [GUIDE_DEMO.md](GUIDE_DEMO.md). Pour installer depuis une archive ZIP de release, voir [GUIDE_INSTALLATION.md](GUIDE_INSTALLATION.md).
 
+## Démo ou utilisation réelle ?
+
+- `Lancer_Demo.py` ouvre Gruterra avec des plantes et mesures fictives. C’est le meilleur choix pour découvrir le projet sans matériel.
+- `Lancer_Gruterra.py` ouvre Gruterra pour une utilisation réelle, avec une base locale vide au départ. Vos futures données restent sur votre machine.
+
+Les deux lanceurs sont à la racine du dossier Gruterra et utilisent des chemins relatifs au dossier décompressé.
+
 ## Aperçu de la démo
 
 Les captures ci-dessous utilisent uniquement les données fictives du mode démo.

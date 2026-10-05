@@ -1,10 +1,30 @@
 # Tester Gruterra sous Windows
 
-Ce guide permet de découvrir l’interface avec des données fictives, sans capteur, Raspberry ni compte Netatmo.
+Ce guide permet de découvrir l’interface avec des données fictives, sans capteur Mi Flora, Raspberry Pi ni compte Netatmo.
 
-1. Ouvrez https://github.com/Botaneo-project/gruterra puis **Code → Download ZIP**. Décompressez le dossier.
-2. Installez Python pour Windows depuis https://www.python.org/downloads/windows/ avec Tkinter et le lanceur `py`.
-3. Ouvrez PowerShell dans le dossier décompressé contenant `requirements.txt` et exécutez :
+## 1. Télécharger le projet
+
+Ouvrez le dépôt GitHub :
+
+```text
+https://github.com/Botaneo-project/gruterra
+```
+
+Puis utilisez **Code → Download ZIP** et décompressez le dossier où vous voulez : Téléchargements, Documents, bureau ou autre dossier local.
+
+## 2. Installer Python
+
+Installez Python pour Windows depuis :
+
+```text
+https://www.python.org/downloads/windows/
+```
+
+Utilisez une installation standard avec Tkinter et le lanceur `py`.
+
+## 3. Lancer la démo
+
+Ouvrez PowerShell dans le dossier décompressé contenant `requirements.txt`, puis lancez :
 
 ```powershell
 py -m venv .venv
@@ -12,24 +32,46 @@ py -m venv .venv
 .\.venv\Scripts\python.exe Lancer_Demo.py
 ```
 
-Pour les prochains lancements, utilisez `Lancer_Demo.py` pour la démo ou `Lancer_Gruterra.py` pour une utilisation réelle vierge. Aucun script d’activation PowerShell n’est requis.
+Pour les prochains lancements, utilisez `Lancer_Demo.py` pour la démo ou `Lancer_Gruterra.py` pour commencer une utilisation réelle vierge.
 
-**Démo** : ouvre Gruterra avec des plantes et mesures fictives déjà présentes. **Version réelle** : ouvre Gruterra avec votre future base locale, sans données fictives. La démonstration utilise `_app/data/demo/plantes_demo.db` et sa propre configuration. Les collectes automatiques au démarrage sont désactivées en démo. Les boutons de synchronisation ne simulent pas de capteurs : n’en lancez pas pour ce premier essai.
+Aucun script d’activation PowerShell n’est requis.
 
-À explorer en priorité :
+## 4. Ce que la démo utilise
 
-- **Crassula démo** : historique riche sur dix jours, deux cycles d’arrosage, une session fractionnée 40 + 55 ml, repères 24 h / 48 h et pic de lumière lié à une sortie balcon.
+**Démo** : ouvre Gruterra avec des plantes fictives et des mesures d’exemple déjà présentes. **Utilisation réelle** : ouvre Gruterra avec votre future base locale, sans données fictives. La démo utilise :
+
+```text
+_app/data/demo/plantes_demo.db
+```
+
+Elle utilise aussi sa propre configuration de démonstration. Les collectes automatiques au démarrage sont désactivées en mode démo. Les boutons de synchronisation ne simulent pas de capteurs physiques, donc ne les utilisez pas pour le premier essai.
+
+## 5. À explorer en priorité
+
+- **Crassula démo** : historique riche sur plusieurs jours, cycles d’arrosage, repères 24 h / 48 h et pic lumineux lié à une sortie balcon.
 - **Historique** : sélection d’une journée, graphique lumière, comparaison de cycles d’arrosage et synthèse copiable pour analyse.
-- **Cactus balcon démo** : plante sans capteur, avec arrosage manuel et rappel futur.
-- **Pothos démo** : exemple d’ancien capteur conservé, utile pour vérifier l’état “ancien capteur”.
-- **Monstera démo** : plante suivie avec des valeurs plus régulières pour comparer avec la Crassula.
+- **Cactus balcon démo** : plante sans capteur actif, avec arrosage manuel et rappel futur.
+- **Pothos démo** : exemple d’ancien capteur conservé.
+- **Monstera démo** : mesures plus régulières, utiles pour comparer avec la Crassula.
 
-Vous pouvez modifier les données fictives. Pour recommencer avec une démo propre, fermez Gruterra puis lancez :
+## 6. Réinitialiser la base de démonstration
+
+Vous pouvez modifier les données fictives. Pour recommencer avec une base démo propre, fermez Gruterra puis lancez :
 
 ```powershell
 .\.venv\Scripts\python.exe _app\creer_base_demo.py
 ```
 
-Cette commande réinitialise la base de démonstration. Ne transmettez aucune base personnelle ni configuration contenant des identifiants.
+## 7. Retour utile
 
-Pour un retour utile, indiquez l’écran concerné, l’action effectuée, ce que vous attendiez et ce qui s’est produit. Ajoutez une capture sans données personnelles si nécessaire. Le dépôt public permet de consulter et télécharger le projet.
+Un retour utile indique :
+
+- l’écran utilisé ;
+- l’action effectuée ;
+- ce que vous attendiez ;
+- ce qui s’est produit ;
+- une capture sans information personnelle si nécessaire.
+
+Ne transmettez aucune base personnelle ni configuration contenant des identifiants.
+
+Version anglaise : [GUIDE_DEMO_EN.md](GUIDE_DEMO_EN.md).

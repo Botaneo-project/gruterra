@@ -10,7 +10,7 @@ Open the GitHub repository:
 https://github.com/Botaneo-project/gruterra
 ```
 
-Then use **Code → Download ZIP** and extract the folder.
+Then use **Code → Download ZIP** and extract the folder anywhere you want: Downloads, Documents, Desktop or another local folder.
 
 ## 2. Install Python
 
