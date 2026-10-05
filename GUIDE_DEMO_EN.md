@@ -29,16 +29,16 @@ Open PowerShell in the extracted folder containing `requirements.txt`, then run:
 ```powershell
 py -m venv .venv
 .\.venv\Scripts\python.exe -m pip install -r requirements.txt
-.\.venv\Scripts\python.exe _app\lancer_demo.py
+.\.venv\Scripts\python.exe Lancer_Demo.py
 ```
 
-For later launches, only the last command is needed.
+For later launches, use `Lancer_Demo.py` for the demo or `Lancer_Gruterra.py` for a blank real-use start.
 
 No PowerShell activation script is required.
 
 ## 4. What the demo uses
 
-The demo uses:
+**Demo**: opens Gruterra with fake plants and sample readings already present. **Real use**: opens Gruterra with your future local database, without fake data. The demo uses:
 
 ```text
 _app/data/demo/plantes_demo.db

@@ -9,12 +9,12 @@ Ce guide permet de découvrir l’interface avec des données fictives, sans cap
 ```powershell
 py -m venv .venv
 .\.venv\Scripts\python.exe -m pip install -r requirements.txt
-.\.venv\Scripts\python.exe _app\lancer_demo.py
+.\.venv\Scripts\python.exe Lancer_Demo.py
 ```
 
-Pour les prochains lancements, seule la dernière commande est nécessaire. Aucun script d’activation PowerShell n’est requis.
+Pour les prochains lancements, utilisez `Lancer_Demo.py` pour la démo ou `Lancer_Gruterra.py` pour une utilisation réelle vierge. Aucun script d’activation PowerShell n’est requis.
 
-La démonstration utilise `_app/data/demo/plantes_demo.db` et sa propre configuration. Les collectes automatiques au démarrage sont désactivées en démo. Les boutons de synchronisation ne simulent pas de capteurs : n’en lancez pas pour ce premier essai.
+**Démo** : ouvre Gruterra avec des plantes et mesures fictives déjà présentes. **Version réelle** : ouvre Gruterra avec votre future base locale, sans données fictives. La démonstration utilise `_app/data/demo/plantes_demo.db` et sa propre configuration. Les collectes automatiques au démarrage sont désactivées en démo. Les boutons de synchronisation ne simulent pas de capteurs : n’en lancez pas pour ce premier essai.
 
 À explorer en priorité :
 

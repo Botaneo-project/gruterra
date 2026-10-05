@@ -15,7 +15,7 @@ Le plus simple pour découvrir Gruterra est le mode démonstration. Il ne demand
 
 ```powershell
 py -m pip install -r requirements.txt
-py _app\lancer_demo.py
+py Lancer_Demo.py
 ```
 
 Le guide détaillé est ici : [GUIDE_DEMO.md](GUIDE_DEMO.md). Pour installer depuis une archive ZIP de release, voir [GUIDE_INSTALLATION.md](GUIDE_INSTALLATION.md).
@@ -83,7 +83,7 @@ Le dépôt fournit seulement des fichiers d’exemple anonymes.
 Une commande permet de lancer les contrôles principaux sans capteur :
 
 ```powershell
-cd C:\Plantes
+cd <dossier Gruterra décompressé>
 py audit_botaneo.py
 ```
 
@@ -128,18 +128,16 @@ Tkinter et SQLite sont fournis avec une installation Python Windows standard.
 Interface graphique :
 
 ```powershell
-cd C:\Plantes\_app
-py interface.py
+py Lancer_Gruterra.py
 ```
 
 Interface console :
 
 ```powershell
-cd C:\Plantes\_app
-py app.py
+py _app\app.py
 ```
 
-Pour un raccourci Windows, utiliser `pythonw.exe` avec `_app\interface.py` comme cible et `_app` comme dossier de démarrage.
+Pour un raccourci Windows, pointer vers `Lancer_Gruterra.py` ou `Lancer_Demo.py` à la racine du dossier Gruterra.
 
 ## Langue et traduction
 
@@ -152,15 +150,13 @@ L'anglais est accueilli pour GitHub, Reddit et Discord, mais la traduction compl
 Le mode démo permet de tester l’interface sans capteur Mi Flora, sans compte Netatmo et sans base personnelle. Il crée une base SQLite fictive dans `_app/data/demo/plantes_demo.db`, avec quelques plantes, mesures, arrosages et observations d’exemple.
 
 ```powershell
-cd C:\Plantes\_app
-py lancer_demo.py
+py Lancer_Demo.py
 ```
 
 La base démo est recréable avec :
 
 ```powershell
-cd C:\Plantes\_app
-py creer_base_demo.py
+py _app\creer_base_demo.py
 ```
 
 Cette base reste locale et n’est pas publiée dans Git. Les données sont volontairement fictives.
@@ -172,6 +168,8 @@ Gruterra/
 ├── README.md
 ├── TODO.md
 ├── requirements.txt
+├── Lancer_Demo.py
+├── Lancer_Gruterra.py
 ├── backup_botaneo.py
 ├── botaneo.local.example.json
 ├── netatmo_config.example.json
@@ -197,7 +195,7 @@ Gruterra/
 Avant de faire un commit ou un push, lancer :
 
 ```powershell
-cd C:\Plantes
+cd <dossier Gruterra décompressé>
 py verifier_avant_github.py
 ```
 

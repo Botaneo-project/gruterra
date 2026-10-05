@@ -7281,7 +7281,7 @@ def ouvrir_apercu_email_alertes(alertes):
             "",
             "C'est normal tant que le compte dédié Gruterra n'est pas créé.",
             "Le futur fichier privé devra être placé ici :",
-            r"C:\Plantes\_config\email.local.json",
+            str(CONFIG_DIR / "email.local.json"),
             "",
             f"Détail technique : {erreur}",
             "",
