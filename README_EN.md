@@ -51,7 +51,7 @@ Current priorities:
 - provide a safer guided update path;
 - document Raspberry Pi setup more clearly;
 - keep secrets, real databases and private configuration out of the repository;
-- progressively prepare English documentation and later app translation.
+- keep improving the English documentation and the in-app French / English translation.
 
 Roadmap: [ROADMAP.md](ROADMAP.md). Detailed development history: [TODO.md](TODO.md).
 
@@ -116,7 +116,7 @@ py creer_base_demo.py
 
 ## Update assistant
 
-Gruterra includes a guarded update assistant:
+Gruterra includes a guarded update assistant. It can check the public manifest, simulate an update, create a local backup and apply an official archive only after explicit confirmation:
 
 ```powershell
 py update_gruterra.py
@@ -126,7 +126,7 @@ py update_gruterra.py --apply
 
 The `--apply` mode refuses to run unless the public manifest explicitly enables automatic update and provides both an official archive URL and a valid SHA256 hash. Before replacing program files, it creates a local backup and preserves personal data such as `plantes.db`, `_config/`, `_historique/`, `_app/data/`, the local Discord bot `.env` and the Git repository.
 
-At the moment, no official update archive is published, so the assistant stays in verification mode.
+The assistant is intentionally strict: real updates require an official release archive, a matching SHA256 hash and an explicit update flag in the manifest. It never replaces local files silently in the background.
 
 ## Netatmo and Raspberry Pi
 

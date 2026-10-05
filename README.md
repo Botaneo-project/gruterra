@@ -152,7 +152,7 @@ Pour un raccourci Windows, pointer vers `Lancer_Gruterra.py` ou `Lancer_Demo.py`
 
 Gruterra est pour l'instant un projet principalement francophone. L'interface, les analyses métier et une partie importante de la documentation sont d'abord rédigées en français.
 
-L'anglais est accueilli pour GitHub, Reddit et Discord, mais la traduction complète de l'application n'est pas encore terminée. Les contributions de traduction seront possibles plus tard, après stabilisation des textes et de la structure de l'interface.
+L'anglais est accueilli pour GitHub, Reddit et Discord. La traduction de l'application est maintenant engagée dans les écrans principaux : les boutons, sections courantes, paramètres et messages essentiels passent progressivement par le sélecteur de langue français / anglais. Certains textes longs, journaux techniques et messages de diagnostic peuvent encore rester en français pendant la stabilisation.
 
 ## Mode démo
 
@@ -321,11 +321,11 @@ Le fichier `.gitignore` exclut notamment :
 - les archives ZIP ;
 - les scripts locaux de diagnostic, migration et test ponctuel.
 
-## Mise à jour future
+## Mise à jour assistée
 
-Gruterra prépare un futur système de mise à jour, mais aucun auto-upgrade réel n’est lancé pour l’instant.
+Gruterra dispose maintenant d'un assistant de mise à jour prudent. Il vérifie les informations publiées par GitHub, peut simuler une mise à jour, prépare une sauvegarde locale et ne remplace les fichiers programme qu'après validation explicite.
 
-Le module `_app/botaneo_update.py` prépare seulement les garde-fous :
+Le module `_app/botaneo_update.py` applique les garde-fous :
 
 - protéger la base `plantes.db` ;
 - préserver `_config/`, `_security_backups/`, `_historique/` et `_app/data/` ;
@@ -339,7 +339,7 @@ La fenêtre `À propos` affiche l’état de cette préparation, permet de copie
 py update_gruterra.py
 ```
 
-Quand une release officielle fournira une archive et une empreinte SHA256 dans `version_manifest.json`, le même assistant pourra simuler puis appliquer la mise à jour :
+Quand une release officielle fournit une archive et une empreinte SHA256 dans `version_manifest.json`, le même assistant peut simuler puis appliquer la mise à jour :
 
 ```powershell
 py update_gruterra.py --dry-run
@@ -350,7 +350,7 @@ Le mode `--apply` reste volontairement strict : il refuse toute mise à jour san
 
 La comparaison de version lit maintenant le manifeste public `version_manifest.json` publié sur GitHub, avec version, notes et lien informatif. Si GitHub n’est pas joignable, Gruterra peut retomber sur un manifeste local. Tant qu’aucune archive officielle et aucun SHA256 ne sont publiés, l’assistant reste en vérification ou simulation refusée.
 
-Toute future mise à jour devra rester précédée d’une sauvegarde locale et d’une validation explicite.
+Toute mise à jour réelle reste précédée d'une sauvegarde locale et d'une validation explicite. Le bouton de l'application sert à guider l'utilisateur ; il n'installe rien en arrière-plan sans action de sa part.
 
 ## Analyse des cycles d’arrosage
 
@@ -375,7 +375,7 @@ Le Raspberry demande une collecte Mi Flora quatre fois par jour, à 06 h, 12 h, 
 
 Gruterra récupère les mesures à chaque ouverture, puis toutes les quinze minutes par défaut tant que l’application est ouverte. Cet intervalle est réglable et ne déclenche pas une nouvelle lecture Bluetooth. Le mode déplacement suspend les transferts. Aucun service Windows permanent n’est nécessaire.
 
-La réception est confirmée après enregistrement dans la base PC. Les reprises évitent les doublons ; les données sans date fiable restent archivées. Pour une synchronisation manuelle, le PC récupère d’abord les données Raspberry puis peut tenter une lecture Bluetooth locale de secours. Les collectes régulières restent confiées au Raspberry.
+La réception est confirmée après enregistrement dans la base PC. Les reprises évitent les doublons ; les données sans date fiable restent archivées. Quand Gruterra indique des mesures rapatriées depuis le Raspberry, cela signifie qu'elles sont nouvelles pour le PC : elles peuvent avoir été collectées pendant que l'application était fermée. Pour une synchronisation manuelle, le PC récupère d'abord les données Raspberry puis peut tenter une lecture Bluetooth locale de secours. Les collectes régulières restent confiées au Raspberry.
 
 La lecture historique Mi Flora côté PC fonctionne sans effacement. Elle peut lire en plusieurs passes pour contourner les coupures BLE de Windows, accepte les lectures partielles valides, et signale clairement les entrées que le capteur annonce mais qui n’ont pas encore été récupérées.
 
