@@ -27,19 +27,29 @@ Pendant l’installation, garder le lanceur `py` activé. Tkinter doit être dis
 
 ## 3. Installer les dépendances
 
-Ouvrir PowerShell dans le dossier décompressé, puis lancer :
+Méthode simple, sans PowerShell : double-cliquer sur le fichier situé à la racine du dossier Gruterra :
+
+```text
+Installer_Gruterra.bat
+```
+
+Ce script crée l'environnement local `.venv` et installe les dépendances de `requirements.txt`.
+
+Méthode manuelle si besoin : ouvrir PowerShell dans le dossier décompressé, puis lancer :
 
 ```powershell
 py -m venv .venv
 .\.venv\Scripts\python.exe -m pip install -r requirements.txt
 ```
 
+Si Python est introuvable, installez Python depuis le site officiel et gardez le lanceur `py` activé. Tkinter doit être disponible avec l'installation Python.
+
 ## 4. Tester sans matériel
 
 Pour découvrir Gruterra sans capteur, lancer le mode démo :
 
 ```powershell
-.\.venv\Scripts\python.exe _app\lancer_demo.py
+.\.venv\Scripts\python.exe Lancer_Demo.py
 ```
 
 Le mode démo n’utilise ni Mi Flora, ni Raspberry Pi, ni compte Netatmo.
@@ -49,7 +59,7 @@ Le mode démo n’utilise ni Mi Flora, ni Raspberry Pi, ni compte Netatmo.
 Quand vous voulez utiliser votre propre base locale :
 
 ```powershell
-.\.venv\Scripts\python.exe _app\interface.py
+.\.venv\Scripts\python.exe Lancer_Gruterra.py
 ```
 
 Gruterra créera ou utilisera ses fichiers locaux selon la configuration disponible.

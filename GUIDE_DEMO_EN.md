@@ -24,7 +24,9 @@ Use a standard installation with Tkinter and the `py` launcher.
 
 ## 3. Launch the demo
 
-Open PowerShell in the extracted folder containing `requirements.txt`, then run:
+Simple method: double-click `Installer_Gruterra.bat`, then run `Lancer_Demo.py`.
+
+Manual method: open PowerShell in the extracted folder containing `requirements.txt`, then run:
 
 ```powershell
 py -m venv .venv
