@@ -15,21 +15,21 @@ Cette roadmap donne une vue courte de l’état du projet. Le fichier `TODO.md` 
 - Intégration Netatmo configurable localement.
 - Synchronisation Raspberry Pi optionnelle.
 - Audit local avant envoi GitHub.
-- Vérification de mise à jour GitHub non destructive.
+- Assistant de mise à jour GitHub prudent : vérification, simulation, sauvegarde locale et application seulement après validation explicite.
 
 ## Priorités courtes
 
-- Rendre le mode démo plus agréable pour les nouveaux testeurs.
-- Améliorer la lecture graphique des cycles d’arrosage.
-- Ajouter des captures d’écran propres au README.
-- Préparer une installation Windows plus simple.
-- Clarifier l’installation Raspberry Pi.
+- Valider l’auto-update en conditions réelles : bouton dans l’application, téléchargement contrôlé, sauvegarde, application et redémarrage.
+- Accélérer la traduction français / anglais sur les écrans visibles par un nouveau testeur.
+- Stabiliser Discord : messages socle épinglés, salons FR/EN cohérents, salons privés admin/bot protégés et tutoriels à jour.
+- Rendre le mode démo plus agréable pour les nouveaux testeurs, avec captures publiques cohérentes.
+- Améliorer encore la lecture graphique des cycles d’arrosage et la prudence des analyses plante.
+- Clarifier l’installation Raspberry Pi et le sens des mesures rapatriées pendant que Gruterra était fermé.
 
 ## Plus tard
 
-- Téléchargement vérifié par SHA256 avant mise à jour.
-- Assistant de mise à jour qui préserve les données personnelles.
 - Migration vers un dossier utilisateur dédié.
 - Notifications e-mail réellement activables après validation des règles.
 - Collecte BLE passive Mi Flora plus poussée sur Raspberry.
 - Comparaison avancée de journées et de cycles.
+- Nettoyage progressif du vieux nom technique `botaneo` quand une vraie migration sera prête.

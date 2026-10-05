@@ -2,6 +2,35 @@
 
 Ce fichier sert à garder une trace claire des idées et des prochaines étapes. Les éléments déjà en place sont conservés ici uniquement pour savoir où on en est, mais ils ne doivent plus être relancés sauf bug ou amélioration ciblée.
 
+## État des lieux urgent — 2026-10-05
+
+Cette section sert de point d'entrée rapide après les grosses modifications récentes. Elle ne remplace pas les sections détaillées plus bas ; elle indique ce qu'il faut vérifier en premier si un agent reprend le dossier ou si un bug apparaît.
+
+### À vérifier en priorité
+
+- [ ] Auto-update : refaire un test complet côté utilisateur avec le bouton de l'application : détection, message, simulation, sauvegarde, application contrôlée et redémarrage. Vérifier qu'une personne qui n'utilise pas Git peut réellement se mettre à jour sans retélécharger tout le projet.
+- [ ] Traduction : parcourir le mode démo en français puis en anglais et noter les écrans encore partiellement traduits. Priorité aux boutons, messages d'erreur, installation, update, historique et synchronisation.
+- [ ] Discord : vérifier que les messages socle et tutoriels sont épinglés, qu'ils ne sont pas supprimés par les commandes de clean, que `#bot-commands`, `#admin-notes` et `#dev-follow-up` restent privés, et que les salons FR/EN ont chacun leur message adapté.
+- [ ] Raspberry : vérifier sur un cycle réel que les mesures annoncées comme rapatriées correspondent bien à des mesures nouvelles pour le PC, éventuellement collectées pendant que Gruterra était fermé.
+- [ ] Démo publique : lancer `Lancer_Demo.py`, vérifier que la première impression est propre, que les captures publiques correspondent encore à l'interface actuelle et que le README ne promet rien qui n'est pas visible en démo.
+- [ ] GitHub public : relire la fiche README après chaque gros push pour éviter les promesses dépassées, les anciens noms Botaneo visibles hors contexte, ou une confusion entre projet francophone et accueil anglophone.
+
+### Bugs / risques à surveiller
+
+- [ ] Les textes de synchronisation peuvent encore être trop verbeux ou ambigus quand une mesure est demandée au Raspberry mais récupérée seulement au passage suivant.
+- [ ] Les imports Raspberry et historique Mi Flora doivent rester idempotents : relancer une synchro ne doit pas créer de doublons.
+- [ ] Les mesures sans date exploitable doivent rester bloquées ou supprimées selon la règle actuelle, même si elles contiennent lumière, humidité ou conductivité.
+- [ ] Les valeurs suspectes, notamment humidité 0 %, doivent être conservées en brut mais clairement exclues des statistiques quand elles sont jugées non exploitables.
+- [ ] Les cycles d'arrosage doivent rester prudents : ne jamais conclure que toute la motte est sèche ou humide à partir de la seule zone mesurée par le Mi Flora.
+- [ ] Les fichiers privés de reprise agent, secrets, bases réelles, captures temporaires, bot Discord local et configurations doivent rester hors GitHub public.
+
+### Prochaine action recommandée
+
+1. Valider l'auto-update en conditions réelles.
+2. Faire un passage traduction complet sur la démo.
+3. Vérifier Discord avec un compte utilisateur normal ou une vue sans droits admin.
+4. Refaire un audit GitHub avant le prochain message Reddit/Discord.
+
 ## État actuel déjà en place
 
 - Dépôt GitHub renommé : `Botaneo-project/gruterra`; remote local mis à jour et description GitHub corrigée.
