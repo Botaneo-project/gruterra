@@ -4642,7 +4642,7 @@ def resume_acquisition_miflora(resultat_miflora):
         lignes.append("ℹ Aucune nouvelle mesure immédiate acquise sur ce passage.")
 
     if historiques_pi:
-        lignes.append(f"Historique récupéré : {historiques_pi} mesure(s) ajoutée(s) depuis le Raspberry.")
+        lignes.append(f"Mesures rapatriées depuis le Raspberry : {historiques_pi} mesure(s) ajoutée(s) au PC. Elles peuvent avoir été collectées pendant que Gruterra était fermé.")
     if attente_pi:
         lignes.append("Mesure Raspberry demandée : résultat attendu lors du prochain contrôle automatique ou de la prochaine synchronisation.")
     return "\n".join(lignes)
