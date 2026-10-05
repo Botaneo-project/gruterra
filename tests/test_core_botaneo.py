@@ -626,6 +626,14 @@ class TestPreparationMiseAJour(unittest.TestCase):
         self.assertIn("https://example.invalid/release", resume)
         self.assertIn("application automatique : désactivée", resume)
 
+    def test_version_locale_lue_depuis_fichier_version(self):
+        botaneo_update = importlib.import_module("botaneo_update")
+        with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as dossier:
+            racine = Path(dossier)
+            self.assertEqual(botaneo_update.lire_version_locale(racine), botaneo_update.VERSION_LOCALE_DEFAUT)
+            (racine / "VERSION").write_text("0.1.4-dev\n", encoding="utf-8")
+            self.assertEqual(botaneo_update.lire_version_locale(racine), "0.1.4-dev")
+
     def test_statut_version_depuis_manifest_local(self):
         botaneo_update = importlib.import_module("botaneo_update")
         with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as dossier:

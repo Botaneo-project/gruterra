@@ -56,6 +56,12 @@ Elle utilise aussi sa propre configuration de démonstration. Les collectes auto
 - **Pothos démo** : exemple d’ancien capteur conservé.
 - **Monstera démo** : mesures plus régulières, utiles pour comparer avec la Crassula.
 
+## Tester la mise à jour depuis la démo
+
+Le mode démo ne lance pas la vérification automatique au démarrage, afin de ne pas gêner la découverte de l'application. En revanche, le test manuel reste possible : ouvrez `À propos`, cliquez sur `Vérifier les mises à jour`, puis utilisez `Tester l’update` pour lancer une simulation.
+
+L'application réelle n'applique une archive que si le manifeste GitHub officiel contient une URL d'archive, un SHA256 valide et `mise_a_jour_automatique=true`.
+
 ## 6. Réinitialiser la base de démonstration
 
 Vous pouvez modifier les données fictives. Pour recommencer avec une base démo propre, fermez Gruterra puis lancez :

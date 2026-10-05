@@ -1,6 +1,6 @@
 {
-  "version": "0.1.3-dev",
-  "notes": "Ajout de boutons Update dans À propos : simulation depuis l'interface, application contrôlée avec confirmation, archive officielle et SHA256 obligatoires.",
+  "version": "0.1.4-dev",
+  "notes": "Release de test update : version locale embarquée, libellés de mise à jour clarifiés, traduction FR/EN poursuivie et test possible depuis À propos, y compris en mode démo.",
   "url": "https://github.com/Botaneo-project/gruterra",
   "archive_url": "",
   "sha256": "",

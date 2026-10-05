@@ -29,6 +29,7 @@ FICHIERS_CONFIG_EXEMPLE = (
 )
 
 VERSION_LOCALE_DEFAUT = "0.1.0-dev"
+FICHIER_VERSION_LOCALE = "VERSION"
 MANIFEST_DISTANT_DEFAUT = "https://raw.githubusercontent.com/Botaneo-project/gruterra/main/version_manifest.json"
 TIMEOUT_MANIFEST_SECONDES = 5
 
@@ -90,10 +91,22 @@ def construire_separation_programme_donnees(racine) -> dict:
     }
 
 
+def lire_version_locale(racine) -> str:
+    """Retourne la version installée, incluse dans les archives de release."""
+
+    chemin = Path(racine) / FICHIER_VERSION_LOCALE
+    try:
+        version = chemin.read_text(encoding="utf-8").strip()
+    except OSError:
+        return VERSION_LOCALE_DEFAUT
+    return version or VERSION_LOCALE_DEFAUT
+
+
 def construire_plan_mise_a_jour(racine, verifier_distant=False) -> dict:
     """Construit un plan de mise à jour en lecture seule."""
 
     racine = Path(racine)
+    version_locale = lire_version_locale(racine)
     elements = [detecter_element_personnel(racine, item) for item in ELEMENTS_PERSONNELS]
     exemples = [str(item) for item in FICHIERS_CONFIG_EXEMPLE if (racine / item).exists()]
     plan = {
@@ -103,7 +116,7 @@ def construire_plan_mise_a_jour(racine, verifier_distant=False) -> dict:
         "elements_personnels": elements,
         "fichiers_exemple": exemples,
         "statut_version": construire_statut_version(
-            version_locale=VERSION_LOCALE_DEFAUT,
+            version_locale=version_locale,
             chemin_manifest_local=racine / "version_manifest.json",
             url_manifest_distant=MANIFEST_DISTANT_DEFAUT,
             verifier_distant=verifier_distant,
