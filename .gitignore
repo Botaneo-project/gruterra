@@ -97,3 +97,7 @@ _dist/
 
 # État local anti-spam du bot Discord
 discord_bot/.release_state.json
+
+# Bot Discord local privé, non publié
+discord_bot/
+docs/images/gruterra-discord-*.png
