@@ -928,6 +928,20 @@ class TestInstallateurWindows(unittest.TestCase):
         self.assertIn("Installation interrompue ou incomplete", contenu)
 
 
+class TestLanceursWindows(unittest.TestCase):
+    def test_lanceurs_bat_utilisent_environnement_local(self):
+        racine = Path(__file__).resolve().parents[1]
+        demo = (racine / "Lancer_Demo.bat").read_text(encoding="ascii")
+        reel = (racine / "Lancer_Gruterra.bat").read_text(encoding="ascii")
+
+        self.assertIn(".venv\\Scripts\\python.exe", demo)
+        self.assertIn("Lancer_Demo.py", demo)
+        self.assertIn("pause", demo.lower())
+        self.assertIn(".venv\\Scripts\\python.exe", reel)
+        self.assertIn("Lancer_Gruterra.py", reel)
+        self.assertIn("pause", reel.lower())
+
+
 class TestSauvegardeUtilisateur(unittest.TestCase):
     def test_manifest_sauvegarde_complete_signale_le_prive(self):
         sauvegarde = importlib.import_module("sauvegarde_utilisateur")

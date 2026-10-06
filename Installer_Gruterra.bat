@@ -119,10 +119,10 @@ echo.
 echo [6/6] Installation terminee avec succes.
 echo.
 echo Pour tester sans materiel :
-echo   double-cliquez sur Lancer_Demo.py
+echo   double-cliquez sur Lancer_Demo.bat
 echo.
 echo Pour commencer une vraie utilisation locale :
-echo   double-cliquez sur Lancer_Gruterra.py
+echo   double-cliquez sur Lancer_Gruterra.bat
 echo.
 pause
 exit /b 0

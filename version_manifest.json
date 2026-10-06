@@ -1,6 +1,6 @@
 {
   "version": "0.1.4-dev",
-  "notes": "Correction installateur : Gruterra redétecte Python 3.12 installé localement et poursuit directement pip, dépendances et vérification de la démo.",
+  "notes": "Correction lancement Windows : ajout de Lancer_Demo.bat et Lancer_Gruterra.bat pour ouvrir Gruterra avec la bonne version Python et afficher les erreurs au lieu de fermer silencieusement.",
   "url": "https://github.com/Botaneo-project/gruterra",
   "archive_url": "",
   "sha256": "",

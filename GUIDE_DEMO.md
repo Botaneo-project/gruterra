@@ -34,7 +34,7 @@ py -m venv .venv
 .\.venv\Scripts\python.exe Lancer_Demo.py
 ```
 
-Pour les prochains lancements, utilisez `Lancer_Demo.py` pour la démo ou `Lancer_Gruterra.py` pour commencer une utilisation réelle vierge.
+Pour les prochains lancements, utilisez `Lancer_Demo.bat` pour la démo ou `Lancer_Gruterra.bat` pour commencer une utilisation réelle vierge.
 
 Aucun script d’activation PowerShell n’est requis.
 

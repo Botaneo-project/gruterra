@@ -23,7 +23,7 @@ Le guide détaillé est ici : [GUIDE_DEMO.md](GUIDE_DEMO.md). Pour installer dep
 
 ## Démo ou utilisation réelle ?
 
-- `Lancer_Demo.py` ouvre Gruterra avec des plantes et mesures fictives. C’est le meilleur choix pour découvrir le projet sans matériel.
+- `Lancer_Demo.bat` ouvre Gruterra avec des plantes et mesures fictives. C’est le meilleur choix pour découvrir le projet sans matériel.
 - `Lancer_Gruterra.py` ouvre Gruterra pour une utilisation réelle, avec une base locale vide au départ. Vos futures données restent sur votre machine.
 
 Les deux lanceurs sont à la racine du dossier Gruterra et utilisent des chemins relatifs au dossier décompressé.
@@ -147,7 +147,7 @@ Interface console :
 py _app\app.py
 ```
 
-Pour un raccourci Windows, pointer vers `Lancer_Gruterra.py` ou `Lancer_Demo.py` à la racine du dossier Gruterra.
+Pour un raccourci Windows, pointer vers `Lancer_Gruterra.bat` ou `Lancer_Demo.bat` à la racine du dossier Gruterra.
 
 ## Langue et traduction
 
