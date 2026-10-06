@@ -1,6 +1,6 @@
 {
   "version": "0.1.4-dev",
-  "notes": "Release de test update : installateur Windows fiabilisé, sauvegarde utilisateur avec rapport horodaté, patch note lisible après mise à jour, et test possible depuis À propos en mode démo.",
+  "notes": "Petite mise à jour : installation automatique de Python si absent, et libellés anglais/français pour les mises à jour dans Paramètres et les sauvegardes utilisateur.",
   "url": "https://github.com/Botaneo-project/gruterra",
   "archive_url": "",
   "sha256": "",

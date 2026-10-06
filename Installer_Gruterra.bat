@@ -5,6 +5,9 @@ cd /d "%~dp0"
 set "MIN_PYTHON=3.10"
 set "PYTHON_CMD="
 set "VENV_PY=.venv\Scripts\python.exe"
+set "PYTHON_VERSION=3.12.10"
+set "PYTHON_INSTALLER=%TEMP%\gruterra-python-%PYTHON_VERSION%-amd64.exe"
+set "PYTHON_DOWNLOAD_URL=https://www.python.org/ftp/python/%PYTHON_VERSION%/python-%PYTHON_VERSION%-amd64.exe"
 
 echo ============================================
 echo Gruterra - installation Windows
@@ -13,9 +16,14 @@ echo.
 echo Objectif : installer les dependances puis verifier que la demo peut demarrer.
 echo.
 
-echo [1/5] Verification de Python
+echo [1/6] Verification de Python
 call :detect_python
-if errorlevel 1 goto :python_missing
+if errorlevel 1 (
+    call :install_python
+    if errorlevel 1 goto :python_missing
+    call :detect_python
+    if errorlevel 1 goto :python_missing
+)
 
 echo Python detecte : %PYTHON_CMD%
 %PYTHON_CMD% -c "import sys; print('Version Python : ' + sys.version.split()[0])"
@@ -23,14 +31,14 @@ echo Python detecte : %PYTHON_CMD%
 if errorlevel 1 (
     echo.
     echo ERREUR - Python %MIN_PYTHON% ou plus recent est necessaire.
-    echo Installez une version recente depuis :
-    echo https://www.python.org/downloads/windows/
+    echo L'installation automatique peut installer Python %PYTHON_VERSION% si Python est absent,
+    echo mais elle ne remplace pas une ancienne version deja detectee.
     echo.
     goto :fail
 )
 
 echo.
-echo [2/5] Verification de l'environnement local
+echo [2/6] Verification de l'environnement local
 if not exist requirements.txt (
     echo ERREUR - requirements.txt est introuvable.
     echo Lancez Installer_Gruterra.bat depuis la racine du dossier Gruterra.
@@ -53,7 +61,7 @@ if not exist "%VENV_PY%" (
 )
 
 echo.
-echo [3/5] Verification de pip
+echo [3/6] Verification de pip
 "%VENV_PY%" -m pip --version >nul 2>nul
 if errorlevel 1 (
     echo pip indisponible dans .venv, tentative d'activation avec ensurepip...
@@ -76,7 +84,7 @@ if errorlevel 1 (
 )
 
 echo.
-echo [4/5] Installation des dependances Gruterra
+echo [4/6] Installation des dependances Gruterra
 "%VENV_PY%" -m pip install -r requirements.txt
 if errorlevel 1 (
     echo.
@@ -87,7 +95,7 @@ if errorlevel 1 (
 )
 
 echo.
-echo [5/5] Verification de Gruterra
+echo [5/6] Verification de Gruterra
 "%VENV_PY%" -c "import tkinter, requests, bleak; print('Imports essentiels OK : tkinter, requests, bleak')"
 if errorlevel 1 (
     echo.
@@ -107,7 +115,7 @@ if errorlevel 1 (
 )
 
 echo.
-echo Installation terminee avec succes.
+echo [6/6] Installation terminee avec succes.
 echo.
 echo Pour tester sans materiel :
 echo   double-cliquez sur Lancer_Demo.py
@@ -137,10 +145,33 @@ if not errorlevel 1 (
 )
 exit /b 1
 
+:install_python
+echo Python est introuvable. Gruterra va tenter d'installer Python automatiquement.
+echo Version cible : Python %PYTHON_VERSION% pour Windows 64 bits.
+echo.
+echo Telechargement depuis python.org...
+powershell -NoProfile -ExecutionPolicy Bypass -Command "try { [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12; Invoke-WebRequest -Uri '%PYTHON_DOWNLOAD_URL%' -OutFile '%PYTHON_INSTALLER%' -UseBasicParsing; exit 0 } catch { Write-Host $_.Exception.Message; exit 1 }"
+if errorlevel 1 (
+    echo.
+    echo ERREUR - impossible de telecharger Python automatiquement.
+    exit /b 1
+)
+echo Installation silencieuse de Python...
+"%PYTHON_INSTALLER%" /quiet InstallAllUsers=0 PrependPath=1 Include_launcher=1 Include_pip=1 Include_tcltk=1 Include_test=0 SimpleInstall=1
+if errorlevel 1 (
+    echo.
+    echo ERREUR - l'installation automatique de Python a echoue.
+    exit /b 1
+)
+echo Python installe. Nouvelle detection...
+echo.
+exit /b 0
+
 :python_missing
 echo Python est introuvable sur ce PC.
 echo.
-echo Installez Python depuis :
+echo L'installation automatique de Python a echoue ou a ete bloquee.
+echo Installez Python manuellement depuis :
 echo https://www.python.org/downloads/windows/
 echo.
 echo Pendant l'installation, cochez l'option qui ajoute Python au PATH si elle est proposee.

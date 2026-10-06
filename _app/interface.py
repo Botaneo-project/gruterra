@@ -5590,9 +5590,9 @@ def ouvrir_maintenance():
     def creer_sauvegarde(mode):
         if mode == "complete":
             if not messagebox.askyesno(
-                "Sauvegarde complète privée",
+                t("private_full_backup"),
                 sauvegarde_utilisateur.AVERTISSEMENT_SAUVEGARDE_PRIVEE
-                + "\n\nCréer cette sauvegarde complète privée maintenant ?",
+                + "\n\n" + t("create_private_backup_question"),
                 parent=fenetre,
             ):
                 return
@@ -5602,18 +5602,18 @@ def ouvrir_maintenance():
             manifest = sauvegarde_utilisateur.construire_manifest_sauvegarde(racine_gruterra, mode=mode)
             rapport = sauvegarde_utilisateur.formater_rapport_sauvegarde(manifest)
         except Exception as erreur:
-            messagebox.showerror("Sauvegarde Gruterra", f"Sauvegarde impossible : {erreur}", parent=fenetre)
-            status_var.set("Sauvegarde Gruterra impossible")
+            messagebox.showerror(t("backup_error_title"), f"{t('backup_impossible')} : {erreur}", parent=fenetre)
+            status_var.set(t("backup_status_impossible"))
             return
 
         root.clipboard_clear()
         root.clipboard_append(str(archive))
         messagebox.showinfo(
-            "Sauvegarde Gruterra",
-            f"Archive créée :\n{archive}\n\nLe chemin a été copié dans le presse-papiers.\n\n{rapport}",
+            t("backup_error_title"),
+            f"{t('backup_created')} :\n{archive}\n\n{t('backup_path_copied')}\n\n{rapport}",
             parent=fenetre,
         )
-        status_var.set(f"Sauvegarde Gruterra créée : {archive.name}")
+        status_var.set(f"{t('backup_status_created')} : {archive.name}")
 
     rafraichir()
 
@@ -5622,8 +5622,8 @@ def ouvrir_maintenance():
     tk.Button(boutons, text=t("refresh_button"), command=rafraichir, bg=LIGHT_GREEN, fg=GREEN, activebackground=LIGHT_GREEN, relief="flat", cursor="hand2").pack(side="left", padx=(0, 8))
     tk.Button(boutons, text=t("copy"), command=copier, bg=LIGHT_BLUE, fg=BLUE, activebackground=LIGHT_BLUE, relief="flat", cursor="hand2").pack(side="left", padx=(0, 8))
     tk.Button(boutons, text=t("prepare_summaries"), command=preparer_syntheses, bg=LIGHT_ORANGE, fg=ORANGE, activebackground=LIGHT_ORANGE, relief="flat", cursor="hand2").pack(side="left", padx=(0, 8))
-    tk.Button(boutons, text="Exporter mes données", command=lambda: creer_sauvegarde("donnees"), bg=LIGHT_BLUE, fg=BLUE, activebackground=LIGHT_BLUE, relief="flat", cursor="hand2").pack(side="left", padx=(0, 8))
-    tk.Button(boutons, text="Sauvegarde complète privée", command=lambda: creer_sauvegarde("complete"), bg=LIGHT_ORANGE, fg=ORANGE, activebackground=LIGHT_ORANGE, relief="flat", cursor="hand2").pack(side="left", padx=(0, 8))
+    tk.Button(boutons, text=t("export_my_data"), command=lambda: creer_sauvegarde("donnees"), bg=LIGHT_BLUE, fg=BLUE, activebackground=LIGHT_BLUE, relief="flat", cursor="hand2").pack(side="left", padx=(0, 8))
+    tk.Button(boutons, text=t("private_full_backup"), command=lambda: creer_sauvegarde("complete"), bg=LIGHT_ORANGE, fg=ORANGE, activebackground=LIGHT_ORANGE, relief="flat", cursor="hand2").pack(side="left", padx=(0, 8))
     tk.Button(boutons, text=t("summary_detail"), command=ouvrir_detail_synthese, bg=BG, fg=TEXT, activebackground=BG, relief="flat", cursor="hand2").pack(side="left")
     tk.Button(boutons, text=t("close"), command=fenetre.destroy, bg=BG, fg=TEXT, relief="flat", cursor="hand2").pack(side="right")
 
@@ -5899,8 +5899,8 @@ def ouvrir_parametres():
 
     update_bloc = tk.Frame(fenetre, bg=LIGHT_ORANGE, highlightbackground=BORDER, highlightthickness=1)
     update_bloc.pack(fill="x", padx=20, pady=(0, 12))
-    tk.Label(update_bloc, text="Mises à jour", font=("Segoe UI", 11, "bold"), fg=ORANGE, bg=LIGHT_ORANGE).pack(anchor="w", padx=12, pady=(10, 4))
-    update_info_var = tk.StringVar(value="Vérifiez les mises à jour depuis GitHub, puis testez ou appliquez l’archive officielle.")
+    tk.Label(update_bloc, text=t("updates_section"), font=("Segoe UI", 11, "bold"), fg=ORANGE, bg=LIGHT_ORANGE).pack(anchor="w", padx=12, pady=(10, 4))
+    update_info_var = tk.StringVar(value=t("updates_settings_help"))
     tk.Label(update_bloc, textvariable=update_info_var, bg=LIGHT_ORANGE, fg=SECONDARY, font=("Segoe UI", 8), wraplength=520, justify="left").pack(anchor="w", padx=12, pady=(0, 8))
 
     def settings_verifier_update():

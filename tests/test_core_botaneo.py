@@ -915,12 +915,14 @@ class TestInstallateurWindows(unittest.TestCase):
         bat = Path(__file__).resolve().parents[1] / "Installer_Gruterra.bat"
         contenu = bat.read_text(encoding="ascii")
 
-        self.assertIn("[1/5] Verification de Python", contenu)
-        self.assertIn("[5/5] Verification de Gruterra", contenu)
+        self.assertIn("[1/6] Verification de Python", contenu)
+        self.assertIn("[5/6] Verification de Gruterra", contenu)
         self.assertIn("Mise a jour de pip, non bloquante", contenu)
         self.assertIn("pip install -r requirements.txt", contenu)
         self.assertIn("import tkinter, requests, bleak", contenu)
         self.assertIn("Python est introuvable sur ce PC", contenu)
+        self.assertIn("Invoke-WebRequest", contenu)
+        self.assertIn("InstallAllUsers=0", contenu)
         self.assertIn("Installation interrompue ou incomplete", contenu)
 
 
@@ -1004,7 +1006,8 @@ class TestUpdateDansParametres(unittest.TestCase):
         interface = Path(__file__).resolve().parents[1] / "_app" / "interface.py"
         contenu = interface.read_text(encoding="utf-8")
 
-        self.assertIn("Mises à jour", contenu)
+        self.assertIn('t("updates_section")', contenu)
+        self.assertIn("updates_settings_help", contenu)
         self.assertIn("settings_verifier_update", contenu)
         self.assertIn("settings_tester_update", contenu)
         self.assertIn("lancer_application_update", contenu)

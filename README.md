@@ -121,7 +121,7 @@ Elle exécute les tests automatisés, la vérification avant GitHub, un contrôl
 
 Gruterra nécessite Python 3.10 ou plus récent. Le développement actuel est testé avec des versions récentes de Python, notamment Python 3.14.
 
-Installer les dépendances sans PowerShell : double-cliquer sur `Installer_Gruterra.bat`. Le script vérifie Python, pip, les dépendances et les imports essentiels avant d’annoncer la réussite.
+Installer les dépendances sans PowerShell : double-cliquer sur `Installer_Gruterra.bat`. Le script installe Python automatiquement s’il est absent, puis vérifie pip, les dépendances et les imports essentiels avant d’annoncer la réussite.
 
 Méthode manuelle :
 
@@ -129,7 +129,7 @@ Méthode manuelle :
 py -m pip install -r requirements.txt
 ```
 
-Si le lanceur `py` n’est pas disponible, utiliser l’exécutable Python installé sur le PC. Si Python est introuvable, installer Python depuis le site officiel en gardant le lanceur `py` activé.
+Si le lanceur `py` n’est pas disponible, Gruterra cherche aussi `python`. Si Python est introuvable, `Installer_Gruterra.bat` tente maintenant d’installer Python automatiquement depuis python.org avant de reprendre l’installation.
 
 Tkinter et SQLite sont fournis avec une installation Python Windows standard.
 

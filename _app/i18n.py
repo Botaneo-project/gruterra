@@ -148,6 +148,18 @@ TRADUCTIONS = {
     "create_netatmo_file": {"fr": "Créer le fichier Netatmo", "en": "Create Netatmo file"},
     "netatmo_file_next_step": {"fr": "Puis ouvrez _config/netatmo_config.json et remplacez les valeurs d'exemple.", "en": "Then open _config/netatmo_config.json and replace the example values."},
     "update_restart_advised": {"fr": "Mise à jour terminée · redémarrage manuel conseillé", "en": "Update finished · manual restart recommended"},
+
+    "updates_section": {"fr": "Mises à jour", "en": "Updates"},
+    "updates_settings_help": {"fr": "Vérifiez les mises à jour depuis GitHub, puis testez ou appliquez l’archive officielle.", "en": "Check GitHub updates, then test or apply the official archive."},
+    "export_my_data": {"fr": "Exporter mes données", "en": "Export my data"},
+    "private_full_backup": {"fr": "Sauvegarde complète privée", "en": "Private full backup"},
+    "create_private_backup_question": {"fr": "Créer cette sauvegarde complète privée maintenant ?", "en": "Create this private full backup now?"},
+    "backup_error_title": {"fr": "Sauvegarde Gruterra", "en": "Gruterra backup"},
+    "backup_impossible": {"fr": "Sauvegarde impossible", "en": "Backup failed"},
+    "backup_created": {"fr": "Archive créée", "en": "Archive created"},
+    "backup_path_copied": {"fr": "Le chemin a été copié dans le presse-papiers.", "en": "The path has been copied to the clipboard."},
+    "backup_status_impossible": {"fr": "Sauvegarde Gruterra impossible", "en": "Gruterra backup failed"},
+    "backup_status_created": {"fr": "Sauvegarde Gruterra créée", "en": "Gruterra backup created"},
 }
 
 

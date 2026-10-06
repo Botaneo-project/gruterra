@@ -24,7 +24,7 @@ Utilisez une installation standard avec Tkinter et le lanceur `py`.
 
 ## 3. Lancer la démo
 
-Méthode simple : double-cliquez sur `Installer_Gruterra.bat`, puis lancez `Lancer_Demo.py`.
+Méthode simple : double-cliquez sur `Installer_Gruterra.bat`, puis lancez `Lancer_Demo.py`. Si Python manque, l’installateur tente de l’installer automatiquement.
 
 Méthode manuelle : ouvrez PowerShell dans le dossier décompressé contenant `requirements.txt`, puis lancez :
 

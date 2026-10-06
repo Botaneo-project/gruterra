@@ -44,7 +44,7 @@ py -m venv .venv
 .\.venv\Scripts\python.exe -m pip install -r requirements.txt
 ```
 
-Si Python est introuvable, le BAT affiche un message clair et indique le site officiel de Python au lieu de laisser une erreur terminal incompréhensible. Tkinter doit être disponible avec l'installation Python.
+Si Python est introuvable, le BAT tente d’installer automatiquement Python depuis python.org. Si le téléchargement ou l’installation est bloqué, il affiche un message clair au lieu de laisser une erreur terminal incompréhensible. Tkinter doit être disponible avec l'installation Python.
 
 ## 4. Tester sans matériel
 
