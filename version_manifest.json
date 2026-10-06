@@ -1,6 +1,6 @@
 {
   "version": "0.1.4-dev",
-  "notes": "Petite mise à jour : installation automatique de Python si absent, et libellés anglais/français pour les mises à jour dans Paramètres et les sauvegardes utilisateur.",
+  "notes": "Petite mise à jour de traduction : libellés français plus clairs pour le diagnostic, le test de mise à jour et l’aide des paramètres.",
   "url": "https://github.com/Botaneo-project/gruterra",
   "archive_url": "",
   "sha256": "",
