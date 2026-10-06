@@ -907,3 +907,17 @@ class TestPreferencesInterface(unittest.TestCase):
                     importlib.reload(sys.modules["botaneo_config"])
                 if "ui_preferences" in sys.modules:
                     importlib.reload(sys.modules["ui_preferences"])
+
+
+class TestInstallateurWindows(unittest.TestCase):
+    def test_installer_windows_verifie_les_dependances_essentielles(self):
+        bat = Path(__file__).resolve().parents[1] / "Installer_Gruterra.bat"
+        contenu = bat.read_text(encoding="ascii")
+
+        self.assertIn("[1/5] Verification de Python", contenu)
+        self.assertIn("[5/5] Verification de Gruterra", contenu)
+        self.assertIn("Mise a jour de pip, non bloquante", contenu)
+        self.assertIn("pip install -r requirements.txt", contenu)
+        self.assertIn("import tkinter, requests, bleak", contenu)
+        self.assertIn("Python est introuvable sur ce PC", contenu)
+        self.assertIn("Installation interrompue ou incomplete", contenu)

@@ -23,7 +23,7 @@ Installer Python pour Windows depuis :
 https://www.python.org/downloads/windows/
 ```
 
-Pendant l’installation, garder le lanceur `py` activé. Tkinter doit être disponible, car l’interface graphique l’utilise.
+Version recommandée : Python 3.10 ou plus récent. Pendant l’installation, garder le lanceur `py` activé si possible et cocher l’ajout de Python au PATH quand l’installateur le propose. Tkinter doit être disponible, car l’interface graphique l’utilise.
 
 ## 3. Installer les dépendances
 
@@ -33,7 +33,9 @@ Méthode simple, sans PowerShell : double-cliquer sur le fichier situé à la ra
 Installer_Gruterra.bat
 ```
 
-Ce script crée l'environnement local `.venv` et installe les dépendances de `requirements.txt`.
+Ce script détecte `py` ou `python`, crée l'environnement local `.venv`, vérifie `pip`, tente la mise à jour de pip sans bloquer toute l’installation si cette mise à jour échoue, installe les dépendances de `requirements.txt`, puis vérifie les imports essentiels : `tkinter`, `requests` et `bleak`.
+
+La fenêtre affiche des étapes lisibles (`[1/5]` à `[5/5]`) et reste ouverte en cas d'erreur pour permettre de copier le message. L'installation n'est considérée comme réussie qu'après cette vérification finale.
 
 Méthode manuelle si besoin : ouvrir PowerShell dans le dossier décompressé, puis lancer :
 
@@ -42,11 +44,11 @@ py -m venv .venv
 .\.venv\Scripts\python.exe -m pip install -r requirements.txt
 ```
 
-Si Python est introuvable, installez Python depuis le site officiel et gardez le lanceur `py` activé. Tkinter doit être disponible avec l'installation Python.
+Si Python est introuvable, le BAT affiche un message clair et indique le site officiel de Python au lieu de laisser une erreur terminal incompréhensible. Tkinter doit être disponible avec l'installation Python.
 
 ## 4. Tester sans matériel
 
-Pour découvrir Gruterra sans capteur, lancer le mode démo :
+Après une installation réussie, le premier test conseillé est le mode démo. Il ne demande ni capteur, ni Raspberry Pi, ni compte Netatmo :
 
 ```powershell
 .\.venv\Scripts\python.exe Lancer_Demo.py

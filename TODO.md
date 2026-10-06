@@ -13,6 +13,7 @@ Cette section sert de point d'entrée rapide après les grosses modifications r�
 - [ ] Discord : vérifier que les messages socle et tutoriels sont épinglés, qu'ils ne sont pas supprimés par les commandes de clean, que `#bot-commands`, `#admin-notes` et `#dev-follow-up` restent privés, et que les salons FR/EN ont chacun leur message adapté.
 - [ ] Raspberry : vérifier sur un cycle réel que les mesures annoncées comme rapatriées correspondent bien à des mesures nouvelles pour le PC, éventuellement collectées pendant que Gruterra était fermé.
 - [ ] Démo publique : lancer `Lancer_Demo.py`, vérifier que la première impression est propre, que les captures publiques correspondent encore à l'interface actuelle et que le README ne promet rien qui n'est pas visible en démo.
+- [ ] Installation Windows : retester `Télécharger → extraire → Installer_Gruterra.bat → Lancer_Demo.py` par double-clic sur le PC de secours, sans commande pip manuelle. Vérifier que pip upgrade non bloquant, `requests`, `bleak` et `tkinter` sont correctement contrôlés.
 - [ ] GitHub public : relire la fiche README après chaque gros push pour éviter les promesses dépassées, les anciens noms Botaneo visibles hors contexte, ou une confusion entre projet francophone et accueil anglophone.
 
 ### Bugs / risques à surveiller
@@ -283,6 +284,7 @@ Objectif : préparer une évolution sans casser l’enregistrement actuel des ar
 - [x] Vérifier au démarrage si une mise à jour installable est disponible et proposer `Télécharger maintenant`, sans bloquer les synchronisations si l’utilisateur refuse.
 
 - [x] Installation neuve : créer le schéma principal `plantes`, `capteurs`, `mesures` directement dans `database.py`, avec clés étrangères actives et index utiles.
+- [x] Installer Windows : étapes lisibles, détection `py`/`python`, pip upgrade non bloquant et vérification finale des imports essentiels.
 
 ## GitHub, sauvegarde et sécurité
 
