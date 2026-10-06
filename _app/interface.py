@@ -104,6 +104,15 @@ def t(cle):
     return traduire(cle, langue_interface)
 
 
+def texte_interface_utf8_sur(texte):
+    """Prépare un texte Unicode pour Tkinter sans supprimer accents ni emojis valides."""
+
+    if texte is None:
+        return ""
+    propre = str(texte).encode("utf-8", errors="replace").decode("utf-8", errors="replace")
+    return propre.replace("\ufffd", "?")
+
+
 # ============================================================
 # VARIABLES
 # ============================================================
@@ -4646,7 +4655,7 @@ def resume_acquisition_miflora(resultat_miflora):
         lignes.append(f"Mesures rapatriées depuis le Raspberry : {historiques_pi} mesure(s) ajoutée(s) au PC. Elles peuvent avoir été collectées pendant que Gruterra était fermé.")
     if attente_pi:
         lignes.append("Mesure Raspberry demandée : résultat attendu lors du prochain contrôle automatique ou de la prochaine synchronisation.")
-    return "\n".join(lignes)
+    return texte_interface_utf8_sur("\n".join(lignes))
 
 
 def synchroniser():
@@ -5005,7 +5014,7 @@ def etat_raspberry_a_propos():
 def resume_mise_a_jour_a_propos(racine, verifier_distant=False):
     try:
         diagnostic = botaneo_update.construire_diagnostic_mise_a_jour(racine, verifier_distant=verifier_distant)
-        return botaneo_update.formater_diagnostic_mise_a_jour(diagnostic)
+        return texte_interface_utf8_sur(botaneo_update.formater_diagnostic_mise_a_jour(diagnostic))
     except Exception as erreur:
         return f"Mise à jour : diagnostic indisponible ({erreur})"
 
@@ -5014,7 +5023,7 @@ def texte_diagnostic_update_json_a_propos(verifier_distant=False):
     racine = Path(__file__).resolve().parent.parent
     try:
         diagnostic = botaneo_update.construire_diagnostic_mise_a_jour(racine, verifier_distant=verifier_distant)
-        return botaneo_update.exporter_diagnostic_mise_a_jour_json(diagnostic)
+        return texte_interface_utf8_sur(botaneo_update.exporter_diagnostic_mise_a_jour_json(diagnostic))
     except Exception as erreur:
         return json.dumps(
             {
@@ -5046,7 +5055,7 @@ def patch_note_update_a_propos(verifier_distant=True):
         lignes.extend(["", notes])
     else:
         lignes.extend(["", "Aucune note de version détaillée n'est fournie par le manifeste."])
-    return "\n".join(lignes)
+    return texte_interface_utf8_sur("\n".join(lignes))
 
 
 def executer_assistant_update_a_propos(appliquer=False):
@@ -5089,7 +5098,7 @@ def executer_assistant_update_a_propos(appliquer=False):
         lignes.extend(["", "Erreurs :", erreur])
     if appliquer:
         lignes.extend(["", patch_note_update_a_propos(verifier_distant=True)])
-    return "\n".join(lignes).strip()
+    return texte_interface_utf8_sur("\n".join(lignes)).strip()
 
 
 
@@ -5215,7 +5224,7 @@ def texte_a_propos(verifier_distant=False):
         "- lancer py verifier_avant_github.py avant tout envoi GitHub",
         "- les documents privés de passation ne sont pas publiés",
     ]
-    return "\n".join(lignes)
+    return texte_interface_utf8_sur("\n".join(lignes))
 
 
 def ouvrir_a_propos():
@@ -5435,7 +5444,7 @@ def texte_maintenance():
         "Prochaine étape future : afficher et valider les synthèses avant d'alléger les anciennes mesures.",
     ]
 
-    return "\n".join(lignes)
+    return texte_interface_utf8_sur("\n".join(lignes))
 
 
 def ouvrir_maintenance():
@@ -5733,7 +5742,7 @@ def texte_sante_systeme(etat_raspberry=None):
             f"{capteur[4]} mesure(s), dernière {capteur[5] or 'jamais'}, "
             f"passif {capteur[6] or 0}, historique {capteur[8] or 0}"
         )
-    return "\n".join(lignes)
+    return texte_interface_utf8_sur("\n".join(lignes))
 
 
 def ouvrir_sante_systeme():
@@ -5928,7 +5937,7 @@ def ouvrir_parametres():
     def set_update_info(texte):
         update_info_zone.configure(state="normal")
         update_info_zone.delete("1.0", "end")
-        update_info_zone.insert("1.0", texte or "")
+        update_info_zone.insert("1.0", texte_interface_utf8_sur(texte))
         update_info_zone.configure(state="normal")
 
     set_update_info(t("updates_settings_help"))
@@ -6874,7 +6883,7 @@ def generer_texte_analyse_plante(plante_id):
     lignes.append("Point à discuter :")
     lignes.append("- Comparer l’évolution de l’humidité après arrosage avec l’état réel des feuilles et de la tige.")
     lignes.append("- Vérifier si la lumière moyenne hors balcon reste insuffisante pour une Crassula, même lorsque quelques pics lumineux apparaissent.")
-    return "\n".join(lignes).strip()
+    return texte_interface_utf8_sur("\n".join(lignes)).strip()
 
 
 def copier_analyse_plante(plante_id):

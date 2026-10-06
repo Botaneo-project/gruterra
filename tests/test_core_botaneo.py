@@ -1061,6 +1061,17 @@ class TestSauvegardeUtilisateur(unittest.TestCase):
         self.assertIn("Sauvegarde privée", rapport)
 
 
+class TestParametresUtf8(unittest.TestCase):
+    def test_parametres_nettoient_textes_update_utf8(self):
+        interface = Path(__file__).resolve().parents[1] / "_app" / "interface.py"
+        contenu = interface.read_text(encoding="utf-8")
+
+        self.assertIn("def texte_interface_utf8_sur", contenu)
+        self.assertIn("texte_interface_utf8_sur(texte)", contenu)
+        self.assertIn("texte_interface_utf8_sur(botaneo_update.formater_diagnostic_mise_a_jour", contenu)
+        self.assertIn("texte_interface_utf8_sur(botaneo_update.exporter_diagnostic_mise_a_jour_json", contenu)
+
+
 class TestUpdateUtf8Interface(unittest.TestCase):
     def test_interface_lance_update_en_utf8(self):
         interface = Path(__file__).resolve().parents[1] / "_app" / "interface.py"

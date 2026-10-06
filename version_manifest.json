@@ -1,6 +1,6 @@
 {
   "version": "0.1.4-dev",
-  "notes": "Correction UTF-8 updater : les notes de version avec accents, flèches, emojis ou drapeaux ne font plus planter update_gruterra.py sous console Windows.",
+  "notes": "Correction UTF-8 Paramètres : les textes de diagnostic et de patch note sont normalisés avant affichage/copie sans supprimer les accents ou emojis valides.",
   "url": "https://github.com/Botaneo-project/gruterra",
   "archive_url": "",
   "sha256": "",
