@@ -1,6 +1,6 @@
 {
   "version": "0.1.4-dev",
-  "notes": "Petite mise à jour de traduction : libellés français plus clairs pour le diagnostic, le test de mise à jour et l’aide des paramètres.",
+  "notes": "Correction installateur : Gruterra redétecte Python 3.12 installé localement et poursuit directement pip, dépendances et vérification de la démo.",
   "url": "https://github.com/Botaneo-project/gruterra",
   "archive_url": "",
   "sha256": "",

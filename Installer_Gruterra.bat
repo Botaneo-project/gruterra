@@ -8,6 +8,7 @@ set "VENV_PY=.venv\Scripts\python.exe"
 set "PYTHON_VERSION=3.12.10"
 set "PYTHON_INSTALLER=%TEMP%\gruterra-python-%PYTHON_VERSION%-amd64.exe"
 set "PYTHON_DOWNLOAD_URL=https://www.python.org/ftp/python/%PYTHON_VERSION%/python-%PYTHON_VERSION%-amd64.exe"
+set "PYTHON_EXPECTED_EXE=%LOCALAPPDATA%\Programs\Python\Python312\python.exe"
 
 echo ============================================
 echo Gruterra - installation Windows
@@ -143,6 +144,13 @@ if not errorlevel 1 (
         exit /b 0
     )
 )
+if exist "%PYTHON_EXPECTED_EXE%" (
+    "%PYTHON_EXPECTED_EXE%" -c "import sys; raise SystemExit(0)" >nul 2>nul
+    if not errorlevel 1 (
+        set "PYTHON_CMD=%PYTHON_EXPECTED_EXE%"
+        exit /b 0
+    )
+)
 exit /b 1
 
 :install_python
@@ -163,6 +171,7 @@ if errorlevel 1 (
     echo ERREUR - l'installation automatique de Python a echoue.
     exit /b 1
 )
+if exist "%PYTHON_EXPECTED_EXE%" set "PYTHON_CMD=%PYTHON_EXPECTED_EXE%"
 echo Python installe. Nouvelle detection...
 echo.
 exit /b 0

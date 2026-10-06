@@ -923,6 +923,8 @@ class TestInstallateurWindows(unittest.TestCase):
         self.assertIn("Python est introuvable sur ce PC", contenu)
         self.assertIn("Invoke-WebRequest", contenu)
         self.assertIn("InstallAllUsers=0", contenu)
+        self.assertIn("PYTHON_EXPECTED_EXE", contenu)
+        self.assertIn("Programs\\Python\\Python312\\python.exe", contenu)
         self.assertIn("Installation interrompue ou incomplete", contenu)
 
 
