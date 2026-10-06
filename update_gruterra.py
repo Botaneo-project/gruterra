@@ -98,7 +98,12 @@ def construire_message_validation(diagnostic: dict) -> str:
     if not sha256:
         lignes.append("- empreinte SHA256 absente du manifeste")
 
-    if manifest_auto_update and archive_url and sha256 and diagnostic.get("statut_global") != "bloque":
+    statut_version = str(version.get("statut") or "").strip()
+    if statut_version == "a_jour":
+        lignes.append("- résultat : Gruterra est déjà à jour, aucune mise à jour normale à appliquer")
+    elif statut_version == "version_locale_plus_recente":
+        lignes.append("- résultat : la version locale est plus récente que la version distante, aucune mise à jour normale à appliquer")
+    elif manifest_auto_update and archive_url and sha256 and diagnostic.get("statut_global") != "bloque":
         lignes.append("- prérequis applicatifs détectés ; lancer avec --apply pour appliquer après sauvegarde locale")
     else:
         lignes.append("- résultat : vérification informative uniquement, aucune mise à jour appliquée")
@@ -111,6 +116,11 @@ def valider_manifest_applicable(diagnostic: dict) -> tuple[bool, list[str]]:
     version = diagnostic.get("version", {})
     if diagnostic.get("statut_global") == "bloque":
         erreurs.append("diagnostic bloqué : protections locales insuffisantes")
+    statut_version = str(version.get("statut") or "").strip()
+    if statut_version == "a_jour":
+        erreurs.append("Gruterra est déjà à jour")
+    elif statut_version == "version_locale_plus_recente":
+        erreurs.append("version locale plus récente que la version distante")
     if not version.get("manifest_auto_update"):
         erreurs.append("mise_a_jour_automatique vaut false dans le manifeste")
     if not str(version.get("archive_url", "") or "").strip():

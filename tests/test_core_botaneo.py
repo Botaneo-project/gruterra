@@ -818,6 +818,28 @@ class TestAssistantMiseAJour(unittest.TestCase):
         self.assertIn("archive_url absent du manifeste", erreurs)
         self.assertIn("sha256 absent ou invalide dans le manifeste", erreurs)
 
+    def test_version_deja_a_jour_refuse_application_normale(self):
+        update_gruterra = importlib.import_module("update_gruterra")
+        diagnostic = {
+            "statut_global": "pret_a_verifier",
+            "version": {
+                "statut": "a_jour",
+                "manifest_auto_update": True,
+                "archive_url": "https://example.invalid/gruterra.zip",
+                "sha256": "a" * 64,
+            },
+        }
+
+        ok, erreurs = update_gruterra.valider_manifest_applicable(diagnostic)
+        resultat = update_gruterra.appliquer_mise_a_jour(diagnostic, Path.cwd(), dry_run=True)
+        message = update_gruterra.construire_message_validation(diagnostic)
+
+        self.assertFalse(ok)
+        self.assertIn("Gruterra est déjà à jour", erreurs)
+        self.assertFalse(resultat["ok"])
+        self.assertFalse(resultat["applique"])
+        self.assertIn("déjà à jour", message)
+
     def test_message_validation_supporte_unicode_patch_note(self):
         update_gruterra = importlib.import_module("update_gruterra")
         diagnostic = {
