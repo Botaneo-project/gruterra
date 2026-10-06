@@ -5029,6 +5029,26 @@ def texte_diagnostic_update_json_a_propos(verifier_distant=False):
 
 
 
+def patch_note_update_a_propos(verifier_distant=True):
+    racine = Path(__file__).resolve().parent.parent
+    try:
+        diagnostic = botaneo_update.construire_diagnostic_mise_a_jour(racine, verifier_distant=verifier_distant)
+    except Exception as erreur:
+        return f"Patch note indisponible : {erreur}"
+    version = diagnostic.get("version", {})
+    version_distante = version.get("version_distante") or version.get("version") or "version non précisée"
+    notes = str(version.get("notes") or "").strip()
+    lignes = [
+        "Patch note Gruterra",
+        f"Version : {version_distante}",
+    ]
+    if notes:
+        lignes.extend(["", notes])
+    else:
+        lignes.extend(["", "Aucune note de version détaillée n'est fournie par le manifeste."])
+    return "\n".join(lignes)
+
+
 def executer_assistant_update_a_propos(appliquer=False):
     racine = Path(__file__).resolve().parent.parent
     script = racine / "update_gruterra.py"
@@ -5063,8 +5083,38 @@ def executer_assistant_update_a_propos(appliquer=False):
         lignes.append(sortie)
     if erreur:
         lignes.extend(["", "Erreurs :", erreur])
+    if appliquer:
+        lignes.extend(["", patch_note_update_a_propos(verifier_distant=True)])
     return "\n".join(lignes).strip()
 
+
+
+def lancer_application_update(parent, afficher_resultat=None):
+    if not messagebox.askyesno(
+        t("update_apply_title"),
+        t("update_apply_confirm"),
+        parent=parent,
+    ):
+        return
+    status_var.set(t("update_apply_running"))
+
+    def tache():
+        contenu = executer_assistant_update_a_propos(appliquer=True)
+
+        def terminer():
+            if afficher_resultat:
+                afficher_resultat(contenu)
+            else:
+                messagebox.showinfo(
+                    "Mise à jour Gruterra",
+                    contenu + "\n\nSi la mise à jour a été appliquée, fermez puis relancez Gruterra.",
+                    parent=parent,
+                )
+            status_var.set(t("update_apply_done"))
+
+        root.after(0, terminer)
+
+    threading.Thread(target=tache, daemon=True).start()
 
 
 def update_installable_depuis_diagnostic(diagnostic):
@@ -5215,7 +5265,8 @@ def ouvrir_a_propos():
     def verifier_mise_a_jour():
         status_var.set(t("update_checking"))
         dernier_verifier_distant["valeur"] = True
-        remplacer_texte_a_propos(texte_a_propos(verifier_distant=True))
+        contenu = texte_a_propos(verifier_distant=True) + "\n\n" + patch_note_update_a_propos(verifier_distant=True)
+        remplacer_texte_a_propos(contenu)
         status_var.set(t("update_check_done"))
 
     def lancer_update_simule():
@@ -5229,20 +5280,7 @@ def ouvrir_a_propos():
         threading.Thread(target=tache, daemon=True).start()
 
     def appliquer_update():
-        if not messagebox.askyesno(
-            t("update_apply_title"),
-            t("update_apply_confirm"),
-            parent=fenetre,
-        ):
-            return
-        status_var.set(t("update_apply_running"))
-
-        def tache():
-            contenu = executer_assistant_update_a_propos(appliquer=True)
-            root.after(0, lambda: remplacer_texte_a_propos(contenu))
-            root.after(0, lambda: status_var.set(t("update_apply_done")))
-
-        threading.Thread(target=tache, daemon=True).start()
+        lancer_application_update(fenetre, afficher_resultat=remplacer_texte_a_propos)
 
     def copier():
         root.clipboard_clear()
@@ -5858,6 +5896,37 @@ def ouvrir_parametres():
         activeforeground=TEXT,
         selectcolor=CARD
     ).pack(anchor="w", padx=12, pady=(0, 10))
+
+    update_bloc = tk.Frame(fenetre, bg=LIGHT_ORANGE, highlightbackground=BORDER, highlightthickness=1)
+    update_bloc.pack(fill="x", padx=20, pady=(0, 12))
+    tk.Label(update_bloc, text="Mises à jour", font=("Segoe UI", 11, "bold"), fg=ORANGE, bg=LIGHT_ORANGE).pack(anchor="w", padx=12, pady=(10, 4))
+    update_info_var = tk.StringVar(value="Vérifiez les mises à jour depuis GitHub, puis testez ou appliquez l’archive officielle.")
+    tk.Label(update_bloc, textvariable=update_info_var, bg=LIGHT_ORANGE, fg=SECONDARY, font=("Segoe UI", 8), wraplength=520, justify="left").pack(anchor="w", padx=12, pady=(0, 8))
+
+    def settings_verifier_update():
+        status_var.set(t("update_checking"))
+        try:
+            diagnostic = botaneo_update.construire_diagnostic_mise_a_jour(Path(__file__).resolve().parent.parent, verifier_distant=True)
+            update_info_var.set(botaneo_update.formater_diagnostic_mise_a_jour(diagnostic) + "\n\n" + patch_note_update_a_propos(verifier_distant=True))
+            status_var.set(t("update_check_done"))
+        except Exception as erreur:
+            update_info_var.set(f"Vérification impossible : {erreur}")
+
+    def settings_tester_update():
+        status_var.set(t("update_sim_running"))
+
+        def tache():
+            contenu = executer_assistant_update_a_propos(appliquer=False)
+            root.after(0, lambda: update_info_var.set(contenu))
+            root.after(0, lambda: status_var.set(t("update_sim_done")))
+
+        threading.Thread(target=tache, daemon=True).start()
+
+    update_actions = tk.Frame(update_bloc, bg=LIGHT_ORANGE)
+    update_actions.pack(fill="x", padx=12, pady=(0, 10))
+    tk.Button(update_actions, text=t("check_updates"), command=settings_verifier_update, bg=BG, fg=TEXT, relief="flat", cursor="hand2").pack(side="left", padx=(0, 8))
+    tk.Button(update_actions, text=t("update"), command=settings_tester_update, bg=BG, fg=TEXT, relief="flat", cursor="hand2").pack(side="left", padx=(0, 8))
+    tk.Button(update_actions, text=t("apply_update"), command=lambda: lancer_application_update(fenetre, afficher_resultat=update_info_var.set), bg=BG, fg=TEXT, relief="flat", cursor="hand2").pack(side="left")
 
     bloc = tk.Frame(fenetre, bg=LIGHT_BLUE, highlightbackground=BORDER, highlightthickness=1)
     bloc.pack(fill="x", padx=20, pady=(0, 12))

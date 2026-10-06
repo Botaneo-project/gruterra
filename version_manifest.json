@@ -1,6 +1,6 @@
 {
   "version": "0.1.4-dev",
-  "notes": "Release de test update : installateur Windows fiabilisé, version locale embarquée, libellés update clarifiés, sauvegarde utilisateur avec rapport horodaté, et test possible depuis À propos en mode démo.",
+  "notes": "Release de test update : installateur Windows fiabilisé, sauvegarde utilisateur avec rapport horodaté, patch note lisible après mise à jour, et test possible depuis À propos en mode démo.",
   "url": "https://github.com/Botaneo-project/gruterra",
   "archive_url": "",
   "sha256": "",

@@ -987,3 +987,24 @@ class TestSauvegardeUtilisateur(unittest.TestCase):
         self.assertIn("Éléments inclus : plantes.db, _config", rapport)
         self.assertIn("Éléments absents : _historique", rapport)
         self.assertIn("Sauvegarde privée", rapport)
+
+
+class TestPatchNoteUpdateInterface(unittest.TestCase):
+    def test_interface_contient_patch_note_update(self):
+        interface = Path(__file__).resolve().parents[1] / "_app" / "interface.py"
+        contenu = interface.read_text(encoding="utf-8")
+
+        self.assertIn("def patch_note_update_a_propos", contenu)
+        self.assertIn("Patch note Gruterra", contenu)
+        self.assertIn("patch_note_update_a_propos(verifier_distant=True)", contenu)
+
+
+class TestUpdateDansParametres(unittest.TestCase):
+    def test_parametres_contiennent_bloc_mises_a_jour(self):
+        interface = Path(__file__).resolve().parents[1] / "_app" / "interface.py"
+        contenu = interface.read_text(encoding="utf-8")
+
+        self.assertIn("Mises à jour", contenu)
+        self.assertIn("settings_verifier_update", contenu)
+        self.assertIn("settings_tester_update", contenu)
+        self.assertIn("lancer_application_update", contenu)

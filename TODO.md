@@ -8,7 +8,7 @@ Cette section sert de point d'entrée rapide après les grosses modifications r�
 
 ### À vérifier en priorité
 
-- [ ] Auto-update : refaire un test complet côté utilisateur avec le bouton de l'application : détection, message, simulation, sauvegarde, application contrôlée et redémarrage. Vérifier qu'une personne qui n'utilise pas Git peut réellement se mettre à jour sans retélécharger tout le projet.
+- [ ] Auto-update : refaire un test complet côté utilisateur depuis `Paramètres` : détection, patch note lisible, simulation, sauvegarde, application contrôlée et redémarrage. Vérifier qu'une personne qui n'utilise pas Git peut réellement se mettre à jour sans retélécharger tout le projet.
 - [ ] Traduction : parcourir le mode démo en français puis en anglais et noter les écrans encore partiellement traduits. Priorité aux boutons, messages d'erreur, installation, update, historique et synchronisation.
 - [ ] Discord : vérifier que les messages socle et tutoriels sont épinglés, qu'ils ne sont pas supprimés par les commandes de clean, que `#bot-commands`, `#admin-notes` et `#dev-follow-up` restent privés, et que les salons FR/EN ont chacun leur message adapté.
 - [ ] Raspberry : vérifier sur un cycle réel que les mesures annoncées comme rapatriées correspondent bien à des mesures nouvelles pour le PC, éventuellement collectées pendant que Gruterra était fermé.
@@ -281,6 +281,7 @@ Objectif : préparer une évolution sans casser l’enregistrement actuel des ar
 - [x] Bloquer le diagnostic update si la séparation programme/données ou la liste des données personnelles à préserver manque dans le plan.
 - [x] Afficher la dernière version disponible depuis GitHub dans le diagnostic À propos quand le manifeste distant répond.
 - [x] Ajouter dans `À propos` un bouton `Vérifier les mises à jour`, à la demande, sans téléchargement ni application automatique.
+- [x] Ajouter un accès mise à jour dans `Paramètres`, en gardant `À propos` pour le diagnostic et la version.
 - [x] Ajouter dans `À propos` un bouton `Update` qui lance la simulation du script de mise à jour et un bouton d’application contrôlée avec confirmation.
 - [x] Vérifier au démarrage si une mise à jour installable est disponible et proposer `Télécharger maintenant`, sans bloquer les synchronisations si l’utilisateur refuse.
 

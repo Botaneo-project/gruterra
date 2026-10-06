@@ -68,7 +68,7 @@ Gruterra créera ou utilisera ses fichiers locaux selon la configuration disponi
 
 ## 6. Mise à jour
 
-Si une release officielle contient une archive et un SHA256 valide, Gruterra peut proposer la mise à jour au démarrage ou depuis `À propos`.
+Si une release officielle contient une archive et un SHA256 valide, Gruterra peut proposer la mise à jour au démarrage ou depuis `Paramètres` ou `À propos`.
 
 Le système de mise à jour :
 
