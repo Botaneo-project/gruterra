@@ -1,6 +1,6 @@
 {
   "version": "0.1.4-dev",
-  "notes": "Amélioration Paramètres : les notes de mise à jour sont maintenant dans une zone défilable, sélectionnable et copiable quand le texte est long.",
+  "notes": "Correction lanceurs Windows : Lancer_Demo.bat et Lancer_Gruterra.bat relancent automatiquement l’installateur si .venv manque, puis réessaient le lancement.",
   "url": "https://github.com/Botaneo-project/gruterra",
   "archive_url": "",
   "sha256": "",

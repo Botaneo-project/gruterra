@@ -36,7 +36,7 @@ py -m venv .venv
 
 Pour les prochains lancements, utilisez `Lancer_Demo.bat` pour la démo ou `Lancer_Gruterra.bat` pour commencer une utilisation réelle vierge.
 
-Aucun script d’activation PowerShell n’est requis.
+Aucun script d’activation PowerShell n’est requis. Si `.venv` manque, `Lancer_Demo.bat` relance automatiquement `Installer_Gruterra.bat`, puis réessaie la démo. Évitez le double-clic sur `Lancer_Demo.py` sur un PC vierge : Windows peut ne rien afficher si l’association Python n’est pas prête.
 
 ## 4. Ce que la démo utilise
 

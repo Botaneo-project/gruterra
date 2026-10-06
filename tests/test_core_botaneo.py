@@ -936,9 +936,13 @@ class TestLanceursWindows(unittest.TestCase):
 
         self.assertIn(".venv\\Scripts\\python.exe", demo)
         self.assertIn("Lancer_Demo.py", demo)
+        self.assertIn("Installer_Gruterra.bat", demo)
+        self.assertIn("call :ensure_environment", demo)
         self.assertIn("pause", demo.lower())
         self.assertIn(".venv\\Scripts\\python.exe", reel)
         self.assertIn("Lancer_Gruterra.py", reel)
+        self.assertIn("Installer_Gruterra.bat", reel)
+        self.assertIn("call :ensure_environment", reel)
         self.assertIn("pause", reel.lower())
 
 

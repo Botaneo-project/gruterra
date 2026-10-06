@@ -26,7 +26,7 @@ Le guide détaillé est ici : [GUIDE_DEMO.md](GUIDE_DEMO.md). Pour installer dep
 - `Lancer_Demo.bat` ouvre Gruterra avec des plantes et mesures fictives. C’est le meilleur choix pour découvrir le projet sans matériel.
 - `Lancer_Gruterra.py` ouvre Gruterra pour une utilisation réelle, avec une base locale vide au départ. Vos futures données restent sur votre machine.
 
-Les deux lanceurs sont à la racine du dossier Gruterra et utilisent des chemins relatifs au dossier décompressé.
+Les deux lanceurs `.bat` sont à la racine du dossier Gruterra et utilisent des chemins relatifs au dossier décompressé. Ils relancent automatiquement `Installer_Gruterra.bat` si l’environnement local `.venv` manque. Le double-clic sur les fichiers `.py` dépend de l’association Python de Windows et peut ne rien afficher sur un PC vierge ; les `.bat` sont les lanceurs recommandés.
 
 ## Aperçu de la démo
 
