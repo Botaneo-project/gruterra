@@ -295,8 +295,8 @@ Objectif : permettre à un utilisateur de reconstruire son environnement Gruterr
 - [x] Préparer un module technique `_app/sauvegarde_utilisateur.py` avec manifeste de sauvegarde, mode `donnees` et mode `complete`.
 - [x] Marquer explicitement les sauvegardes complètes comme privées, car elles peuvent contenir tokens, identifiants techniques, `_config/`, base réelle et états runtime.
 - [x] Exclure `_user_backups/` de Git et le bloquer dans `verifier_avant_github.py`.
-- [ ] Ajouter une interface `Exporter mes données` pour produire une archive sans secrets.
-- [ ] Ajouter une interface `Sauvegarde complète privée` avec avertissement très visible avant création.
+- [x] Ajouter une interface `Exporter mes données` pour produire une archive sans secrets.
+- [x] Ajouter une interface `Sauvegarde complète privée` avec avertissement très visible avant création.
 - [ ] Étudier un chiffrement par mot de passe fiable pour les archives complètes contenant des secrets, sans inventer un chiffrement maison fragile.
 - [ ] Préparer la restauration : vérifier l'archive, afficher son contenu, créer une sauvegarde automatique de l'état existant, puis restaurer seulement après confirmation.
 - [ ] Tester la restauration sur un dossier temporaire avant toute restauration réelle sur le poste utilisateur.

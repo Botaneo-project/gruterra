@@ -331,7 +331,7 @@ Gruterra distingue deux usages :
 
 Une sauvegarde complète privée peut contenir des tokens ou identifiants techniques. Elle doit rester locale, ne jamais être partagée et ne jamais être publiée sur GitHub. Les dossiers `_user_backups/`, `_config/`, `_security_backups/`, `_historique/` et `_app/data/` sont exclus ou bloqués par les garde-fous GitHub.
 
-La restauration automatique complète n'est pas encore exposée dans l'interface. Elle devra créer une sauvegarde de l'état existant avant toute restauration.
+Les boutons `Exporter mes données` et `Sauvegarde complète privée` sont disponibles depuis `Base & synthèses`. La restauration automatique complète n’est pas encore exposée dans l’interface ; elle devra créer une sauvegarde de l’état existant avant toute restauration.
 
 ## Mise à jour assistée
 

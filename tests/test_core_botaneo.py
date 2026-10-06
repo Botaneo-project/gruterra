@@ -966,3 +966,24 @@ class TestSauvegardeUtilisateur(unittest.TestCase):
 
         self.assertIn("_config/secret.local.json", noms)
         self.assertTrue(manifest["contient_elements_prives"])
+
+    def test_rapport_sauvegarde_affiche_horaire_et_avertissement(self):
+        sauvegarde = importlib.import_module("sauvegarde_utilisateur")
+        manifest = {
+            "mode": "complete",
+            "cree_le": "2026-10-06T21:15:00",
+            "contient_elements_prives": True,
+            "avertissement": "Sauvegarde privée",
+            "elements": [
+                {"chemin": "plantes.db", "existe": True},
+                {"chemin": "_config", "existe": True},
+                {"chemin": "_historique", "existe": False},
+            ],
+        }
+        rapport = sauvegarde.formater_rapport_sauvegarde(manifest)
+
+        self.assertIn("Horaire : 2026-10-06T21:15:00", rapport)
+        self.assertIn("Mode : complete", rapport)
+        self.assertIn("Éléments inclus : plantes.db, _config", rapport)
+        self.assertIn("Éléments absents : _historique", rapport)
+        self.assertIn("Sauvegarde privée", rapport)

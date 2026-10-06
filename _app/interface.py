@@ -24,6 +24,7 @@ import sync_miflora
 import raspberry_sync
 import botaneo_email
 import botaneo_update
+import sauvegarde_utilisateur
 from capteurs import netatmo
 import previsions_meteo
 from suivi_raspberry_ui import SuiviRaspberry
@@ -34,7 +35,7 @@ from botaneo_config import CONFIG_DIR
 # CONFIGURATION
 # ============================================================
 
-APP_VERSION = "0.1.3-dev"
+APP_VERSION = "0.1.4-dev"
 
 root = tk.Tk()
 
@@ -5548,6 +5549,34 @@ def ouvrir_maintenance():
         )
         status_var.set("Synthèses journalières préparées sans suppression")
 
+    def creer_sauvegarde(mode):
+        if mode == "complete":
+            if not messagebox.askyesno(
+                "Sauvegarde complète privée",
+                sauvegarde_utilisateur.AVERTISSEMENT_SAUVEGARDE_PRIVEE
+                + "\n\nCréer cette sauvegarde complète privée maintenant ?",
+                parent=fenetre,
+            ):
+                return
+        try:
+            racine_gruterra = Path(__file__).resolve().parent.parent
+            archive = sauvegarde_utilisateur.creer_sauvegarde_utilisateur(racine_gruterra, mode=mode)
+            manifest = sauvegarde_utilisateur.construire_manifest_sauvegarde(racine_gruterra, mode=mode)
+            rapport = sauvegarde_utilisateur.formater_rapport_sauvegarde(manifest)
+        except Exception as erreur:
+            messagebox.showerror("Sauvegarde Gruterra", f"Sauvegarde impossible : {erreur}", parent=fenetre)
+            status_var.set("Sauvegarde Gruterra impossible")
+            return
+
+        root.clipboard_clear()
+        root.clipboard_append(str(archive))
+        messagebox.showinfo(
+            "Sauvegarde Gruterra",
+            f"Archive créée :\n{archive}\n\nLe chemin a été copié dans le presse-papiers.\n\n{rapport}",
+            parent=fenetre,
+        )
+        status_var.set(f"Sauvegarde Gruterra créée : {archive.name}")
+
     rafraichir()
 
     boutons = tk.Frame(fenetre, bg=CARD)
@@ -5555,6 +5584,8 @@ def ouvrir_maintenance():
     tk.Button(boutons, text=t("refresh_button"), command=rafraichir, bg=LIGHT_GREEN, fg=GREEN, activebackground=LIGHT_GREEN, relief="flat", cursor="hand2").pack(side="left", padx=(0, 8))
     tk.Button(boutons, text=t("copy"), command=copier, bg=LIGHT_BLUE, fg=BLUE, activebackground=LIGHT_BLUE, relief="flat", cursor="hand2").pack(side="left", padx=(0, 8))
     tk.Button(boutons, text=t("prepare_summaries"), command=preparer_syntheses, bg=LIGHT_ORANGE, fg=ORANGE, activebackground=LIGHT_ORANGE, relief="flat", cursor="hand2").pack(side="left", padx=(0, 8))
+    tk.Button(boutons, text="Exporter mes données", command=lambda: creer_sauvegarde("donnees"), bg=LIGHT_BLUE, fg=BLUE, activebackground=LIGHT_BLUE, relief="flat", cursor="hand2").pack(side="left", padx=(0, 8))
+    tk.Button(boutons, text="Sauvegarde complète privée", command=lambda: creer_sauvegarde("complete"), bg=LIGHT_ORANGE, fg=ORANGE, activebackground=LIGHT_ORANGE, relief="flat", cursor="hand2").pack(side="left", padx=(0, 8))
     tk.Button(boutons, text=t("summary_detail"), command=ouvrir_detail_synthese, bg=BG, fg=TEXT, activebackground=BG, relief="flat", cursor="hand2").pack(side="left")
     tk.Button(boutons, text=t("close"), command=fenetre.destroy, bg=BG, fg=TEXT, relief="flat", cursor="hand2").pack(side="right")
 

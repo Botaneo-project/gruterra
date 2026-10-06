@@ -96,6 +96,30 @@ def construire_manifest_sauvegarde(racine, mode="complete") -> dict:
     }
 
 
+
+def formater_rapport_sauvegarde(manifest: dict) -> str:
+    """Retourne un rapport court et copiable pour l'utilisateur."""
+
+    mode = manifest.get("mode", "inconnu")
+    cree_le = manifest.get("cree_le", "horaire inconnu")
+    elements = manifest.get("elements", [])
+    presents = [item.get("chemin") for item in elements if item.get("existe")]
+    absents = [item.get("chemin") for item in elements if not item.get("existe")]
+    lignes = [
+        "Rapport de sauvegarde Gruterra",
+        f"Horaire : {cree_le}",
+        f"Mode : {mode}",
+        f"Contient des éléments privés : {'oui' if manifest.get('contient_elements_prives') else 'non'}",
+        f"Éléments inclus : {', '.join(presents) if presents else 'aucun'}",
+    ]
+    if absents:
+        lignes.append(f"Éléments absents : {', '.join(absents)}")
+    avertissement = manifest.get("avertissement")
+    if avertissement:
+        lignes.append(f"Avertissement : {avertissement}")
+    return "\n".join(lignes)
+
+
 def _ajouter_fichier(zipf: zipfile.ZipFile, racine: Path, relatif: Path) -> None:
     chemin = racine / relatif
     if chemin.is_file():

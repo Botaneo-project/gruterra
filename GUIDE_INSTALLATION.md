@@ -97,7 +97,7 @@ Gruterra distingue deux types de sauvegardes :
 
 Une sauvegarde complète privée ne doit jamais être publiée sur GitHub, Reddit, Discord ou envoyée à quelqu’un sans vérification. Elle est destinée uniquement à l’utilisateur. Le dossier local prévu pour ces archives est `_user_backups/`, ignoré par Git.
 
-La restauration complète automatique n’est pas encore exposée dans l’interface. Quand elle sera ajoutée, Gruterra devra d’abord créer une sauvegarde de l’état existant pour permettre un retour arrière.
+Les boutons `Exporter mes données` et `Sauvegarde complète privée` sont disponibles depuis `Base & synthèses`. La restauration complète automatique n’est pas encore exposée dans l’interface. Quand elle sera ajoutée, Gruterra devra d’abord créer une sauvegarde de l’état existant pour permettre un retour arrière.
 
 ## 8. Configuration optionnelle
 
