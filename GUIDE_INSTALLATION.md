@@ -33,7 +33,7 @@ Méthode simple, sans PowerShell : double-cliquer sur le fichier situé à la ra
 Installer_Gruterra.bat
 ```
 
-Ce script détecte `py` ou `python`, crée l'environnement local `.venv`, vérifie `pip`, tente la mise à jour de pip sans bloquer toute l’installation si cette mise à jour échoue, installe les dépendances de `requirements.txt`, puis vérifie les imports essentiels : `tkinter`, `requests` et `bleak`.
+Ce script détecte `py` ou `python`, crée l'environnement local `.venv`, vérifie `pip` sans le mettre à jour systématiquement, installe les dépendances de `requirements.txt`, puis vérifie les imports essentiels : `tkinter`, `requests` et `bleak`.
 
 La fenêtre affiche des étapes lisibles (`[1/5]` à `[5/5]`) et reste ouverte en cas d'erreur pour permettre de copier le message. L'installation n'est considérée comme réussie qu'après cette vérification finale.
 

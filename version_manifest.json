@@ -1,6 +1,6 @@
 {
   "version": "0.1.4-dev",
-  "notes": "Correction lanceurs Windows : Lancer_Demo.bat et Lancer_Gruterra.bat relancent automatiquement l’installateur si .venv manque, puis réessaient le lancement.",
+  "notes": "Correction installateur : pip n’est plus mis à jour systématiquement à chaque installation, ce qui évite le bruit de désinstallation/réinstallation inutile.",
   "url": "https://github.com/Botaneo-project/gruterra",
   "archive_url": "",
   "sha256": "",

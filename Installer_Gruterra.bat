@@ -76,13 +76,7 @@ if errorlevel 1 (
     )
 )
 
-echo Mise a jour de pip, non bloquante...
-"%VENV_PY%" -m pip install --upgrade pip
-if errorlevel 1 (
-    echo.
-    echo AVERTISSEMENT - la mise a jour de pip a echoue.
-    echo L'installation continue avec la version de pip deja disponible.
-)
+echo pip disponible dans l'environnement local.
 
 echo.
 echo [4/6] Installation des dependances Gruterra

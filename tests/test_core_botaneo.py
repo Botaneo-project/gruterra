@@ -917,7 +917,8 @@ class TestInstallateurWindows(unittest.TestCase):
 
         self.assertIn("[1/6] Verification de Python", contenu)
         self.assertIn("[5/6] Verification de Gruterra", contenu)
-        self.assertIn("Mise a jour de pip, non bloquante", contenu)
+        self.assertIn("pip disponible dans l'environnement local", contenu)
+        self.assertNotIn("pip install --upgrade pip", contenu)
         self.assertIn("pip install -r requirements.txt", contenu)
         self.assertIn("import tkinter, requests, bleak", contenu)
         self.assertIn("Python est introuvable sur ce PC", contenu)
