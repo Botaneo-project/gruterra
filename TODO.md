@@ -359,6 +359,14 @@ Objectif : permettre à un utilisateur de reconstruire son environnement Gruterr
 - [ ] Prévoir un prototype isolé : scan BLE passif, journalisation des service data bruts par adresse, puis décodage hors base avant tout enregistrement automatique.
 - [ ] Éviter de dépendre de Home Assistant comme source directe : s’inspirer de sa méthode, mais garder Gruterra autonome.
 
+## ESP32 — configuration future
+
+- [ ] Prévoir pour les futurs collecteurs ESP32 un mode configuration simple : au premier démarrage, l’ESP32 crée un réseau Wi‑Fi temporaire local.
+- [ ] Depuis un téléphone, l’utilisateur se connecte à ce réseau puis ouvre une page de configuration captive ou locale pour renseigner Wi‑Fi, adresse Gruterra/Raspberry, nom du capteur et paramètres utiles.
+- [ ] Après validation, l’ESP32 enregistre la configuration localement, coupe le point d’accès temporaire et rejoint le Wi‑Fi domestique.
+- [ ] Prévoir un bouton ou une procédure de reset configuration pour relancer ce mode sans devoir reflasher l’ESP32.
+- [ ] Ne jamais afficher ni envoyer les secrets ESP32 vers GitHub ; documenter seulement un exemple de configuration anonyme.
+
 ## Raspberry et synchronisation
 
 État actuel : le PC récupère les données du Raspberry en priorité, confirme les mesures après enregistrement, évite les doublons et copie la dernière sauvegarde quotidienne du Pi. Le Raspberry demande maintenant une collecte Mi Flora quatre fois par jour : 06 h, 12 h, 18 h et 23 h. Le PC peut encore faire une lecture Bluetooth manuelle de secours si le Raspberry ne fournit pas de mesure fraîche.

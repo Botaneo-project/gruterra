@@ -33,5 +33,6 @@ Cette roadmap donne une vue courte de l’état du projet. Le fichier `TODO.md` 
 - Migration vers un dossier utilisateur dédié.
 - Notifications e-mail réellement activables après validation des règles.
 - Collecte BLE passive Mi Flora plus poussée sur Raspberry.
+- Configuration simplifiée des futurs ESP32 via réseau Wi‑Fi temporaire et page locale depuis téléphone.
 - Comparaison avancée de journées et de cycles.
 - Nettoyage progressif du vieux nom technique `botaneo` quand une vraie migration sera prête.
