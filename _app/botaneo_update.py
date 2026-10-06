@@ -8,6 +8,7 @@ sauvegardes.
 from __future__ import annotations
 
 import json
+import os
 from dataclasses import dataclass
 from pathlib import Path
 from urllib.error import HTTPError, URLError
@@ -32,6 +33,18 @@ VERSION_LOCALE_DEFAUT = "0.1.0-dev"
 FICHIER_VERSION_LOCALE = "VERSION"
 MANIFEST_DISTANT_DEFAUT = "https://raw.githubusercontent.com/Botaneo-project/gruterra/main/version_manifest.json"
 TIMEOUT_MANIFEST_SECONDES = 5
+
+
+def detecter_contexte_execution(racine) -> dict:
+    racine = Path(racine)
+    demo_db = racine / "_app" / "data" / "demo" / "plantes_demo.db"
+    mode_demo = os.environ.get("BOTANEO_DEMO") == "1" or demo_db.exists()
+    return {
+        "mode": "démo" if mode_demo else "réel",
+        "mode_demo": mode_demo,
+        "base_demo": str(demo_db),
+        "base_demo_detectee": demo_db.is_file(),
+    }
 
 
 @dataclass(frozen=True)
@@ -108,9 +121,11 @@ def construire_plan_mise_a_jour(racine, verifier_distant=False) -> dict:
     racine = Path(racine)
     version_locale = lire_version_locale(racine)
     elements = [detecter_element_personnel(racine, item) for item in ELEMENTS_PERSONNELS]
+    contexte = detecter_contexte_execution(racine)
     exemples = [str(item) for item in FICHIERS_CONFIG_EXEMPLE if (racine / item).exists()]
     plan = {
-        "mode": "préparation uniquement",
+        "mode": "démo" if contexte.get("mode_demo") else "préparation uniquement",
+        "contexte_execution": contexte,
         "racine": str(racine),
         "separation_programme_donnees": construire_separation_programme_donnees(racine),
         "elements_personnels": elements,
@@ -162,16 +177,22 @@ def verifier_plan_mise_a_jour(plan) -> dict:
         if manquantes:
             bloquants.append("données personnelles absentes du plan : " + ", ".join(manquantes))
 
+    contexte = plan.get("contexte_execution", {})
+    mode_demo = bool(contexte.get("mode_demo"))
+
     base = elements.get("plantes.db")
-    if not base or not base.existe or base.type != "fichier":
-        bloquants.append("base plantes.db introuvable")
+    if mode_demo:
+        if not contexte.get("base_demo_detectee"):
+            bloquants.append("base de démonstration plantes_demo.db introuvable")
+    elif not base or not base.existe or base.type != "fichier":
+        avertissements.append("base plantes.db absente : installation fraîche, démo ou base réelle non créée")
 
     config = elements.get("_config")
     if not config or not config.existe or config.type != "dossier":
         avertissements.append("dossier _config absent ou non détecté")
 
     sauvegardes = elements.get("_security_backups")
-    if not sauvegardes or not sauvegardes.existe:
+    if not mode_demo and (not sauvegardes or not sauvegardes.existe):
         avertissements.append("aucune sauvegarde locale _security_backups détectée")
 
     statut = "pret"
@@ -204,10 +225,11 @@ def resume_court_mise_a_jour(plan) -> str:
     presents = [element.chemin for element in elements if element.existe]
     absents = [element.chemin for element in elements if not element.existe]
     statut = verification.get("statut", "inconnu")
+    contexte = plan.get("contexte_execution", {})
 
     statut_version = plan.get("statut_version", {})
     lignes = [
-        "Mise à jour future : préparation uniquement",
+        "Mise à jour future : " + ("mode démo" if contexte.get("mode_demo") else "préparation uniquement"),
         f"- état du plan : {statut}",
         f"- contrôle : {verification.get('message', 'non effectué')}",
         f"- version : {statut_version.get('message', 'vérification non configurée')}",
@@ -216,6 +238,8 @@ def resume_court_mise_a_jour(plan) -> str:
         lignes.append(f"- notes : {statut_version.get('notes')}")
     if statut_version.get("url"):
         lignes.append(f"- lien informatif : {statut_version.get('url')}")
+    if contexte.get("mode_demo"):
+        lignes.append("- base de démonstration détectée : " + ("plantes_demo.db" if contexte.get("base_demo_detectee") else "absente"))
     lignes.extend([
         "- application automatique : désactivée",
         "- données personnelles : conservées séparément du programme",
@@ -223,7 +247,12 @@ def resume_court_mise_a_jour(plan) -> str:
         "- à préserver : " + (", ".join(presents) if presents else "aucun élément personnel détecté"),
     ])
     if absents:
-        lignes.append("- non présents sur ce poste : " + ", ".join(absents))
+        if contexte.get("mode_demo"):
+            absents_affiches = [item for item in absents if item not in {"plantes.db", "_security_backups", "_historique"}]
+        else:
+            absents_affiches = absents
+        if absents_affiches:
+            lignes.append("- non présents sur ce poste : " + ", ".join(absents_affiches))
     lignes.append("- règle : sauvegarde locale et validation explicite avant toute application")
     return "\n".join(lignes)
 
@@ -266,6 +295,7 @@ def construire_diagnostic_mise_a_jour(racine, verifier_distant=False) -> dict:
         "racine": plan.get("racine"),
         "version": statut_version,
         "verification": verification,
+        "contexte_execution": plan.get("contexte_execution", {}),
         "elements_presents": presents,
         "elements_absents": absents,
         "prochaines_actions": prochaines_actions,
@@ -306,12 +336,17 @@ def formater_diagnostic_mise_a_jour(diagnostic) -> str:
         f"État : {libelle_statut_global(statut_global)}",
         f"Code état : {statut_global}",
         f"Mode : {diagnostic.get('mode', 'préparation uniquement')}",
+    ]
+    contexte = diagnostic.get("contexte_execution", {})
+    if contexte.get("mode_demo"):
+        lignes.append("Base de démonstration détectée : " + ("plantes_demo.db" if contexte.get("base_demo_detectee") else "absente"))
+    lignes.extend([
         f"Application automatique autorisée : {'oui' if diagnostic.get('application_autorisee') else 'non'}",
         "",
         diagnostic.get("resume", "Résumé indisponible."),
         "",
         "Prochaines actions :",
-    ]
+    ])
     lignes.extend(f"- {action}" for action in diagnostic.get("prochaines_actions", []))
     return "\n".join(lignes)
 

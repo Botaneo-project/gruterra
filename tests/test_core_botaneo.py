@@ -587,13 +587,13 @@ class TestPreparationMiseAJour(unittest.TestCase):
             (racine / "_security_backups").rmdir()
             prudence = botaneo_update.construire_plan_mise_a_jour(racine)["verification"]
             (racine / "plantes.db").unlink()
-            bloque = botaneo_update.construire_plan_mise_a_jour(racine)["verification"]
+            sans_base = botaneo_update.construire_plan_mise_a_jour(racine)["verification"]
 
         self.assertEqual(pret["statut"], "pret")
         self.assertEqual(prudence["statut"], "prudence")
-        self.assertEqual(bloque["statut"], "bloque")
+        self.assertEqual(sans_base["statut"], "prudence")
         self.assertFalse(pret["application_autorisee"])
-        self.assertIn("plantes.db", bloque["message"])
+        self.assertIn("plantes.db", sans_base["message"])
 
     def test_resume_court_mise_a_jour_est_lisible_et_non_applicatif(self):
         botaneo_update = importlib.import_module("botaneo_update")
@@ -743,14 +743,32 @@ class TestPreparationMiseAJour(unittest.TestCase):
         self.assertIn("plantes.db", donnees["elements_presents"])
         self.assertNotIn("netatmo_config.json", texte)
 
-    def test_diagnostic_mise_a_jour_signale_bloquant(self):
+    def test_diagnostic_mise_a_jour_installation_fraiche_est_en_prudence(self):
         botaneo_update = importlib.import_module("botaneo_update")
         with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as dossier:
             racine = Path(dossier)
             diagnostic = botaneo_update.construire_diagnostic_mise_a_jour(racine)
 
-        self.assertEqual(diagnostic["statut_global"], "bloque")
-        self.assertIn("corriger les éléments bloquants", diagnostic["prochaines_actions"][0])
+        self.assertEqual(diagnostic["statut_global"], "prudence")
+        self.assertIn("contrôler les avertissements", diagnostic["prochaines_actions"][0])
+        self.assertIn("plantes.db absente", diagnostic["verification"]["message"])
+
+    def test_diagnostic_mise_a_jour_mode_demo_utilise_base_demo(self):
+        botaneo_update = importlib.import_module("botaneo_update")
+        with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as dossier:
+            racine = Path(dossier)
+            demo_dir = racine / "_app" / "data" / "demo"
+            demo_dir.mkdir(parents=True)
+            (demo_dir / "plantes_demo.db").write_text("sqlite demo", encoding="utf-8")
+
+            diagnostic = botaneo_update.construire_diagnostic_mise_a_jour(racine)
+            texte = botaneo_update.formater_diagnostic_mise_a_jour(diagnostic)
+
+        self.assertNotEqual(diagnostic["statut_global"], "bloque")
+        self.assertEqual(diagnostic["mode"], "démo")
+        self.assertIn("Base de démonstration détectée : plantes_demo.db", texte)
+        self.assertNotIn("base plantes.db introuvable", texte)
+        self.assertNotIn("plantes.db, _security_backups, _historique", texte)
 
     def test_comparer_versions_ne_declenche_jamais_application(self):
         botaneo_update = importlib.import_module("botaneo_update")

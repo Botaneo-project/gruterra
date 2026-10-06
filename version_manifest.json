@@ -1,6 +1,6 @@
 {
   "version": "0.1.4-dev",
-  "notes": "Correction installateur : pip n’est plus mis à jour systématiquement à chaque installation, ce qui évite le bruit de désinstallation/réinstallation inutile.",
+  "notes": "Correction updater démo : le diagnostic reconnaît plantes_demo.db en mode démo et ne bloque plus sur l’absence de plantes.db, _historique ou _security_backups.",
   "url": "https://github.com/Botaneo-project/gruterra",
   "archive_url": "",
   "sha256": "",
