@@ -321,6 +321,17 @@ Le fichier `.gitignore` exclut notamment :
 - les archives ZIP ;
 - les scripts locaux de diagnostic, migration et test ponctuel.
 
+## Sauvegarde utilisateur
+
+Gruterra distingue deux usages :
+
+- **Exporter mes données** : export destiné au partage, au diagnostic ou à l'analyse, sans configuration privée volontaire.
+- **Sauvegarde complète privée** : archive de récupération après formatage ou changement de PC, pouvant contenir `plantes.db`, `_config/`, les données runtime, historiques, paramètres et secrets nécessaires à la restauration.
+
+Une sauvegarde complète privée peut contenir des tokens ou identifiants techniques. Elle doit rester locale, ne jamais être partagée et ne jamais être publiée sur GitHub. Les dossiers `_user_backups/`, `_config/`, `_security_backups/`, `_historique/` et `_app/data/` sont exclus ou bloqués par les garde-fous GitHub.
+
+La restauration automatique complète n'est pas encore exposée dans l'interface. Elle devra créer une sauvegarde de l'état existant avant toute restauration.
+
 ## Mise à jour assistée
 
 Gruterra dispose maintenant d'un assistant de mise à jour prudent. Il vérifie les informations publiées par GitHub, peut simuler une mise à jour, prépare une sauvegarde locale et ne remplace les fichiers programme qu'après validation explicite.

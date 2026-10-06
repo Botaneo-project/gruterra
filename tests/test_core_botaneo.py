@@ -5,6 +5,7 @@ import os
 import sys
 import tempfile
 import unittest
+import zipfile
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -921,3 +922,47 @@ class TestInstallateurWindows(unittest.TestCase):
         self.assertIn("import tkinter, requests, bleak", contenu)
         self.assertIn("Python est introuvable sur ce PC", contenu)
         self.assertIn("Installation interrompue ou incomplete", contenu)
+
+
+class TestSauvegardeUtilisateur(unittest.TestCase):
+    def test_manifest_sauvegarde_complete_signale_le_prive(self):
+        sauvegarde = importlib.import_module("sauvegarde_utilisateur")
+        with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as dossier:
+            racine = Path(dossier)
+            (racine / "_config").mkdir()
+            (racine / "_config" / "netatmo_config.json").write_text("{}", encoding="utf-8")
+            manifest = sauvegarde.construire_manifest_sauvegarde(racine, mode="complete")
+
+        self.assertTrue(manifest["contient_elements_prives"])
+        self.assertIn("Ne la partagez pas", manifest["avertissement"])
+        self.assertFalse(manifest["restauration_automatique"])
+
+    def test_creer_export_donnees_n_inclut_pas_config_privee(self):
+        sauvegarde = importlib.import_module("sauvegarde_utilisateur")
+        with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as dossier:
+            racine = Path(dossier)
+            (racine / "plantes.db").write_text("base fictive", encoding="utf-8")
+            (racine / "_config").mkdir()
+            (racine / "_config" / "secret.local.json").write_text("secret", encoding="utf-8")
+            archive = sauvegarde.creer_sauvegarde_utilisateur(racine, mode="donnees")
+            with zipfile.ZipFile(archive) as zipf:
+                noms = set(zipf.namelist())
+
+        self.assertIn("plantes.db", noms)
+        self.assertIn("MANIFEST_GRUTERRA_BACKUP.json", noms)
+        self.assertNotIn("_config/secret.local.json", noms)
+
+    def test_creer_sauvegarde_complete_peut_inclure_config_privee(self):
+        sauvegarde = importlib.import_module("sauvegarde_utilisateur")
+        with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as dossier:
+            racine = Path(dossier)
+            (racine / "plantes.db").write_text("base fictive", encoding="utf-8")
+            (racine / "_config").mkdir()
+            (racine / "_config" / "secret.local.json").write_text("secret", encoding="utf-8")
+            archive = sauvegarde.creer_sauvegarde_utilisateur(racine, mode="complete")
+            with zipfile.ZipFile(archive) as zipf:
+                noms = set(zipf.namelist())
+                manifest = json.loads(zipf.read("MANIFEST_GRUTERRA_BACKUP.json").decode("utf-8"))
+
+        self.assertIn("_config/secret.local.json", noms)
+        self.assertTrue(manifest["contient_elements_prives"])

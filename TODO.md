@@ -286,6 +286,21 @@ Objectif : préparer une évolution sans casser l’enregistrement actuel des ar
 - [x] Installation neuve : créer le schéma principal `plantes`, `capteurs`, `mesures` directement dans `database.py`, avec clés étrangères actives et index utiles.
 - [x] Installer Windows : étapes lisibles, détection `py`/`python`, pip upgrade non bloquant et vérification finale des imports essentiels.
 
+## Sauvegarde et restauration utilisateur complète
+
+Objectif : permettre à un utilisateur de reconstruire son environnement Gruterra après formatage ou changement de PC, sans reconfigurer manuellement tous les services.
+
+- [x] Distinguer deux usages : export de données partageable et sauvegarde complète privée.
+- [x] Préparer un module technique `_app/sauvegarde_utilisateur.py` avec manifeste de sauvegarde, mode `donnees` et mode `complete`.
+- [x] Marquer explicitement les sauvegardes complètes comme privées, car elles peuvent contenir tokens, identifiants techniques, `_config/`, base réelle et états runtime.
+- [x] Exclure `_user_backups/` de Git et le bloquer dans `verifier_avant_github.py`.
+- [ ] Ajouter une interface `Exporter mes données` pour produire une archive sans secrets.
+- [ ] Ajouter une interface `Sauvegarde complète privée` avec avertissement très visible avant création.
+- [ ] Étudier un chiffrement par mot de passe fiable pour les archives complètes contenant des secrets, sans inventer un chiffrement maison fragile.
+- [ ] Préparer la restauration : vérifier l'archive, afficher son contenu, créer une sauvegarde automatique de l'état existant, puis restaurer seulement après confirmation.
+- [ ] Tester la restauration sur un dossier temporaire avant toute restauration réelle sur le poste utilisateur.
+- [ ] Documenter clairement que les sauvegardes complètes privées ne doivent jamais être partagées, envoyées sur Discord/Reddit ou publiées sur GitHub.
+
 ## GitHub, sauvegarde et sécurité
 
 - Maintenir `README.md`, `RASPBERRY.md`, `TODO.md` et `CONTEXTE_AGENT_BOTANEO.md` à jour après les grosses évolutions.

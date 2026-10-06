@@ -47,6 +47,7 @@ GIT = trouver_git()
 SENSITIVE_PATH_PARTS = [
     "_config/",
     "_security_backups/",
+    "_user_backups/",
     "_historique/",
     "_app/data/",
     "archive_conservee_",

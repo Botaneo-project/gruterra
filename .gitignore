@@ -41,6 +41,7 @@ __pycache__/
 *.7z
 *.rar
 Backups_Plantes/
+_user_backups/
 
 # Fichiers système / éditeurs
 .DS_Store

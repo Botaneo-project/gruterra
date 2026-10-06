@@ -15,6 +15,7 @@ Cette roadmap donne une vue courte de l’état du projet. Le fichier `TODO.md` 
 - Intégration Netatmo configurable localement.
 - Synchronisation Raspberry Pi optionnelle.
 - Audit local avant envoi GitHub.
+- Base technique pour distinguer export de données et sauvegarde complète privée.
 - Assistant de mise à jour GitHub prudent : vérification, simulation, sauvegarde locale et application seulement après validation explicite.
 
 ## Priorités courtes
@@ -25,6 +26,7 @@ Cette roadmap donne une vue courte de l’état du projet. Le fichier `TODO.md` 
 - Rendre le mode démo plus agréable pour les nouveaux testeurs, avec captures publiques cohérentes.
 - Améliorer encore la lecture graphique des cycles d’arrosage et la prudence des analyses plante.
 - Clarifier l’installation Raspberry Pi et le sens des mesures rapatriées pendant que Gruterra était fermé.
+- Ajouter une interface de sauvegarde/restauration utilisateur complète, avec avertissement secrets et retour arrière.
 
 ## Plus tard
 
