@@ -1040,6 +1040,16 @@ class TestPatchNoteUpdateInterface(unittest.TestCase):
         self.assertIn("patch_note_update_a_propos(verifier_distant=True)", contenu)
 
 
+class TestParametresLangue(unittest.TestCase):
+    def test_parametres_langue_affiche_drapeaux(self):
+        interface = Path(__file__).resolve().parents[1] / "_app" / "interface.py"
+        contenu = interface.read_text(encoding="utf-8")
+
+        self.assertIn('"🇫🇷 FR": "fr"', contenu)
+        self.assertIn('"🇬🇧 EN": "en"', contenu)
+        self.assertIn("options_langue.get(langue_var.get(), langue_var.get())", contenu)
+
+
 class TestUpdateDansParametres(unittest.TestCase):
     def test_parametres_contiennent_bloc_mises_a_jour(self):
         interface = Path(__file__).resolve().parents[1] / "_app" / "interface.py"

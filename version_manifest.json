@@ -1,6 +1,6 @@
 {
   "version": "0.1.4-dev",
-  "notes": "Correction updater démo : le diagnostic reconnaît plantes_demo.db en mode démo et ne bloque plus sur l’absence de plantes.db, _historique ou _security_backups.",
+  "notes": "Amélioration langue : le sélecteur des paramètres affiche maintenant 🇫🇷 FR et 🇬🇧 EN tout en conservant les codes internes fr/en.",
   "url": "https://github.com/Botaneo-project/gruterra",
   "archive_url": "",
   "sha256": "",

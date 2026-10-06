@@ -5840,15 +5840,17 @@ def ouvrir_parametres():
         bg=LIGHT_GREEN
     ).pack(anchor="w", padx=12, pady=(10, 4))
 
-    langue_var = tk.StringVar(value=langue_interface)
+    options_langue = {"🇫🇷 FR": "fr", "🇬🇧 EN": "en"}
+    libelle_langue_courante = next((libelle for libelle, code in options_langue.items() if code == langue_interface), "🇫🇷 FR")
+    langue_var = tk.StringVar(value=libelle_langue_courante)
     ligne_langue = tk.Frame(affichage_bloc, bg=LIGHT_GREEN)
     ligne_langue.pack(fill="x", padx=12, pady=(0, 8))
     tk.Label(ligne_langue, text=t("language"), bg=LIGHT_GREEN, fg=TEXT, font=("Segoe UI", 9, "bold")).pack(side="left")
     ttk.Combobox(
         ligne_langue,
         textvariable=langue_var,
-        values=("fr", "en"),
-        width=8,
+        values=tuple(options_langue.keys()),
+        width=10,
         state="readonly",
     ).pack(side="left", padx=(10, 8))
     tk.Label(
@@ -6222,7 +6224,7 @@ def ouvrir_parametres():
         alertes_config["seuil_batterie"] = seuil_batterie
         alertes_config["plantes_rappel_email"] = [pid for pid, var in plantes_alertes_vars if var.get()]
 
-        nouvelle_langue = normaliser_langue(langue_var.get())
+        nouvelle_langue = normaliser_langue(options_langue.get(langue_var.get(), langue_var.get()))
 
         sauvegarde_sync = sauvegarder_config_sync_auto()
         sauvegarde_layout = sauvegarder_layout_interface()
