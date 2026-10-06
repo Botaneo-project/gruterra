@@ -818,6 +818,37 @@ class TestAssistantMiseAJour(unittest.TestCase):
         self.assertIn("archive_url absent du manifeste", erreurs)
         self.assertIn("sha256 absent ou invalide dans le manifeste", erreurs)
 
+    def test_message_validation_supporte_unicode_patch_note(self):
+        update_gruterra = importlib.import_module("update_gruterra")
+        diagnostic = {
+            "statut_global": "pret_a_verifier",
+            "mode": "démo",
+            "application_autorisee": False,
+            "version": {
+                "notes": "é è à ç œ ’ — → 🇫🇷 🇬🇧 🌱",
+                "manifest_auto_update": False,
+                "archive_url": "",
+                "sha256": "",
+            },
+            "verification": {"statut": "prudence", "message": "é è à ç œ ’ — → 🇫🇷 🇬🇧 🌱"},
+            "elements_presents": [],
+            "elements_absents": [],
+            "prochaines_actions": ["vérifier → 🇫🇷"],
+            "resume": "Patch note : é è à ç œ ’ — → 🇫🇷 🇬🇧 🌱",
+        }
+
+        message = update_gruterra.construire_message_validation(diagnostic)
+
+        self.assertIn("🇫🇷", message)
+        self.assertIn("🌱", message)
+        self.assertIsInstance(message.encode("utf-8"), bytes)
+
+    def test_update_gruterra_configure_sorties_utf8(self):
+        update_gruterra = importlib.import_module("update_gruterra")
+
+        self.assertTrue(callable(update_gruterra.configurer_sorties_utf8))
+        self.assertTrue(callable(update_gruterra.safe_print))
+
     def test_listing_update_preserve_les_donnees_personnelles(self):
         update_gruterra = importlib.import_module("update_gruterra")
         with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as dossier:
@@ -1028,6 +1059,16 @@ class TestSauvegardeUtilisateur(unittest.TestCase):
         self.assertIn("Éléments inclus : plantes.db, _config", rapport)
         self.assertIn("Éléments absents : _historique", rapport)
         self.assertIn("Sauvegarde privée", rapport)
+
+
+class TestUpdateUtf8Interface(unittest.TestCase):
+    def test_interface_lance_update_en_utf8(self):
+        interface = Path(__file__).resolve().parents[1] / "_app" / "interface.py"
+        contenu = interface.read_text(encoding="utf-8")
+
+        self.assertIn('environnement["PYTHONIOENCODING"] = "utf-8"', contenu)
+        self.assertIn('environnement["PYTHONUTF8"] = "1"', contenu)
+        self.assertIn("env=environnement", contenu)
 
 
 class TestPatchNoteUpdateInterface(unittest.TestCase):

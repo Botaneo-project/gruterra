@@ -10,6 +10,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import os
 import shutil
 import sys
 import tempfile
@@ -48,6 +49,27 @@ DOSSIERS_IGNORES_ARCHIVE = {
 }
 
 TIMEOUT_TELECHARGEMENT_SECONDES = 60
+
+
+def configurer_sorties_utf8() -> None:
+    """Évite les crashs UnicodeEncodeError dans les consoles Windows anciennes."""
+
+    os.environ.setdefault("PYTHONIOENCODING", "utf-8")
+    os.environ.setdefault("PYTHONUTF8", "1")
+    for flux in (sys.stdout, sys.stderr):
+        reconfigure = getattr(flux, "reconfigure", None)
+        if callable(reconfigure):
+            try:
+                reconfigure(encoding="utf-8", errors="replace")
+            except Exception:
+                pass
+
+
+def safe_print(texte="") -> None:
+    try:
+        print(texte)
+    except UnicodeEncodeError:
+        print(str(texte).encode("utf-8", errors="replace").decode("utf-8", errors="replace"))
 
 
 def est_chemin_preserve(relatif: Path) -> bool:
@@ -208,6 +230,7 @@ def appliquer_mise_a_jour(diagnostic: dict, racine: Path, dry_run: bool = True) 
 
 
 def main(argv: list[str] | None = None) -> int:
+    configurer_sorties_utf8()
     parser = argparse.ArgumentParser(description="Vérifie ou applique une mise à jour Gruterra en préservant les données locales.")
     parser.add_argument("--local", action="store_true", help="utilise seulement le manifeste local")
     parser.add_argument("--json", action="store_true", help="affiche le diagnostic JSON")
@@ -221,22 +244,22 @@ def main(argv: list[str] | None = None) -> int:
     )
 
     if args.json:
-        print(botaneo_update.exporter_diagnostic_mise_a_jour_json(diagnostic))
+        safe_print(botaneo_update.exporter_diagnostic_mise_a_jour_json(diagnostic))
         return 0 if diagnostic.get("statut_global") != "bloque" else 2
 
-    print(construire_message_validation(diagnostic))
+    safe_print(construire_message_validation(diagnostic))
 
     if args.apply or args.dry_run:
-        print("")
-        print("Application demandée :" if args.apply else "Simulation demandée :")
+        safe_print("")
+        safe_print("Application demandée :" if args.apply else "Simulation demandée :")
         try:
             resultat = appliquer_mise_a_jour(diagnostic, RACINE, dry_run=not args.apply)
         except RuntimeError as erreur:
-            print(f"- échec : {erreur}")
+            safe_print(f"- échec : {erreur}")
             return 3
-        print(f"- {resultat.get('message')}")
+        safe_print(f"- {resultat.get('message')}")
         for erreur in resultat.get("erreurs", []):
-            print(f"- {erreur}")
+            safe_print(f"- {erreur}")
         return 0 if resultat.get("ok") else 3
 
     return 0 if diagnostic.get("statut_global") != "bloque" else 2

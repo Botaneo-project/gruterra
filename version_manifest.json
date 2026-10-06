@@ -1,6 +1,6 @@
 {
   "version": "0.1.4-dev",
-  "notes": "Amélioration langue : le sélecteur des paramètres affiche maintenant 🇫🇷 FR et 🇬🇧 EN tout en conservant les codes internes fr/en.",
+  "notes": "Correction UTF-8 updater : les notes de version avec accents, flèches, emojis ou drapeaux ne font plus planter update_gruterra.py sous console Windows.",
   "url": "https://github.com/Botaneo-project/gruterra",
   "archive_url": "",
   "sha256": "",

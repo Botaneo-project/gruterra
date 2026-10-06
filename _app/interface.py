@@ -5055,6 +5055,9 @@ def executer_assistant_update_a_propos(appliquer=False):
     if not script.exists():
         return "Assistant update introuvable : update_gruterra.py"
     commande = ["py", str(script), "--apply" if appliquer else "--dry-run"]
+    environnement = os.environ.copy()
+    environnement["PYTHONIOENCODING"] = "utf-8"
+    environnement["PYTHONUTF8"] = "1"
     try:
         resultat = subprocess.run(
             commande,
@@ -5063,6 +5066,7 @@ def executer_assistant_update_a_propos(appliquer=False):
             text=True,
             encoding="utf-8",
             errors="replace",
+            env=environnement,
             timeout=180,
             creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0),
         )
