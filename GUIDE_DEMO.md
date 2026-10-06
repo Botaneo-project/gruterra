@@ -46,7 +46,7 @@ Aucun script d’activation PowerShell n’est requis.
 _app/data/demo/plantes_demo.db
 ```
 
-Elle utilise aussi sa propre configuration de démonstration. Les collectes automatiques au démarrage sont désactivées en mode démo. Les boutons de synchronisation ne simulent pas de capteurs physiques, donc ne les utilisez pas pour le premier essai.
+Elle utilise aussi sa propre configuration de démonstration. La démo ne contient aucune sauvegarde privée, aucun token et aucune configuration personnelle. Les collectes automatiques au démarrage sont désactivées en mode démo. Les boutons de synchronisation ne simulent pas de capteurs physiques, donc ne les utilisez pas pour le premier essai.
 
 ## 5. À explorer en priorité
 

@@ -18,6 +18,7 @@ Cette section sert de point d'entrée rapide après les grosses modifications r�
 
 ### Bugs / risques à surveiller
 
+- [ ] Après chaque évolution structurante, mettre à jour le tutoriel GitHub de base : README, guide installation, guide démo si concerné, et notes de release.
 - [ ] Les textes de synchronisation peuvent encore être trop verbeux ou ambigus quand une mesure est demandée au Raspberry mais récupérée seulement au passage suivant.
 - [ ] Les imports Raspberry et historique Mi Flora doivent rester idempotents : relancer une synchro ne doit pas créer de doublons.
 - [ ] Les mesures sans date exploitable doivent rester bloquées ou supprimées selon la règle actuelle, même si elles contiennent lumière, humidité ou conductivité.

@@ -88,7 +88,18 @@ Les données locales à préserver ne doivent pas être envoyées sur GitHub :
 - `_app/data/` ;
 - `discord_bot/.env`.
 
-## 7. Configuration optionnelle
+## 7. Sauvegarder ses données
+
+Gruterra distingue deux types de sauvegardes :
+
+- **Exporter mes données** : archive destinée au partage, au diagnostic ou à l’analyse, sans configuration privée volontaire.
+- **Sauvegarde complète privée** : archive locale de récupération après formatage ou changement de PC. Elle peut contenir la base réelle, les historiques, les paramètres, `_config/`, les tokens et d’autres secrets nécessaires à la restauration.
+
+Une sauvegarde complète privée ne doit jamais être publiée sur GitHub, Reddit, Discord ou envoyée à quelqu’un sans vérification. Elle est destinée uniquement à l’utilisateur. Le dossier local prévu pour ces archives est `_user_backups/`, ignoré par Git.
+
+La restauration complète automatique n’est pas encore exposée dans l’interface. Quand elle sera ajoutée, Gruterra devra d’abord créer une sauvegarde de l’état existant pour permettre un retour arrière.
+
+## 8. Configuration optionnelle
 
 Les fichiers d’exemple peuvent être copiés puis adaptés localement :
 
@@ -99,7 +110,7 @@ Les fichiers d’exemple peuvent être copiés puis adaptés localement :
 
 Ne publiez jamais vos tokens, mots de passe, refresh tokens ou fichiers de configuration privée.
 
-## 8. En cas de problème
+## 9. En cas de problème
 
 Pour demander de l’aide, indiquez :
 

@@ -13,9 +13,10 @@ Le projet est né d’un besoin simple : ne pas seulement afficher des mesures, 
 
 Le plus simple pour découvrir Gruterra est le mode démonstration. Il ne demande ni capteur Mi Flora, ni Raspberry Pi, ni compte Netatmo, ni base personnelle.
 
-```powershell
-py -m pip install -r requirements.txt
-py Lancer_Demo.py
+```text
+1. Télécharger et extraire Gruterra.
+2. Double-cliquer sur Installer_Gruterra.bat.
+3. Double-cliquer sur Lancer_Demo.py.
 ```
 
 Le guide détaillé est ici : [GUIDE_DEMO.md](GUIDE_DEMO.md). Pour installer depuis une archive ZIP de release, voir [GUIDE_INSTALLATION.md](GUIDE_INSTALLATION.md).
@@ -118,9 +119,9 @@ Elle exécute les tests automatisés, la vérification avant GitHub, un contrôl
 
 ## Installation
 
-Gruterra nécessite Python 3.14 ou une version compatible.
+Gruterra nécessite Python 3.10 ou plus récent. Le développement actuel est testé avec des versions récentes de Python, notamment Python 3.14.
 
-Installer les dépendances sans PowerShell : double-cliquer sur `Installer_Gruterra.bat`.
+Installer les dépendances sans PowerShell : double-cliquer sur `Installer_Gruterra.bat`. Le script vérifie Python, pip, les dépendances et les imports essentiels avant d’annoncer la réussite.
 
 Méthode manuelle :
 
