@@ -1,6 +1,6 @@
 {
   "version": "0.1.4-dev",
-  "notes": "Correction lancement Windows : ajout de Lancer_Demo.bat et Lancer_Gruterra.bat pour ouvrir Gruterra avec la bonne version Python et afficher les erreurs au lieu de fermer silencieusement.",
+  "notes": "Amélioration Paramètres : les notes de mise à jour sont maintenant dans une zone défilable, sélectionnable et copiable quand le texte est long.",
   "url": "https://github.com/Botaneo-project/gruterra",
   "archive_url": "",
   "sha256": "",

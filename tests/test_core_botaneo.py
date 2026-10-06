@@ -1027,3 +1027,12 @@ class TestUpdateDansParametres(unittest.TestCase):
         self.assertIn("settings_verifier_update", contenu)
         self.assertIn("settings_tester_update", contenu)
         self.assertIn("lancer_application_update", contenu)
+
+    def test_parametres_notes_update_sont_defilables_et_copiables(self):
+        interface = Path(__file__).resolve().parents[1] / "_app" / "interface.py"
+        contenu = interface.read_text(encoding="utf-8")
+
+        self.assertIn("update_info_zone = tk.Text", contenu)
+        self.assertIn("update_info_scroll = ttk.Scrollbar", contenu)
+        self.assertIn("def set_update_info", contenu)
+        self.assertIn("afficher_resultat=set_update_info", contenu)

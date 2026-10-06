@@ -5900,24 +5900,48 @@ def ouvrir_parametres():
     update_bloc = tk.Frame(fenetre, bg=LIGHT_ORANGE, highlightbackground=BORDER, highlightthickness=1)
     update_bloc.pack(fill="x", padx=20, pady=(0, 12))
     tk.Label(update_bloc, text=t("updates_section"), font=("Segoe UI", 11, "bold"), fg=ORANGE, bg=LIGHT_ORANGE).pack(anchor="w", padx=12, pady=(10, 4))
-    update_info_var = tk.StringVar(value=t("updates_settings_help"))
-    tk.Label(update_bloc, textvariable=update_info_var, bg=LIGHT_ORANGE, fg=SECONDARY, font=("Segoe UI", 8), wraplength=520, justify="left").pack(anchor="w", padx=12, pady=(0, 8))
+
+    update_texte_frame = tk.Frame(update_bloc, bg=LIGHT_ORANGE)
+    update_texte_frame.pack(fill="x", padx=12, pady=(0, 8))
+    update_info_zone = tk.Text(
+        update_texte_frame,
+        width=68,
+        height=7,
+        wrap="word",
+        bg=BG,
+        fg=SECONDARY,
+        insertbackground=TEXT,
+        relief="flat",
+        font=("Segoe UI", 8),
+    )
+    update_info_scroll = ttk.Scrollbar(update_texte_frame, orient="vertical", command=update_info_zone.yview)
+    update_info_zone.configure(yscrollcommand=update_info_scroll.set)
+    update_info_zone.pack(side="left", fill="both", expand=True)
+    update_info_scroll.pack(side="right", fill="y")
+
+    def set_update_info(texte):
+        update_info_zone.configure(state="normal")
+        update_info_zone.delete("1.0", "end")
+        update_info_zone.insert("1.0", texte or "")
+        update_info_zone.configure(state="normal")
+
+    set_update_info(t("updates_settings_help"))
 
     def settings_verifier_update():
         status_var.set(t("update_checking"))
         try:
             diagnostic = botaneo_update.construire_diagnostic_mise_a_jour(Path(__file__).resolve().parent.parent, verifier_distant=True)
-            update_info_var.set(botaneo_update.formater_diagnostic_mise_a_jour(diagnostic) + "\n\n" + patch_note_update_a_propos(verifier_distant=True))
+            set_update_info(botaneo_update.formater_diagnostic_mise_a_jour(diagnostic) + "\n\n" + patch_note_update_a_propos(verifier_distant=True))
             status_var.set(t("update_check_done"))
         except Exception as erreur:
-            update_info_var.set(f"Vérification impossible : {erreur}")
+            set_update_info(f"Vérification impossible : {erreur}")
 
     def settings_tester_update():
         status_var.set(t("update_sim_running"))
 
         def tache():
             contenu = executer_assistant_update_a_propos(appliquer=False)
-            root.after(0, lambda: update_info_var.set(contenu))
+            root.after(0, lambda: set_update_info(contenu))
             root.after(0, lambda: status_var.set(t("update_sim_done")))
 
         threading.Thread(target=tache, daemon=True).start()
@@ -5926,7 +5950,7 @@ def ouvrir_parametres():
     update_actions.pack(fill="x", padx=12, pady=(0, 10))
     tk.Button(update_actions, text=t("check_updates"), command=settings_verifier_update, bg=BG, fg=TEXT, relief="flat", cursor="hand2").pack(side="left", padx=(0, 8))
     tk.Button(update_actions, text=t("update"), command=settings_tester_update, bg=BG, fg=TEXT, relief="flat", cursor="hand2").pack(side="left", padx=(0, 8))
-    tk.Button(update_actions, text=t("apply_update"), command=lambda: lancer_application_update(fenetre, afficher_resultat=update_info_var.set), bg=BG, fg=TEXT, relief="flat", cursor="hand2").pack(side="left")
+    tk.Button(update_actions, text=t("apply_update"), command=lambda: lancer_application_update(fenetre, afficher_resultat=set_update_info), bg=BG, fg=TEXT, relief="flat", cursor="hand2").pack(side="left")
 
     bloc = tk.Frame(fenetre, bg=LIGHT_BLUE, highlightbackground=BORDER, highlightthickness=1)
     bloc.pack(fill="x", padx=20, pady=(0, 12))
