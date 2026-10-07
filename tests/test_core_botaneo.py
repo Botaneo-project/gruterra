@@ -1077,9 +1077,9 @@ class TestSauvegardeUtilisateur(unittest.TestCase):
         rapport = sauvegarde.formater_rapport_sauvegarde(manifest)
 
         self.assertIn("Horaire : 2026-10-06T21:15:00", rapport)
-        self.assertIn("Mode : complete", rapport)
-        self.assertIn("Éléments inclus : plantes.db, _config", rapport)
-        self.assertIn("Éléments absents : _historique", rapport)
+        self.assertIn("Type de sauvegarde : complète personnelle", rapport)
+        self.assertIn("Contenu inclus : plantes.db, _config", rapport)
+        self.assertIn("Non trouvés sur ce poste : _historique", rapport)
         self.assertIn("Sauvegarde privée", rapport)
 
 

@@ -18,7 +18,7 @@ from pathlib import Path
 DOSSIER_SAUVEGARDES = "_user_backups"
 AVERTISSEMENT_SAUVEGARDE_PRIVEE = (
     "Cette sauvegarde complète peut contenir des informations privées : base réelle, "
-    "configuration locale, tokens, identifiants techniques et secrets. Ne la partagez "
+    "réglages personnels, accès de connexion et informations privées. Ne la partagez "
     "pas et ne la publiez jamais sur GitHub."
 )
 
@@ -90,7 +90,7 @@ def construire_manifest_sauvegarde(racine, mode="complete") -> dict:
         "mode": mode,
         "cree_le": datetime.now().isoformat(timespec="seconds"),
         "contient_elements_prives": contient_prive,
-        "avertissement": AVERTISSEMENT_SAUVEGARDE_PRIVEE if mode == "complete" else "Export de données destiné au partage ou au diagnostic, sans configuration privée volontaire.",
+        "avertissement": AVERTISSEMENT_SAUVEGARDE_PRIVEE if mode == "complete" else "Export de données destiné au partage ou à l’analyse, sans réglages privés volontairement inclus.",
         "elements": [item.__dict__ for item in elements],
         "restauration_automatique": False,
     }
@@ -108,15 +108,15 @@ def formater_rapport_sauvegarde(manifest: dict) -> str:
     lignes = [
         "Rapport de sauvegarde Gruterra",
         f"Horaire : {cree_le}",
-        f"Mode : {mode}",
-        f"Contient des éléments privés : {'oui' if manifest.get('contient_elements_prives') else 'non'}",
-        f"Éléments inclus : {', '.join(presents) if presents else 'aucun'}",
+        f"Type de sauvegarde : {'complète personnelle' if mode == 'complete' else 'données uniquement'}",
+        f"Contient des informations privées : {'oui' if manifest.get('contient_elements_prives') else 'non'}",
+        f"Contenu inclus : {', '.join(presents) if presents else 'aucun'}",
     ]
     if absents:
-        lignes.append(f"Éléments absents : {', '.join(absents)}")
+        lignes.append(f"Non trouvés sur ce poste : {', '.join(absents)}")
     avertissement = manifest.get("avertissement")
     if avertissement:
-        lignes.append(f"Avertissement : {avertissement}")
+        lignes.append(f"Attention : {avertissement}")
     return "\n".join(lignes)
 
 

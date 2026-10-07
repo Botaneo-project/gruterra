@@ -5262,7 +5262,7 @@ def texte_a_propos(verifier_distant=False):
         f"- Projet : {racine}",
         f"- Application : {Path(__file__).resolve().parent}",
         f"- Base locale : {database.DB_PATH}",
-        f"- Configuration privée : {CONFIG_DIR}",
+        f"- Réglages personnels : {CONFIG_DIR}",
         "",
         "Fonctions principales :",
         "- suivi de plantes avec ou sans capteur",
@@ -5277,7 +5277,7 @@ def texte_a_propos(verifier_distant=False):
         resume_mise_a_jour_a_propos(racine, verifier_distant=verifier_distant),
         "",
         "Sécurité :",
-        "- les tokens, bases réelles, sauvegardes et fichiers _config restent locaux",
+        "- les accès privés, bases réelles et sauvegardes restent sur ce PC",
         "- lancer py verifier_avant_github.py avant tout envoi GitHub",
         "- les documents privés de passation ne sont pas publiés",
     ]
@@ -5481,24 +5481,24 @@ def texte_maintenance():
         syntheses = []
         syntheses_info = "table non initialisée"
 
-    etat = "compactage à envisager" if diagnostic.get("compactage_conseille") else "aucune action nécessaire"
+    etat = "allègement à envisager plus tard" if diagnostic.get("compactage_conseille") else "aucune action nécessaire"
     lignes = [
-        "Base & synthèses Gruterra",
+        "Données & résumés Gruterra",
         "",
-        f"Base active : {database.DB_PATH}",
-        f"Taille actuelle : {format_octets(diagnostic.get('taille_octets'))}",
-        f"Seuil de compactage conseillé : {format_octets(diagnostic.get('seuil_octets'))}",
+        f"Fichier de données utilisé : {database.DB_PATH}",
+        f"Volume actuel : {format_octets(diagnostic.get('taille_octets'))}",
+        f"Seuil à partir duquel un allègement pourra être proposé : {format_octets(diagnostic.get('seuil_octets'))}",
         f"État : {etat}",
-        f"Nombre de mesures brutes : {nombre_mesures}",
-        f"Synthèses journalières : {syntheses_info}",
+        f"Mesures conservées : {nombre_mesures}",
+        f"Résumés par jour : {syntheses_info}",
         "",
         "Règles actuelles :",
         "- aucune suppression automatique de mesures brutes",
-        "- aucune compaction automatique",
-        "- les synthèses journalières sont une préparation technique",
-        "- le compactage destructeur reste bloqué par garde-fou",
+        "- aucun allègement automatique",
+        "- les résumés par jour servent seulement à mieux lire l’historique",
+        "- aucune opération qui supprime des mesures n’est autorisée automatiquement",
         "",
-        "Prochaine étape future : afficher et valider les synthèses avant d'alléger les anciennes mesures.",
+        "Prochaine étape future : afficher et valider les résumés avant d’envisager un allègement des très anciennes mesures.",
     ]
 
     return texte_interface_utf8_sur("\n".join(lignes))
@@ -5571,7 +5571,7 @@ def ouvrir_maintenance():
         texte = texte_maintenance()
         root.clipboard_clear()
         root.clipboard_append(texte)
-        status_var.set("Base & synthèses copiées dans le presse-papiers")
+        status_var.set("Données & résumés copiés dans le presse-papiers")
 
     def ouvrir_detail_synthese():
         selection = tableau_syntheses.selection()
@@ -5788,7 +5788,7 @@ def texte_sante_systeme(etat_raspberry=None):
         f"Mesures entièrement à zéro : {diagnostic.get('mesures_entierement_zero', 0)}",
         f"Synthèses : {syntheses['nombre']} ({syntheses['premier_jour']} → {syntheses['dernier_jour']})",
         f"Synthèses entièrement à zéro : {diagnostic.get('syntheses_entierement_zero', 0)}",
-        f"Compactage conseillé : {'oui' if base.get('compactage_conseille') else 'non'}",
+        f"Allègement conseillé plus tard : {'oui' if base.get('compactage_conseille') else 'non'}",
         "",
     ]
     lignes.extend(lignes_sante_raspberry(etat_raspberry))
@@ -6113,7 +6113,7 @@ def ouvrir_parametres():
     couleur_netatmo = GREEN if diagnostic_netatmo.get("ok") else ORANGE
     tk.Label(
         netatmo_bloc,
-        text="Configuration privée : " + diagnostic_netatmo.get("message", "état inconnu"),
+        text="Connexion Netatmo : " + diagnostic_netatmo.get("message", "état inconnu"),
         bg=LIGHT_GREEN,
         fg=couleur_netatmo,
         font=("Segoe UI", 9, "bold"),
@@ -6161,7 +6161,7 @@ def ouvrir_parametres():
 
     tk.Label(
         netatmo_bloc,
-        text="Mode tuto : créez une application sur le portail développeur Netatmo, copiez les quatre valeurs demandées dans le fichier privé, puis revenez ici. Le bouton Actualiser Netatmo testera ensuite la connexion réelle.",
+        text="Aide Netatmo : créez une application sur le portail développeur Netatmo, copiez les quatre valeurs demandées dans le fichier privé créé par Gruterra, puis revenez ici. Le bouton Actualiser Netatmo testera ensuite la connexion.",
         bg=LIGHT_GREEN,
         fg=SECONDARY,
         font=("Segoe UI", 8),
