@@ -213,10 +213,10 @@ def verifier_plan_mise_a_jour(plan) -> dict:
 
 def message_verification_plan(statut, bloquants, avertissements):
     if statut == "pret":
-        return "Protections principales détectées ; mise à jour toujours soumise à validation explicite."
+        return "Données personnelles repérées ; l’installation restera soumise à votre validation."
     if statut == "bloque":
-        return "Mise à jour à bloquer : " + ", ".join(bloquants)
-    return "Mise à jour possible seulement avec prudence : " + ", ".join(avertissements)
+        return "Installation bloquée pour protéger vos données : " + ", ".join(bloquants)
+    return "Installation possible, mais quelques points sont à contrôler : " + ", ".join(avertissements)
 
 
 def resume_court_mise_a_jour(plan) -> str:
@@ -229,22 +229,22 @@ def resume_court_mise_a_jour(plan) -> str:
 
     statut_version = plan.get("statut_version", {})
     lignes = [
-        "Mise à jour future : " + ("mode démo" if contexte.get("mode_demo") else "préparation uniquement"),
-        f"- état du plan : {statut}",
-        f"- contrôle : {verification.get('message', 'non effectué')}",
+        "Mise à jour Gruterra : " + ("mode démo" if contexte.get("mode_demo") else "poste réel"),
+        f"- état général : {statut}",
+        f"- protection des données : {verification.get('message', 'non effectuée')}",
         f"- version : {statut_version.get('message', 'vérification non configurée')}",
     ]
     if statut_version.get("notes"):
-        lignes.append(f"- notes : {statut_version.get('notes')}")
+        lignes.append(f"- note de version : {statut_version.get('notes')}")
     if statut_version.get("url"):
-        lignes.append(f"- lien informatif : {statut_version.get('url')}")
+        lignes.append(f"- page du projet : {statut_version.get('url')}")
     if contexte.get("mode_demo"):
         lignes.append("- base de démonstration détectée : " + ("plantes_demo.db" if contexte.get("base_demo_detectee") else "absente"))
     lignes.extend([
-        "- application automatique : désactivée",
+        "- installation sans votre accord : non",
         "- données personnelles : conservées séparément du programme",
-        "- fichiers secrets : noms détaillés non affichés",
-        "- à préserver : " + (", ".join(presents) if presents else "aucun élément personnel détecté"),
+        "- fichiers privés : détails masqués",
+        "- données à conserver : " + (", ".join(presents) if presents else "aucun élément personnel détecté"),
     ])
     if absents:
         if contexte.get("mode_demo"):
@@ -252,8 +252,8 @@ def resume_court_mise_a_jour(plan) -> str:
         else:
             absents_affiches = absents
         if absents_affiches:
-            lignes.append("- non présents sur ce poste : " + ", ".join(absents_affiches))
-    lignes.append("- règle : sauvegarde locale et validation explicite avant toute application")
+            lignes.append("- éléments non encore créés sur ce poste : " + ", ".join(absents_affiches))
+    lignes.append("- règle : sauvegarde locale puis validation explicite avant installation")
     return "\n".join(lignes)
 
 
@@ -305,9 +305,9 @@ def construire_diagnostic_mise_a_jour(racine, verifier_distant=False) -> dict:
 
 def libelle_statut_global(statut) -> str:
     libelles = {
-        "pret_a_verifier": "Prêt pour vérification manuelle",
+        "pret_a_verifier": "Prêt à installer après validation",
         "prudence": "À contrôler avant mise à jour",
-        "bloque": "Bloqué tant que les protections manquent",
+        "bloque": "Installation bloquée pour protéger les données",
     }
     return libelles.get(statut, "État inconnu")
 
@@ -332,16 +332,16 @@ def exporter_diagnostic_mise_a_jour_json(diagnostic) -> str:
 def formater_diagnostic_mise_a_jour(diagnostic) -> str:
     statut_global = diagnostic.get('statut_global', 'inconnu')
     lignes = [
-        "Diagnostic de mise à jour Gruterra",
+        "Mise à jour Gruterra",
         f"État : {libelle_statut_global(statut_global)}",
-        f"Code état : {statut_global}",
+        f"Référence technique : {statut_global}",
         f"Mode : {diagnostic.get('mode', 'préparation uniquement')}",
     ]
     contexte = diagnostic.get("contexte_execution", {})
     if contexte.get("mode_demo"):
         lignes.append("Base de démonstration détectée : " + ("plantes_demo.db" if contexte.get("base_demo_detectee") else "absente"))
     lignes.extend([
-        f"Application automatique autorisée : {'oui' if diagnostic.get('application_autorisee') else 'non'}",
+        f"Installation sans validation : {'oui' if diagnostic.get('application_autorisee') else 'non'}",
         "",
         diagnostic.get("resume", "Résumé indisponible."),
         "",
@@ -416,12 +416,12 @@ def comparer_versions(version_locale, version_distante):
 
 def message_version(statut, version_locale, version_distante):
     if statut == "mise_a_jour_disponible":
-        return f"Version distante {version_distante} disponible ; sauvegarde et validation nécessaires avant application."
+        return f"Nouvelle version disponible : {version_distante}. Une sauvegarde sera faite avant installation."
     if statut == "version_stable_disponible":
         return f"Version stable {version_distante} disponible pour remplacer la version locale {version_locale}."
     if statut == "a_jour":
-        return f"Version locale {version_locale} à jour."
-    return f"Version locale {version_locale} plus récente que la version distante {version_distante}."
+        return f"Gruterra {version_locale} est à jour."
+    return f"Cette installation ({version_locale}) est plus récente que la version publiée ({version_distante})."
 
 
 def analyser_manifest_version(donnees, source):
@@ -451,7 +451,7 @@ def analyser_manifest_version(donnees, source):
         "archive_url": str(donnees.get("archive_url", "")),
         "sha256": str(donnees.get("sha256", "")),
         "mise_a_jour_automatique": bool(donnees.get("mise_a_jour_automatique", False)),
-        "message": f"Version distante déclarée : {version}",
+        "message": f"Version publiée : {version}",
     }
 
 
@@ -464,7 +464,7 @@ def lire_manifest_version(chemin_manifest):
             "disponible": False,
             "version": None,
             "source": str(chemin),
-            "message": "Manifeste de version local absent.",
+            "message": "Fichier local de version absent.",
         }
     try:
         donnees = json.loads(chemin.read_text(encoding="utf-8"))
@@ -473,7 +473,7 @@ def lire_manifest_version(chemin_manifest):
             "disponible": False,
             "version": None,
             "source": str(chemin),
-            "message": f"Manifeste de version local illisible : {erreur}",
+            "message": f"Fichier local de version illisible : {erreur}",
         }
     return analyser_manifest_version(donnees, chemin)
 
@@ -486,7 +486,7 @@ def lire_manifest_version_distant(url, timeout=TIMEOUT_MANIFEST_SECONDES, ouvreu
             "disponible": False,
             "version": None,
             "source": "",
-            "message": "URL de manifeste distant non configurée.",
+            "message": "Adresse de vérification GitHub non configurée.",
         }
     try:
         requete = Request(str(url), headers={"User-Agent": "Gruterra-update-check/1.0"})
@@ -498,18 +498,18 @@ def lire_manifest_version_distant(url, timeout=TIMEOUT_MANIFEST_SECONDES, ouvreu
             "disponible": False,
             "version": None,
             "source": str(url),
-            "message": f"Manifeste distant indisponible : HTTP {erreur.code}.",
+            "message": f"Vérification GitHub indisponible : HTTP {erreur.code}.",
         }
     except (URLError, TimeoutError, OSError, json.JSONDecodeError, UnicodeDecodeError) as erreur:
         return {
             "disponible": False,
             "version": None,
             "source": str(url),
-            "message": f"Manifeste distant non vérifié : {erreur}",
+            "message": f"Vérification GitHub impossible : {erreur}",
         }
     manifest = analyser_manifest_version(donnees, url)
     if manifest.get("disponible"):
-        manifest["message"] = f"Version distante GitHub déclarée : {manifest.get('version')}"
+        manifest["message"] = f"Version publiée sur GitHub : {manifest.get('version')}"
     return manifest
 
 
@@ -547,7 +547,7 @@ def construire_statut_version(version_locale, version_distante=None, chemin_mani
             local = lire_manifest_version(chemin_manifest_local)
             statut = construire_statut_version_depuis_manifest_charge(version_locale, local)
             if local.get("disponible"):
-                statut["message"] = "Manifeste GitHub non lisible ou dépôt privé ; manifeste local utilisé."
+                statut["message"] = "GitHub n’est pas joignable ; Gruterra utilise les informations locales."
                 statut["avertissement_distant"] = manifest.get("message", "vérification distante indisponible")
             else:
                 statut["message"] = manifest.get("message", statut.get("message"))
@@ -570,5 +570,5 @@ def construire_statut_version_base(version_locale):
         "version_distante": None,
         "statut": "verification_non_configuree",
         "application_autorisee": False,
-        "message": "Vérification distante non configurée ; aucune mise à jour automatique active.",
+        "message": "Vérification GitHub non configurée ; aucune installation automatique active.",
     }

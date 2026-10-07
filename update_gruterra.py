@@ -84,7 +84,7 @@ def construire_message_validation(diagnostic: dict) -> str:
     lignes = [
         botaneo_update.formater_diagnostic_mise_a_jour(diagnostic),
         "",
-        "Validation auto-update :",
+        "Vérification avant installation :",
     ]
 
     archive_url = str(version.get("archive_url", "") or "").strip()
@@ -92,11 +92,11 @@ def construire_message_validation(diagnostic: dict) -> str:
     manifest_auto_update = bool(version.get("manifest_auto_update", False))
 
     if not manifest_auto_update:
-        lignes.append("- application automatique désactivée dans le manifeste public")
+        lignes.append("- installation depuis GitHub désactivée pour cette version")
     if not archive_url:
-        lignes.append("- archive de mise à jour absente du manifeste")
+        lignes.append("- paquet de mise à jour absent des informations GitHub")
     if not sha256:
-        lignes.append("- empreinte SHA256 absente du manifeste")
+        lignes.append("- contrôle d’intégrité du paquet absent")
 
     statut_version = str(version.get("statut") or "").strip()
     if statut_version == "a_jour":
@@ -104,9 +104,9 @@ def construire_message_validation(diagnostic: dict) -> str:
     elif statut_version == "version_locale_plus_recente":
         lignes.append("- résultat : la version locale est plus récente que la version distante, aucune mise à jour normale à appliquer")
     elif manifest_auto_update and archive_url and sha256 and diagnostic.get("statut_global") != "bloque":
-        lignes.append("- prérequis applicatifs détectés ; lancer avec --apply pour appliquer après sauvegarde locale")
+        lignes.append("- tout est prêt ; l’installation peut être lancée après sauvegarde locale")
     else:
-        lignes.append("- résultat : vérification informative uniquement, aucune mise à jour appliquée")
+        lignes.append("- résultat : information seulement, aucune installation lancée")
 
     return "\n".join(lignes)
 
@@ -115,19 +115,19 @@ def valider_manifest_applicable(diagnostic: dict) -> tuple[bool, list[str]]:
     erreurs = []
     version = diagnostic.get("version", {})
     if diagnostic.get("statut_global") == "bloque":
-        erreurs.append("diagnostic bloqué : protections locales insuffisantes")
+        erreurs.append("installation bloquée : protections locales insuffisantes")
     statut_version = str(version.get("statut") or "").strip()
     if statut_version == "a_jour":
         erreurs.append("Gruterra est déjà à jour")
     elif statut_version == "version_locale_plus_recente":
         erreurs.append("version locale plus récente que la version distante")
     if not version.get("manifest_auto_update"):
-        erreurs.append("mise_a_jour_automatique vaut false dans le manifeste")
+        erreurs.append("installation depuis GitHub désactivée pour cette version")
     if not str(version.get("archive_url", "") or "").strip():
-        erreurs.append("archive_url absent du manifeste")
+        erreurs.append("paquet de mise à jour absent des informations GitHub")
     sha256 = str(version.get("sha256", "") or "").strip().lower()
     if len(sha256) != 64 or any(car not in "0123456789abcdef" for car in sha256):
-        erreurs.append("sha256 absent ou invalide dans le manifeste")
+        erreurs.append("contrôle d’intégrité du paquet absent ou invalide")
     return not erreurs, erreurs
 
 
@@ -202,7 +202,7 @@ def appliquer_fichiers(source: Path, racine: Path, fichiers: list[Path]) -> int:
 def appliquer_mise_a_jour(diagnostic: dict, racine: Path, dry_run: bool = True) -> dict:
     ok, erreurs = valider_manifest_applicable(diagnostic)
     if not ok:
-        return {"ok": False, "applique": False, "erreurs": erreurs, "message": "Mise à jour refusée."}
+        return {"ok": False, "applique": False, "erreurs": erreurs, "message": "Installation refusée."}
 
     version = diagnostic.get("version", {})
     archive_url = str(version.get("archive_url", "")).strip()
@@ -220,13 +220,13 @@ def appliquer_mise_a_jour(diagnostic: dict, racine: Path, dry_run: bool = True) 
         source = trouver_racine_archive(extraction)
         fichiers = lister_fichiers_programme(source)
         if not fichiers:
-            return {"ok": False, "applique": False, "erreurs": ["archive sans fichier programme exploitable"], "message": "Mise à jour refusée."}
+            return {"ok": False, "applique": False, "erreurs": ["paquet téléchargé sans fichier Gruterra exploitable"], "message": "Installation refusée."}
         if dry_run:
             return {
                 "ok": True,
                 "applique": False,
                 "fichiers": len(fichiers),
-                "message": f"Simulation OK : {len(fichiers)} fichier(s) programme seraient remplacés.",
+                "message": f"Vérification OK : {len(fichiers)} fichier(s) du programme seraient mis à jour.",
             }
         backup = sauvegarder_programme(racine, fichiers)
         copies = appliquer_fichiers(source, racine, fichiers)
@@ -235,7 +235,7 @@ def appliquer_mise_a_jour(diagnostic: dict, racine: Path, dry_run: bool = True) 
             "applique": True,
             "fichiers": copies,
             "backup": str(backup),
-            "message": f"Mise à jour appliquée : {copies} fichier(s) remplacé(s). Sauvegarde : {backup}",
+            "message": f"Mise à jour appliquée : {copies} fichier(s) du programme remplacé(s). Sauvegarde créée : {backup}",
         }
 
 
@@ -261,7 +261,7 @@ def main(argv: list[str] | None = None) -> int:
 
     if args.apply or args.dry_run:
         safe_print("")
-        safe_print("Application demandée :" if args.apply else "Simulation demandée :")
+        safe_print("Installation demandée :" if args.apply else "Vérification sans installation demandée :")
         try:
             resultat = appliquer_mise_a_jour(diagnostic, RACINE, dry_run=not args.apply)
         except RuntimeError as erreur:

@@ -539,7 +539,7 @@ class TestPreparationMiseAJour(unittest.TestCase):
         self.assertTrue(elements["_app/data"].existe)
         self.assertIn("préserver _config", texte)
         self.assertIn("Interdit sans validation explicite", texte)
-        self.assertIn("manifeste de version local absent", texte.lower())
+        self.assertIn("fichier local de version absent", texte.lower())
         self.assertIn("Séparation programme / données", texte)
         self.assertIn("programme remplaçable", texte)
 
@@ -604,10 +604,10 @@ class TestPreparationMiseAJour(unittest.TestCase):
             plan = botaneo_update.construire_plan_mise_a_jour(racine)
             resume = botaneo_update.resume_court_mise_a_jour(plan).lower()
 
-        self.assertIn("préparation uniquement", resume)
-        self.assertIn("application automatique : désactivée", resume)
+        self.assertIn("poste réel", resume)
+        self.assertIn("installation sans votre accord : non", resume)
         self.assertIn("données personnelles", resume)
-        self.assertIn("fichiers secrets", resume)
+        self.assertIn("fichiers privés", resume)
         self.assertNotIn("netatmo_config.json", resume)
 
     def test_resume_court_affiche_notes_version_si_disponibles(self):
@@ -625,7 +625,7 @@ class TestPreparationMiseAJour(unittest.TestCase):
 
         self.assertIn("Amélioration historique", resume)
         self.assertIn("https://example.invalid/release", resume)
-        self.assertIn("application automatique : désactivée", resume)
+        self.assertIn("installation sans votre accord : non", resume)
 
     def test_version_locale_lue_depuis_fichier_version(self):
         botaneo_update = importlib.import_module("botaneo_update")
@@ -696,17 +696,17 @@ class TestPreparationMiseAJour(unittest.TestCase):
                 botaneo_update.lire_manifest_version_distant = original
 
         self.assertEqual(statut["statut"], "mise_a_jour_disponible")
-        self.assertIn("manifeste local utilisé", statut["message"].lower())
-        self.assertIn("Manifeste distant non vérifié", statut["avertissement_distant"])
+        self.assertIn("informations locales", statut["message"].lower())
+        self.assertIn("Vérification GitHub impossible", statut["avertissement_distant"])
         self.assertEqual(statut["notes"], "Fallback local")
         self.assertFalse(statut["application_autorisee"])
 
     def test_libelle_statut_global_est_lisible(self):
         botaneo_update = importlib.import_module("botaneo_update")
 
-        self.assertEqual(botaneo_update.libelle_statut_global("pret_a_verifier"), "Prêt pour vérification manuelle")
+        self.assertEqual(botaneo_update.libelle_statut_global("pret_a_verifier"), "Prêt à installer après validation")
         self.assertEqual(botaneo_update.libelle_statut_global("prudence"), "À contrôler avant mise à jour")
-        self.assertEqual(botaneo_update.libelle_statut_global("bloque"), "Bloqué tant que les protections manquent")
+        self.assertEqual(botaneo_update.libelle_statut_global("bloque"), "Installation bloquée pour protéger les données")
         self.assertEqual(botaneo_update.libelle_statut_global("autre"), "État inconnu")
 
     def test_diagnostic_mise_a_jour_reste_non_applicatif(self):
@@ -722,9 +722,9 @@ class TestPreparationMiseAJour(unittest.TestCase):
         self.assertEqual(diagnostic["statut_global"], "pret_a_verifier")
         self.assertFalse(diagnostic["application_autorisee"])
         self.assertIn("plantes.db", diagnostic["elements_presents"])
-        self.assertIn("Diagnostic de mise à jour Gruterra", texte)
-        self.assertIn("Prêt pour vérification manuelle", texte)
-        self.assertIn("Application automatique autorisée : non", texte)
+        self.assertIn("Mise à jour Gruterra", texte)
+        self.assertIn("Prêt à installer après validation", texte)
+        self.assertIn("Installation sans validation : non", texte)
 
     def test_exporter_diagnostic_mise_a_jour_json(self):
         botaneo_update = importlib.import_module("botaneo_update")
@@ -814,9 +814,9 @@ class TestAssistantMiseAJour(unittest.TestCase):
         ok, erreurs = update_gruterra.valider_manifest_applicable(diagnostic)
 
         self.assertFalse(ok)
-        self.assertIn("mise_a_jour_automatique vaut false dans le manifeste", erreurs)
-        self.assertIn("archive_url absent du manifeste", erreurs)
-        self.assertIn("sha256 absent ou invalide dans le manifeste", erreurs)
+        self.assertIn("installation depuis GitHub désactivée pour cette version", erreurs)
+        self.assertIn("paquet de mise à jour absent des informations GitHub", erreurs)
+        self.assertIn("contrôle d’intégrité du paquet absent ou invalide", erreurs)
 
     def test_version_deja_a_jour_refuse_application_normale(self):
         update_gruterra = importlib.import_module("update_gruterra")
