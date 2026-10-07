@@ -986,9 +986,9 @@ class TestInstallateurWindows(unittest.TestCase):
         bat = Path(__file__).resolve().parents[1] / "Installer_Gruterra.bat"
         contenu = bat.read_text(encoding="ascii")
 
-        self.assertIn("[1/6] Verification de Python", contenu)
-        self.assertIn("[5/6] Verification de Gruterra", contenu)
-        self.assertIn("pip disponible dans l'environnement local", contenu)
+        self.assertIn("[1/6] Recherche de Python sur ce PC", contenu)
+        self.assertIn("[5/6] Verification finale de Gruterra", contenu)
+        self.assertIn("Gestionnaire de modules OK", contenu)
         self.assertNotIn("pip install --upgrade pip", contenu)
         self.assertIn("pip install -r requirements.txt", contenu)
         self.assertIn("import tkinter, requests, bleak", contenu)
@@ -997,7 +997,7 @@ class TestInstallateurWindows(unittest.TestCase):
         self.assertIn("InstallAllUsers=0", contenu)
         self.assertIn("PYTHON_EXPECTED_EXE", contenu)
         self.assertIn("Programs\\Python\\Python312\\python.exe", contenu)
-        self.assertIn("Installation interrompue ou incomplete", contenu)
+        self.assertIn("Installation arretee avant la fin", contenu)
 
 
 class TestLanceursWindows(unittest.TestCase):

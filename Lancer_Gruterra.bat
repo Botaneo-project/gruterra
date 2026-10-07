@@ -13,12 +13,12 @@ echo.
 call :ensure_environment
 if errorlevel 1 goto :fail_environment
 
-echo Ouverture de Gruterra...
+echo Ouverture de Gruterra... une fenetre peut mettre quelques secondes a apparaitre.
 "%VENV_PY%" "%TARGET_SCRIPT%"
 if errorlevel 1 (
     echo.
     echo ERREUR - Gruterra ne s'est pas lance correctement.
-    echo Copiez les lignes ci-dessus si vous demandez de l'aide.
+    echo Copiez toute cette fenetre si vous demandez de l'aide.
     echo.
     pause
     exit /b 1
@@ -29,8 +29,8 @@ exit /b 0
 :ensure_environment
 if exist "%VENV_PY%" exit /b 0
 
-echo Environnement local introuvable : %VENV_PY%
-echo Gruterra va lancer Installer_Gruterra.bat, puis reessayer automatiquement.
+echo Preparation locale Gruterra introuvable : %VENV_PY%
+echo Gruterra va lancer l'installateur, puis reessayer automatiquement.
 echo.
 if not exist "Installer_Gruterra.bat" (
     echo ERREUR - Installer_Gruterra.bat est introuvable dans ce dossier.
@@ -41,14 +41,14 @@ call "Installer_Gruterra.bat"
 if errorlevel 1 exit /b 1
 if exist "%VENV_PY%" exit /b 0
 
-echo ERREUR - l'installation s'est terminee mais %VENV_PY% reste introuvable.
-echo Vous etes peut-etre dans une autre copie du dossier Gruterra.
+echo ERREUR - l'installation s'est terminee, mais la preparation locale reste introuvable.
+echo Verifiez que vous lancez le fichier depuis le dossier Gruterra extrait.
 exit /b 1
 
 :fail_environment
 echo.
-echo Impossible de preparer l'environnement Gruterra.
-echo Copiez les lignes ci-dessus si vous demandez de l'aide.
+echo Impossible de preparer Gruterra sur ce PC.
+echo Copiez toute cette fenetre si vous demandez de l'aide.
 echo.
 pause
 exit /b 1
