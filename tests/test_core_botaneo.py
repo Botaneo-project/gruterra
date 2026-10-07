@@ -1124,6 +1124,19 @@ class TestParametresLangue(unittest.TestCase):
         self.assertIn("options_langue.get(langue_var.get(), langue_var.get())", contenu)
 
 
+class TestRedemarrageUpdate(unittest.TestCase):
+    def test_interface_prepare_redemarrage_post_update(self):
+        interface = Path(__file__).resolve().parents[1] / "_app" / "interface.py"
+        contenu = interface.read_text(encoding="utf-8")
+
+        self.assertIn("def update_appliquee_depuis_resultat", contenu)
+        self.assertIn("def proposer_redemarrage_apres_update", contenu)
+        self.assertIn("def redemarrer_gruterra", contenu)
+        self.assertIn("Lancer_Demo.py", contenu)
+        self.assertIn("Lancer_Gruterra.py", contenu)
+        self.assertIn("update_restart_question", contenu)
+
+
 class TestUpdateDansParametres(unittest.TestCase):
     def test_parametres_contiennent_bloc_mises_a_jour(self):
         interface = Path(__file__).resolve().parents[1] / "_app" / "interface.py"

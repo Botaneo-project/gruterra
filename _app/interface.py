@@ -11,6 +11,7 @@ from datetime import datetime, timedelta
 import threading
 import json
 import subprocess
+import sys
 from pathlib import Path
 
 import database
@@ -5102,6 +5103,62 @@ def executer_assistant_update_a_propos(appliquer=False):
 
 
 
+def update_appliquee_depuis_resultat(contenu):
+    texte = str(contenu or "")
+    return "Code retour : 0" in texte and "Mise à jour appliquée" in texte
+
+
+def script_lancement_courant(racine):
+    if os.environ.get("BOTANEO_DEMO") == "1":
+        return racine / "Lancer_Demo.py"
+    return racine / "Lancer_Gruterra.py"
+
+
+def redemarrer_gruterra(parent=None):
+    racine = Path(__file__).resolve().parent.parent
+    script = script_lancement_courant(racine)
+    if not script.exists():
+        messagebox.showwarning(
+            t("update_restart_title"),
+            t("update_restart_missing_launcher"),
+            parent=parent,
+        )
+        return False
+    environnement = os.environ.copy()
+    environnement["PYTHONIOENCODING"] = "utf-8"
+    environnement["PYTHONUTF8"] = "1"
+    try:
+        subprocess.Popen(
+            [sys.executable, str(script)],
+            cwd=str(racine),
+            env=environnement,
+            creationflags=getattr(subprocess, "CREATE_NEW_PROCESS_GROUP", 0),
+        )
+    except Exception as erreur:
+        messagebox.showwarning(
+            t("update_restart_title"),
+            f"{t('update_restart_failed')}\n\n{erreur}",
+            parent=parent,
+        )
+        return False
+    status_var.set(t("update_restarting"))
+    root.after(500, root.destroy)
+    return True
+
+
+def proposer_redemarrage_apres_update(parent, contenu):
+    if not update_appliquee_depuis_resultat(contenu):
+        status_var.set(t("update_apply_done"))
+        return
+    status_var.set(t("update_restart_advised"))
+    if messagebox.askyesno(
+        t("update_restart_title"),
+        t("update_restart_question"),
+        parent=parent,
+    ):
+        redemarrer_gruterra(parent=parent)
+
+
 def lancer_application_update(parent, afficher_resultat=None):
     if not messagebox.askyesno(
         t("update_apply_title"),
@@ -5119,11 +5176,11 @@ def lancer_application_update(parent, afficher_resultat=None):
                 afficher_resultat(contenu)
             else:
                 messagebox.showinfo(
-                    "Mise à jour Gruterra",
-                    contenu + "\n\nSi la mise à jour a été appliquée, fermez puis relancez Gruterra.",
+                    t("update_apply_result_title"),
+                    contenu + "\n\n" + t("update_restart_hint"),
                     parent=parent,
                 )
-            status_var.set(t("update_apply_done"))
+            proposer_redemarrage_apres_update(parent, contenu)
 
         root.after(0, terminer)
 
@@ -5178,12 +5235,12 @@ def verifier_update_au_demarrage():
                 resultat = executer_assistant_update_a_propos(appliquer=True)
 
                 def terminer():
-                    status_var.set(t("update_restart_advised"))
                     messagebox.showinfo(
-                        "Mise à jour Gruterra",
-                        resultat + "\n\nSi la mise à jour a été appliquée, fermez puis relancez Gruterra.",
+                        t("update_apply_result_title"),
+                        resultat + "\n\n" + t("update_restart_hint"),
                         parent=root,
                     )
+                    proposer_redemarrage_apres_update(root, resultat)
 
                 root.after(0, terminer)
 
