@@ -87,6 +87,13 @@ class TestSchemaEtNettoyage(BaseTemporaireMixin, unittest.TestCase):
         self.assertEqual(mesures[0][1], "2026-09-20T13:39:29")
 
 
+class TestVueHistoriqueI18n(unittest.TestCase):
+    def test_copie_journee_n_utilise_pas_libelle_francais_en_dur(self):
+        source = (Path(__file__).resolve().parents[1] / "_app" / "vue_historique.py").read_text(encoding="utf-8")
+        self.assertNotIn('periode.get() != "Journée"', source)
+        self.assertIn('periode.get() != vh_t("period_day")', source)
+
+
 class TestAnalyseHistorique(unittest.TestCase):
     def test_lumiere_ne_signale_pas_faible_si_seules_les_periodes_sombres_baissent_la_moyenne(self):
         vue_historique = importlib.import_module("vue_historique")

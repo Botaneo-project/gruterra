@@ -1662,7 +1662,7 @@ def ouvrir_historique(parent, plante_id, action_synchroniser=None):
     def copier_journee():
         nom_plante = plante[1] if plante else "Plante"
         texte_jour = bilan_jour_courant.get("texte") or ""
-        if periode.get() != "Journée" or not texte_jour:
+        if periode.get() != vh_t("period_day") or not texte_jour:
             bilan.set(f"{bilan.get()} · aucune journée sélectionnée à copier")
             return
         texte_expositions = bilan_jour_courant.get("expositions") or ""
