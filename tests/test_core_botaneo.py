@@ -87,6 +87,21 @@ class TestSchemaEtNettoyage(BaseTemporaireMixin, unittest.TestCase):
         self.assertEqual(mesures[0][1], "2026-09-20T13:39:29")
 
 
+class TestAnalyseHistorique(unittest.TestCase):
+    def test_lumiere_ne_signale_pas_faible_si_seules_les_periodes_sombres_baissent_la_moyenne(self):
+        vue_historique = importlib.import_module("vue_historique")
+        points = [
+            (datetime(2026, 10, 8, 0, 0), 0),
+            (datetime(2026, 10, 8, 1, 0), 0),
+            (datetime(2026, 10, 8, 10, 0), 600),
+        ]
+
+        analyse = vue_historique.analyser_points(points, "Lumière")
+
+        self.assertEqual(analyse["couleur"], "BLUE")
+        self.assertIn("périodes sombres", analyse["lecture"])
+
+
 class TestRappelsArrosage(BaseTemporaireMixin, unittest.TestCase):
     def test_nouvel_arrosage_cloture_ancien_rappel_en_retard(self):
         db = self.database

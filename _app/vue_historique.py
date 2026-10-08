@@ -206,8 +206,16 @@ def analyser_points(points, nom_serie):
     elif nom_serie == "Lumière":
         valeurs = [valeur for _, valeur in points]
         moyenne = sum(valeurs) / len(valeurs)
-        if moyenne < 250:
-            lecture = "Lumière moyenne faible : emplacement ou éclairage à surveiller."
+        valeurs_eclairees = [valeur for valeur in valeurs if valeur >= 50]
+        moyenne_eclairee = sum(valeurs_eclairees) / len(valeurs_eclairees) if valeurs_eclairees else 0
+        if moyenne < 250 and moyenne_eclairee >= 250:
+            lecture = (
+                "Lumière correcte pendant les mesures éclairées ; "
+                "la moyenne brute est abaissée par les périodes sombres."
+            )
+            couleur = "BLUE"
+        elif moyenne < 250:
+            lecture = "Lumière moyenne faible sur les périodes mesurées : emplacement ou éclairage à surveiller."
             couleur = "ORANGE"
         else:
             lecture = "Lumière exploitable sur la période affichée."
@@ -1737,10 +1745,10 @@ def ouvrir_historique(parent, plante_id, action_synchroniser=None):
         jours_par_libelle = {libelle_jour(jour): jour for jour in jours_disponibles}
         libelles_jours = tuple(jours_par_libelle.keys())
         choix_jour.configure(values=libelles_jours)
-        if libelles_jours and jour_selectionne.get() not in jours_par_libelle:
-            jour_selectionne.set(libelles_jours[0])
 
         if periode.get() == vh_t("period_day"):
+            if libelles_jours and jour_selectionne.get() not in jours_par_libelle:
+                jour_selectionne.set(libelles_jours[0])
             if not jour_resume_label.winfo_ismapped():
                 jour_resume_label.pack(fill="x", padx=24, pady=(0, 8), ipady=8, before=qualite_label)
             choix_jour.configure(state="readonly" if libelles_jours else "disabled")
@@ -1766,7 +1774,7 @@ def ouvrir_historique(parent, plante_id, action_synchroniser=None):
                 bilan_jour_courant["jour"] = ""
                 jour_resume_label.configure(fg=couleurs["SECONDARY"])
         else:
-            choix_jour.configure(state="readonly" if libelles_jours else "disabled")
+            choix_jour.configure(state="disabled")
             bilan_jour_courant["texte"] = ""
             bilan_jour_courant["jour"] = ""
             jour_resume_label.pack_forget()
@@ -1886,6 +1894,14 @@ def ouvrir_historique(parent, plante_id, action_synchroniser=None):
     def selectionner_periode(_event=None):
         if periode.get() == vh_t("period_day"):
             serie.set("Lumière")
+            if not jour_selectionne.get():
+                try:
+                    mesures = database.get_mesures(plante_id=plante_id, limite=-1)
+                    jours = jours_disponibles_mesures(mesures)
+                    if jours:
+                        jour_selectionne.set(libelle_jour(jours[0]))
+                except Exception:
+                    pass
         actualiser()
 
     def selectionner_jour(_event=None):
