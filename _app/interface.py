@@ -1903,6 +1903,31 @@ def ouvrir_evaluation_sante_plante(plante_id, nom_plante):
     etat_sante_combo.pack(fill="x", padx=20)
     etat_sante_combo.current(0)
 
+    tk.Label(fenetre, text=t("plant_health_signs"), bg=CARD, fg=TEXT, font=("Segoe UI", 9, "bold")).pack(anchor="w", padx=20, pady=(10, 3))
+    signes_frame = tk.Frame(fenetre, bg=CARD)
+    signes_frame.pack(fill="x", padx=20)
+    signes_options = [
+        ("leaf_drop", t("plant_sign_leaf_drop")),
+        ("soft_leaf", t("plant_sign_soft_leaf")),
+        ("brown_spot", t("plant_sign_brown_spot")),
+        ("soft_stem", t("plant_sign_soft_stem")),
+        ("new_growth", t("plant_sign_new_growth")),
+    ]
+    signes_vars = []
+    for index, (code, libelle) in enumerate(signes_options):
+        var = tk.BooleanVar(value=False)
+        signes_vars.append((code, libelle, var))
+        tk.Checkbutton(
+            signes_frame,
+            text=libelle,
+            variable=var,
+            bg=CARD,
+            fg=TEXT,
+            activebackground=CARD,
+            activeforeground=TEXT,
+            selectcolor=BG
+        ).grid(row=index // 2, column=index % 2, sticky="w", padx=(0, 12), pady=2)
+
     tk.Label(fenetre, text=t("comment"), bg=CARD, fg=TEXT, font=("Segoe UI", 9, "bold")).pack(anchor="w", padx=20, pady=(10, 3))
     commentaire_entry = tk.Entry(fenetre, width=42, bg=BG, fg=TEXT, insertbackground=TEXT)
     commentaire_entry.pack(fill="x", padx=20)
@@ -1914,10 +1939,14 @@ def ouvrir_evaluation_sante_plante(plante_id, nom_plante):
         etat_libelle = etat_sante_combo.get().strip()
         etat_code = code_etat_sante_depuis_libelle(etat_libelle)
         commentaire_libre = commentaire_entry.get().strip()
+        signes_selectionnes = [(code, libelle) for code, libelle, var in signes_vars if var.get()]
         lignes = [
             f"etat_sante={etat_code}",
             f"État déclaré : {etat_libelle}.",
         ]
+        if signes_selectionnes:
+            lignes.append("signes=" + ",".join(code for code, _libelle in signes_selectionnes))
+            lignes.append("Signes confirmés : " + "; ".join(libelle for _code, libelle in signes_selectionnes) + ".")
         if commentaire_libre:
             lignes.append(f"Commentaire : {commentaire_libre}")
         try:

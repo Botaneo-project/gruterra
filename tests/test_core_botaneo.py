@@ -118,7 +118,7 @@ class TestEvaluationSanteJournal(BaseTemporaireMixin, unittest.TestCase):
         evenement_id = db.ajouter_observation_plante(
             plante_id,
             "2026-10-08T19:31:00",
-            "etat_sante=a_surveiller État déclaré : À surveiller.",
+            "etat_sante=a_surveiller État déclaré : À surveiller. signes=leaf_drop,brown_spot Signes confirmés : Feuille tombée; Tache brune sèche.",
             titre="Évaluation santé",
             type_evenement="evaluation_sante",
             source="botaneo",
@@ -128,6 +128,7 @@ class TestEvaluationSanteJournal(BaseTemporaireMixin, unittest.TestCase):
         self.assertEqual(evenement[0], evenement_id)
         self.assertEqual(evenement[3], "evaluation_sante")
         self.assertIn("etat_sante=a_surveiller", evenement[5])
+        self.assertIn("signes=leaf_drop,brown_spot", evenement[5])
 
 
 class TestSanteArrosage(BaseTemporaireMixin, unittest.TestCase):
