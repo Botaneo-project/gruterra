@@ -2945,9 +2945,9 @@ def creer_carte_plante(parent, plante):
 
     historique_disponible = plante_a_historique_mesures(plante_id)
     texte_bouton_historique = (
-        "📈 Historique mesures"
+        t("history_measurements_button")
         if historique_disponible
-        else "📈 Historique / raccourci"
+        else t("history_shortcut_button")
     )
     fond_bouton_historique = LIGHT_BLUE if historique_disponible else BG
     couleur_bouton_historique = TEXT if historique_disponible else SECONDARY
@@ -3044,7 +3044,7 @@ def recuperer_prevision_2h_avec_cache():
         if prevision_2h_data is None:
             prevision_2h_data = charger_cache_prevision_2h()
     except Exception:
-        prevision_2h_error = "Prévision +2 h indisponible"
+        prevision_2h_error = t("forecast_2h_unavailable")
         if prevision_2h_data is None:
             prevision_2h_data = charger_cache_prevision_2h()
 
@@ -3071,11 +3071,11 @@ def afficher_prevision_2h(parent):
 
     tk.Label(entete, text=t("local_forecast_2h"), font=("Segoe UI", 11, "bold"), fg=BLUE, bg=LIGHT_BLUE).pack(side="left")
 
-    source = prevision_2h_data.get("source", "Météo locale") if prevision_2h_data else "Météo locale"
+    source = prevision_2h_data.get("source", t("local_weather")) if prevision_2h_data else t("local_weather")
     tk.Label(entete, text=source, font=("Segoe UI", 8), fg=SECONDARY, bg=LIGHT_BLUE).pack(side="right")
 
     if not prevision_2h_data:
-        message = prevision_2h_error or "Prévision non chargée pour le moment."
+        message = prevision_2h_error or t("forecast_not_loaded")
         tk.Label(bloc, text=message, font=("Segoe UI", 9), fg=SECONDARY, bg=LIGHT_BLUE, anchor="w", wraplength=900, justify="left").pack(fill="x", padx=12, pady=(2, 10))
         return
 
@@ -3089,17 +3089,17 @@ def afficher_prevision_2h(parent):
     ciel = prevision_2h_data.get("lumiere") or "—"
 
     creer_ligne_netatmo_compacte(bloc, [
-        ("🌧️ Pluie 2 h", pluie),
-        ("☔ Max", intensite),
-        ("🌡️ Température", temperature),
-        ("💨 Vent", vent),
-        ("💨 Rafales", rafale),
-        ("☁️ Ciel", ciel),
+        (t("rain_2h"), pluie),
+        (t("max_rain_intensity"), intensite),
+        (t("temperature"), temperature),
+        (t("wind"), vent),
+        (t("gusts"), rafale),
+        (t("sky"), ciel),
     ])
 
-    message = prevision_2h_data.get("message_pluie") or "Prévision locale chargée."
+    message = prevision_2h_data.get("message_pluie") or t("local_forecast_loaded")
     if prevision_2h_error:
-        message += " · Donnée affichée depuis le cache."
+        message += t("displayed_from_cache")
 
     tk.Label(bloc, text=message, font=("Segoe UI", 9, "bold"), fg=TEXT, bg=LIGHT_BLUE, anchor="w", wraplength=900, justify="left").pack(fill="x", padx=12, pady=(0, 10))
 
@@ -3142,7 +3142,7 @@ def id_station_netatmo(station):
 def nom_station_netatmo(station):
     station_id = id_station_netatmo(station)
     nom_local = netatmo_preferences.get("noms", {}).get(station_id)
-    return nom_local or station.get("nom") or "Station publique"
+    return nom_local or station.get("nom") or t("public_station_default")
 
 
 def trier_favoris_netatmo(stations):
@@ -3187,7 +3187,7 @@ def deplacer_favori_netatmo(station_id, direction):
 def ajouter_favori_netatmo_config(station_saisie, nom_local=""):
     station_id = normaliser_station_favorite(station_saisie)
     if not station_id:
-        return False, "Colle un identifiant Netatmo ou un lien weathermap."
+        return False, t("netatmo_station_input_help")
 
     try:
         config = lire_json(LOCAL_CONFIG)
@@ -3214,7 +3214,7 @@ def ajouter_favori_netatmo_config(station_saisie, nom_local=""):
     try:
         ecrire_json(LOCAL_CONFIG, config)
     except RuntimeError:
-        return False, "Impossible d'enregistrer le favori Netatmo."
+        return False, t("netatmo_favorite_save_failed")
 
     if nom_local.strip():
         netatmo_preferences.setdefault("noms", {})[station_id] = nom_local.strip()
@@ -3225,15 +3225,15 @@ def ajouter_favori_netatmo_config(station_saisie, nom_local=""):
         sauvegarder_preferences_netatmo()
 
     if deja_present:
-        return True, "Station déjà présente dans les favoris Gruterra."
+        return True, t("netatmo_favorite_already_exists")
 
-    return True, "Station ajoutée aux favoris Gruterra. Lance Actualiser Netatmo pour charger ses données."
+    return True, t("netatmo_favorite_added")
 
 
 def renommer_station_netatmo(station):
     station_id = id_station_netatmo(station)
     if not station_id:
-        messagebox.showinfo(t("netatmo"), "Cette station n'a pas d'identifiant local utilisable.", parent=root)
+        messagebox.showinfo(t("netatmo"), t("netatmo_station_no_local_id"), parent=root)
         return
 
     fenetre = tk.Toplevel(root)
@@ -4393,7 +4393,7 @@ def actualiser_netatmo_seul():
         return
     netatmo_loading = True
     sync_button.config(state='disabled')
-    netatmo_status_var.set('Actualisation en cours…')
+    netatmo_status_var.set(t("netatmo_refreshing"))
     def terminer(resultats):
         global netatmo_loading
         try:
