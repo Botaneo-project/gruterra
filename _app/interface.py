@@ -4669,19 +4669,19 @@ def synchroniser():
     )
 
     status_var.set(
-        "📡 Synchronisation en cours"
+        t("sync_running_status")
     )
 
     sync_var.set(
-        "Synchronisation Mi Flora + historique + Netatmo..."
+        t("sync_running_summary")
     )
 
     sync_detail_var.set(
-        "Préparation..."
+        t("sync_preparing")
     )
 
     sync_progress_var.set(
-        "Progression : 0%"
+        t("sync_progress_percent").format(percent=0)
     )
 
     afficher_synchronisation_visible()
@@ -4705,7 +4705,7 @@ def synchroniser_arriere_plan():
         root.after(
             0,
             afficher_etape_netatmo,
-            "🌱 Recherche du Mi Flora...",
+            t("sync_searching_miflora"),
             5
         )
 
@@ -4775,9 +4775,9 @@ def synchroniser_arriere_plan():
 
     # --------------------------------------------------------
     # Netatmo : lectures et dates independantes.
-    root.after(0, afficher_etape_netatmo, "🌦️ Netatmo : lecture des stations privées et publiques...", 55)
+    root.after(0, afficher_etape_netatmo, t("sync_netatmo_reading"), 55)
     resultats_meteo = recuperer_sources(netatmo)
-    root.after(0, afficher_etape_netatmo, "🌦️ Prévision locale +2 h : récupération météo...", 70)
+    root.after(0, afficher_etape_netatmo, t("sync_forecast_reading"), 70)
     recuperer_prevision_2h_avec_cache()
     root.after(0, synchronisation_terminee, resultat_miflora, resultats_meteo)
 
@@ -4801,18 +4801,18 @@ def programmer_controle_raspberry(delai_ms=2 * 60 * 1000):
         if str(sync_button['state']) == 'disabled':
             root.after(60 * 1000, lancer)
             return
-        status_var.set("Raspberry : contrôle automatique des nouvelles mesures")
+        status_var.set(t("sync_raspberry_auto_check"))
 
         def arriere_plan():
             try:
                 resultat = raspberry_sync.synchronize(collect_now=False)
             except Exception as erreur:
-                resultat = {"ok": False, "message": f"Contrôle Raspberry impossible : {erreur}"}
+                resultat = {"ok": False, "message": t("sync_raspberry_check_failed").format(error=erreur)}
 
             def terminer():
-                message = resultat.get("message", "Contrôle Raspberry terminé.")
+                message = resultat.get("message", t("sync_raspberry_check_done"))
                 if resultat.get("ok"):
-                    status_var.set(f"Contrôle Raspberry terminé : {message}")
+                    status_var.set(t("sync_raspberry_check_done_with_message").format(message=message))
                     actualiser_interface()
                 else:
                     status_var.set(message)
@@ -4863,7 +4863,7 @@ def synchronisation_terminee(resultat_miflora, resultats_meteo):
     if resultat_miflora.get("ok"):
 
         afficher_etape_netatmo(
-            "✓ Mi Flora + historique synchronisés",
+            t("sync_miflora_done"),
             90
         )
 
@@ -4873,7 +4873,7 @@ def synchronisation_terminee(resultat_miflora, resultats_meteo):
             "⚠ Mi Flora : "
             + resultat_miflora.get(
                 "message",
-                "erreur"
+                t("sync_error_fallback")
             ),
             90
         )
@@ -4900,17 +4900,17 @@ def synchronisation_terminee(resultat_miflora, resultats_meteo):
     if not resultat_miflora.get("ok"):
         sources_en_echec.append("Mi Flora")
     if erreur_netatmo or donnees_netatmo is None:
-        sources_en_echec.append("Netatmo privée")
+        sources_en_echec.append(t("sync_netatmo_private_source"))
     if erreur_netatmo_publique:
-        sources_en_echec.append("Netatmo publiques")
-    bilan_sync = "⚠ Synchronisation terminée avec erreurs" if sources_en_echec else "✓ Synchronisation terminée"
+        sources_en_echec.append(t("sync_netatmo_public_source"))
+    bilan_sync = t("sync_finished_with_errors") if sources_en_echec else t("sync_finished")
     sync_var.set(
         bilan_sync + " · "
         + f"{datetime.now().strftime('%d/%m/%Y à %H:%M:%S')}"
     )
 
-    lignes_detail = [resultat_miflora.get("message", "Synchronisation Mi Flora terminée")]
-    lignes_detail.append("Affichage relu automatiquement après synchronisation pour éviter les anciennes valeurs visibles.")
+    lignes_detail = [resultat_miflora.get("message", t("sync_miflora_default_done"))]
+    lignes_detail.append(t("sync_display_refreshed"))
     acquisition_miflora = resume_acquisition_miflora(resultat_miflora)
     if acquisition_miflora:
         lignes_detail.append(acquisition_miflora)
@@ -4918,22 +4918,26 @@ def synchronisation_terminee(resultat_miflora, resultats_meteo):
     historiques_incomplets = resultat_miflora.get("historiques_incomplets") or []
     historiques_complets = resultat_miflora.get("historiques_complets") or []
     if historiques_incomplets:
-        lignes_detail.append("⚠ Historique encore à récupérer :")
+        lignes_detail.append(t("sync_history_missing_title"))
         for historique in historiques_incomplets:
             lignes_detail.append(
-                f"- {historique.get('nom')} : "
-                f"{historique.get('historique_total_lues', 0)}/{historique.get('historique_total_annonce', '?')} récupérée(s), "
-                f"{historique.get('historique_manque', 0)} restante(s). "
-                f"Passes terminées : {historique.get('historique_passes', '?')}/{historique.get('historique_passes_max', '?')}."
+                t("sync_history_missing_line").format(
+                    name=historique.get('nom'),
+                    read=historique.get('historique_total_lues', 0),
+                    total=historique.get('historique_total_annonce', '?'),
+                    missing=historique.get('historique_manque', 0),
+                    passes=historique.get('historique_passes', '?'),
+                    max_passes=historique.get('historique_passes_max', '?'),
+                )
             )
-        lignes_detail.append("Les données déjà récupérées sont conservées. Le Raspberry et le PC pourront compléter aux prochains passages.")
+        lignes_detail.append(t("sync_history_missing_help"))
     elif historiques_complets:
-        lignes_detail.append("✅ Historique complet pour les capteurs lus sur ce passage.")
+        lignes_detail.append(t("sync_history_complete"))
 
     if controle_raspberry_a_programmer(resultat_miflora):
         programmer_controle_raspberry()
         lignes_detail.append(
-            "ℹ Mesure Raspberry demandée mais pas encore rapatriée : contrôle automatique prévu dans environ 2 min."
+            t("sync_raspberry_pending")
         )
 
     controles_zero = controles_humidite_zero_a_programmer(resultat_miflora)
@@ -4941,23 +4945,22 @@ def synchronisation_terminee(resultat_miflora, resultats_meteo):
         if controle.get("plante_id"):
             lancer_controle_humidite_zero(controle["plante_id"])
         lignes_detail.append(
-            f"⚠ {controle.get('nom')} : humidité 0 % détectée sur une mesure fraîche. "
-            "Valeur conservée ; relecture de contrôle programmée dans 10 min."
+            t("sync_zero_humidity_warning").format(name=controle.get('nom'))
         )
 
     if resultat_miflora.get('detail'):
         lignes_detail.append(resultat_miflora['detail'])
     if sources_en_echec:
-        lignes_detail.append("À vérifier : " + ", ".join(sources_en_echec))
+        lignes_detail.append(t("sync_to_check").format(sources=", ".join(sources_en_echec)))
 
     sync_detail_var.set("\n".join(lignes_detail))
 
     sync_progress_var.set(
-        "Progression : 100%"
+        t("sync_progress_percent").format(percent=100)
     )
 
     status_var.set(
-        "● Système actif"
+        t("system_active")
     )
 
     global derniere_operation_bluetooth
@@ -5040,7 +5043,7 @@ def texte_diagnostic_update_json_a_propos(verifier_distant=False):
     except Exception as erreur:
         return json.dumps(
             {
-                "erreur": "diagnostic mise à jour indisponible",
+                t("sync_error_fallback"): "diagnostic mise à jour indisponible",
                 "message": str(erreur),
                 "application_autorisee": False,
             },
@@ -8072,7 +8075,7 @@ sync_frame = tk.Frame(
 
 tk.Label(
     sync_frame,
-    text="📡 Synchronisation Gruterra",
+    text=t("sync_panel_title"),
     font=("Segoe UI", 10, "bold"),
     fg=BLUE,
     bg=LIGHT_BLUE,

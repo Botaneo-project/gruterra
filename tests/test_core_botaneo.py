@@ -957,6 +957,18 @@ class TestPreferencesInterface(unittest.TestCase):
             self.assertIn("settings", data)
             self.assertIn("sync_plain", data)
 
+    def test_cles_interface_presentes_dans_les_deux_langues(self):
+        import re
+        interface = (APP_DIR / "interface.py").read_text(encoding="utf-8")
+        locales = APP_DIR / "locales"
+        fr = json.loads((locales / "fr.json").read_text(encoding="utf-8"))
+        en = json.loads((locales / "en.json").read_text(encoding="utf-8"))
+        cles = set(re.findall(r'(?<![A-Za-z0-9_])t\("([a-zA-Z0-9_]+)"\)', interface))
+        manquantes_fr = sorted(cle for cle in cles if cle not in fr)
+        manquantes_en = sorted(cle for cle in cles if cle not in en)
+        self.assertEqual(manquantes_fr, [])
+        self.assertEqual(manquantes_en, [])
+
     def test_i18n_normalise_langue_et_traduit(self):
         i18n = importlib.import_module("i18n")
 
