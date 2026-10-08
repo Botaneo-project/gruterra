@@ -5922,8 +5922,8 @@ def ouvrir_parametres():
         bg=LIGHT_GREEN
     ).pack(anchor="w", padx=12, pady=(10, 4))
 
-    options_langue = {"🇫🇷 FR": "fr", "🇬🇧 EN": "en"}
-    libelle_langue_courante = next((libelle for libelle, code in options_langue.items() if code == langue_interface), "🇫🇷 FR")
+    options_langue = {"🇫🇷 Français": "fr", "🇬🇧 English": "en"}
+    libelle_langue_courante = next((libelle for libelle, code in options_langue.items() if code == langue_interface), "🇫🇷 Français")
     langue_var = tk.StringVar(value=libelle_langue_courante)
     ligne_langue = tk.Frame(affichage_bloc, bg=LIGHT_GREEN)
     ligne_langue.pack(fill="x", padx=12, pady=(0, 8))
@@ -5932,7 +5932,7 @@ def ouvrir_parametres():
         ligne_langue,
         textvariable=langue_var,
         values=tuple(options_langue.keys()),
-        width=10,
+        width=16,
         state="readonly",
     ).pack(side="left", padx=(10, 8))
     tk.Label(

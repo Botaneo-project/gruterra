@@ -1,172 +1,35 @@
-"""Traductions simples pour l’interface Gruterra.
+"""Gestion simple des langues pour l’interface Gruterra.
 
-Ce module ne traduit pas encore toute l’application. Il fournit une base stable
-pour brancher progressivement les textes visibles sur une préférence locale.
+Les textes visibles sont stockés dans ``_app/locales/*.json`` pour pouvoir
+traduire l’application progressivement sans grossir le code Python principal.
 """
+
+from __future__ import annotations
+
+import json
+from functools import lru_cache
+from pathlib import Path
 
 LANGUES = {"fr", "en"}
 LANGUE_DEFAUT = "fr"
+DOSSIER_LOCALES = Path(__file__).resolve().parent / "locales"
 
-TRADUCTIONS = {
+# Quelques textes vitaux restent ici pour que l’application démarre même si les
+# fichiers de langue sont absents ou abîmés après une copie incomplète.
+TRADUCTIONS_SECOURS = {
     "app_title": {"fr": "Gruterra", "en": "Gruterra"},
     "system_active": {"fr": "● Système actif", "en": "● System active"},
     "no_sync": {"fr": "Aucune synchronisation effectuée", "en": "No synchronization yet"},
-    "refresh": {"fr": "⟳ Actualiser", "en": "⟳ Refresh"},
-    "sync": {"fr": "🔄 Synchroniser", "en": "🔄 Sync"},
-    "add_plant": {"fr": "＋ Ajouter une plante", "en": "＋ Add plant"},
-    "add_sensor": {"fr": "＋ Ajouter un capteur", "en": "＋ Add sensor"},
-    "plants": {"fr": "🌱 Plantes", "en": "🌱 Plants"},
     "settings": {"fr": "⚙ Paramètres", "en": "⚙ Settings"},
-    "about": {"fr": "ℹ À propos", "en": "ℹ About"},
-    "health": {"fr": "🩺 État Gruterra", "en": "🩺 Gruterra status"},
-    "maintenance": {"fr": "🧰 Données & résumés", "en": "🧰 Data & summaries"},
-    "light_mode": {"fr": "☀️ Mode clair", "en": "☀️ Light mode"},
-    "dark_mode": {"fr": "🌙 Mode sombre", "en": "🌙 Dark mode"},
     "settings_title": {"fr": "Paramètres Gruterra", "en": "Gruterra settings"},
     "settings_header": {"fr": "⚙ Paramètres", "en": "⚙ Settings"},
-    "display": {"fr": "Affichage", "en": "Display"},
     "language": {"fr": "Langue", "en": "Language"},
-    "language_note": {"fr": "Traduction progressive : les écrans principaux passent peu à peu en français/anglais.", "en": "Progressive translation: the main screens are gradually becoming available in French and English."},
     "save": {"fr": "Enregistrer", "en": "Save"},
     "cancel": {"fr": "Annuler", "en": "Cancel"},
-    "settings_saved": {"fr": "Paramètres enregistrés.", "en": "Settings saved."},
-    "close": {"fr": "Fermer", "en": "Close"},
-    "copy": {"fr": "📋 Copier", "en": "📋 Copy"},
-    "copy_update_json": {"fr": "Copier le rapport technique", "en": "Copy technical report"},
-    "check_updates": {"fr": "🔎 Vérifier les mises à jour", "en": "🔎 Check updates"},
-    "update": {"fr": "⬇ Simuler sans installer", "en": "⬇ Simulate without installing"},
-    "apply_update": {"fr": "⚠ Installer la mise à jour", "en": "⚠ Install update"},
-    "about_copied": {"fr": "Informations À propos copiées dans le presse-papiers", "en": "About information copied to clipboard"},
-    "update_json_copied": {"fr": "Rapport technique de mise à jour copié dans le presse-papiers", "en": "Technical update report copied to clipboard"},
-    "update_checking": {"fr": "Vérification des mises à jour Gruterra…", "en": "Checking Gruterra updates…"},
-    "update_check_done": {"fr": "Vérification des mises à jour terminée", "en": "Update check finished"},
-    "update_sim_running": {"fr": "Vérification sans installation en cours…", "en": "Checking without installing…"},
-    "update_sim_done": {"fr": "Vérification sans installation terminée", "en": "Check without installing finished"},
-    "update_apply_title": {"fr": "Installer la mise à jour Gruterra", "en": "Install Gruterra update"},
-    "update_apply_confirm": {"fr": "Gruterra va télécharger le paquet officiel, vérifier qu’il correspond bien à la version publiée, créer une sauvegarde locale, puis remplacer les fichiers du programme. Vos données personnelles sont conservées. Continuer ?", "en": "Gruterra will download the official package, verify that it matches the published version, create a local backup, then replace the program files. Your personal data is preserved. Continue?"},
-    "update_apply_running": {"fr": "Installation de la mise à jour Gruterra en cours…", "en": "Installing Gruterra update…"},
-    "update_apply_done": {"fr": "Assistant de mise à jour terminé", "en": "Update assistant finished"},
-    "update_apply_result_title": {"fr": "Mise à jour Gruterra", "en": "Gruterra update"},
-    "update_restart_title": {"fr": "Redémarrer Gruterra", "en": "Restart Gruterra"},
-    "update_restart_hint": {"fr": "Si la mise à jour a été appliquée, redémarrez Gruterra pour charger les nouveaux fichiers.", "en": "If the update was applied, restart Gruterra to load the new files."},
-    "update_restart_question": {"fr": "La mise à jour a été appliquée. Voulez-vous redémarrer Gruterra maintenant ?", "en": "The update has been applied. Do you want to restart Gruterra now?"},
-    "update_restart_missing_launcher": {"fr": "Le lanceur Gruterra est introuvable. Fermez puis relancez l’application manuellement.", "en": "The Gruterra launcher could not be found. Close and restart the app manually."},
-    "update_restart_failed": {"fr": "Redémarrage automatique impossible. Fermez puis relancez Gruterra manuellement.", "en": "Automatic restart failed. Close and restart Gruterra manually."},
-    "update_restarting": {"fr": "Redémarrage de Gruterra…", "en": "Restarting Gruterra…"},
-    "sync_status_copied": {"fr": "Statut de synchronisation copié dans le presse-papiers", "en": "Synchronization status copied to clipboard"},
-    "auto_sync_running": {"fr": "📡 Synchronisation automatique en cours", "en": "📡 Automatic synchronization running"},
-    "theme_applied_unsaved": {"fr": "Thème appliqué · préférence non enregistrée", "en": "Theme applied · preference not saved"},
-    "watering": {"fr": "💧 Arrosage", "en": "💧 Watering"},
-    "balcony_out": {"fr": "☀️ Sortie balcon", "en": "☀️ Balcony time"},
-    "back_inside": {"fr": "🏠 Retour intérieur", "en": "🏠 Back inside"},
-    "past_exposure": {"fr": "🕘 Exposition passée", "en": "🕘 Past exposure"},
-    "analysis": {"fr": "🔎 Analyse", "en": "🔎 Analysis"},
-    "copy_plant_analysis": {"fr": "📋 Copier analyse", "en": "📋 Copy analysis"},
-    "history": {"fr": "📈 Historique", "en": "📈 History"},
-    "history_analysis": {"fr": "📈 Historique / analyse", "en": "📈 History / analysis"},
-    "import_simple_history": {"fr": "📥 Importer historique simplifié", "en": "📥 Import simplified history"},
-    "associate_sensor": {"fr": "＋ Associer un capteur", "en": "＋ Link sensor"},
-    "add_plant_title": {"fr": "Ajouter une plante", "en": "Add plant"},
-    "plant_name": {"fr": "Nom de la plante", "en": "Plant name"},
-    "known_needs": {"fr": "Besoins connus", "en": "Known needs"},
-    "location": {"fr": "Emplacement", "en": "Location"},
-    "add": {"fr": "Ajouter", "en": "Add"},
-    "search_plants": {"fr": "🔎 Filtrer les plantes", "en": "🔎 Filter plants"},
-    "reset": {"fr": "Réinitialiser", "en": "Reset"},
-    "plants_view_title": {"fr": "Plantes — Gruterra", "en": "Plants — Gruterra"},
-    "refresh_plain": {"fr": "Actualiser", "en": "Refresh"},
-    "no_plant_filters": {"fr": "Aucune plante ne correspond aux filtres actuels.", "en": "No plant matches the current filters."},
-    "open_plants_view": {"fr": "Ouvrir la vue Plantes", "en": "Open plants view"},
-    "plants_hidden_home": {"fr": "Les plantes sont masquées sur l'accueil. Vous pouvez les consulter dans une vue dédiée ou les réafficher depuis Paramètres > Affichage.", "en": "Plants are hidden from the home screen. You can open the dedicated view or show them again from Settings > Display."},
-    "no_plants": {"fr": "🌱 Aucune plante dans Gruterra", "en": "🌱 No plants in Gruterra"},
     "syncing": {"fr": "⏳ Synchronisation...", "en": "⏳ Synchronizing..."},
     "sync_plain": {"fr": "📡 Synchroniser", "en": "📡 Sync"},
     "copy_status": {"fr": "📋 Copier le statut", "en": "📋 Copy status"},
     "copyable_status": {"fr": "Statut copiable", "en": "Copyable status"},
-    "update_available_title": {"fr": "Mise à jour Gruterra disponible", "en": "Gruterra update available"},
-    "update_ignored": {"fr": "Mise à jour disponible ignorée pour cette session", "en": "Available update ignored for this session"},
-    "update_downloading": {"fr": "Téléchargement et application de la mise à jour Gruterra…", "en": "Downloading and applying Gruterra update…"},
-
-    "light_history_7d": {"fr": "Évolutions de lumière · 7 derniers jours terminés", "en": "Light trends · last 7 completed days"},
-    "basic_needs": {"fr": "📋 Besoins de base", "en": "📋 Basic needs"},
-    "past_balcony_exposure_title": {"fr": "Exposition balcon passée", "en": "Past balcony exposure"},
-    "past_balcony_exposure_help": {"fr": "Permet d'ajouter après coup une sortie et un retour, sans modifier les mesures.", "en": "Add a past outdoor period and return without editing measurements."},
-    "out": {"fr": "Sortie", "en": "Out"},
-    "return_in": {"fr": "Retour", "en": "Return"},
-    "optional_comment": {"fr": "Commentaire facultatif", "en": "Optional comment"},
-    "confirm_balcony_exposure": {"fr": "Confirmer l'exposition balcon", "en": "Confirm balcony exposure"},
-    "watering_title": {"fr": "Arrosage", "en": "Watering"},
-    "quantity_ml": {"fr": "Quantité en ml", "en": "Amount in ml"},
-    "type": {"fr": "Type", "en": "Type"},
-    "water_type": {"fr": "Type d'eau", "en": "Water type"},
-    "optional_context": {"fr": "Contexte facultatif", "en": "Optional context"},
-    "distribution": {"fr": "Répartition", "en": "Distribution"},
-    "drainage": {"fr": "Écoulement", "en": "Drainage"},
-    "cache_pot": {"fr": "Cache-pot", "en": "Outer pot"},
-    "substrate": {"fr": "Substrat", "en": "Substrate"},
-    "mode": {"fr": "Mode", "en": "Mode"},
-    "pot": {"fr": "Pot", "en": "Pot"},
-    "drainage_delay": {"fr": "Délai drainage", "en": "Drainage delay"},
-    "comment": {"fr": "Commentaire", "en": "Comment"},
-    "schedule_reminder": {"fr": "Programmer un rappel", "en": "Schedule reminder"},
-    "in_days_prefix": {"fr": "Dans", "en": "In"},
-    "days": {"fr": "jours", "en": "days"},
-    "sensor_details": {"fr": "Détails du capteur", "en": "Sensor details"},
-    "no_sync_badge": {"fr": "⚪ Aucune synchronisation", "en": "⚪ No synchronization"},
-    "local_forecast_2h": {"fr": "🔮 Prévision locale +2 h", "en": "🔮 Local forecast +2 h"},
-    "netatmo_title": {"fr": "🌦️ MÉTÉO NETATMO", "en": "🌦️ NETATMO WEATHER"},
-    "refresh_netatmo": {"fr": "Actualiser Netatmo", "en": "Refresh Netatmo"},
-    "netatmo_no_data": {"fr": "🌦️ Aucune donnée Netatmo chargée.", "en": "🌦️ No Netatmo data loaded."},
-    "local_weather_summary": {"fr": "🌍 Synthèse météo locale", "en": "🌍 Local weather summary"},
-    "best_netatmo_source": {"fr": "Meilleure source disponible parmi vos stations Netatmo", "en": "Best available source from your Netatmo stations"},
-    "rename": {"fr": "Renommer", "en": "Rename"},
-    "rename_station_title": {"fr": "Renommer la station", "en": "Rename station"},
-    "local_station_name": {"fr": "Nom local de la station", "en": "Local station name"},
-    "about_title": {"fr": "À propos de Gruterra", "en": "About Gruterra"},
-    "about_subtitle": {"fr": "Application locale de suivi des plantes", "en": "Local plant tracking application"},
-    "maintenance_title": {"fr": "Données & résumés Gruterra", "en": "Gruterra data & summaries"},
-    "maintenance_subtitle": {"fr": "Suivi du volume de données, des mesures conservées et des résumés par jour", "en": "Track data size, stored measurements and daily summaries"},
-    "latest_summaries": {"fr": "Dernières synthèses préparées", "en": "Latest prepared summaries"},
-    "day": {"fr": "Jour", "en": "Day"},
-    "plant": {"fr": "Plante", "en": "Plant"},
-    "sensor": {"fr": "Capteur", "en": "Sensor"},
-    "measurements": {"fr": "Mesures", "en": "Measurements"},
-    "humidity": {"fr": "Humidité", "en": "Humidity"},
-    "max_light": {"fr": "Lumière max", "en": "Max light"},
-    "sources": {"fr": "Sources", "en": "Sources"},
-    "refresh_button": {"fr": "⟳ Rafraîchir", "en": "⟳ Refresh"},
-    "prepare_summaries": {"fr": "Préparer les synthèses", "en": "Prepare summaries"},
-    "summary_detail": {"fr": "Détail synthèse", "en": "Summary detail"},
-    "summary_detail_title": {"fr": "📊 Détail de synthèse", "en": "📊 Summary detail"},
-    "health_title": {"fr": "État Gruterra & Raspberry", "en": "Gruterra & Raspberry status"},
-    "health_header": {"fr": "🩺 État Gruterra & Raspberry", "en": "🩺 Gruterra & Raspberry status"},
-    "health_subtitle": {"fr": "Vue globale de l’application, de la base, des capteurs, du Raspberry et des sauvegardes", "en": "Overview of the app, database, sensors, Raspberry Pi and backups"},
-    "show_weather_top": {"fr": "Afficher météo locale et prévisions tout en haut", "en": "Show local weather and forecast at the top"},
-    "show_plants_home": {"fr": "Afficher les plantes sur l'accueil", "en": "Show plants on the home screen"},
-    "compact_plants": {"fr": "Vue compacte des plantes", "en": "Compact plant view"},
-    "auto_sync": {"fr": "Synchronisation automatique", "en": "Automatic synchronization"},
-    "enable_auto_sync": {"fr": "Activer la synchronisation automatique", "en": "Enable automatic synchronization"},
-    "time": {"fr": "Heure", "en": "Time"},
-    "time_format_hint": {"fr": "format 18:00", "en": "format 18:00"},
-    "allowed_days": {"fr": "Jours autorisés", "en": "Allowed days"},
-    "netatmo": {"fr": "Netatmo", "en": "Netatmo"},
-    "add_public_favorite_station": {"fr": "Ajouter une station favorite publique par identifiant ou lien weathermap", "en": "Add a public favorite station by ID or weathermap link"},
-    "netatmo_favorite_hint": {"fr": "À gauche : lien ou stationid. À droite : nom local optionnel.", "en": "Left: link or stationid. Right: optional local name."},
-    "create_netatmo_file": {"fr": "Créer le fichier Netatmo", "en": "Create Netatmo file"},
-    "netatmo_file_next_step": {"fr": "Puis ouvrez le fichier privé Netatmo créé et remplacez les valeurs d’exemple.", "en": "Then open the private Netatmo file that was created and replace the example values."},
-    "update_restart_advised": {"fr": "Mise à jour terminée · redémarrage manuel conseillé", "en": "Update finished · manual restart recommended"},
-
-    "updates_section": {"fr": "Mises à jour", "en": "Updates"},
-    "updates_settings_help": {"fr": "Vérifiez GitHub, lisez la note de version, puis lancez une vérification sans installation ou installez la mise à jour.", "en": "Check GitHub, read the release note, then run a check without installing or install the update."},
-    "export_my_data": {"fr": "Exporter mes données", "en": "Export my data"},
-    "private_full_backup": {"fr": "Sauvegarde complète personnelle", "en": "Personal full backup"},
-    "create_private_backup_question": {"fr": "Créer cette sauvegarde complète privée maintenant ?", "en": "Create this private full backup now?"},
-    "backup_error_title": {"fr": "Sauvegarde Gruterra", "en": "Gruterra backup"},
-    "backup_impossible": {"fr": "Sauvegarde impossible", "en": "Backup failed"},
-    "backup_created": {"fr": "Archive créée", "en": "Archive created"},
-    "backup_path_copied": {"fr": "Le chemin a été copié dans le presse-papiers.", "en": "The path has been copied to the clipboard."},
-    "backup_status_impossible": {"fr": "Sauvegarde Gruterra impossible", "en": "Gruterra backup failed"},
-    "backup_status_created": {"fr": "Sauvegarde Gruterra créée", "en": "Gruterra backup created"},
 }
 
 
@@ -175,7 +38,27 @@ def normaliser_langue(langue):
     return code if code in LANGUES else LANGUE_DEFAUT
 
 
+@lru_cache(maxsize=None)
+def charger_locale(langue):
+    """Charge un fichier de langue Gruterra."""
+    code = normaliser_langue(langue)
+    fichier = DOSSIER_LOCALES / f"{code}.json"
+    try:
+        contenu = json.loads(fichier.read_text(encoding="utf-8"))
+    except Exception:
+        contenu = {}
+    return contenu if isinstance(contenu, dict) else {}
+
+
 def traduire(cle, langue="fr"):
     code = normaliser_langue(langue)
-    entree = TRADUCTIONS.get(cle, {})
-    return entree.get(code) or entree.get(LANGUE_DEFAUT) or cle
+    valeur = charger_locale(code).get(cle)
+    if isinstance(valeur, str) and valeur:
+        return valeur
+
+    valeur_defaut = charger_locale(LANGUE_DEFAUT).get(cle)
+    if isinstance(valeur_defaut, str) and valeur_defaut:
+        return valeur_defaut
+
+    secours = TRADUCTIONS_SECOURS.get(cle, {})
+    return secours.get(code) or secours.get(LANGUE_DEFAUT) or cle

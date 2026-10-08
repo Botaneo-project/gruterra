@@ -948,6 +948,15 @@ class TestPreparationRelease(unittest.TestCase):
 
         self.assertTrue(any("SHA256 recalculé" in erreur for erreur in erreurs))
 class TestPreferencesInterface(unittest.TestCase):
+    def test_i18n_charge_les_fichiers_de_langue(self):
+        locales = APP_DIR / "locales"
+        self.assertTrue((locales / "fr.json").exists())
+        self.assertTrue((locales / "en.json").exists())
+        for fichier in (locales / "fr.json", locales / "en.json"):
+            data = json.loads(fichier.read_text(encoding="utf-8"))
+            self.assertIn("settings", data)
+            self.assertIn("sync_plain", data)
+
     def test_i18n_normalise_langue_et_traduit(self):
         i18n = importlib.import_module("i18n")
 
@@ -956,6 +965,7 @@ class TestPreferencesInterface(unittest.TestCase):
         self.assertEqual(i18n.normaliser_langue("de"), "fr")
         self.assertEqual(i18n.traduire("settings", "en"), "⚙ Settings")
         self.assertEqual(i18n.traduire("settings", "fr"), "⚙ Paramètres")
+        self.assertEqual(i18n.traduire("cle_absente", "en"), "cle_absente")
 
     def test_preferences_langue_interface_sont_locales(self):
         with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as dossier:
@@ -1119,8 +1129,8 @@ class TestParametresLangue(unittest.TestCase):
         interface = Path(__file__).resolve().parents[1] / "_app" / "interface.py"
         contenu = interface.read_text(encoding="utf-8")
 
-        self.assertIn('"🇫🇷 FR": "fr"', contenu)
-        self.assertIn('"🇬🇧 EN": "en"', contenu)
+        self.assertIn('"🇫🇷 Français": "fr"', contenu)
+        self.assertIn('"🇬🇧 English": "en"', contenu)
         self.assertIn("options_langue.get(langue_var.get(), langue_var.get())", contenu)
 
 
