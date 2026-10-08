@@ -676,30 +676,27 @@ def age_mesure_minutes(date_heure):
 def anciennete(date_heure):
     minutes_total = age_mesure_minutes(date_heure)
     if minutes_total is None:
-        return "Aucune donnée" if not date_heure else "Ancienneté inconnue"
+        return t("age_no_data") if not date_heure else t("age_unknown")
 
     if minutes_total < 1:
-        return "il y a moins d'une minute"
+        return t("age_less_than_minute")
 
     if minutes_total < 60:
         return (
-            f"il y a {minutes_total} minute"
-            f"{'s' if minutes_total != 1 else ''}"
+            t("age_minutes").format(count=minutes_total)
         )
 
     heures = minutes_total // 60
 
     if heures < 24:
         return (
-            f"il y a {heures} heure"
-            f"{'s' if heures != 1 else ''}"
+            t("age_hours").format(count=heures)
         )
 
     jours = heures // 24
 
     return (
-        f"il y a {jours} jour"
-        f"{'s' if jours != 1 else ''}"
+        t("age_days").format(count=jours)
     )
 
 
@@ -707,12 +704,12 @@ def etat_fraicheur_mesure(date_heure):
     minutes = age_mesure_minutes(date_heure)
     texte_age = anciennete(date_heure)
     if minutes is None:
-        return "⚪ Aucune mesure", SECONDARY, BG
+        return t("fresh_no_measure"), SECONDARY, BG
     if minutes <= 90:
-        return f"🟢 Mesure récente · {texte_age}", GREEN, LIGHT_GREEN
+        return t("fresh_recent").format(age=texte_age), GREEN, LIGHT_GREEN
     if minutes <= 8 * 60:
-        return f"🟠 Mesure à surveiller · {texte_age}", ORANGE, LIGHT_ORANGE
-    return f"🔴 Mesure ancienne · {texte_age}", RED, LIGHT_RED
+        return t("fresh_watch").format(age=texte_age), ORANGE, LIGHT_ORANGE
+    return t("fresh_old").format(age=texte_age), RED, LIGHT_RED
 
 def obtenir_derniere_mesure(plante_id):
 
@@ -786,7 +783,7 @@ def determiner_etat_humidite(humidite, plante_id=None):
 
     if humidite is None:
         return (
-            "⚪ Pas de mesure",
+            t("humidity_no_measure"),
             SECONDARY,
             BG
         )
@@ -796,12 +793,12 @@ def determiner_etat_humidite(humidite, plante_id=None):
     if humidite < 20:
         if arrosage_recent:
             return (
-                "🟠 Suivi post-arrosage : humidité encore basse",
+                t("humidity_post_watering_low"),
                 ORANGE,
                 LIGHT_ORANGE
             )
         return (
-            "🔴 Humidité très basse",
+            t("humidity_very_low"),
             RED,
             LIGHT_RED
         )
@@ -809,18 +806,18 @@ def determiner_etat_humidite(humidite, plante_id=None):
     if humidite < 30:
         if arrosage_recent:
             return (
-                "🟢 Suivi post-arrosage en cours",
+                t("humidity_post_watering"),
                 GREEN,
                 LIGHT_GREEN
             )
         return (
-            "🟠 Humidité à surveiller",
+            t("humidity_watch"),
             ORANGE,
             LIGHT_ORANGE
         )
 
     return (
-        "🟢 Humidité correcte",
+        t("humidity_ok"),
         GREEN,
         LIGHT_GREEN
     )
@@ -858,8 +855,8 @@ def analyser_lumiere_24h(plante_id):
     if not luminosites:
         return {
             "etat": "inconnu",
-            "message": "Lumière 24 h : pas assez de mesures",
-            "detail": "Aucune mesure exploitable sur 24 h.",
+            "message": t("light_24_not_enough"),
+            "detail": t("light_24_no_usable"),
             "couleur": SECONDARY,
             "fond": BG
         }
@@ -880,37 +877,36 @@ def analyser_lumiere_24h(plante_id):
     ratio_utile = mesures_utiles / len(luminosites)
     ratio_tres_lumineux = mesures_tres_lumineuses / len(luminosites)
     detail_base = (
-        f"Moyenne {moyenne:.0f} lux, pic {maximum:.0f} lux, "
-        f"{mesures_utiles}/{len(luminosites)} mesure(s) au-dessus de 1000 lux. "
+        t("light_detail_base").format(average=moyenne, maximum=maximum, useful=mesures_utiles, total=len(luminosites))
     )
     pic_isole = maximum >= 10000 and moyenne < 500 and ratio_tres_lumineux < 0.20
 
     if maximum < 800 or moyenne < 250:
-        message = "Lumière faible sur 24 h"
-        detail = detail_base + "Éclairage conseillé."
+        message = t("light_24_low")
+        detail = detail_base + t("light_advised")
         couleur = ORANGE
         fond = LIGHT_ORANGE
 
     elif pic_isole:
-        message = "Pic lumineux isolé"
+        message = t("light_isolated_peak")
         detail = (
             detail_base
-            + "Le pic ressemble à une exposition ponctuelle ; la moyenne reste faible pour juger la journée complète."
+            + t("light_isolated_peak_detail")
         )
         couleur = ORANGE
         fond = LIGHT_ORANGE
 
     elif ratio_utile < 0.25:
-        message = "Lumière à surveiller"
+        message = t("light_watch")
         detail = (
             detail_base
-            + "La plante reçoit peu de vraie lumière utile."
+            + t("light_watch_detail")
         )
         couleur = ORANGE
         fond = LIGHT_ORANGE
 
     else:
-        message = "Lumière correcte aujourd'hui"
+        message = t("light_ok_today")
         detail = detail_base.rstrip()
         couleur = GREEN
         fond = LIGHT_GREEN
@@ -955,8 +951,8 @@ def analyser_tendance_humidite(plante_id):
     if len(points) < 6:
         return {
             "etat": "insuffisant",
-            "message": "Prévision 48-72 h : pas assez de données",
-            "detail": "Quelques mesures supplémentaires sont nécessaires avant d'estimer une tendance fiable.",
+            "message": t("forecast_not_enough"),
+            "detail": t("forecast_need_more"),
             "couleur": SECONDARY,
             "fond": BG
         }
@@ -969,8 +965,8 @@ def analyser_tendance_humidite(plante_id):
     if duree_jours < 1:
         return {
             "etat": "insuffisant",
-            "message": "Prévision 48-72 h : historique trop court",
-            "detail": "Il faut au moins une journée de recul pour éviter une fausse prévision.",
+            "message": t("forecast_too_short"),
+            "detail": t("forecast_need_one_day"),
             "couleur": SECONDARY,
             "fond": BG
         }
@@ -978,18 +974,18 @@ def analyser_tendance_humidite(plante_id):
     tendance = (fin_humidite - debut_humidite) / duree_jours
 
     if tendance < -3 and fin_humidite < 35:
-        message = "Humidité en baisse"
-        detail = f"Tendance environ {tendance:.1f} point/jour. À surveiller avant arrosage."
+        message = t("humidity_dropping")
+        detail = t("trend_watch_detail").format(trend=tendance)
         couleur = ORANGE
         fond = LIGHT_ORANGE
     elif tendance < -1:
-        message = "Humidité baisse doucement"
-        detail = f"Tendance environ {tendance:.1f} point/jour. Pas d'urgence détectée."
+        message = t("humidity_dropping_slow")
+        detail = t("trend_no_urgency_detail").format(trend=tendance)
         couleur = SECONDARY
         fond = BG
     else:
-        message = "Pas de baisse inquiétante"
-        detail = f"Tendance environ {tendance:.1f} point/jour. Prévision prudente seulement."
+        message = t("humidity_no_worrying_drop")
+        detail = t("trend_prudent_detail").format(trend=tendance)
         couleur = GREEN
         fond = LIGHT_GREEN
 
@@ -1008,9 +1004,9 @@ def construire_decisions_plante(plante_id, mesure, analyse_lumiere):
 
     if not mesure:
         return [
-            ("À faire aujourd'hui", "Synchroniser ou associer un capteur pour obtenir les premières mesures.", BLUE, LIGHT_BLUE),
-            ("À surveiller", "Aucune donnée plante exploitable pour le moment.", SECONDARY, BG),
-            ("Prévision 48-72 h", "Pas assez de données pour prévoir sans inventer.", SECONDARY, BG),
+            (t("decision_todo_today"), t("decision_sync_first"), BLUE, LIGHT_BLUE),
+            (t("decision_watch"), t("decision_no_usable_data"), SECONDARY, BG),
+            (t("forecast_not_enough").split(":")[0], t("decision_not_enough_forecast"), SECONDARY, BG),
         ]
 
     humidite = mesure[3]
@@ -1021,23 +1017,23 @@ def construire_decisions_plante(plante_id, mesure, analyse_lumiere):
     arrosage_recent = derniere_session_arrosage_recente(plante_id)
 
     if humidite is None:
-        surveillances.append("humidité du sol non mesurée")
+        surveillances.append(t("watch_soil_humidity_missing"))
     elif humidite < 20:
         if arrosage_recent:
-            surveillances.append("suivi post-arrosage : humidité encore basse dans la zone du capteur")
+            surveillances.append(t("watch_post_watering_low_zone"))
         else:
-            actions.append("arrosage probablement nécessaire")
+            actions.append(t("action_watering_probably_needed"))
     elif humidite < 30:
         if arrosage_recent:
-            surveillances.append("suivi post-arrosage en cours, sans urgence immédiate")
+            surveillances.append(t("watch_post_watering_no_urgency"))
         else:
-            surveillances.append("humidité du sol basse")
+            surveillances.append(t("watch_soil_low"))
 
     if temperature is not None and (temperature < 12 or temperature > 30):
-        surveillances.append("température à contrôler")
+        surveillances.append(t("watch_temperature"))
 
     if analyse_lumiere.get("couleur") == ORANGE:
-        surveillances.append("lumière faible ou irrégulière")
+        surveillances.append(t("watch_light_low"))
 
     tendance = analyser_tendance_humidite(plante_id)
 
@@ -1046,7 +1042,7 @@ def construire_decisions_plante(plante_id, mesure, analyse_lumiere):
         couleur_faire = RED if humidite is not None and humidite < 20 else ORANGE
         fond_faire = LIGHT_RED if couleur_faire == RED else LIGHT_ORANGE
     else:
-        faire = "Aucune action urgente détectée avec les données actuelles."
+        faire = t("decision_no_urgent_action")
         couleur_faire = GREEN
         fond_faire = LIGHT_GREEN
 
@@ -1055,14 +1051,14 @@ def construire_decisions_plante(plante_id, mesure, analyse_lumiere):
         couleur_surv = ORANGE
         fond_surv = LIGHT_ORANGE
     else:
-        surveiller = "Rien de particulier à surveiller pour l'instant."
+        surveiller = t("decision_nothing_special")
         couleur_surv = GREEN
         fond_surv = LIGHT_GREEN
 
     return [
-        ("À faire aujourd'hui", faire, couleur_faire, fond_faire),
-        ("À surveiller", surveiller, couleur_surv, fond_surv),
-        ("Prévision 48-72 h", tendance["message"] + " · " + tendance["detail"], tendance["couleur"], tendance["fond"]),
+        (t("decision_todo_today"), faire, couleur_faire, fond_faire),
+        (t("decision_watch"), surveiller, couleur_surv, fond_surv),
+        (t("forecast_not_enough").split(":")[0], tendance["message"] + " · " + tendance["detail"], tendance["couleur"], tendance["fond"]),
     ]
 
 
@@ -2197,7 +2193,7 @@ def plante_passe_filtres(plante):
         return False
 
     filtre_attention = filtre_attention_var.get()
-    if filtre_attention == "À surveiller" and not alerte_principale_plante(plante_id):
+    if filtre_attention == t("decision_watch") and not alerte_principale_plante(plante_id):
         return False
 
     return True
@@ -2273,7 +2269,7 @@ def afficher_filtres_plantes(parent, plantes, plantes_filtrees, commande=None):
     creer_menu_filtre(ligne, "Zone", filtre_zone_var, options_filtre_plantes(plantes, 4), action)
     creer_menu_filtre(ligne, "Pièce", filtre_piece_var, options_filtre_plantes(plantes, 3), action)
     creer_menu_filtre(ligne, "Capteur", filtre_capteur_var, ["Toutes", "Avec capteur", "Sans capteur"], action)
-    creer_menu_filtre(ligne, "État", filtre_attention_var, ["Toutes", "À surveiller"], action)
+    creer_menu_filtre(ligne, "État", filtre_attention_var, ["Toutes", t("decision_watch")], action)
 
     tk.Button(
         ligne,
