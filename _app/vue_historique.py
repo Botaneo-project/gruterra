@@ -24,7 +24,12 @@ from services.analyse_lumiere import (
     resume_expositions_jour,
 )
 from botaneo_dates import formater_local, maintenant_local, vers_local_naif
-from ui_preferences import charger_theme_sombre
+from ui_preferences import charger_theme_sombre, charger_langue_interface
+from i18n import traduire, normaliser_langue
+
+
+def vh_t(cle):
+    return traduire(cle, normaliser_langue(charger_langue_interface()))
 
 
 THEME_CLAIR = {
@@ -599,44 +604,44 @@ def ouvrir_historique(parent, plante_id, action_synchroniser=None):
     plante = database.get_plante(plante_id)
 
     fenetre = tk.Toplevel(parent)
-    fenetre.title("Historique — " + (plante[1] if plante else "Plante"))
+    fenetre.title(vh_t("history_window_title").format(plant=(plante[1] if plante else vh_t("plant_missing"))))
     largeur_fenetre = min(1080, max(900, fenetre.winfo_screenwidth() - 90))
     hauteur_fenetre = min(740, max(620, fenetre.winfo_screenheight() - 120))
     fenetre.geometry(f"{largeur_fenetre}x{hauteur_fenetre}+40+30")
     fenetre.minsize(860, 600)
     fenetre.configure(bg=couleurs["BG"])
 
-    tk.Label(fenetre, text=plante[1] if plante else "Plante introuvable",
+    tk.Label(fenetre, text=plante[1] if plante else vh_t("plant_missing"),
              bg=couleurs["BG"], fg=couleurs["TEXT"],
              font=("Segoe UI", 21, "bold")).pack(anchor="w", padx=24, pady=(18, 2))
-    tk.Label(fenetre, text="Historique des mesures · heures locales",
+    tk.Label(fenetre, text=vh_t("history_subtitle"),
              bg=couleurs["BG"], fg=couleurs["SECONDARY"],
              font=("Segoe UI", 10)).pack(anchor="w", padx=24)
 
     barre = tk.Frame(fenetre, bg=couleurs["BG"])
     barre.pack(fill="x", padx=24, pady=12)
 
-    periode = tk.StringVar(value="Tout")
+    periode = tk.StringVar(value=vh_t("period_all"))
     serie = tk.StringVar(value="Humidité")
     jour_selectionne = tk.StringVar(value="")
     bilan = tk.StringVar()
     tri_table = {"colonne": None}
     jours_par_libelle = {}
 
-    tk.Label(barre, text="Période", bg=couleurs["BG"],
+    tk.Label(barre, text=vh_t("period"), bg=couleurs["BG"],
              fg=couleurs["TEXT"]).pack(side="left", padx=(0, 8))
     choix_periode = ttk.Combobox(barre, textvariable=periode,
-                                 values=("Journée", "24 heures", "7 jours", "Tout"),
+                                 values=(vh_t("period_day"), vh_t("period_24h"), vh_t("period_7d"), vh_t("period_all")),
                                  state="readonly", width=14)
     choix_periode.pack(side="left")
 
-    tk.Label(barre, text="Jour", bg=couleurs["BG"],
+    tk.Label(barre, text=vh_t("day"), bg=couleurs["BG"],
              fg=couleurs["TEXT"]).pack(side="left", padx=(18, 8))
     choix_jour = ttk.Combobox(barre, textvariable=jour_selectionne,
                               values=(), state="disabled", width=12, height=12)
     choix_jour.pack(side="left")
 
-    tk.Label(barre, text="Mesure", bg=couleurs["BG"],
+    tk.Label(barre, text=vh_t("measurement"), bg=couleurs["BG"],
              fg=couleurs["TEXT"]).pack(side="left", padx=(18, 8))
     choix_serie = ttk.Combobox(barre, textvariable=serie,
                                values=tuple(SERIES.keys()),
@@ -646,7 +651,7 @@ def ouvrir_historique(parent, plante_id, action_synchroniser=None):
     if action_synchroniser:
         ttk.Button(
             barre,
-            text="↻ Resynchroniser",
+            text=vh_t("resync"),
             command=action_synchroniser
         ).pack(side="left", padx=(14, 0))
 
@@ -666,11 +671,11 @@ def ouvrir_historique(parent, plante_id, action_synchroniser=None):
         "tendance": tk.StringVar(value="—")
     }
 
-    for titre, variable in (("Dernière", resume_vars["dernier"]),
-                            ("Moyenne", resume_vars["moyenne"]),
-                            ("Minimum", resume_vars["minimum"]),
-                            ("Maximum", resume_vars["maximum"]),
-                            ("Tendance", resume_vars["tendance"])):
+    for titre, variable in ((vh_t("latest"), resume_vars["dernier"]),
+                            (vh_t("average"), resume_vars["moyenne"]),
+                            (vh_t("minimum"), resume_vars["minimum"]),
+                            (vh_t("maximum"), resume_vars["maximum"]),
+                            (vh_t("trend"), resume_vars["tendance"])):
         bloc = tk.Frame(resume_frame, bg=couleurs["CARD"])
         bloc.pack(side="left", expand=True, fill="x", padx=8, pady=8)
         tk.Label(bloc, textvariable=variable, bg=couleurs["CARD"],
@@ -678,7 +683,7 @@ def ouvrir_historique(parent, plante_id, action_synchroniser=None):
         tk.Label(bloc, text=titre, bg=couleurs["CARD"],
                  fg=couleurs["SECONDARY"], font=("Segoe UI", 8)).pack()
 
-    jour_resume_var = tk.StringVar(value="Sélectionnez la période Journée pour afficher les moyennes d'un jour précis.")
+    jour_resume_var = tk.StringVar(value=vh_t("history_day_help"))
     jour_resume_label = tk.Label(
         fenetre,
         textvariable=jour_resume_var,
@@ -691,7 +696,7 @@ def ouvrir_historique(parent, plante_id, action_synchroniser=None):
         highlightbackground=couleurs["BORDER"],
         highlightthickness=1
     )
-    qualite_var = tk.StringVar(value="Qualité des données : en attente")
+    qualite_var = tk.StringVar(value=vh_t("data_quality_waiting"))
     qualite_label = tk.Label(
         fenetre,
         textvariable=qualite_var,
@@ -706,7 +711,7 @@ def ouvrir_historique(parent, plante_id, action_synchroniser=None):
     )
     qualite_label.pack(fill="x", padx=24, pady=(0, 8), ipady=6)
 
-    lecture_var = tk.StringVar(value="Sélectionnez une mesure pour lire la tendance.")
+    lecture_var = tk.StringVar(value=vh_t("history_select_measure"))
     lecture_label = tk.Label(
         fenetre,
         textvariable=lecture_var,
@@ -731,7 +736,7 @@ def ouvrir_historique(parent, plante_id, action_synchroniser=None):
 
     tk.Label(
         outils_table,
-        text="Repères rapides du tableau",
+        text=vh_t("history_quick_markers"),
         bg=couleurs["BG"],
         fg=couleurs["SECONDARY"],
         font=("Segoe UI", 9, "bold")
@@ -741,7 +746,7 @@ def ouvrir_historique(parent, plante_id, action_synchroniser=None):
 
     tk.Label(
         outils_post_arrosage,
-        text="Après arrosage",
+        text=vh_t("after_watering"),
         bg=couleurs["BG"],
         fg=couleurs["WATER"],
         font=("Segoe UI", 9, "bold")
@@ -752,7 +757,7 @@ def ouvrir_historique(parent, plante_id, action_synchroniser=None):
 
     colonnes = ("date", "humidite", "temperature", "lumiere", "conductivite", "_mesure_id")
     table = ttk.Treeview(cadre, columns=colonnes, show="headings", height=7)
-    titres = ("Date et heure", "Humidité (%)", "Température (°C)", "Lumière (lux)", "Conductivité (µS/cm)")
+    titres = (vh_t("date_time"), vh_t("humidity_percent"), vh_t("temperature_c"), vh_t("light_lux"), vh_t("conductivity_us"))
 
     for nom, titre, largeur in zip(colonnes[:5], titres, (185, 110, 130, 120, 165)):
         table.heading(nom, text=titre, command=lambda col=nom: trier_table(col))
@@ -784,7 +789,7 @@ def ouvrir_historique(parent, plante_id, action_synchroniser=None):
             return "Qualité des données : aucune mesure sur cette période.", "SECONDARY"
         debut = dates[0]
         fin = dates[-1]
-        if periode_affichee == "Tout":
+        if periode_affichee == vh_t("period_all"):
             return (
                 f"Données disponibles : {len(dates)} mesure(s) conservée(s) · "
                 f"période {debut.strftime('%d/%m %H:%M')} au {fin.strftime('%d/%m %H:%M')}. "
@@ -1080,9 +1085,9 @@ def ouvrir_historique(parent, plante_id, action_synchroniser=None):
                            anchor="w", fill=couleurs["TEXT"],
                            font=("Segoe UI", 12, "bold"))
         if serie.get() == "Lumière":
-            aide_graphique = "Courbe bleue : mesures du jour · zone bleutée : volume visuel · point orange : mesure sélectionnée"
+            aide_graphique = vh_t("history_light_graph_help")
         else:
-            aide_graphique = "Courbe : mesures affichées · zone colorée : volume visuel · point orange : mesure sélectionnée"
+            aide_graphique = vh_t("history_graph_help")
         canvas.create_text(
             x0,
             39,
@@ -1096,7 +1101,7 @@ def ouvrir_historique(parent, plante_id, action_synchroniser=None):
                            font=("Segoe UI", 9))
 
         if not points:
-            canvas.create_text(w / 2, h / 2, text="Aucune mesure pour cette période.",
+            canvas.create_text(w / 2, h / 2, text=vh_t("history_no_measure_period"),
                                fill=couleur_secondaire, font=("Segoe UI", 11))
             return
 
@@ -1148,7 +1153,7 @@ def ouvrir_historique(parent, plante_id, action_synchroniser=None):
             canvas.create_text(
                 x_debut + 4,
                 y0 + 12,
-                text="☀️ sortie",
+                text=vh_t("balcony_out_short"),
                 anchor="w",
                 fill=couleurs["ORANGE"],
                 font=("Segoe UI", 8, "bold")
@@ -1158,7 +1163,7 @@ def ouvrir_historique(parent, plante_id, action_synchroniser=None):
                 canvas.create_text(
                     x_fin - 4,
                     y0 + 28,
-                    text="🏠 retour",
+                    text=vh_t("back_inside_short"),
                     anchor="e",
                     fill=couleurs["BLUE"],
                     font=("Segoe UI", 8, "bold")
@@ -1167,7 +1172,7 @@ def ouvrir_historique(parent, plante_id, action_synchroniser=None):
                 canvas.create_text(
                     (x_debut + x_fin) / 2,
                     y0 + 28,
-                    text="retour non noté",
+                    text=vh_t("return_not_recorded"),
                     fill=couleurs["SECONDARY"],
                     font=("Segoe UI", 8)
                 )
@@ -1180,7 +1185,7 @@ def ouvrir_historique(parent, plante_id, action_synchroniser=None):
                 continue
             x_arrosage = x0 + (x1 - x0) * (date_arrosage - start).total_seconds() / span if span else (x0 + x1) / 2
             quantite = arrosage[3]
-            quantite_txt = f"{quantite:g} ml" if quantite is not None else "arrosage"
+            quantite_txt = f"{quantite:g} ml" if quantite is not None else vh_t("watering_short")
             canvas.create_line(
                 x_arrosage, y0, x_arrosage, y1,
                 fill=couleurs["WATER"],
@@ -1735,7 +1740,7 @@ def ouvrir_historique(parent, plante_id, action_synchroniser=None):
         if libelles_jours and jour_selectionne.get() not in jours_par_libelle:
             jour_selectionne.set(libelles_jours[0])
 
-        if periode.get() == "Journée":
+        if periode.get() == vh_t("period_day"):
             if not jour_resume_label.winfo_ismapped():
                 jour_resume_label.pack(fill="x", padx=24, pady=(0, 8), ipady=8, before=qualite_label)
             choix_jour.configure(state="readonly" if libelles_jours else "disabled")
@@ -1766,7 +1771,7 @@ def ouvrir_historique(parent, plante_id, action_synchroniser=None):
             bilan_jour_courant["jour"] = ""
             jour_resume_label.pack_forget()
 
-        jours = {"24 heures": 1, "7 jours": 7}.get(periode.get())
+        jours = {vh_t("period_24h"): 1, vh_t("period_7d"): 7}.get(periode.get())
 
         if jours:
             maintenant = maintenant_local().replace(tzinfo=None)
@@ -1834,7 +1839,7 @@ def ouvrir_historique(parent, plante_id, action_synchroniser=None):
         lecture_label.configure(fg=couleurs.get(analyse["couleur"], couleurs["TEXT"]))
         suffixe_arrosage = f" · {len(arrosages_courants)} arrosage(s)" if arrosages_courants else ""
         suffixe_exposition = f" · {len(expositions_courantes)} exposition(s) balcon" if expositions_courantes else ""
-        if periode.get() == "Journée":
+        if periode.get() == vh_t("period_day"):
             if outils_post_arrosage.winfo_ismapped():
                 outils_post_arrosage.pack_forget()
         else:
@@ -1848,10 +1853,10 @@ def ouvrir_historique(parent, plante_id, action_synchroniser=None):
         dessiner()
 
     for texte, repere in (
-            ("Max", "max"),
-            ("Min", "min"),
-            ("Moyenne proche", "moyenne"),
-            ("Dernière", "derniere")):
+            (vh_t("history_marker_max"), "max"),
+            (vh_t("history_marker_min"), "min"),
+            (vh_t("history_marker_average"), "moyenne"),
+            (vh_t("history_marker_latest"), "derniere")):
         ttk.Button(
             outils_table,
             text=texte,
@@ -1872,20 +1877,20 @@ def ouvrir_historique(parent, plante_id, action_synchroniser=None):
             command=lambda r=repere: selectionner_apres_arrosage(r)
         ).pack(side="left", padx=(0, 6))
 
-    ttk.Button(barre, text="Ordre normal", command=remettre_ordre_normal).pack(side="right", padx=(8, 0))
-    ttk.Button(barre, text="Copier résumé", command=copier_resume_historique).pack(side="right", padx=(8, 0))
-    ttk.Button(barre, text="Comparer jours", command=ouvrir_comparaison_jours).pack(side="right", padx=(8, 0))
-    ttk.Button(barre, text="Cycles", command=ouvrir_cycles_arrosage).pack(side="right", padx=(8, 0))
-    ttk.Button(barre, text="Copier journée", command=copier_journee).pack(side="right", padx=(8, 0))
-    ttk.Button(barre, text="Actualiser", command=actualiser).pack(side="right")
+    ttk.Button(barre, text=vh_t("normal_order"), command=remettre_ordre_normal).pack(side="right", padx=(8, 0))
+    ttk.Button(barre, text=vh_t("copy_summary"), command=copier_resume_historique).pack(side="right", padx=(8, 0))
+    ttk.Button(barre, text=vh_t("compare_days"), command=ouvrir_comparaison_jours).pack(side="right", padx=(8, 0))
+    ttk.Button(barre, text=vh_t("cycles"), command=ouvrir_cycles_arrosage).pack(side="right", padx=(8, 0))
+    ttk.Button(barre, text=vh_t("copy_day"), command=copier_journee).pack(side="right", padx=(8, 0))
+    ttk.Button(barre, text=vh_t("refresh_plain"), command=actualiser).pack(side="right")
     def selectionner_periode(_event=None):
-        if periode.get() == "Journée":
+        if periode.get() == vh_t("period_day"):
             serie.set("Lumière")
         actualiser()
 
     def selectionner_jour(_event=None):
         if jour_selectionne.get():
-            periode.set("Journée")
+            periode.set(vh_t("period_day"))
             serie.set("Lumière")
         actualiser()
 
