@@ -1329,6 +1329,15 @@ def enregistrer_arrosage_plante(
     initialiser_arrosages()
     conn = get_connection()
 
+    conn.execute("""
+        UPDATE arrosages
+        SET rappel_fait = 1
+        WHERE plante_id = ?
+          AND rappel_date IS NOT NULL
+          AND rappel_fait = 0
+          AND date_heure <= ?
+    """, (plante_id, date_heure))
+
     curseur = conn.execute("""
         INSERT INTO arrosages
         (plante_id, date_heure, quantite_ml, type, fertilisant, dosage, commentaire, type_eau, rappel_date, rappel_fait)
@@ -1599,9 +1608,14 @@ def get_rappel_arrosage_actif(plante_id):
         WHERE plante_id = ?
           AND rappel_date IS NOT NULL
           AND rappel_fait = 0
+          AND date_heure >= COALESCE((
+              SELECT MAX(date_heure)
+              FROM arrosages
+              WHERE plante_id = ?
+          ), date_heure)
         ORDER BY rappel_date ASC, id DESC
         LIMIT 1
-    """, (plante_id,)).fetchone()
+    """, (plante_id, plante_id)).fetchone()
 
     conn.close()
     return rappel

@@ -87,6 +87,40 @@ class TestSchemaEtNettoyage(BaseTemporaireMixin, unittest.TestCase):
         self.assertEqual(mesures[0][1], "2026-09-20T13:39:29")
 
 
+class TestRappelsArrosage(BaseTemporaireMixin, unittest.TestCase):
+    def test_nouvel_arrosage_cloture_ancien_rappel_en_retard(self):
+        db = self.database
+        db.initialiser_schema()
+        plante_id = db.ajouter_plante("Crassula", "Crassula ovata")
+
+        ancien_id = db.enregistrer_arrosage_plante(
+            plante_id,
+            "2026-10-01T10:00:00",
+            quantite_ml=80,
+            rappel_date="2026-10-02T10:00:00",
+        )
+        nouveau_id = db.enregistrer_arrosage_plante(
+            plante_id,
+            "2026-10-08T10:00:00",
+            quantite_ml=80,
+            rappel_date="2026-10-15T10:00:00",
+        )
+
+        rappel = db.get_rappel_arrosage_actif(plante_id)
+        self.assertEqual(rappel[0], nouveau_id)
+        self.assertEqual(rappel[9], "2026-10-15T10:00:00")
+
+        conn = db.get_connection()
+        try:
+            ancien = conn.execute(
+                "SELECT rappel_fait FROM arrosages WHERE id = ?",
+                (ancien_id,),
+            ).fetchone()
+        finally:
+            conn.close()
+        self.assertEqual(ancien[0], 1)
+
+
 class TestAlertesEmail(unittest.TestCase):
     def test_memoire_alerte_respecte_delai_minimal(self):
         botaneo_email = importlib.import_module("botaneo_email")
