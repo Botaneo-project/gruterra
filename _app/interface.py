@@ -6375,7 +6375,7 @@ def ouvrir_ajout_plante():
 
     tk.Label(
         fenetre,
-        text="Tapez librement ou choisissez une plante connue dans la liste.",
+        text=t("plant_choose_known_help"),
         bg=CARD,
         fg=SECONDARY,
         font=("Segoe UI", 8)
@@ -6386,8 +6386,8 @@ def ouvrir_ajout_plante():
     )
 
     for cle, titre in (
-        ("espece", "Espèce"),
-        ("zone", "Zone ou pièce")
+        ("espece", t("species")),
+        ("zone", t("room_or_zone"))
     ):
         tk.Label(
             fenetre,
@@ -6445,7 +6445,7 @@ def ouvrir_ajout_plante():
     )
 
     plante_selectionnee.set(
-        "Choisissez une plante connue pour remplir automatiquement les informations disponibles."
+        t("known_plant_help")
     )
 
     def appliquer_plante_connue(event=None):
@@ -6477,11 +6477,11 @@ def ouvrir_ajout_plante():
             appliquer_plante_connue()
         elif texte.strip():
             plante_selectionnee.set(
-                "Plante non connue dans la mini base. Vous pouvez quand même l'ajouter manuellement."
+                t("unknown_plant_help")
             )
         else:
             plante_selectionnee.set(
-                "Choisissez une plante connue pour remplir automatiquement les informations disponibles."
+                t("known_plant_help")
             )
 
     nom_plante.bind("<KeyRelease>", actualiser_propositions)
@@ -6505,8 +6505,8 @@ def ouvrir_ajout_plante():
         state="readonly",
         width=46,
         values=[
-            "Intérieur",
-            "Extérieur"
+            t("indoor"),
+            t("outdoor")
         ]
     )
 
@@ -6539,7 +6539,7 @@ def ouvrir_ajout_plante():
         zone = champs["zone"].get().strip() or None
 
         if not nom:
-            erreur.set("Le nom de la plante est obligatoire.")
+            erreur.set(t("plant_name_required"))
             return
 
         try:
@@ -6552,15 +6552,14 @@ def ouvrir_ajout_plante():
 
         except Exception:
             erreur.set(
-                "Ajout impossible. Vérifiez l'accès à la base."
+                t("plant_add_failed_db")
             )
             return
 
         fenetre.destroy()
         actualiser_interface()
         status_var.set(
-            "Plante ajoutée. Elle peut rester sans capteur "
-            "ou recevoir un capteur plus tard."
+            t("plant_added_status")
         )
 
     boutons = tk.Frame(
@@ -6603,27 +6602,27 @@ def ouvrir_ajout_plante():
 
 def ouvrir_ajout_capteur():
     if netatmo_loading or str(sync_button['state']) == 'disabled':
-        messagebox.showinfo("Ajouter un capteur", "Attendez la fin de la synchronisation.", parent=root)
+        messagebox.showinfo(t("add_sensor_title"), t("wait_sync_before_sensor"), parent=root)
         return
     plantes = database.get_plantes()
     occupes = {c[3] for c in database.get_capteurs() if c[8]}
     disponibles = [p for p in plantes if p[0] not in occupes]
     if not disponibles:
-        messagebox.showinfo("Ajouter un capteur", "Il faut une plante sans capteur actif. Ajoutez d'abord une plante depuis l'interface.", parent=root)
+        messagebox.showinfo(t("add_sensor_title"), t("need_plant_without_sensor"), parent=root)
         return
     fenetre = tk.Toplevel(root)
-    fenetre.title("Ajouter un capteur")
+    fenetre.title(t("add_sensor_title"))
     fenetre.configure(bg=CARD)
     fenetre.resizable(False, False)
     fenetre.transient(root)
     fenetre.grab_set()
     champs = []
-    for titre in ("Nom du capteur", "Adresse Bluetooth (AA:BB:CC:DD:EE:FF)"):
+    for titre in (t("sensor_name"), t("bluetooth_address")):
         tk.Label(fenetre, text=titre, bg=CARD, fg=TEXT).pack(anchor='w', padx=20, pady=(12, 3))
         entree = tk.Entry(fenetre, width=48, bg=BG, fg=TEXT, insertbackground=TEXT)
         entree.pack(padx=20, fill='x')
         champs.append(entree)
-    tk.Label(fenetre, text="Plante à associer", bg=CARD, fg=TEXT).pack(anchor='w', padx=20, pady=(12,3))
+    tk.Label(fenetre, text=t("plant_to_link"), bg=CARD, fg=TEXT).pack(anchor='w', padx=20, pady=(12,3))
     choix = ttk.Combobox(fenetre, state='readonly', width=46,
                           values=[f"{p[1]} (n° {p[0]})" for p in disponibles])
     choix.pack(padx=20, fill='x')
@@ -6637,11 +6636,11 @@ def ouvrir_ajout_capteur():
             erreur.set(str(probleme))
             return
         except Exception:
-            erreur.set("Ajout impossible. Vérifiez l'accès à la base et à la sauvegarde.")
+            erreur.set(t("sensor_add_failed_db_backup"))
             return
         fenetre.destroy()
         actualiser_interface()
-        status_var.set("Capteur ajouté. Cliquez sur Synchroniser pour effectuer sa première lecture.")
+        status_var.set(t("sensor_added_status"))
     tk.Button(fenetre, text=t("add"), command=enregistrer, bg=LIGHT_GREEN, fg=TEXT,
               activebackground=LIGHT_GREEN, activeforeground=TEXT).pack(side='right', padx=20, pady=15)
     tk.Button(fenetre, text=t("cancel"), command=fenetre.destroy, bg=BG, fg=TEXT).pack(side='left', padx=20, pady=15)
@@ -7127,7 +7126,7 @@ def afficher_raccourcis_historique(plante_id):
     )
 
     fenetre = tk.Toplevel(root)
-    fenetre.title("Historique")
+    fenetre.title(t("history_title"))
     fenetre.configure(bg=CARD)
     fenetre.transient(root)
     fenetre.grab_set()
@@ -7139,7 +7138,7 @@ def afficher_raccourcis_historique(plante_id):
 
     tk.Label(
         contenu,
-        text="📈 Historique de mesures",
+        text=t("measurement_history_title"),
         font=("Segoe UI", 15, "bold"),
         fg=TEXT,
         bg=CARD,
@@ -7149,8 +7148,7 @@ def afficher_raccourcis_historique(plante_id):
     tk.Label(
         contenu,
         text=(
-            f"{nom_plante} n'a pas encore de mesures capteur enregistrées. "
-            "C'est normal pour une plante sans capteur actif."
+            t("plant_no_sensor_measurements").format(plant=nom_plante)
         ),
         font=("Segoe UI", 10),
         fg=SECONDARY,
@@ -7163,7 +7161,7 @@ def afficher_raccourcis_historique(plante_id):
     if raccourcis:
         tk.Label(
             contenu,
-            text="Ouvrir un historique disponible :",
+            text=t("open_available_history"),
             font=("Segoe UI", 10, "bold"),
             fg=TEXT,
             bg=CARD,
@@ -7191,8 +7189,7 @@ def afficher_raccourcis_historique(plante_id):
         tk.Label(
             contenu,
             text=(
-                "Aucune plante n'a encore d'historique de mesures. "
-                "Après une synchronisation Mi Flora, le bouton ouvrira les graphiques."
+                t("no_history_any_plant")
             ),
             font=("Segoe UI", 10),
             fg=SECONDARY,
