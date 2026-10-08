@@ -738,7 +738,6 @@ def ouvrir_historique(parent, plante_id, action_synchroniser=None):
     ).pack(side="left", padx=(0, 10))
 
     outils_post_arrosage = tk.Frame(fenetre, bg=couleurs["BG"])
-    outils_post_arrosage.pack(fill="x", padx=24, pady=(0, 8))
 
     tk.Label(
         outils_post_arrosage,
@@ -1080,6 +1079,18 @@ def ouvrir_historique(parent, plante_id, action_synchroniser=None):
         canvas.create_text(x0, 22, text=f"{config['titre']} ({config['unite']})",
                            anchor="w", fill=couleurs["TEXT"],
                            font=("Segoe UI", 12, "bold"))
+        if serie.get() == "Lumière":
+            aide_graphique = "Courbe bleue : mesures du jour · zone bleutée : volume visuel · point orange : mesure sélectionnée"
+        else:
+            aide_graphique = "Courbe : mesures affichées · zone colorée : volume visuel · point orange : mesure sélectionnée"
+        canvas.create_text(
+            x0,
+            39,
+            text=aide_graphique,
+            anchor="w",
+            fill=couleur_secondaire,
+            font=("Segoe UI", 8)
+        )
         canvas.create_text(x1, 22, text=f"{len(points)} point(s)",
                            anchor="e", fill=couleur_secondaire,
                            font=("Segoe UI", 9))
@@ -1823,6 +1834,13 @@ def ouvrir_historique(parent, plante_id, action_synchroniser=None):
         lecture_label.configure(fg=couleurs.get(analyse["couleur"], couleurs["TEXT"]))
         suffixe_arrosage = f" · {len(arrosages_courants)} arrosage(s)" if arrosages_courants else ""
         suffixe_exposition = f" · {len(expositions_courantes)} exposition(s) balcon" if expositions_courantes else ""
+        if periode.get() == "Journée":
+            if outils_post_arrosage.winfo_ismapped():
+                outils_post_arrosage.pack_forget()
+        else:
+            if not outils_post_arrosage.winfo_ismapped():
+                outils_post_arrosage.pack(fill="x", padx=24, pady=(0, 8), before=cadre)
+
         if tri_table["colonne"]:
             bilan.set(f"{len(mesures)} mesure(s){suffixe_arrosage}{suffixe_exposition} · tri : {libelle_tri(tri_table['colonne'])}")
         else:
