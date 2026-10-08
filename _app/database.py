@@ -1294,6 +1294,7 @@ def initialiser_arrosages():
             type_eau TEXT,
             rappel_date TEXT,
             rappel_fait INTEGER NOT NULL DEFAULT 0,
+            etat_sante TEXT,
             FOREIGN KEY (plante_id) REFERENCES plantes(id)
         )
     """)
@@ -1309,6 +1310,9 @@ def initialiser_arrosages():
     if "rappel_fait" not in colonnes:
         conn.execute("ALTER TABLE arrosages ADD COLUMN rappel_fait INTEGER NOT NULL DEFAULT 0")
 
+    if "etat_sante" not in colonnes:
+        conn.execute("ALTER TABLE arrosages ADD COLUMN etat_sante TEXT")
+
     conn.commit()
     conn.close()
 
@@ -1322,7 +1326,8 @@ def enregistrer_arrosage_plante(
     dosage=None,
     commentaire=None,
     rappel_date=None,
-    type_eau=None
+    type_eau=None,
+    etat_sante=None
 ):
     """Enregistre un arrosage manuel pour une plante, avec ou sans capteur."""
 
@@ -1340,8 +1345,8 @@ def enregistrer_arrosage_plante(
 
     curseur = conn.execute("""
         INSERT INTO arrosages
-        (plante_id, date_heure, quantite_ml, type, fertilisant, dosage, commentaire, type_eau, rappel_date, rappel_fait)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 0)
+        (plante_id, date_heure, quantite_ml, type, fertilisant, dosage, commentaire, type_eau, rappel_date, rappel_fait, etat_sante)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 0, ?)
     """, (
         plante_id,
         date_heure,
@@ -1351,7 +1356,8 @@ def enregistrer_arrosage_plante(
         dosage,
         commentaire,
         type_eau,
-        rappel_date
+        rappel_date,
+        etat_sante
     ))
 
     arrosage_id = curseur.lastrowid
@@ -1378,7 +1384,8 @@ def get_dernier_arrosage(plante_id):
             commentaire,
             type_eau,
             rappel_date,
-            rappel_fait
+            rappel_fait,
+            etat_sante
         FROM arrosages
         WHERE plante_id = ?
         ORDER BY date_heure DESC, id DESC
@@ -1407,7 +1414,8 @@ def get_arrosages_plante(plante_id, limite=20):
             commentaire,
             type_eau,
             rappel_date,
-            rappel_fait
+            rappel_fait,
+            etat_sante
         FROM arrosages
         WHERE plante_id = ?
         ORDER BY date_heure DESC, id DESC
@@ -1603,7 +1611,8 @@ def get_rappel_arrosage_actif(plante_id):
             commentaire,
             type_eau,
             rappel_date,
-            rappel_fait
+            rappel_fait,
+            etat_sante
         FROM arrosages
         WHERE plante_id = ?
           AND rappel_date IS NOT NULL

@@ -1897,6 +1897,21 @@ def ouvrir_arrosage_plante(plante_id, nom_plante):
     type_eau_combo.pack(fill="x", padx=20)
     type_eau_combo.current(0)
 
+    tk.Label(fenetre, text=t("plant_health_optional"), bg=CARD, fg=TEXT, font=("Segoe UI", 9, "bold")).pack(anchor="w", padx=20, pady=(10, 3))
+    etat_sante_combo = ttk.Combobox(
+        fenetre,
+        state="readonly",
+        values=[
+            t("plant_health_unknown"),
+            t("plant_health_good"),
+            t("plant_health_watch"),
+            t("plant_health_degraded"),
+        ],
+        width=39
+    )
+    etat_sante_combo.pack(fill="x", padx=20)
+    etat_sante_combo.current(0)
+
     contexte_frame = tk.Frame(fenetre, bg=CARD)
     contexte_frame.pack(fill="x", padx=20, pady=(10, 0))
 
@@ -2025,6 +2040,14 @@ def ouvrir_arrosage_plante(plante_id, nom_plante):
         if type_eau == "Non renseigné":
             type_eau = None
 
+        etat_sante_libelle = etat_sante_combo.get().strip()
+        etat_sante = {
+            t("plant_health_good"): "bon_etat",
+            t("plant_health_watch"): "a_surveiller",
+            t("plant_health_degraded"): "degrade",
+            t("plant_health_unknown"): "inconnu",
+        }.get(etat_sante_libelle, "inconnu")
+
         contexte_arrosage = []
         for libelle, combo in (
                 ("Répartition", repartition_combo),
@@ -2051,6 +2074,7 @@ def ouvrir_arrosage_plante(plante_id, nom_plante):
             f"Quantité : {quantite:g} ml" if quantite is not None else "Quantité : non renseignée",
             f"Type : {type_combo.get()}",
             f"Type d'eau : {type_eau or 'non renseigné'}",
+            f"État santé : {etat_sante_libelle}",
         ]
         confirmation.extend(contexte_arrosage)
         if rappel_date:
@@ -2074,7 +2098,8 @@ def ouvrir_arrosage_plante(plante_id, nom_plante):
                 type_arrosage=type_combo.get(),
                 commentaire=commentaire,
                 rappel_date=rappel_date,
-                type_eau=type_eau
+                type_eau=type_eau,
+                etat_sante=etat_sante
             )
             demande_id = database.enregistrer_collecte_prioritaire(
                 plante_id,

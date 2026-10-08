@@ -109,6 +109,23 @@ class TestAnalyseHistorique(unittest.TestCase):
         self.assertIn("périodes sombres", analyse["lecture"])
 
 
+class TestSanteArrosage(BaseTemporaireMixin, unittest.TestCase):
+    def test_arrosage_conserve_etat_sante_facultatif(self):
+        db = self.database
+        db.initialiser_schema()
+        plante_id = db.ajouter_plante("Crassula", "Crassula ovata")
+
+        db.enregistrer_arrosage_plante(
+            plante_id,
+            "2026-10-08T19:31:00",
+            quantite_ml=95,
+            etat_sante="a_surveiller",
+        )
+
+        dernier = db.get_dernier_arrosage(plante_id)
+        self.assertEqual(dernier[11], "a_surveiller")
+
+
 class TestRappelsArrosage(BaseTemporaireMixin, unittest.TestCase):
     def test_nouvel_arrosage_cloture_ancien_rappel_en_retard(self):
         db = self.database
