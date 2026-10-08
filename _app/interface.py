@@ -6128,7 +6128,7 @@ def ouvrir_parametres():
     couleur_netatmo = GREEN if diagnostic_netatmo.get("ok") else ORANGE
     tk.Label(
         netatmo_bloc,
-        text="Connexion Netatmo : " + diagnostic_netatmo.get("message", "état inconnu"),
+        text=t("netatmo_connection_prefix").format(message=diagnostic_netatmo.get("message", t("netatmo_unknown_status"))),
         bg=LIGHT_GREEN,
         fg=couleur_netatmo,
         font=("Segoe UI", 9, "bold"),
@@ -6176,7 +6176,7 @@ def ouvrir_parametres():
 
     tk.Label(
         netatmo_bloc,
-        text="Aide Netatmo : créez une application sur le portail développeur Netatmo, copiez les quatre valeurs demandées dans le fichier privé créé par Gruterra, puis revenez ici. Le bouton Actualiser Netatmo testera ensuite la connexion.",
+        text=t("netatmo_help_settings"),
         bg=LIGHT_GREEN,
         fg=SECONDARY,
         font=("Segoe UI", 8),
@@ -6187,27 +6187,27 @@ def ouvrir_parametres():
     alertes_bloc = tk.Frame(fenetre, bg=LIGHT_ORANGE, highlightbackground=BORDER, highlightthickness=1)
     alertes_bloc.pack(fill="x", padx=20, pady=(0, 12))
 
-    tk.Label(alertes_bloc, text="Alertes", font=("Segoe UI", 11, "bold"), fg=ORANGE, bg=LIGHT_ORANGE).pack(anchor="w", padx=12, pady=(10, 4))
+    tk.Label(alertes_bloc, text=t("alerts_section"), font=("Segoe UI", 11, "bold"), fg=ORANGE, bg=LIGHT_ORANGE).pack(anchor="w", padx=12, pady=(10, 4))
 
     email_var = tk.BooleanVar(value=bool(alertes_config.get("email_actif", False)))
-    tk.Checkbutton(alertes_bloc, text="Préparer les alertes e-mail en mode test", variable=email_var,
+    tk.Checkbutton(alertes_bloc, text=t("email_alerts_test_mode"), variable=email_var,
                   bg=LIGHT_ORANGE, fg=TEXT, activebackground=LIGHT_ORANGE,
                   activeforeground=TEXT, selectcolor=CARD).pack(anchor="w", padx=12, pady=(0, 6))
 
     ligne_email = tk.Frame(alertes_bloc, bg=LIGHT_ORANGE)
     ligne_email.pack(fill="x", padx=12, pady=(0, 6))
-    tk.Label(ligne_email, text="Destinataire", bg=LIGHT_ORANGE, fg=TEXT, font=("Segoe UI", 9, "bold")).pack(side="left")
+    tk.Label(ligne_email, text=t("recipient"), bg=LIGHT_ORANGE, fg=TEXT, font=("Segoe UI", 9, "bold")).pack(side="left")
     email_destinataire_var = tk.StringVar(value=alertes_config.get("email_destinataire", ""))
     tk.Entry(ligne_email, textvariable=email_destinataire_var, width=32, bg=BG, fg=TEXT, insertbackground=TEXT).pack(side="left", padx=(10, 4))
 
     ligne_batterie = tk.Frame(alertes_bloc, bg=LIGHT_ORANGE)
     ligne_batterie.pack(fill="x", padx=12, pady=(0, 6))
-    tk.Label(ligne_batterie, text="Seuil batterie", bg=LIGHT_ORANGE, fg=TEXT, font=("Segoe UI", 9, "bold")).pack(side="left")
+    tk.Label(ligne_batterie, text=t("battery_threshold"), bg=LIGHT_ORANGE, fg=TEXT, font=("Segoe UI", 9, "bold")).pack(side="left")
     seuil_batterie_var = tk.StringVar(value=str(alertes_config.get("seuil_batterie", 50)))
     tk.Entry(ligne_batterie, textvariable=seuil_batterie_var, width=6, bg=BG, fg=TEXT, insertbackground=TEXT).pack(side="left", padx=(10, 4))
     tk.Label(ligne_batterie, text="%", bg=LIGHT_ORANGE, fg=TEXT).pack(side="left")
 
-    tk.Label(alertes_bloc, text="Plantes avec rappel e-mail", bg=LIGHT_ORANGE, fg=TEXT, font=("Segoe UI", 9, "bold")).pack(anchor="w", padx=12, pady=(4, 3))
+    tk.Label(alertes_bloc, text=t("plants_with_email_reminder"), bg=LIGHT_ORANGE, fg=TEXT, font=("Segoe UI", 9, "bold")).pack(anchor="w", padx=12, pady=(4, 3))
     plantes_alertes_frame = tk.Frame(alertes_bloc, bg=LIGHT_ORANGE)
     plantes_alertes_frame.pack(fill="x", padx=12, pady=(0, 10))
     plantes_alertes_vars = []
@@ -6220,7 +6220,7 @@ def ouvrir_parametres():
                       bg=LIGHT_ORANGE, fg=TEXT, activebackground=LIGHT_ORANGE,
                       activeforeground=TEXT, selectcolor=CARD).pack(anchor="w")
 
-    tk.Label(alertes_bloc, text="Mode test uniquement : Gruterra prépare un aperçu. Le SMTP sécurisé local sera prioritaire plus tard ; Outlook restera une option secondaire si nécessaire.",
+    tk.Label(alertes_bloc, text=t("email_alerts_test_help"),
              bg=LIGHT_ORANGE, fg=SECONDARY, font=("Segoe UI", 8), wraplength=520,
              justify="left").pack(anchor="w", padx=12, pady=(0, 8))
 
@@ -6238,8 +6238,8 @@ def ouvrir_parametres():
     raccourcis = tk.Frame(fenetre, bg=CARD)
     raccourcis.pack(fill="x", padx=20, pady=(0, 8))
 
-    tk.Button(raccourcis, text="Tous les jours", command=selectionner_tous, bg=BG, fg=TEXT, relief="flat", cursor="hand2").pack(side="left", padx=(0, 8))
-    tk.Button(raccourcis, text="Lundi à vendredi", command=jours_semaine, bg=BG, fg=TEXT, relief="flat", cursor="hand2").pack(side="left")
+    tk.Button(raccourcis, text=t("every_day"), command=selectionner_tous, bg=BG, fg=TEXT, relief="flat", cursor="hand2").pack(side="left", padx=(0, 8))
+    tk.Button(raccourcis, text=t("monday_to_friday"), command=jours_semaine, bg=BG, fg=TEXT, relief="flat", cursor="hand2").pack(side="left")
 
     def enregistrer():
         global langue_interface
@@ -6252,12 +6252,12 @@ def ouvrir_parametres():
                 raise ValueError()
             heure = f"{heure_int:02d}:{minute_int:02d}"
         except Exception:
-            erreur.set("Heure invalide. Exemple accepté : 18:00")
+            erreur.set(t("invalid_time_example"))
             return
 
         jours = [index for index, var in enumerate(jours_vars) if var.get()]
         if not jours:
-            erreur.set("Sélectionnez au moins un jour, ou désactivez la synchronisation automatique.")
+            erreur.set(t("select_day_or_disable_auto_sync"))
             return
 
         ancienne_heure = auto_sync_config.get("heure", "18:00")
@@ -6282,7 +6282,7 @@ def ouvrir_parametres():
             if not (1 <= seuil_batterie <= 100):
                 raise ValueError()
         except ValueError:
-            erreur.set("Seuil batterie invalide. Exemple : 50")
+            erreur.set(t("invalid_battery_threshold_example"))
             return
 
         station_favorite_saisie = favori_netatmo_var.get().strip()
@@ -6300,7 +6300,7 @@ def ouvrir_parametres():
         interface_layout_config["vue_compacte_plantes"] = bool(vue_compacte_var.get())
         destinataire = email_destinataire_var.get().strip()
         if email_var.get() and not destinataire:
-            erreur.set("Ajoutez un destinataire pour activer les alertes e-mail.")
+            erreur.set(t("email_recipient_required"))
             return
 
         alertes_config["email_actif"] = bool(email_var.get())
@@ -6327,7 +6327,7 @@ def ouvrir_parametres():
             else:
                 status_var.set(t("settings_saved"))
         else:
-            erreur.set("Impossible d'enregistrer tous les paramètres.")
+            erreur.set(t("settings_save_failed"))
 
     boutons = tk.Frame(fenetre, bg=CARD)
     boutons.pack(fill="x", padx=20, pady=(0, 15))
