@@ -109,6 +109,27 @@ class TestAnalyseHistorique(unittest.TestCase):
         self.assertIn("périodes sombres", analyse["lecture"])
 
 
+class TestEvaluationSanteJournal(BaseTemporaireMixin, unittest.TestCase):
+    def test_journal_conserve_evaluation_sante_structuree(self):
+        db = self.database
+        db.initialiser_schema()
+        plante_id = db.ajouter_plante("Crassula", "Crassula ovata")
+
+        evenement_id = db.ajouter_observation_plante(
+            plante_id,
+            "2026-10-08T19:31:00",
+            "etat_sante=a_surveiller État déclaré : À surveiller.",
+            titre="Évaluation santé",
+            type_evenement="evaluation_sante",
+            source="botaneo",
+        )
+
+        evenement = db.get_journal_plante(plante_id, limite=1)[0]
+        self.assertEqual(evenement[0], evenement_id)
+        self.assertEqual(evenement[3], "evaluation_sante")
+        self.assertIn("etat_sante=a_surveiller", evenement[5])
+
+
 class TestSanteArrosage(BaseTemporaireMixin, unittest.TestCase):
     def test_arrosage_conserve_etat_sante_facultatif(self):
         db = self.database

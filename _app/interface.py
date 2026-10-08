@@ -1853,6 +1853,96 @@ def enregistrer_evenement_balcon(plante_id, nom_plante, action):
     status_var.set(message)
 
 
+def code_etat_sante_depuis_libelle(libelle):
+    return {
+        t("plant_health_good"): "bon_etat",
+        t("plant_health_watch"): "a_surveiller",
+        t("plant_health_degraded"): "degrade",
+        t("plant_health_unknown"): "inconnu",
+    }.get((libelle or "").strip(), "inconnu")
+
+
+def ouvrir_evaluation_sante_plante(plante_id, nom_plante):
+    fenetre = tk.Toplevel(root)
+    fenetre.title(t("plant_health_eval_title"))
+    fenetre.configure(bg=CARD)
+    fenetre.resizable(False, False)
+    fenetre.transient(root)
+    fenetre.grab_set()
+
+    tk.Label(
+        fenetre,
+        text=f"🩺 {t('plant_health_eval_title')} · {nom_plante}",
+        font=("Segoe UI", 15, "bold"),
+        fg=TEXT,
+        bg=CARD
+    ).pack(anchor="w", padx=20, pady=(16, 6))
+
+    tk.Label(
+        fenetre,
+        text=t("plant_health_eval_help"),
+        font=("Segoe UI", 9),
+        fg=SECONDARY,
+        bg=CARD,
+        wraplength=420,
+        justify="left"
+    ).pack(anchor="w", padx=20, pady=(0, 12))
+
+    tk.Label(fenetre, text=t("plant_health_optional"), bg=CARD, fg=TEXT, font=("Segoe UI", 9, "bold")).pack(anchor="w", padx=20, pady=(4, 3))
+    etat_sante_combo = ttk.Combobox(
+        fenetre,
+        state="readonly",
+        values=[
+            t("plant_health_unknown"),
+            t("plant_health_good"),
+            t("plant_health_watch"),
+            t("plant_health_degraded"),
+        ],
+        width=39
+    )
+    etat_sante_combo.pack(fill="x", padx=20)
+    etat_sante_combo.current(0)
+
+    tk.Label(fenetre, text=t("comment"), bg=CARD, fg=TEXT, font=("Segoe UI", 9, "bold")).pack(anchor="w", padx=20, pady=(10, 3))
+    commentaire_entry = tk.Entry(fenetre, width=42, bg=BG, fg=TEXT, insertbackground=TEXT)
+    commentaire_entry.pack(fill="x", padx=20)
+
+    erreur = tk.StringVar()
+    tk.Label(fenetre, textvariable=erreur, bg=CARD, fg=RED, wraplength=420, justify="left").pack(fill="x", padx=20, pady=8)
+
+    def enregistrer():
+        etat_libelle = etat_sante_combo.get().strip()
+        etat_code = code_etat_sante_depuis_libelle(etat_libelle)
+        commentaire_libre = commentaire_entry.get().strip()
+        lignes = [
+            f"etat_sante={etat_code}",
+            f"État déclaré : {etat_libelle}.",
+        ]
+        if commentaire_libre:
+            lignes.append(f"Commentaire : {commentaire_libre}")
+        try:
+            database.ajouter_observation_plante(
+                plante_id,
+                datetime.now().isoformat(timespec="seconds"),
+                " ".join(lignes),
+                titre=t("plant_health_eval_title"),
+                type_evenement="evaluation_sante",
+                source="botaneo"
+            )
+        except Exception as exception:
+            erreur.set(f"{t('plant_health_eval_save_failed')} {exception}")
+            return
+        fenetre.destroy()
+        actualiser_interface()
+        status_var.set(t("plant_health_eval_saved").format(plant=nom_plante))
+
+    boutons = tk.Frame(fenetre, bg=CARD)
+    boutons.pack(fill="x", padx=20, pady=(0, 15))
+    tk.Button(boutons, text=t("save"), command=enregistrer, bg=LIGHT_GREEN, fg=GREEN, activebackground=LIGHT_GREEN, relief="flat", cursor="hand2").pack(side="right")
+    tk.Button(boutons, text=t("cancel"), command=fenetre.destroy, bg=BG, fg=TEXT, relief="flat", cursor="hand2").pack(side="left")
+    commentaire_entry.focus_set()
+
+
 def ouvrir_arrosage_plante(plante_id, nom_plante):
     fenetre = tk.Toplevel(root)
     fenetre.title(t("watering_title"))
@@ -2041,12 +2131,7 @@ def ouvrir_arrosage_plante(plante_id, nom_plante):
             type_eau = None
 
         etat_sante_libelle = etat_sante_combo.get().strip()
-        etat_sante = {
-            t("plant_health_good"): "bon_etat",
-            t("plant_health_watch"): "a_surveiller",
-            t("plant_health_degraded"): "degrade",
-            t("plant_health_unknown"): "inconnu",
-        }.get(etat_sante_libelle, "inconnu")
+        etat_sante = code_etat_sante_depuis_libelle(etat_sante_libelle)
 
         contexte_arrosage = []
         for libelle, combo in (
@@ -2388,6 +2473,7 @@ def creer_carte_plante_compacte(parent, plante):
     boutons = tk.Frame(carte, bg=CARD)
     boutons.pack(fill="x", padx=14, pady=(0, 10))
     tk.Button(boutons, text=t("watering"), font=("Segoe UI", 8, "bold"), bg=LIGHT_BLUE, fg=BLUE, relief="flat", cursor="hand2", command=lambda pid=plante_id, n=nom: ouvrir_arrosage_plante(pid, n)).pack(side="left", padx=(0, 8))
+    tk.Button(boutons, text=t("plant_health_button"), font=("Segoe UI", 8, "bold"), bg=LIGHT_GREEN, fg=GREEN, relief="flat", cursor="hand2", command=lambda pid=plante_id, n=nom: ouvrir_evaluation_sante_plante(pid, n)).pack(side="left", padx=(0, 8))
     tk.Button(boutons, text=t("balcony_out"), font=("Segoe UI", 8, "bold"), bg=BG, fg=ORANGE, relief="flat", cursor="hand2", command=lambda pid=plante_id, n=nom: enregistrer_evenement_balcon(pid, n, "sortie")).pack(side="left", padx=(0, 8))
     tk.Button(boutons, text=t("back_inside"), font=("Segoe UI", 8, "bold"), bg=BG, fg=BLUE, relief="flat", cursor="hand2", command=lambda pid=plante_id, n=nom: enregistrer_evenement_balcon(pid, n, "retour")).pack(side="left", padx=(0, 8))
     tk.Button(boutons, text=t("past_exposure"), font=("Segoe UI", 8, "bold"), bg=BG, fg=SECONDARY, relief="flat", cursor="hand2", command=lambda pid=plante_id, n=nom: ouvrir_exposition_balcon_passee(pid, n)).pack(side="left", padx=(0, 8))
@@ -2912,6 +2998,23 @@ def creer_carte_plante(parent, plante):
         cursor="hand2",
         command=lambda pid=plante_id, nom=nom:
             ouvrir_arrosage_plante(pid, nom)
+    ).pack(
+        side="left",
+        padx=(0, 8)
+    )
+
+    tk.Button(
+        boutons,
+        text=t("plant_health_button"),
+        font=("Segoe UI", 9, "bold"),
+        bg=LIGHT_GREEN,
+        fg=GREEN,
+        activebackground=LIGHT_GREEN,
+        activeforeground=GREEN,
+        relief="flat",
+        cursor="hand2",
+        command=lambda pid=plante_id, nom=nom:
+            ouvrir_evaluation_sante_plante(pid, nom)
     ).pack(
         side="left",
         padx=(0, 8)
