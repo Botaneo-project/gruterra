@@ -4885,6 +4885,17 @@ def synchronisation_terminee(resultat_miflora, resultats_meteo):
     actualiser_interface()
     afficher_netatmo()
 
+    def rafraichir_apres_synchronisation():
+        """Relit l'affichage peu après la synchro pour éviter un reste visuel."""
+        try:
+            actualiser_interface()
+            if meteo_affichee_en_haut():
+                afficher_netatmo()
+        except Exception:
+            pass
+
+    root.after(1500, rafraichir_apres_synchronisation)
+
     sources_en_echec = []
     if not resultat_miflora.get("ok"):
         sources_en_echec.append("Mi Flora")
@@ -4899,6 +4910,7 @@ def synchronisation_terminee(resultat_miflora, resultats_meteo):
     )
 
     lignes_detail = [resultat_miflora.get("message", "Synchronisation Mi Flora terminée")]
+    lignes_detail.append("Affichage relu automatiquement après synchronisation pour éviter les anciennes valeurs visibles.")
     acquisition_miflora = resume_acquisition_miflora(resultat_miflora)
     if acquisition_miflora:
         lignes_detail.append(acquisition_miflora)
