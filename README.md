@@ -354,6 +354,7 @@ py update_gruterra.py
 Quand une release officielle fournit une archive et une empreinte SHA256 dans `version_manifest.json`, le même assistant peut simuler puis appliquer la mise à jour :
 
 ```powershell
+py update_gruterra.py --prepare
 py update_gruterra.py --dry-run
 py update_gruterra.py --apply
 ```
@@ -405,3 +406,6 @@ Le dépôt public/privé attendu pour Gruterra est `https://github.com/Botaneo-p
 ## Compatibilité technique avec l’ancien nom Botaneo
 
 Le nom officiel du projet est désormais **Gruterra**. Pour éviter de casser les installations existantes, certains éléments techniques conservent temporairement le nom historique `botaneo` : noms de fichiers Python, variables d’environnement `BOTANEO_*`, fichier local `_config/botaneo.local.json`, scripts d’audit, services Raspberry `botaneo-*` et chemin Raspberry `~/botaneo`. Ces noms sont gardés volontairement pour la compatibilité et pourront être migrés plus tard avec une procédure dédiée.
+### Parcours de mise à jour dans les paramètres
+
+Cliquez sur **Vérifier les mises à jour**. Si Gruterra est à jour, aucune installation n’est proposée. Sinon, **Préparer la mise à jour** vérifie le paquet officiel, son SHA-256 et les protections locales, puis crée une sauvegarde du programme sans remplacer de fichiers. **Appliquer la mise à jour** devient disponible après une préparation réussie. Les contrôles sont répétés avant remplacement ; les données privées restent préservées et le redémarrage est proposé après succès. Une nouvelle vérification réinitialise la préparation.

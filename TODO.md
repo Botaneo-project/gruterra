@@ -2,6 +2,13 @@
 
 Ce fichier sert à garder une trace claire des idées et des prochaines étapes. Les éléments déjà en place sont conservés ici uniquement pour savoir où on en est, mais ils ne doivent plus être relancés sauf bug ou amélioration ciblée.
 
+## Mise à jour — parcours progressif du 2026-10-09
+
+- [x] Paramètres : Vérifier → Préparer → Appliquer. Si la version est à jour, aucune action d’installation ni confirmation d’archive.
+- [x] Préparation : archive officielle, SHA-256, protections et sauvegarde locale ; aucun fichier remplacé. Application avec recontrôle et sauvegarde avant remplacement.
+- [x] À propos renvoie aux Paramètres pour installer ; contrôles FR/EN et tests sur archives fictives.
+- [ ] Valider ce nouveau parcours sur le PC de secours lors de la prochaine release.
+
 ## Paramètres — 2026-10-09
 
 - [x] Drapeaux France/Royaume-Uni dessinés localement à côté de Français/English, sans dépendre des emojis Windows.

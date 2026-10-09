@@ -5210,12 +5210,19 @@ def patch_note_update_a_propos(verifier_distant=True):
     return texte_interface_utf8_sur("\n".join(lignes))
 
 
-def executer_assistant_update_a_propos(appliquer=False):
+class ResultatAssistantUpdate(str):
+    def __new__(cls, texte, code_retour):
+        resultat = super().__new__(cls, texte)
+        resultat.code_retour = code_retour
+        return resultat
+
+
+def executer_assistant_update_a_propos(appliquer=False, preparer=False):
     racine = Path(__file__).resolve().parent.parent
     script = racine / "update_gruterra.py"
     if not script.exists():
         return "Assistant update introuvable : update_gruterra.py"
-    commande = ["py", str(script), "--apply" if appliquer else "--dry-run"]
+    commande = ["py", str(script), "--apply" if appliquer else ("--prepare" if preparer else "--dry-run")]
     environnement = os.environ.copy()
     environnement["PYTHONIOENCODING"] = "utf-8"
     environnement["PYTHONUTF8"] = "1"
@@ -5250,7 +5257,7 @@ def executer_assistant_update_a_propos(appliquer=False):
         lignes.extend(["", t("updater_errors_label"), erreur])
     if appliquer:
         lignes.extend(["", patch_note_update_a_propos(verifier_distant=True)])
-    return texte_interface_utf8_sur("\n".join(lignes)).strip()
+    return ResultatAssistantUpdate(texte_interface_utf8_sur("\n".join(lignes)).strip(), resultat.returncode)
 
 
 
@@ -5315,12 +5322,24 @@ def proposer_redemarrage_apres_update(parent, contenu):
 
 
 def lancer_application_update(parent, afficher_resultat=None):
+    try:
+        diagnostic = botaneo_update.construire_diagnostic_mise_a_jour(Path(__file__).resolve().parent.parent, verifier_distant=True)
+        if not update_installable_depuis_diagnostic(diagnostic):
+            texte = message_parcours_update(diagnostic)
+            if afficher_resultat:
+                afficher_resultat(texte)
+            else:
+                messagebox.showinfo(t("updates_section"), texte, parent=parent)
+            return False
+    except Exception as erreur:
+        messagebox.showerror(t("updates_section"), str(erreur), parent=parent)
+        return False
     if not messagebox.askyesno(
         t("update_apply_title"),
         t("update_apply_confirm"),
         parent=parent,
     ):
-        return
+        return False
     status_var.set(t("update_apply_running"))
 
     def tache():
@@ -5340,6 +5359,7 @@ def lancer_application_update(parent, afficher_resultat=None):
         root.after(0, terminer)
 
     threading.Thread(target=tache, daemon=True).start()
+    return True
 
 
 def update_installable_depuis_diagnostic(diagnostic):
@@ -5350,7 +5370,14 @@ def update_installable_depuis_diagnostic(diagnostic):
     auto_update = bool(version.get("manifest_auto_update"))
     version_disponible = statut_version in {"mise_a_jour_disponible", "version_stable_disponible"}
     protections_ok = diagnostic.get("statut_global") != "bloque"
-    return version_disponible and protections_ok and auto_update and archive_url and len(sha256) == 64
+    return version_disponible and protections_ok and auto_update and archive_url and len(sha256) == 64 and all(c in "0123456789abcdefABCDEF" for c in sha256)
+
+
+def message_parcours_update(diagnostic):
+    version = diagnostic.get("version", {})
+    if version.get("statut") == "a_jour":
+        return t("update_current_version").format(version=version.get("version_locale") or APP_VERSION)
+    return botaneo_update.formater_diagnostic_mise_a_jour(diagnostic)
 
 
 def verifier_update_au_demarrage():
@@ -5373,7 +5400,7 @@ def verifier_update_au_demarrage():
 
         def proposer():
             message = (
-                t('interface_text_5383').format(v0=version_distante)
+                t("update_open_settings_prompt").format(version=version_distante)
             )
             if notes:
                 message += t('interface_text_5372').format(v0=notes[:500])
@@ -5381,22 +5408,7 @@ def verifier_update_au_demarrage():
                 status_var.set(t("update_ignored"))
                 return
 
-            status_var.set(t("update_downloading"))
-
-            def appliquer():
-                resultat = executer_assistant_update_a_propos(appliquer=True)
-
-                def terminer():
-                    messagebox.showinfo(
-                        t("update_apply_result_title"),
-                        resultat + "\n\n" + t("update_restart_hint"),
-                        parent=root,
-                    )
-                    proposer_redemarrage_apres_update(root, resultat)
-
-                root.after(0, terminer)
-
-            threading.Thread(target=appliquer, daemon=True).start()
+            ouvrir_parametres()
 
         root.after(0, proposer)
 
@@ -5547,27 +5559,8 @@ def ouvrir_a_propos():
         cursor="hand2"
     ).pack(side="left", padx=(8, 0))
 
-    tk.Button(
-        boutons,
-        text=t("update"),
-        command=lancer_update_simule,
-        bg=LIGHT_ORANGE,
-        fg=ORANGE,
-        activebackground=LIGHT_ORANGE,
-        relief="flat",
-        cursor="hand2"
-    ).pack(side="left", padx=(8, 0))
-
-    tk.Button(
-        boutons,
-        text=t("apply_update"),
-        command=appliquer_update,
-        bg=LIGHT_RED,
-        fg=RED,
-        activebackground=LIGHT_RED,
-        relief="flat",
-        cursor="hand2"
-    ).pack(side="left", padx=(8, 0))
+    tk.Button(boutons, text=t("settings"), command=ouvrir_parametres, bg=BG, fg=TEXT,
+              relief="flat", cursor="hand2").pack(side="left", padx=(8, 0))
 
     tk.Button(
         boutons,
@@ -6182,30 +6175,77 @@ def ouvrir_parametres():
 
     set_update_info(t("updates_settings_help"))
 
+    update_etat = {"prepare": False, "occupe": False}
+
+    def actions_update(prepare=False, appliquer=False, occupe=False):
+        update_etat["occupe"] = occupe
+        verifier_button.configure(state="disabled" if occupe else "normal")
+        preparer_button.pack_forget()
+        appliquer_button.pack_forget()
+        if prepare:
+            preparer_button.configure(state="disabled" if occupe else "normal")
+            preparer_button.pack(side="left", padx=(0, 8))
+        if appliquer:
+            appliquer_button.configure(state="disabled" if occupe else "normal")
+            appliquer_button.pack(side="left")
+
     def settings_verifier_update():
-        status_var.set(t("update_checking"))
-        try:
-            diagnostic = botaneo_update.construire_diagnostic_mise_a_jour(Path(__file__).resolve().parent.parent, verifier_distant=True)
-            set_update_info(botaneo_update.formater_diagnostic_mise_a_jour(diagnostic) + "\n\n" + patch_note_update_a_propos(verifier_distant=True))
-            status_var.set(t("update_check_done"))
-        except Exception as erreur:
-            set_update_info(t('interface_text_6171').format(v0=erreur))
-
-    def settings_tester_update():
-        status_var.set(t("update_sim_running"))
-
+        update_etat["prepare"] = False
+        actions_update(occupe=True)
+        set_update_info(t("update_checking"))
         def tache():
-            contenu = executer_assistant_update_a_propos(appliquer=False)
-            root.after(0, lambda: set_update_info(contenu))
-            root.after(0, lambda: status_var.set(t("update_sim_done")))
-
+            try:
+                diagnostic = botaneo_update.construire_diagnostic_mise_a_jour(Path(__file__).resolve().parent.parent, verifier_distant=True)
+                texte = message_parcours_update(diagnostic)
+                installable = update_installable_depuis_diagnostic(diagnostic)
+                notes = str(diagnostic.get("version", {}).get("notes") or "").strip()
+                if installable and notes:
+                    texte += "\n\n" + notes
+            except Exception as erreur:
+                texte, installable = str(erreur), False
+            def terminer():
+                if not fenetre.winfo_exists():
+                    return
+                set_update_info(texte)
+                actions_update(prepare=bool(installable))
+            root.after(0, terminer)
         threading.Thread(target=tache, daemon=True).start()
+
+    def settings_preparer_update():
+        update_etat["prepare"] = False
+        actions_update(prepare=True, occupe=True)
+        set_update_info(t("update_preparing"))
+        def tache():
+            resultat = executer_assistant_update_a_propos(preparer=True)
+            def terminer():
+                if not fenetre.winfo_exists():
+                    return
+                update_etat["prepare"] = getattr(resultat, "code_retour", None) == 0
+                set_update_info(resultat)
+                actions_update(appliquer=update_etat["prepare"])
+            root.after(0, terminer)
+        threading.Thread(target=tache, daemon=True).start()
+
+    def settings_appliquer_update():
+        if not update_etat["prepare"] or update_etat["occupe"]:
+            return
+        actions_update(occupe=True)
+        def afficher(texte):
+            if fenetre.winfo_exists():
+                set_update_info(texte)
+                update_etat["prepare"] = False
+                actions_update()
+        lance = lancer_application_update(fenetre, afficher_resultat=afficher)
+        # La confirmation peut être annulée : permettre un nouvel essai.
+        if not lance and fenetre.winfo_exists() and update_etat["prepare"]:
+            actions_update(appliquer=True)
 
     update_actions = tk.Frame(update_bloc, bg=LIGHT_ORANGE)
     update_actions.pack(fill="x", padx=12, pady=(0, 10))
-    tk.Button(update_actions, text=t("check_updates"), command=settings_verifier_update, bg=BG, fg=TEXT, relief="flat", cursor="hand2").pack(side="left", padx=(0, 8))
-    tk.Button(update_actions, text=t("update"), command=settings_tester_update, bg=BG, fg=TEXT, relief="flat", cursor="hand2").pack(side="left", padx=(0, 8))
-    tk.Button(update_actions, text=t("apply_update"), command=lambda: lancer_application_update(fenetre, afficher_resultat=set_update_info), bg=BG, fg=TEXT, relief="flat", cursor="hand2").pack(side="left")
+    verifier_button = tk.Button(update_actions, text=t("check_updates"), command=settings_verifier_update, bg=BG, fg=TEXT, relief="flat", cursor="hand2")
+    verifier_button.pack(side="left", padx=(0, 8))
+    preparer_button = tk.Button(update_actions, text=t("prepare_update"), command=settings_preparer_update, bg=BG, fg=TEXT, relief="flat", cursor="hand2")
+    appliquer_button = tk.Button(update_actions, text=t("apply_update"), command=settings_appliquer_update, bg=BG, fg=TEXT, relief="flat", cursor="hand2")
 
     bloc = tk.Frame(contenu, bg=LIGHT_BLUE, highlightbackground=BORDER, highlightthickness=1)
     bloc.pack(fill="x", padx=20, pady=(0, 12))

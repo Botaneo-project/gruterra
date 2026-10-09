@@ -200,7 +200,7 @@ def appliquer_fichiers(source: Path, racine: Path, fichiers: list[Path]) -> int:
     return compteur
 
 
-def appliquer_mise_a_jour(diagnostic: dict, racine: Path, dry_run: bool = True) -> dict:
+def appliquer_mise_a_jour(diagnostic: dict, racine: Path, dry_run: bool = True, preparer: bool = False) -> dict:
     ok, erreurs = valider_manifest_applicable(diagnostic)
     if not ok:
         return {"ok": False, "applique": False, "erreurs": erreurs, "message": _tr('updater_cli_14')}
@@ -222,6 +222,10 @@ def appliquer_mise_a_jour(diagnostic: dict, racine: Path, dry_run: bool = True) 
         fichiers = lister_fichiers_programme(source)
         if not fichiers:
             return {"ok": False, "applique": False, "erreurs": [_tr('updater_cli_15')], "message": _tr('updater_cli_14')}
+        if dry_run and preparer:
+            backup = sauvegarder_programme(racine, fichiers)
+            return {"ok": True, "applique": False, "prepare": True, "backup": str(backup),
+                    "fichiers": len(fichiers), "message": _tr("update_prepared_report").format(count=len(fichiers), backup=backup)}
         if dry_run:
             return {
                 "ok": True,
@@ -247,7 +251,10 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--json", action="store_true", help=_tr('updater_cli_18'))
     parser.add_argument("--apply", action="store_true", help=_tr('updater_cli_19'))
     parser.add_argument("--dry-run", action="store_true", help=_tr('updater_cli_20'))
+    parser.add_argument("--prepare", action="store_true", help=_tr("update_prepare_help"))
     args = parser.parse_args(argv)
+    if args.prepare and args.apply:
+        parser.error(_tr("update_prepare_apply_exclusive"))
 
     diagnostic = botaneo_update.construire_diagnostic_mise_a_jour(
         RACINE,
@@ -260,11 +267,11 @@ def main(argv: list[str] | None = None) -> int:
 
     safe_print(construire_message_validation(diagnostic))
 
-    if args.apply or args.dry_run:
+    if args.apply or args.dry_run or args.prepare:
         safe_print("")
         safe_print(_tr('updater_cli_21') if args.apply else _tr('updater_cli_22'))
         try:
-            resultat = appliquer_mise_a_jour(diagnostic, RACINE, dry_run=not args.apply)
+            resultat = appliquer_mise_a_jour(diagnostic, RACINE, dry_run=not args.apply, preparer=args.prepare)
         except RuntimeError as erreur:
             safe_print(_tr('updater_download_error').format(error=erreur))
             return 3

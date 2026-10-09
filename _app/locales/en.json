@@ -412,7 +412,7 @@
   "update_sim_done": "Check without installing finished",
   "update_sim_running": "Checking without installing…",
   "updates_section": "Updates",
-  "updates_settings_help": "Check GitHub, read the release note, then run a check without installing or install the update.",
+  "updates_settings_help": "Check for updates. If a new version is available, prepare it to verify the archive and create a backup, then apply it.",
   "wait_sync_before_sensor": "Wait until synchronization is finished.",
   "watch_light_low": "low or irregular light",
   "watch_post_watering_low_zone": "post-watering follow-up: humidity still low in the sensor area",
@@ -1798,5 +1798,12 @@
   "history_import_failed": "Mi Flora history could not be imported.",
   "cli_refresh_netatmo": "3. 🌦️ Refresh Netatmo",
   "cli_quit": "4. ❌ Quit",
-  "cli_invalid_choice": "❌ Invalid choice."
+  "cli_invalid_choice": "❌ Invalid choice.",
+  "update_current_version": "Gruterra is up to date ({version}).",
+  "prepare_update": "Prepare update",
+  "update_preparing": "Checking the archive, SHA-256 and local safeguards, and creating the backup…",
+  "update_prepared_report": "Update prepared: {count} file(s) checked. Backup created: {backup}. No files replaced.",
+  "update_prepare_help": "verify the archive and create the backup without replacing files",
+  "update_prepare_apply_exclusive": "Preparation and application must be run separately.",
+  "update_open_settings_prompt": "Gruterra {version} is available. Open settings to check and prepare the update?"
 }

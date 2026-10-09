@@ -412,7 +412,7 @@
   "update_sim_done": "Vérification sans installation terminée",
   "update_sim_running": "Vérification sans installation en cours…",
   "updates_section": "Mises à jour",
-  "updates_settings_help": "Vérifiez GitHub, lisez la note de version, puis lancez une vérification sans installation ou installez la mise à jour.",
+  "updates_settings_help": "Vérifiez les mises à jour. Si une nouvelle version est disponible, préparez-la pour contrôler l’archive et créer une sauvegarde, puis appliquez-la.",
   "wait_sync_before_sensor": "Attendez la fin de la synchronisation.",
   "watch_light_low": "lumière faible ou irrégulière",
   "watch_post_watering_low_zone": "suivi post-arrosage : humidité encore basse dans la zone du capteur",
@@ -1798,5 +1798,12 @@
   "history_import_failed": "Import historique Mi Flora impossible.",
   "cli_refresh_netatmo": "3. 🌦️ Actualiser Netatmo",
   "cli_quit": "4. ❌ Quitter",
-  "cli_invalid_choice": "❌ Choix invalide."
+  "cli_invalid_choice": "❌ Choix invalide.",
+  "update_current_version": "Gruterra est à jour ({version}).",
+  "prepare_update": "Préparer la mise à jour",
+  "update_preparing": "Vérification de l’archive et de son SHA-256, des protections locales et création de la sauvegarde…",
+  "update_prepared_report": "Mise à jour préparée : {count} fichier(s) vérifié(s). Sauvegarde créée : {backup}. Aucun fichier remplacé.",
+  "update_prepare_help": "vérifie l’archive et crée la sauvegarde sans remplacer les fichiers",
+  "update_prepare_apply_exclusive": "Préparation et application doivent être lancées séparément.",
+  "update_open_settings_prompt": "Gruterra {version} est disponible. Ouvrir les paramètres pour vérifier et préparer la mise à jour ?"
 }
