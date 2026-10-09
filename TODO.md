@@ -6,14 +6,18 @@ Ce fichier sert à garder une trace claire des idées et des prochaines étapes.
 
 - [x] Regrouper les traductions, drapeaux, paramètres défilants, historique, palette claire et parcours update dans une version de test.
 - [x] Release v0.1.6-dev publiée avec archive officielle et SHA-256. Passage réel dans un dossier isolé avec l’updater 0.1.5 validé : données démo et préférences conservées.
-- [ ] Test utilisateur sur le PC de secours : mise à jour de 0.1.5-dev vers 0.1.6-dev, redémarrage et conservation des données/préférences.
+- [x] Test fonctionnel utilisateur 0.1.5-dev → 0.1.6-dev réussi : refus de réinstallation identique, détection de la nouvelle version, sauvegarde créée, 115 fichiers installés, relancement OK, un seul bouton et message « Gruterra est à jour ».
+- [ ] Conservation des données/préférences sur le PC de secours : confirmation utilisateur distincte à conserver ; déjà vérifiée dans le test isolé.
+- [ ] Fiabiliser la fermeture et le redémarrage automatiques : une fermeture manuelle a encore été nécessaire pendant le test utilisateur.
+- [ ] Vérifier et rendre explicite la source du manifeste : ancien diagnostic local 0.1.4-dev, interface actuelle 0.1.6-dev. Confirmer GitHub comme source du contrôle et signaler clairement un éventuel repli local.
+- Ne pas remanier davantage le parcours d’interface validé. Les deux points techniques ci-dessus restent à vérifier avant une diffusion plus large.
 
 ## Mise à jour — parcours progressif du 2026-10-09
 
 - [x] Paramètres : Vérifier → Préparer → Appliquer. Si la version est à jour, aucune action d’installation ni confirmation d’archive.
 - [x] Préparation : archive officielle, SHA-256, protections et sauvegarde locale ; aucun fichier remplacé. Application avec recontrôle et sauvegarde avant remplacement.
 - [x] À propos renvoie aux Paramètres pour installer ; contrôles FR/EN et tests sur archives fictives.
-- [ ] Valider ce nouveau parcours sur le PC de secours lors de la prochaine release.
+- [x] Parcours validé par le test utilisateur de la 0.1.6-dev ; voir les deux vérifications techniques restantes dans la section release.
 
 ## Paramètres — 2026-10-09
 
@@ -43,7 +47,7 @@ Cette section sert de point d'entrée rapide après les grosses modifications r�
 
 ### À vérifier en priorité
 
-- [ ] Auto-update : refaire un test complet côté utilisateur depuis `Paramètres` : détection, patch note lisible, simulation, sauvegarde, application contrôlée et redémarrage. Vérifier qu'une personne qui n'utilise pas Git peut réellement se mettre à jour sans retélécharger tout le projet.
+- [x] Auto-update : test fonctionnel principal 0.1.5-dev → 0.1.6-dev réussi côté utilisateur. Fermeture/redémarrage automatiques et source du manifeste restent à vérifier (section release).
 - [ ] Traduction : parcourir le mode démo en français puis en anglais et noter les écrans encore partiellement traduits. Priorité aux boutons, messages d'erreur, installation, update, historique et synchronisation.
 - [ ] Discord : vérifier que les messages socle et tutoriels sont épinglés, qu'ils ne sont pas supprimés par les commandes de clean, que `#bot-commands`, `#admin-notes` et `#dev-follow-up` restent privés, et que les salons FR/EN ont chacun leur message adapté.
 - [ ] Raspberry : vérifier sur un cycle réel que les mesures annoncées comme rapatriées correspondent bien à des mesures nouvelles pour le PC, éventuellement collectées pendant que Gruterra était fermé.
