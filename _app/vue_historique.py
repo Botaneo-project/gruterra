@@ -165,14 +165,14 @@ def analyser_points(points, nom_serie):
     if not points:
         return {
             "tendance": "—",
-            "lecture": "Aucune mesure exploitable sur cette période.",
+            "lecture": vh_t("history_reading_no_usable_measure"),
             "couleur": "SECONDARY"
         }
 
     if len(points) == 1:
         return {
-            "tendance": "stable",
-            "lecture": "Une seule mesure disponible : tendance non interprétable.",
+            "tendance": vh_t("trend_stable"),
+            "lecture": vh_t("history_reading_single_measure"),
             "couleur": "SECONDARY"
         }
 
@@ -184,7 +184,7 @@ def analyser_points(points, nom_serie):
     unite = SERIES[nom_serie]["unite"]
 
     if abs(variation_jour) < 0.5:
-        tendance = "stable"
+        tendance = vh_t("trend_stable")
         couleur = "GREEN"
     elif variation_jour > 0:
         tendance = f"+{formater_nombre(variation_jour)} {unite}/jour"
@@ -196,13 +196,13 @@ def analyser_points(points, nom_serie):
     if nom_serie == "Humidité":
         derniere = fin_valeur
         if derniere < 20 and variation_jour < -1:
-            lecture = "Humidité basse et en baisse : arrosage à surveiller."
+            lecture = vh_t("history_reading_soil_low_down")
             couleur = "ORANGE"
         elif derniere > 35 and variation_jour > -0.5:
-            lecture = "Substrat encore humide : éviter d'arroser trop vite."
+            lecture = vh_t("history_reading_soil_still_wet")
             couleur = "BLUE"
         else:
-            lecture = "Aucune tendance globale suffisamment fiable sur la période affichée. Les réponses aux arrosages doivent être comparées séparément."
+            lecture = vh_t("history_reading_soil_no_global_trend")
     elif nom_serie == "Lumière":
         valeurs = [valeur for _, valeur in points]
         moyenne = sum(valeurs) / len(valeurs)
@@ -210,23 +210,22 @@ def analyser_points(points, nom_serie):
         moyenne_eclairee = sum(valeurs_eclairees) / len(valeurs_eclairees) if valeurs_eclairees else 0
         if moyenne < 250 and moyenne_eclairee >= 250:
             lecture = (
-                "Lumière correcte pendant les mesures éclairées ; "
-                "la moyenne brute est abaissée par les périodes sombres."
+                vh_t("history_reading_light_ok_when_lit")
             )
             couleur = "BLUE"
         elif moyenne < 250:
-            lecture = "Lumière moyenne faible sur les périodes mesurées : emplacement ou éclairage à surveiller."
+            lecture = vh_t("history_reading_light_low")
             couleur = "ORANGE"
         else:
-            lecture = "Lumière exploitable sur la période affichée."
+            lecture = vh_t("history_reading_light_usable")
     elif nom_serie == "Température":
         if abs(variation_jour) >= 2:
-            lecture = "Température en évolution nette : surveiller les écarts."
+            lecture = vh_t("history_reading_temp_change")
             couleur = "ORANGE"
         else:
-            lecture = "Température globalement stable."
+            lecture = vh_t("history_reading_temp_stable")
     else:
-        lecture = "Conductivité affichée comme indicateur de suivi, à interpréter prudemment."
+        lecture = vh_t("history_reading_conductivity_prudent")
 
     return {
         "tendance": tendance,
@@ -561,16 +560,16 @@ def comparer_deux_jours(mesures, arrosages, jour_a, jour_b):
 
 def resume_moyennes_jour(mesures, jour, arrosages=None):
     if not jour:
-        return "Journée : aucune date sélectionnée."
+        return vh_t("history_day_no_date")
     arrosages = arrosages or []
     if not mesures:
         if arrosages:
             details = []
             for arrosage in arrosages:
-                quantite = f"{formater_nombre(arrosage[3])} ml" if arrosage[3] is not None else "quantité non notée"
+                quantite = f"{formater_nombre(arrosage[3])} ml" if arrosage[3] is not None else vh_t("quantity_not_noted")
                 details.append(quantite)
-            return f"Journée {libelle_jour(jour)} : aucune mesure enregistrée · arrosage(s) : {', '.join(details)}."
-        return f"Journée {libelle_jour(jour)} : aucune mesure enregistrée."
+            return vh_t("history_day_no_measure_with_watering").format(day=libelle_jour(jour), details=', '.join(details))
+        return vh_t("history_day_no_measure").format(day=libelle_jour(jour))
 
     mesures_ordonnees = sorted(mesures, key=lambda mesure: mesure[1] or "")
     premiere = date_locale_depuis_iso(mesures_ordonnees[0][1])
@@ -580,30 +579,30 @@ def resume_moyennes_jour(mesures, jour, arrosages=None):
     lumiere = statistiques_colonne(mesures, 4)
     conductivite = statistiques_colonne(mesures, 5)
 
-    lignes = [f"Journée {libelle_jour(jour)} · {len(mesures)} mesure(s)"]
+    lignes = [vh_t("history_day_measure_count").format(day=libelle_jour(jour), count=len(mesures))]
     if premiere and derniere:
-        lignes.append(f"Plage mesurée : {premiere.strftime('%H:%M')} → {derniere.strftime('%H:%M')}")
+        lignes.append(vh_t("history_day_measured_range").format(start=premiere.strftime('%H:%M'), end=derniere.strftime('%H:%M')))
     if arrosages:
         details = []
         for arrosage in arrosages:
             heure = date_locale_depuis_iso(arrosage[2])
-            heure_txt = heure.strftime('%H:%M') if heure else "heure inconnue"
-            quantite = f"{formater_nombre(arrosage[3])} ml" if arrosage[3] is not None else "quantité non notée"
+            heure_txt = heure.strftime('%H:%M') if heure else vh_t("unknown_time")
+            quantite = f"{formater_nombre(arrosage[3])} ml" if arrosage[3] is not None else vh_t("quantity_not_noted")
             eau = f" · {arrosage[8]}" if len(arrosage) > 8 and arrosage[8] else ""
             details.append(f"{heure_txt} : {quantite}{eau}")
-        lignes.append("Arrosage(s) : " + " ; ".join(details))
+        lignes.append(vh_t("history_day_watering_list").format(details=" ; ".join(details)))
     else:
-        lignes.append("Arrosage : aucun enregistré ce jour")
+        lignes.append(vh_t("history_day_no_watering"))
 
     lignes.extend([
-        formater_statistique_jour("Humidité", humidite, "%"),
-        formater_statistique_jour("Température", temperature, "°C"),
-        formater_statistique_jour("Lumière", lumiere, "lux"),
-        formater_statistique_jour("Conductivité", conductivite, "µS/cm"),
+        formater_statistique_jour(vh_t("series_soil_humidity_short"), humidite, "%"),
+        formater_statistique_jour(vh_t("series_temperature_short"), temperature, "°C"),
+        formater_statistique_jour(vh_t("series_light_short"), lumiere, "lux"),
+        formater_statistique_jour(vh_t("series_conductivity_short"), conductivite, "µS/cm"),
     ])
 
     if len(mesures) < 6:
-        lignes.append("⚠ Peu de mesures sur cette journée : interprétation prudente.")
+        lignes.append(vh_t("history_day_few_measurements"))
     return "\n".join(lignes)
 
 

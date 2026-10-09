@@ -106,7 +106,9 @@ class TestAnalyseHistorique(unittest.TestCase):
         analyse = vue_historique.analyser_points(points, "Lumière")
 
         self.assertEqual(analyse["couleur"], "BLUE")
-        self.assertIn("périodes sombres", analyse["lecture"])
+        self.assertTrue(
+            "périodes sombres" in analyse["lecture"] or "dark periods" in analyse["lecture"]
+        )
 
 
 class TestEvaluationSanteJournal(BaseTemporaireMixin, unittest.TestCase):
