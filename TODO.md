@@ -2,6 +2,11 @@
 
 Ce fichier sert à garder une trace claire des idées et des prochaines étapes. Les éléments déjà en place sont conservés ici uniquement pour savoir où on en est, mais ils ne doivent plus être relancés sauf bug ou amélioration ciblée.
 
+## Release 0.1.6-dev — 2026-10-09
+
+- [x] Regrouper les traductions, drapeaux, paramètres défilants, historique, palette claire et parcours update dans une version de test.
+- [ ] Test utilisateur sur le PC de secours : mise à jour de 0.1.5-dev vers 0.1.6-dev, redémarrage et conservation des données/préférences.
+
 ## Mise à jour — parcours progressif du 2026-10-09
 
 - [x] Paramètres : Vérifier → Préparer → Appliquer. Si la version est à jour, aucune action d’installation ni confirmation d’archive.

@@ -36,7 +36,7 @@ from botaneo_config import CONFIG_DIR
 # CONFIGURATION
 # ============================================================
 
-APP_VERSION = "0.1.5-dev"
+APP_VERSION = "0.1.6-dev"
 
 root = tk.Tk()
 

@@ -1,8 +1,8 @@
 {
-  "version": "0.1.5-dev",
-  "notes": "Correction updater : le bouton normal n’applique plus une archive quand Gruterra est déjà à jour. Une réinstallation de la même version devra passer par une future action dédiée Réparer / Réinstaller.",
+  "version": "0.1.6-dev",
+  "notes": "Interface FR/EN : 1 800 textes traduits, vrais drapeaux et paramètres défilants avec validation toujours accessible. Historique : choix du jour depuis toutes les périodes, repères balcon/arrosage plus lisibles. Mode clair harmonisé. Update : parcours Vérifier → Préparer → Appliquer, sauvegarde avant installation et aucune installation proposée si Gruterra est à jour.",
   "url": "https://github.com/Botaneo-project/gruterra",
-  "archive_url": "https://github.com/Botaneo-project/gruterra/releases/download/v0.1.5-dev/gruterra-0.1.5-dev.zip",
-  "sha256": "a99286c39c73c71a104a1426ecee4fc2cc7392084a6b87e8855ee507765bc78f",
-  "mise_a_jour_automatique": true
+  "archive_url": "",
+  "sha256": "",
+  "mise_a_jour_automatique": false
 }
