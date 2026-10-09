@@ -6032,19 +6032,49 @@ def ouvrir_parametres():
     fenetre = tk.Toplevel(root)
     fenetre.title(t("settings_title"))
     fenetre.configure(bg=CARD)
-    fenetre.resizable(False, False)
+    fenetre.resizable(True, True)
+    hauteur = min(760, max(400, fenetre.winfo_screenheight() - 120))
+    fenetre.geometry(f"760x{hauteur}")
+    fenetre.minsize(560, min(440, hauteur))
+    pied = tk.Frame(fenetre, bg=CARD)
+    pied.pack(side="bottom", fill="x")
+    zone = tk.Frame(fenetre, bg=CARD)
+    zone.pack(fill="both", expand=True)
+    defilement = tk.Canvas(zone, bg=CARD, highlightthickness=0)
+    barre_defilement = ttk.Scrollbar(zone, orient="vertical", command=defilement.yview)
+    barre_defilement.pack(side="right", fill="y")
+    defilement.pack(side="left", fill="both", expand=True)
+    defilement.configure(yscrollcommand=barre_defilement.set)
+    contenu = tk.Frame(defilement, bg=CARD)
+    contenu_id = defilement.create_window((0, 0), window=contenu, anchor="nw")
+    contenu.bind("<Configure>", lambda event: defilement.configure(scrollregion=defilement.bbox("all")))
+    defilement.bind("<Configure>", lambda event: defilement.itemconfigure(contenu_id, width=event.width))
+
+    def defiler_parametres(event):
+        if isinstance(event.widget, (tk.Text, tk.Listbox, ttk.Treeview, ttk.Combobox)):
+            return
+        if defilement.yview() == (0.0, 1.0):
+            return
+        delta = getattr(event, "delta", 0)
+        pas = (-1 if delta > 0 else 1) if delta else (-1 if getattr(event, "num", None) == 4 else 1)
+        defilement.yview_scroll(pas * 3, "units")
+        return "break"
+
+    fenetre.bind("<MouseWheel>", defiler_parametres, add="+")
+    fenetre.bind("<Button-4>", defiler_parametres, add="+")
+    fenetre.bind("<Button-5>", defiler_parametres, add="+")
     fenetre.transient(root)
     fenetre.grab_set()
 
     tk.Label(
-        fenetre,
+        contenu,
         text=t("settings_header"),
         font=("Segoe UI", 16, "bold"),
         fg=TEXT,
         bg=CARD
     ).pack(anchor="w", padx=20, pady=(18, 8))
 
-    affichage_bloc = tk.Frame(fenetre, bg=LIGHT_GREEN, highlightbackground=BORDER, highlightthickness=1)
+    affichage_bloc = tk.Frame(contenu, bg=LIGHT_GREEN, highlightbackground=BORDER, highlightthickness=1)
     affichage_bloc.pack(fill="x", padx=20, pady=(0, 12))
 
     tk.Label(
@@ -6055,19 +6085,27 @@ def ouvrir_parametres():
         bg=LIGHT_GREEN
     ).pack(anchor="w", padx=12, pady=(10, 4))
 
-    options_langue = {"🇫🇷 Français": "fr", "🇬🇧 English": "en"}
-    libelle_langue_courante = next((libelle for libelle, code in options_langue.items() if code == langue_interface), "🇫🇷 Français")
+    from ui_widgets import creer_drapeau
+    options_langue = {"Français": "fr", "English": "en"}
+    libelle_langue_courante = next((libelle for libelle, code in options_langue.items() if code == langue_interface), "Français")
     langue_var = tk.StringVar(value=libelle_langue_courante)
     ligne_langue = tk.Frame(affichage_bloc, bg=LIGHT_GREEN)
     ligne_langue.pack(fill="x", padx=12, pady=(0, 8))
     tk.Label(ligne_langue, text=t("language"), bg=LIGHT_GREEN, fg=TEXT, font=("Segoe UI", 9, "bold")).pack(side="left")
-    ttk.Combobox(
-        ligne_langue,
-        textvariable=langue_var,
-        values=tuple(options_langue.keys()),
-        width=16,
-        state="readonly",
-    ).pack(side="left", padx=(10, 8))
+    drapeaux = {code: creer_drapeau(fenetre, code) for code in ("fr", "en")}
+    choix_langue = tk.Menubutton(ligne_langue, textvariable=langue_var, image=drapeaux[langue_interface],
+                               compound="left", bg=CARD, fg=TEXT, relief="raised", padx=8, pady=4,
+                               activebackground=LIGHT_GREEN, activeforeground=TEXT, cursor="hand2")
+    choix_langue.drapeaux = drapeaux
+    menu_langue = tk.Menu(choix_langue, tearoff=False, bg=CARD, fg=TEXT)
+    def selectionner_langue(libelle, code):
+        langue_var.set(libelle)
+        choix_langue.configure(image=drapeaux[code])
+    for libelle, code in options_langue.items():
+        menu_langue.add_command(label=libelle, image=drapeaux[code], compound="left",
+                               command=lambda l=libelle, c=code: selectionner_langue(l, c))
+    choix_langue.configure(menu=menu_langue)
+    choix_langue.pack(side="left", padx=(10, 8))
     tk.Label(
         affichage_bloc,
         text=t("language_note"),
@@ -6114,7 +6152,7 @@ def ouvrir_parametres():
         selectcolor=CARD
     ).pack(anchor="w", padx=12, pady=(0, 10))
 
-    update_bloc = tk.Frame(fenetre, bg=LIGHT_ORANGE, highlightbackground=BORDER, highlightthickness=1)
+    update_bloc = tk.Frame(contenu, bg=LIGHT_ORANGE, highlightbackground=BORDER, highlightthickness=1)
     update_bloc.pack(fill="x", padx=20, pady=(0, 12))
     tk.Label(update_bloc, text=t("updates_section"), font=("Segoe UI", 11, "bold"), fg=ORANGE, bg=LIGHT_ORANGE).pack(anchor="w", padx=12, pady=(10, 4))
 
@@ -6169,7 +6207,7 @@ def ouvrir_parametres():
     tk.Button(update_actions, text=t("update"), command=settings_tester_update, bg=BG, fg=TEXT, relief="flat", cursor="hand2").pack(side="left", padx=(0, 8))
     tk.Button(update_actions, text=t("apply_update"), command=lambda: lancer_application_update(fenetre, afficher_resultat=set_update_info), bg=BG, fg=TEXT, relief="flat", cursor="hand2").pack(side="left")
 
-    bloc = tk.Frame(fenetre, bg=LIGHT_BLUE, highlightbackground=BORDER, highlightthickness=1)
+    bloc = tk.Frame(contenu, bg=LIGHT_BLUE, highlightbackground=BORDER, highlightthickness=1)
     bloc.pack(fill="x", padx=20, pady=(0, 12))
 
     tk.Label(
@@ -6228,7 +6266,7 @@ def ouvrir_parametres():
             selectcolor=CARD
         ).pack(side="left", padx=(0, 6))
 
-    netatmo_bloc = tk.Frame(fenetre, bg=LIGHT_GREEN, highlightbackground=BORDER, highlightthickness=1)
+    netatmo_bloc = tk.Frame(contenu, bg=LIGHT_GREEN, highlightbackground=BORDER, highlightthickness=1)
     netatmo_bloc.pack(fill="x", padx=20, pady=(0, 12))
 
     tk.Label(netatmo_bloc, text=t("netatmo"), font=("Segoe UI", 11, "bold"), fg=GREEN, bg=LIGHT_GREEN).pack(anchor="w", padx=12, pady=(10, 4))
@@ -6314,7 +6352,7 @@ def ouvrir_parametres():
         justify="left"
     ).pack(anchor="w", padx=12, pady=(0, 8))
 
-    alertes_bloc = tk.Frame(fenetre, bg=LIGHT_ORANGE, highlightbackground=BORDER, highlightthickness=1)
+    alertes_bloc = tk.Frame(contenu, bg=LIGHT_ORANGE, highlightbackground=BORDER, highlightthickness=1)
     alertes_bloc.pack(fill="x", padx=20, pady=(0, 12))
 
     tk.Label(alertes_bloc, text=t("alerts_section"), font=("Segoe UI", 11, "bold"), fg=ORANGE, bg=LIGHT_ORANGE).pack(anchor="w", padx=12, pady=(10, 4))
@@ -6355,7 +6393,7 @@ def ouvrir_parametres():
              justify="left").pack(anchor="w", padx=12, pady=(0, 8))
 
     erreur = tk.StringVar()
-    tk.Label(fenetre, textvariable=erreur, bg=CARD, fg=RED, wraplength=420).pack(fill="x", padx=20, pady=(0, 6))
+    tk.Label(pied, textvariable=erreur, bg=CARD, fg=RED, wraplength=420).pack(fill="x", padx=20, pady=(0, 6))
 
     def selectionner_tous():
         for var in jours_vars:
@@ -6365,7 +6403,7 @@ def ouvrir_parametres():
         for index, var in enumerate(jours_vars):
             var.set(index < 5)
 
-    raccourcis = tk.Frame(fenetre, bg=CARD)
+    raccourcis = tk.Frame(contenu, bg=CARD)
     raccourcis.pack(fill="x", padx=20, pady=(0, 8))
 
     tk.Button(raccourcis, text=t("every_day"), command=selectionner_tous, bg=BG, fg=TEXT, relief="flat", cursor="hand2").pack(side="left", padx=(0, 8))
@@ -6459,7 +6497,7 @@ def ouvrir_parametres():
         else:
             erreur.set(t("settings_save_failed"))
 
-    boutons = tk.Frame(fenetre, bg=CARD)
+    boutons = tk.Frame(pied, bg=CARD)
     boutons.pack(fill="x", padx=20, pady=(0, 15))
 
     tk.Button(boutons, text=t("save"), command=enregistrer, bg=LIGHT_GREEN, fg=TEXT, activebackground=LIGHT_GREEN, relief="flat", cursor="hand2").pack(side="right")

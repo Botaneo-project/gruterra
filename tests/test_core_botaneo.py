@@ -1278,8 +1278,9 @@ class TestParametresLangue(unittest.TestCase):
         interface = Path(__file__).resolve().parents[1] / "_app" / "interface.py"
         contenu = interface.read_text(encoding="utf-8")
 
-        self.assertIn('"🇫🇷 Français": "fr"', contenu)
-        self.assertIn('"🇬🇧 English": "en"', contenu)
+        self.assertIn('"Français": "fr"', contenu)
+        self.assertIn("creer_drapeau(fenetre, code)", contenu)
+        self.assertIn('"English": "en"', contenu)
         self.assertIn("options_langue.get(langue_var.get(), langue_var.get())", contenu)
 
 

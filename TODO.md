@@ -2,6 +2,11 @@
 
 Ce fichier sert à garder une trace claire des idées et des prochaines étapes. Les éléments déjà en place sont conservés ici uniquement pour savoir où on en est, mais ils ne doivent plus être relancés sauf bug ou amélioration ciblée.
 
+## Paramètres — 2026-10-09
+
+- [x] Drapeaux France/Royaume-Uni dessinés localement à côté de Français/English, sans dépendre des emojis Windows.
+- [x] Fenêtre redimensionnable avec défilement ; Enregistrer/Annuler et erreurs restent accessibles dans un pied fixe.
+
 ## Thèmes — 2026-10-09
 
 - [x] Tous les boutons de navigation suivent la palette lors du passage clair/sombre, y compris Plantes, Données et synthèses et État Gruterra. Libellés FR : Mode clair / Mode sombre ; EN : Light mode / Dark mode.
