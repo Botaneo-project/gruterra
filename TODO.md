@@ -5,6 +5,7 @@ Ce fichier sert à garder une trace claire des idées et des prochaines étapes.
 ## Release 0.1.6-dev — 2026-10-09
 
 - [x] Regrouper les traductions, drapeaux, paramètres défilants, historique, palette claire et parcours update dans une version de test.
+- [x] Release v0.1.6-dev publiée avec archive officielle et SHA-256. Passage réel dans un dossier isolé avec l’updater 0.1.5 validé : données démo et préférences conservées.
 - [ ] Test utilisateur sur le PC de secours : mise à jour de 0.1.5-dev vers 0.1.6-dev, redémarrage et conservation des données/préférences.
 
 ## Mise à jour — parcours progressif du 2026-10-09

@@ -2,7 +2,7 @@
   "version": "0.1.6-dev",
   "notes": "Interface FR/EN : 1 800 textes traduits, vrais drapeaux et paramètres défilants avec validation toujours accessible. Historique : choix du jour depuis toutes les périodes, repères balcon/arrosage plus lisibles. Mode clair harmonisé. Update : parcours Vérifier → Préparer → Appliquer, sauvegarde avant installation et aucune installation proposée si Gruterra est à jour.",
   "url": "https://github.com/Botaneo-project/gruterra",
-  "archive_url": "",
-  "sha256": "",
-  "mise_a_jour_automatique": false
+  "archive_url": "https://github.com/Botaneo-project/gruterra/releases/download/v0.1.6-dev/gruterra-0.1.6-dev.zip",
+  "sha256": "d7e96b1b263a5931c879b45b0c684f99a1c059b11068d0d33a55a9813daf6315",
+  "mise_a_jour_automatique": true
 }
