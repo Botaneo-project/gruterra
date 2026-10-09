@@ -1240,23 +1240,23 @@ def formater_session_arrosage(session):
     if not session:
         return None
     total = session.get("quantite_totale_ml")
-    total_txt = f"{total:g} ml" if total is not None else "quantité non renseignée"
+    total_txt = f"{total:g} ml" if total is not None else t("quantity_not_specified")
     apports = session.get("apports") or []
     if len(apports) <= 1:
         apport = apports[0] if apports else None
         type_eau = apport[8] if apport and len(apport) > 8 else None
-        eau_txt = f" · eau : {type_eau}" if type_eau else ""
+        eau_txt = t("water_suffix").format(water=type_eau) if type_eau else ""
         return f"{total_txt}{eau_txt}"
     details = []
     for apport in apports:
         try:
             heure = datetime.fromisoformat(apport[2]).strftime("%H:%M")
         except (TypeError, ValueError):
-            heure = "heure inconnue"
+            heure = t("unknown_time")
         quantite = apport[3]
-        quantite_txt = f"{quantite:g} ml" if quantite is not None else "quantité non renseignée"
-        details.append(f"{quantite_txt} à {heure}")
-    return f"session {total_txt} ({' + '.join(details)})"
+        quantite_txt = f"{quantite:g} ml" if quantite is not None else t("quantity_not_specified")
+        details.append(t("watering_amount_at_time").format(amount=quantite_txt, time=heure))
+    return t("watering_session_details").format(total=total_txt, details=" + ".join(details))
 
 
 def date_debut_session_iso(session):
@@ -1318,11 +1318,11 @@ def analyser_cycle_arrosage(plante_id):
     ecarts = [(b[0] - a[0]).total_seconds() / 3600 for a, b in zip(points_apres, points_apres[1:])]
     plus_grand_trou = max(ecarts) if ecarts else 0
     if plus_grand_trou > 6:
-        qualite = f"prudence : trou de mesure jusqu’à {plus_grand_trou:.1f} h"
+        qualite = t("data_quality_caution_gap").format(hours=f"{plus_grand_trou:.1f}")
     elif plus_grand_trou > 1.8:
-        qualite = f"correcte avec quelques trous, maximum {plus_grand_trou:.1f} h"
+        qualite = t("data_quality_ok_with_gaps").format(hours=f"{plus_grand_trou:.1f}")
     else:
-        qualite = "bonne sur les mesures disponibles"
+        qualite = t("data_quality_good_available")
 
     session_txt = formater_session_arrosage(session_arrosage) if session_arrosage else None
     if session_txt:
@@ -1330,35 +1330,35 @@ def analyser_cycle_arrosage(plante_id):
         eau_txt = ""
     else:
         quantite = dernier[3]
-        quantite_txt = f"{quantite:g} ml" if quantite is not None else "quantité non renseignée"
+        quantite_txt = f"{quantite:g} ml" if quantite is not None else t("quantity_not_specified")
         type_eau = dernier[8] if len(dernier) > 8 else None
         eau_txt = f" · {type_eau}" if type_eau else ""
     contexte = dernier[7] if len(dernier) > 7 else None
 
     lignes = [
-        f"Cycle du {formater_date(date_session_iso)} · {quantite_txt}{eau_txt}",
+        t("watering_cycle_header").format(date=formater_date(date_session_iso), quantity=quantite_txt, water=eau_txt),
     ]
     if avant:
         ecart_avant = (date_arrosage - avant[0]).total_seconds() / 3600
-        lignes.append(f"Avant arrosage : {avant[1]:.0f} %, {formater_duree_heures(ecart_avant)} avant.")
+        lignes.append(t("watering_cycle_before").format(value=f"{avant[1]:.0f}", delay=formater_duree_heures(ecart_avant)))
     else:
-        lignes.append("Avant arrosage : aucune mesure exploitable juste avant.")
-    lignes.append(f"Première mesure après : {premiere[1]:.0f} %.")
-    lignes.append(f"Pic observé : {pic[1]:.0f} %.")
-    lignes.append(f"Dernière mesure du cycle : {derniere[1]:.0f} %, suivi sur {formater_duree_heures(duree_suivi_h)}.")
+        lignes.append(t("watering_cycle_before_missing"))
+    lignes.append(t("watering_cycle_first_after").format(value=f"{premiere[1]:.0f}"))
+    lignes.append(t("watering_cycle_peak").format(value=f"{pic[1]:.0f}"))
+    lignes.append(t("watering_cycle_last").format(value=f"{derniere[1]:.0f}", duration=formater_duree_heures(duree_suivi_h)))
     if date_arrosage_suivant:
-        lignes.append(f"Cycle borné par l’arrosage suivant du {formater_date(date_arrosage_suivant.isoformat(timespec='seconds'))}.")
+        lignes.append(t("watering_cycle_bounded").format(date=formater_date(date_arrosage_suivant.isoformat(timespec="seconds"))))
     if vitesse_baisse is not None:
-        lignes.append(f"Vitesse de baisse observée après le pic : environ {vitesse_baisse:.1f} point(s)/jour.")
+        lignes.append(t("watering_cycle_drying_speed").format(speed=f"{vitesse_baisse:.1f}"))
     else:
-        lignes.append("Vitesse de baisse : recul insuffisant ou pas de baisse nette après le pic.")
-    lignes.append(f"Qualité des données : {qualite}.")
-    lignes.append("Lecture prudente : ces valeurs décrivent la zone du capteur, pas forcément toute la motte.")
+        lignes.append(t("watering_cycle_drying_speed_missing"))
+    lignes.append(t("data_quality_line").format(quality=qualite))
+    lignes.append(t("watering_cycle_prudent_reading"))
     if contexte:
-        lignes.append(f"Contexte noté : {contexte}")
+        lignes.append(t("context_noted").format(context=contexte))
 
     return {
-        "titre": "💧 Cycle d’arrosage",
+        "titre": t("watering_cycle_title"),
         "resume": " ".join(lignes),
         "lignes": lignes,
         "qualite": qualite,
@@ -1367,7 +1367,7 @@ def analyser_cycle_arrosage(plante_id):
 def _resume_reperes_post_arrosage(points, date_arrosage, avant=None):
     """Construit une ligne courte avec les repères 10 min, 1 h, 24 h et 48 h."""
     if not points:
-        return "Repères : en attente de mesures après arrosage."
+        return t("post_watering_markers_waiting")
 
     def mesure_proche(minutes):
         cible = date_arrosage + timedelta(minutes=minutes)
@@ -1388,16 +1388,16 @@ def _resume_reperes_post_arrosage(points, date_arrosage, avant=None):
     for libelle, minutes in (("10 min", 10), ("1 h", 60), ("24 h", 1440), ("48 h", 2880)):
         trouve = mesure_proche(minutes)
         if trouve:
-            morceaux.append(f"{libelle} : {trouve[1]:.0f} %")
+            morceaux.append(t("post_watering_marker_value").format(label=libelle, value=f"{trouve[1]:.0f}"))
         else:
-            morceaux.append(f"{libelle} : —")
+            morceaux.append(t("post_watering_marker_missing").format(label=libelle))
 
     if avant:
         premiere = points[0]
-        comparaison = f"Avant/après : {avant[1]:.0f} % → {premiere[1]:.0f} %."
+        comparaison = t("post_watering_before_after").format(before=f"{avant[1]:.0f}", after=f"{premiere[1]:.0f}")
     else:
-        comparaison = "Avant/après : mesure avant arrosage non disponible."
-    return comparaison + " Repères : " + " · ".join(morceaux) + "."
+        comparaison = t("post_watering_before_missing")
+    return comparaison +  " " + t("post_watering_markers_prefix") + " "  + " · ".join(morceaux) + "."
 
 
 def analyser_apres_arrosage(plante_id):
@@ -1463,9 +1463,9 @@ def analyser_apres_arrosage(plante_id):
     arrosage_txt = formater_session_arrosage(session_arrosage) if session_arrosage else None
     if not arrosage_txt:
         quantite = dernier[3]
-        quantite_txt = f"{quantite:g} ml" if quantite is not None else "quantité non renseignée"
+        quantite_txt = f"{quantite:g} ml" if quantite is not None else t("quantity_not_specified")
         type_eau = dernier[8] if len(dernier) > 8 else None
-        eau_txt = f" · eau : {type_eau}" if type_eau else ""
+        eau_txt = t("water_suffix").format(water=type_eau) if type_eau else ""
         arrosage_txt = f"{quantite_txt}{eau_txt}"
 
     if not points:
@@ -1576,14 +1576,14 @@ def afficher_resume_arrosage(parent, plante_id):
         if session_arrosage:
             session_txt = formater_session_arrosage(session_arrosage)
             date_txt = formater_date(date_debut_session_iso(session_arrosage))
-            prefixe = "Dernière session d’arrosage" if session_arrosage.get("fractionnee") else "Dernier arrosage"
-            lignes.append(f"{prefixe} : {date_txt} · {session_txt}")
+            prefixe = t("last_watering_session") if session_arrosage.get("fractionnee") else t("last_watering")
+            lignes.append(t("last_watering_line").format(prefix=prefixe, date=date_txt, details=session_txt))
         else:
             quantite = dernier[3]
-            quantite_txt = f"{quantite:g} ml" if quantite is not None else "quantité non renseignée"
+            quantite_txt = f"{quantite:g} ml" if quantite is not None else t("quantity_not_specified")
             type_eau = dernier[8] if len(dernier) > 8 else None
-            eau_txt = f" · eau : {type_eau}" if type_eau else ""
-            lignes.append(f"Dernier arrosage : {formater_date(dernier[2])} · {quantite_txt}{eau_txt}")
+            eau_txt = t("water_suffix").format(water=type_eau) if type_eau else ""
+            lignes.append(t("last_watering_line").format(prefix=t("last_watering"), date=formater_date(dernier[2]), details=quantite_txt + eau_txt))
 
     if suivi:
         lignes.append(suivi["resume"])
@@ -1592,9 +1592,9 @@ def afficher_resume_arrosage(parent, plante_id):
         lignes.append(cycle["resume"])
 
     if rappel:
-        texte_rappel = f"Rappel prévu : {formater_date(rappel[9])}"
+        texte_rappel = t("reminder_planned").format(date=formater_date(rappel[9]))
         if plante_avec_rappel_email(plante_id):
-            texte_rappel += " · mail prévu quand l'envoi sera configuré"
+            texte_rappel += t("email_planned_when_configured_suffix")
         lignes.append(texte_rappel)
 
     bloc = tk.Frame(parent, bg=LIGHT_BLUE, highlightbackground=BORDER, highlightthickness=1)
@@ -7021,7 +7021,7 @@ def generer_texte_analyse_plante(plante_id):
 
     if dernier_arrosage:
         quantite = dernier_arrosage[3]
-        quantite_txt = f"{quantite:g} ml" if quantite is not None else "quantité non renseignée"
+        quantite_txt = f"{quantite:g} ml" if quantite is not None else t("quantity_not_specified")
         type_eau = dernier_arrosage[8] if len(dernier_arrosage) > 8 else None
         commentaire = dernier_arrosage[7] if len(dernier_arrosage) > 7 else None
         lignes.append("Dernier arrosage :")
@@ -7037,7 +7037,7 @@ def generer_texte_analyse_plante(plante_id):
         lignes.append("Arrosages récents :")
         for arrosage in arrosages[:5]:
             quantite = arrosage[3]
-            quantite_txt = f"{quantite:g} ml" if quantite is not None else "quantité non renseignée"
+            quantite_txt = f"{quantite:g} ml" if quantite is not None else t("quantity_not_specified")
             type_eau = arrosage[8] if len(arrosage) > 8 else None
             commentaire = arrosage[7] if len(arrosage) > 7 else None
             morceaux = [quantite_txt]
@@ -7492,7 +7492,7 @@ def construire_alertes(plantes):
 
             if dernier_arrosage and dernier_arrosage[2]:
                 quantite = dernier_arrosage[3]
-                quantite_txt = f"{quantite:g} ml" if quantite is not None else "quantité non renseignée"
+                quantite_txt = f"{quantite:g} ml" if quantite is not None else t("quantity_not_specified")
                 details_sans_capteur.append(f"Dernier arrosage manuel : {formater_date(dernier_arrosage[2])} · {quantite_txt}.")
 
             if not rappel:
