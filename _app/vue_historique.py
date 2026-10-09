@@ -1306,30 +1306,30 @@ def ouvrir_historique(parent, plante_id, action_synchroniser=None):
             tous_arrosages = []
         jours = jours_disponibles_mesures(toutes_mesures)
         if len(jours) < 2:
-            messagebox.showinfo("Comparer jours", "Il faut au moins deux journées avec mesures.", parent=fenetre)
+            messagebox.showinfo(vh_t('compare_days_dialog'), vh_t('compare_days_minimum'), parent=fenetre)
             return
         libelles = [libelle_jour(jour) for jour in jours]
         jours_lookup = dict(zip(libelles, jours))
         detail = tk.Toplevel(fenetre)
-        detail.title("Comparer deux journées")
+        detail.title(vh_t('compare_days_window'))
         detail.configure(bg=couleurs["CARD"])
         detail.transient(fenetre)
         detail.geometry("820x520+90+90")
-        tk.Label(detail, text="📊 Comparer deux journées", bg=couleurs["CARD"], fg=couleurs["GREEN"], font=("Segoe UI", 16, "bold")).pack(anchor="w", padx=18, pady=(16, 4))
+        tk.Label(detail, text=vh_t('compare_days_header'), bg=couleurs["CARD"], fg=couleurs["GREEN"], font=("Segoe UI", 16, "bold")).pack(anchor="w", padx=18, pady=(16, 4))
         choix = tk.Frame(detail, bg=couleurs["CARD"])
         choix.pack(fill="x", padx=18, pady=(6, 10))
         jour_a_var = tk.StringVar(value=libelles[0])
         jour_b_var = tk.StringVar(value=libelles[1])
-        tk.Label(choix, text="Jour A", bg=couleurs["CARD"], fg=couleurs["TEXT"]).pack(side="left", padx=(0, 6))
+        tk.Label(choix, text=vh_t('compare_day_a'), bg=couleurs["CARD"], fg=couleurs["TEXT"]).pack(side="left", padx=(0, 6))
         combo_a = ttk.Combobox(choix, textvariable=jour_a_var, values=libelles, state="readonly", width=12)
         combo_a.pack(side="left", padx=(0, 16))
-        tk.Label(choix, text="Jour B", bg=couleurs["CARD"], fg=couleurs["TEXT"]).pack(side="left", padx=(0, 6))
+        tk.Label(choix, text=vh_t('compare_day_b'), bg=couleurs["CARD"], fg=couleurs["TEXT"]).pack(side="left", padx=(0, 6))
         combo_b = ttk.Combobox(choix, textvariable=jour_b_var, values=libelles, state="readonly", width=12)
         combo_b.pack(side="left")
 
         colonnes_cmp = ("mesure", "jour_a", "jour_b", "ecart")
         tableau = ttk.Treeview(detail, columns=colonnes_cmp, show="headings", height=8)
-        for colonne, titre, largeur in (("mesure", "Mesure", 180), ("jour_a", "Jour A", 150), ("jour_b", "Jour B", 150), ("ecart", "Écart A-B", 150)):
+        for colonne, titre, largeur in (("mesure", vh_t('compare_measurement'), 180), ("jour_a", vh_t('compare_day_a'), 150), ("jour_b", vh_t('compare_day_b'), 150), ("ecart", vh_t('compare_difference'), 150)):
             tableau.heading(colonne, text=titre)
             tableau.column(colonne, width=largeur, anchor="center")
         tableau.pack(fill="x", padx=18, pady=(0, 10))
@@ -1354,10 +1354,10 @@ def ouvrir_historique(parent, plante_id, action_synchroniser=None):
             for item in tableau.get_children():
                 tableau.delete(item)
             lignes = [
-                ("Mesures", str(resultat['stats_a']['mesures']), str(resultat['stats_b']['mesures']), str(resultat['stats_a']['mesures'] - resultat['stats_b']['mesures'])),
-                ("Arrosages", str(resultat['stats_a']['arrosages']), str(resultat['stats_b']['arrosages']), str(resultat['stats_a']['arrosages'] - resultat['stats_b']['arrosages'])),
+                (vh_t('compare_measurement_count'), str(resultat['stats_a']['mesures']), str(resultat['stats_b']['mesures']), str(resultat['stats_a']['mesures'] - resultat['stats_b']['mesures'])),
+                (vh_t('compare_watering_count'), str(resultat['stats_a']['arrosages']), str(resultat['stats_b']['arrosages']), str(resultat['stats_a']['arrosages'] - resultat['stats_b']['arrosages'])),
             ]
-            for titre, cle, unite in (("Humidité moy.", "humidite", "%"), ("Température moy.", "temperature", "°C"), ("Lumière moy.", "lumiere", "lux"), ("Conductivité moy.", "conductivite", "µS/cm")):
+            for titre, cle, unite in ((vh_t('compare_average_moisture'), "humidite", "%"), (vh_t('compare_average_temperature'), "temperature", "°C"), (vh_t('compare_average_light'), "lumiere", "lux"), (vh_t('compare_average_conductivity'), "conductivite", "µS/cm")):
                 texte_a, valeur_a = valeur_stat(resultat['stats_a'], cle, unite)
                 texte_b, valeur_b = valeur_stat(resultat['stats_b'], cle, unite)
                 ecart = "—" if valeur_a is None or valeur_b is None else f"{formater_nombre(valeur_a - valeur_b)} {unite}"
@@ -1376,9 +1376,9 @@ def ouvrir_historique(parent, plante_id, action_synchroniser=None):
         def copier_comparaison():
             detail.clipboard_clear()
             detail.clipboard_append(resultat_courant.get("texte") or "")
-            bilan.set(f"{bilan.get()} · comparaison copiée")
-        ttk.Button(boutons, text="Copier", command=copier_comparaison).pack(side="left")
-        ttk.Button(boutons, text="Fermer", command=detail.destroy).pack(side="right")
+            bilan.set(vh_t("compare_copied_status").format(status=bilan.get()))
+        ttk.Button(boutons, text=vh_t('compare_copy'), command=copier_comparaison).pack(side="left")
+        ttk.Button(boutons, text=vh_t('compare_close'), command=detail.destroy).pack(side="right")
         rafraichir_comparaison()
 
 

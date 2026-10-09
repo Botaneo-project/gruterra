@@ -1225,14 +1225,14 @@ def formater_duree_heures(heures):
     try:
         heures = float(heures)
     except (TypeError, ValueError):
-        return "durée inconnue"
+        return t("duration_unknown")
     if heures < 1:
         minutes = max(1, int(round(heures * 60)))
-        return f"{minutes} min"
+        return t("duration_minutes").format(count=minutes)
     if heures < 48:
-        return f"{heures:.1f} h"
+        return t("duration_hours").format(count=heures)
     jours = heures / 24
-    return f"{jours:.1f} j"
+    return t("duration_days").format(count=jours)
 
 
 def formater_session_arrosage(session):
