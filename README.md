@@ -416,4 +416,4 @@ Le diagnostic indique si la version a été vérifiée sur GitHub ou si seules l
 
 ### Lisibilité de la météo locale
 
-La synthèse météo affiche la source et la date du relevé sous chaque indicateur. Les tuiles passent de quatre à deux ou une colonne selon la largeur disponible. Une date absente reste explicitement inconnue ; la date de consultation ne remplace pas celle du relevé. Les messages sont disponibles en français et en anglais.
+La synthèse météo est placée sur l’accueil juste après le centre d’alertes, indépendamment de la position des détails Netatmo. Sans station, un bloc de prévision (ou son état indisponible) reste visible. L’actualisation météo rafraîchit également les alertes. La synthèse affiche la source et la date du relevé sous chaque indicateur. Les tuiles passent de quatre à deux ou une colonne selon la largeur disponible. Une date absente reste explicitement inconnue ; la date de consultation ne remplace pas celle du relevé. Les messages sont disponibles en français et en anglais.

@@ -4430,6 +4430,8 @@ def creer_tuile_synthese_netatmo(parent, titre, info, couleur_fond, couleur):
 
 def afficher_synthese_netatmo(parent):
     if not netatmo_data and not netatmo_public_data:
+        # Un accueil sans station conserve un bloc explicite de prévision météo.
+        afficher_prevision_2h(parent)
         return
 
     bloc = tk.Frame(
@@ -4570,7 +4572,8 @@ def actualiser_netatmo_seul():
         global netatmo_loading
         try:
             appliquer_resultats_meteo(resultats)
-            afficher_netatmo()
+            # La prévision nourrit aussi les alertes : reconstruire tout l’accueil.
+            actualiser_interface()
         finally:
             netatmo_loading = False
             sync_button.config(state='normal')
@@ -4646,7 +4649,6 @@ def afficher_netatmo():
     )
 
     afficher_prevision_2h(netatmo_frame)
-    afficher_synthese_netatmo(netatmo_frame)
 
     # --------------------------------------------------------
     # Pas encore de données
@@ -7871,6 +7873,7 @@ def actualiser_interface():
         t('interface_text_7771')
     )
     afficher_centre_alertes(content_frame, plantes)
+    afficher_synthese_netatmo(content_frame)
 
     afficher_titre_section(
         content_frame,

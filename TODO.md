@@ -567,3 +567,11 @@ La remise en attente a été effectuée uniquement sur une copie de la base Pi. 
 - [ ] Définir les alertes météo importantes selon les plantes extérieures avant d’ajouter une nouvelle classification rouge.
 
 Ces changements sont consolidés sur main ; aucune nouvelle release ne remplace la 0.1.6-dev pour le moment.
+
+### Correction affichage météo / alertes — 09/10/2026
+
+- [x] Sortir la synthèse de la section détaillée Netatmo pour la placer près du centre d’alertes sur l’accueil.
+- [x] Afficher un bloc de prévision même sans station Netatmo.
+- [x] Rafraîchir les alertes à la fin de l’actualisation météo seule.
+- [x] Vérifier l’accueil complet FR/EN avec une prévision de rafales au-dessus du seuil existant, et sans station.
+- [ ] Confirmer le rendu et les alertes sur les données météo réelles du poste utilisateur.
