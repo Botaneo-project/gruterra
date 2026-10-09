@@ -468,7 +468,7 @@ def comparer_deux_cycles(cycle_a, cycle_b):
     def fmt_repere(repere):
         if not repere:
             return "—"
-        return f"{formater_nombre(repere['valeur'])} % à {formater_nombre(repere['heures'])} h"
+        return vh_t('comparison_report_1').format(v0=formater_nombre(repere['valeur']), v1=formater_nombre(repere['heures']))
 
     def valeur_repere(repere):
         return repere["valeur"] if repere else None
@@ -476,50 +476,50 @@ def comparer_deux_cycles(cycle_a, cycle_b):
     comparabilite = comparer_conditions_cycles(cycle_a, cycle_b)
 
     lignes = [
-        "Comparaison Gruterra — cycles d’arrosage",
+        vh_t('comparison_report_2'),
         "",
-        f"Cycle A : {libelle_cycle(cycle_a)}",
-        f"Cycle B : {libelle_cycle(cycle_b)}",
+        vh_t('comparison_report_3').format(v0=libelle_cycle(cycle_a)),
+        vh_t('comparison_report_4').format(v0=libelle_cycle(cycle_b)),
         "",
-        f"Mesures : {mesures_a} / {mesures_b} · écart {mesures_a - mesures_b}",
-        f"Humidité départ : {fmt(depart_a, '%')} / {fmt(depart_b, '%')}",
-        f"Pic observé : {fmt(pic_a, '%')} / {fmt(pic_b, '%')}",
-        f"Repère 24 h : {fmt_repere(repere_24_a)} / {fmt_repere(repere_24_b)}",
-        f"Repère 48 h : {fmt_repere(repere_48_a)} / {fmt_repere(repere_48_b)}",
-        f"Humidité fin : {fmt(fin_a, '%')} / {fmt(fin_b, '%')}",
-        f"Hausse observée : {fmt(hausse_a, 'pt')} / {fmt(hausse_b, 'pt')}",
-        f"Séchage : {fmt(sechage_a, 'pt/j')} / {fmt(sechage_b, 'pt/j')}",
-        f"Vitesse 24 h : {fmt(vitesse_24h_a, 'pt/j')} / {fmt(vitesse_24h_b, 'pt/j')}",
-        f"Qualité : {cycle_a.get('qualite') or '—'} / {cycle_b.get('qualite') or '—'}",
+        vh_t('comparison_report_5').format(v0=mesures_a, v1=mesures_b, v2=mesures_a - mesures_b),
+        vh_t('comparison_report_6').format(v0=fmt(depart_a, '%'), v1=fmt(depart_b, '%')),
+        vh_t('comparison_report_7').format(v0=fmt(pic_a, '%'), v1=fmt(pic_b, '%')),
+        vh_t('comparison_report_8').format(v0=fmt_repere(repere_24_a), v1=fmt_repere(repere_24_b)),
+        vh_t('comparison_report_9').format(v0=fmt_repere(repere_48_a), v1=fmt_repere(repere_48_b)),
+        vh_t('comparison_report_10').format(v0=fmt(fin_a, '%'), v1=fmt(fin_b, '%')),
+        vh_t('comparison_report_11').format(v0=fmt(hausse_a, 'pt'), v1=fmt(hausse_b, 'pt')),
+        vh_t('comparison_report_12').format(v0=fmt(sechage_a, 'pt/j'), v1=fmt(sechage_b, 'pt/j')),
+        vh_t('comparison_report_13').format(v0=fmt(vitesse_24h_a, 'pt/j'), v1=fmt(vitesse_24h_b, 'pt/j')),
+        vh_t('comparison_report_14').format(v0=cycle_a.get('qualite') or '—', v1=cycle_b.get('qualite') or '—'),
         comparabilite["texte"],
     ]
     if sechage_a is not None and sechage_b is not None:
         diff = sechage_a - sechage_b
         if abs(diff) < 0.4:
-            lecture = "vitesse de séchage proche"
+            lecture = vh_t('comparison_report_16')
         elif diff < 0:
-            lecture = "cycle A sèche plus vite"
+            lecture = vh_t('comparison_report_18')
         else:
-            lecture = "cycle A sèche plus lentement"
-        lignes.append(f"Lecture : {lecture} ({formater_nombre(diff)} pt/j d’écart).")
-    lignes.append("Lecture prudente : les durées et la répartition des mesures peuvent différer entre cycles.")
+            lecture = vh_t('comparison_report_19')
+        lignes.append(vh_t('comparison_report_17').format(v0=lecture, v1=formater_nombre(diff)))
+    lignes.append(vh_t('comparison_report_15'))
     return {
         "texte": "\n".join(lignes),
         "lignes_tableau": [
-            ("Mesures", str(mesures_a), str(mesures_b), str(mesures_a - mesures_b)),
-            ("Départ", fmt(depart_a, "%"), fmt(depart_b, "%"), fmt((depart_a - depart_b) if depart_a is not None and depart_b is not None else None, "pt")),
-            ("Pic", fmt(pic_a, "%"), fmt(pic_b, "%"), fmt((pic_a - pic_b) if pic_a is not None and pic_b is not None else None, "pt")),
-            ("Autour 24 h", fmt_repere(repere_24_a), fmt_repere(repere_24_b), fmt((valeur_repere(repere_24_a) - valeur_repere(repere_24_b)) if valeur_repere(repere_24_a) is not None and valeur_repere(repere_24_b) is not None else None, "pt")),
-            ("Autour 48 h", fmt_repere(repere_48_a), fmt_repere(repere_48_b), fmt((valeur_repere(repere_48_a) - valeur_repere(repere_48_b)) if valeur_repere(repere_48_a) is not None and valeur_repere(repere_48_b) is not None else None, "pt")),
-            ("Fin", fmt(fin_a, "%"), fmt(fin_b, "%"), fmt((fin_a - fin_b) if fin_a is not None and fin_b is not None else None, "pt")),
-            ("Hausse observée", fmt(hausse_a, "pt"), fmt(hausse_b, "pt"), fmt((hausse_a - hausse_b) if hausse_a is not None and hausse_b is not None else None, "pt")),
-            ("Séchage après pic", fmt(sechage_a, "pt/j"), fmt(sechage_b, "pt/j"), fmt((sechage_a - sechage_b) if sechage_a is not None and sechage_b is not None else None, "pt/j")),
-            ("Tendance 24 h", fmt(vitesse_24h_a, "pt/j"), fmt(vitesse_24h_b, "pt/j"), fmt((vitesse_24h_a - vitesse_24h_b) if vitesse_24h_a is not None and vitesse_24h_b is not None else None, "pt/j")),
-            ("Lecture A", cycle_a.get("lecture_sechage") or "—", "", ""),
-            ("Lecture B", cycle_b.get("lecture_sechage") or "—", "", ""),
-            ("Plus grand trou", fmt(trou_a, "h"), fmt(trou_b, "h"), fmt((trou_a - trou_b) if trou_a is not None and trou_b is not None else None, "h")),
-            ("Qualité", cycle_a.get("qualite") or "—", cycle_b.get("qualite") or "—", "—"),
-            ("Comparabilité", comparabilite["niveau"], "", "; ".join(comparabilite["alertes"])),
+            (vh_t('comparison_report_20'), str(mesures_a), str(mesures_b), str(mesures_a - mesures_b)),
+            (vh_t('comparison_report_21'), fmt(depart_a, "%"), fmt(depart_b, "%"), fmt((depart_a - depart_b) if depart_a is not None and depart_b is not None else None, vh_t('comparison_report_34'))),
+            (vh_t('comparison_report_22'), fmt(pic_a, "%"), fmt(pic_b, "%"), fmt((pic_a - pic_b) if pic_a is not None and pic_b is not None else None, vh_t('comparison_report_34'))),
+            (vh_t('comparison_report_23'), fmt_repere(repere_24_a), fmt_repere(repere_24_b), fmt((valeur_repere(repere_24_a) - valeur_repere(repere_24_b)) if valeur_repere(repere_24_a) is not None and valeur_repere(repere_24_b) is not None else None, vh_t('comparison_report_34'))),
+            (vh_t('comparison_report_24'), fmt_repere(repere_48_a), fmt_repere(repere_48_b), fmt((valeur_repere(repere_48_a) - valeur_repere(repere_48_b)) if valeur_repere(repere_48_a) is not None and valeur_repere(repere_48_b) is not None else None, vh_t('comparison_report_34'))),
+            (vh_t('comparison_report_25'), fmt(fin_a, "%"), fmt(fin_b, "%"), fmt((fin_a - fin_b) if fin_a is not None and fin_b is not None else None, vh_t('comparison_report_34'))),
+            (vh_t('comparison_report_26'), fmt(hausse_a, vh_t('comparison_report_34')), fmt(hausse_b, vh_t('comparison_report_34')), fmt((hausse_a - hausse_b) if hausse_a is not None and hausse_b is not None else None, vh_t('comparison_report_34'))),
+            (vh_t('comparison_report_27'), fmt(sechage_a, vh_t('comparison_report_35')), fmt(sechage_b, vh_t('comparison_report_35')), fmt((sechage_a - sechage_b) if sechage_a is not None and sechage_b is not None else None, vh_t('comparison_report_35'))),
+            (vh_t('comparison_report_28'), fmt(vitesse_24h_a, vh_t('comparison_report_35')), fmt(vitesse_24h_b, vh_t('comparison_report_35')), fmt((vitesse_24h_a - vitesse_24h_b) if vitesse_24h_a is not None and vitesse_24h_b is not None else None, vh_t('comparison_report_35'))),
+            (vh_t('comparison_report_29'), cycle_a.get("lecture_sechage") or "—", "", ""),
+            (vh_t('comparison_report_30'), cycle_b.get("lecture_sechage") or "—", "", ""),
+            (vh_t('comparison_report_31'), fmt(trou_a, "h"), fmt(trou_b, "h"), fmt((trou_a - trou_b) if trou_a is not None and trou_b is not None else None, "h")),
+            (vh_t('comparison_report_32'), cycle_a.get("qualite") or "—", cycle_b.get("qualite") or "—", "—"),
+            (vh_t('comparison_report_33'), comparabilite["niveau"], "", "; ".join(comparabilite["alertes"])),
         ],
     }
 
@@ -532,21 +532,21 @@ def comparer_deux_jours(mesures, arrosages, jour_a, jour_b):
     stats_a = resume_stats_jour_dict(mesures_a, arrosages_a)
     stats_b = resume_stats_jour_dict(mesures_b, arrosages_b)
     lignes = [
-        f"Comparaison Gruterra — {libelle_jour(jour_a)} / {libelle_jour(jour_b)}",
+        vh_t('comparison_report_36').format(v0=libelle_jour(jour_a), v1=libelle_jour(jour_b)),
         "",
-        f"Mesures : {stats_a['mesures']} / {stats_b['mesures']}",
-        f"Arrosages : {stats_a['arrosages']} / {stats_b['arrosages']}",
-        f"Humidité moyenne : {formater_moyenne_stats(stats_a['humidite'], '%')} / {formater_moyenne_stats(stats_b['humidite'], '%')}",
-        f"Température moyenne : {formater_moyenne_stats(stats_a['temperature'], '°C')} / {formater_moyenne_stats(stats_b['temperature'], '°C')}",
-        f"Lumière moyenne : {formater_moyenne_stats(stats_a['lumiere'], 'lux')} / {formater_moyenne_stats(stats_b['lumiere'], 'lux')}",
-        f"Conductivité moyenne : {formater_moyenne_stats(stats_a['conductivite'], 'µS/cm')} / {formater_moyenne_stats(stats_b['conductivite'], 'µS/cm')}",
+        vh_t('comparison_report_37').format(v0=stats_a['mesures'], v1=stats_b['mesures']),
+        vh_t('comparison_report_38').format(v0=stats_a['arrosages'], v1=stats_b['arrosages']),
+        vh_t('comparison_report_39').format(v0=formater_moyenne_stats(stats_a['humidite'], '%'), v1=formater_moyenne_stats(stats_b['humidite'], '%')),
+        vh_t('comparison_report_40').format(v0=formater_moyenne_stats(stats_a['temperature'], '°C'), v1=formater_moyenne_stats(stats_b['temperature'], '°C')),
+        vh_t('comparison_report_41').format(v0=formater_moyenne_stats(stats_a['lumiere'], 'lux'), v1=formater_moyenne_stats(stats_b['lumiere'], 'lux')),
+        vh_t('comparison_report_42').format(v0=formater_moyenne_stats(stats_a['conductivite'], 'µS/cm'), v1=formater_moyenne_stats(stats_b['conductivite'], 'µS/cm')),
     ]
     if stats_a['humidite'] and stats_b['humidite']:
         ecart = stats_a['humidite']['moyenne'] - stats_b['humidite']['moyenne']
-        lignes.append(f"Écart humidité moyenne : {formater_nombre(ecart)} point(s)")
+        lignes.append(vh_t('comparison_report_43').format(v0=formater_nombre(ecart)))
     if stats_a['lumiere'] and stats_b['lumiere']:
         ecart_lumiere = stats_a['lumiere']['moyenne'] - stats_b['lumiere']['moyenne']
-        lignes.append(f"Écart lumière moyenne : {formater_nombre(ecart_lumiere)} lux")
+        lignes.append(vh_t('comparison_report_44').format(v0=formater_nombre(ecart_lumiere)))
     return {
         "texte": "\n".join(lignes),
         "stats_a": stats_a,
