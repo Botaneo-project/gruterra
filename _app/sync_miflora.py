@@ -1,4 +1,6 @@
 """Adaptation pour l'interface de la lecture Mi Flora d'origine."""
+
+from i18n import traduire_courant as _tr
 import asyncio
 
 import database
@@ -15,13 +17,13 @@ def message_erreur_historique(erreur):
     texte = str(erreur)
     texte_min = texte.lower()
     if "operation was canceled" in texte_min or "opération a été annulée" in texte_min:
-        return "Historique Mi Flora impossible : Windows a annulé l'accès Bluetooth. Ce n'est pas une annulation manuelle. Attendez la fin complète de la synchronisation, fermez toute autre connexion Bluetooth au capteur, puis réessayez."
+        return _tr('sync_miflora_text_18')
     if nom == "BleakError" or "bleak" in nom.lower():
         if "not found" in texte_min or "characteristic" in texte_min:
-            return "Historique Mi Flora impossible : accès aux caractéristiques historiques refusé ou pas encore prêt. Fermez toute autre lecture Bluetooth, rapprochez le capteur, puis réessayez."
-        return f"Historique Mi Flora impossible : erreur Bluetooth Bleak · {texte}"
+            return _tr('sync_miflora_text_21')
+        return _tr('sync_miflora_text_22').format(v0=texte)
     if "not connected" in texte_min or "disconnected" in texte_min:
-        return "Historique Mi Flora impossible : le capteur s'est déconnecté pendant la lecture."
+        return _tr('sync_miflora_text_24')
     return f"Historique Mi Flora impossible : {nom} · {texte}"
 
 
@@ -31,8 +33,8 @@ def message_erreur_mesure_bluetooth(erreur):
     if texte:
         return f"{nom} · {texte}"
     if nom in {"TimeoutError", "CancelledError"}:
-        return f"{nom} · délai Bluetooth dépassé ou connexion interrompue. Le Raspberry reste prioritaire ; réessayez après quelques minutes si une mesure PC est nécessaire."
-    return f"{nom} · aucun détail fourni par Windows/Bleak. Le Raspberry reste prioritaire ; réessayez après quelques minutes si une mesure PC est nécessaire."
+        return _tr('sync_miflora_text_34').format(v0=nom)
+    return _tr('sync_miflora_text_35').format(v0=nom)
 
 
 async def importer_historique_capteur_direct_pc(capteur, on_progress=None):
@@ -90,7 +92,7 @@ async def importer_historique_capteur_direct_pc(capteur, on_progress=None):
                 derniere_erreur = {
                     'index': index_depart,
                     'type': 'Bluetooth',
-                    'message': 'Mi Flora introuvable pour reprise historique PC.'
+                    'message': _tr('sync_miflora_text_93')
                 }
                 break
 
@@ -207,11 +209,9 @@ async def importer_historique_capteur_direct_pc(capteur, on_progress=None):
         total_lues = resume['total_lues']
         total_annonce = export.get('history_count') or 0
         passes_txt = f", {len(export.get('passes', []))} passe(s)"
-        couverture_txt = f", {total_lues}/{total_annonce} récupérée(s)" if total_annonce else ""
+        couverture_txt = _tr('sync_miflora_text_210').format(v0=total_lues, v1=total_annonce) if total_annonce else ""
         message = (
-            f"Historique PC lu : {total_lues} entrée(s){passes_txt}{couverture_txt}, "
-            f"{resume['ajoutees']} nouvelle(s), "
-            f"{resume['doublons']} déjà connue(s)."
+            _tr('sync_miflora_text_212').format(v0=total_lues, v1=passes_txt, v2=couverture_txt, v3=resume['ajoutees'], v4=resume['doublons'])
         )
         graphiques = alimenter_graphiques(export, database.DB_PATH)
         resume['graphiques'] = graphiques
@@ -222,18 +222,18 @@ async def importer_historique_capteur_direct_pc(capteur, on_progress=None):
         historique_complet = bool(total_annonce) and manque == 0 and export.get('status') == 'complete'
         historique_etat = 'complet' if historique_complet else 'incomplet'
         if historique_complet:
-            message += f" ✅ Historique complet : {total_lues}/{total_annonce} entrée(s) récupérée(s)."
+            message += _tr('sync_miflora_text_225').format(v0=total_lues, v1=total_annonce)
         elif total_annonce:
-            message += f" ⚠ Historique encore à récupérer : {total_lues}/{total_annonce} entrée(s), {manque} restante(s). Les entrées déjà lues sont conservées ; le Raspberry et le PC pourront compléter aux prochains passages."
+            message += _tr('sync_miflora_text_227').format(v0=total_lues, v1=total_annonce, v2=manque)
         else:
-            message += " ⚠ Historique : total annoncé inconnu, conservation des entrées récupérées."
+            message += _tr('sync_miflora_text_229')
 
         if export.get('status') == 'partial':
             erreurs = export.get('errors') or []
             if erreurs:
-                message += f" Lecture interrompue à l'entrée {erreurs[0].get('index')} après reprise. Les entrées déjà lues ont été conservées."
+                message += _tr('sync_miflora_text_234').format(v0=erreurs[0].get('index'))
             else:
-                message += " Lecture partielle conservée."
+                message += _tr('sync_miflora_text_236')
 
         return {
             'ok': graphiques['ok'],
@@ -266,15 +266,15 @@ async def importer_historique_capteur(capteur_id=None, force_pc=False, on_progre
         capteur = database.get_capteur(capteur_id)
 
     if capteur is None:
-        return {'ok': False, 'message': 'Aucun capteur actif disponible.'}
+        return {'ok': False, 'message': _tr('sync_miflora_text_269')}
     if not capteur[8]:
-        return {'ok': False, 'message': 'Le capteur est désactivé.'}
+        return {'ok': False, 'message': _tr('sync_miflora_text_271')}
     if not capteur[2]:
-        return {'ok': False, 'message': "Le capteur n'a pas d'adresse Bluetooth."}
+        return {'ok': False, 'message': _tr('sync_miflora_text_273')}
 
     if raspberry_sync.owned(capteur[2]) and not force_pc:
         if on_progress:
-            on_progress({'phase': 'historique_raspberry', 'message': 'Récupération historique via Raspberry'})
+            on_progress({'phase': 'historique_raspberry', 'message': _tr('sync_miflora_text_277')})
         resultat = await asyncio.to_thread(raspberry_sync.replay_recent_history)
         resultat.setdefault('historique_etat', 'raspberry_replay')
         if resultat.get('ok') and not resultat.get('history_added', 0):
@@ -287,17 +287,13 @@ async def importer_historique_capteur(capteur_id=None, force_pc=False, on_progre
         history_undated = resultat.get('history_undated', 0) or 0
         if history_added or history_duplicates or history_undated:
             resultat['historique_message_simplifie'] = (
-                f"Historique simplifié via Raspberry : {history_added} ajoutée(s), "
-                f"{history_duplicates} déjà reçue(s), "
-                f"{history_undated} sans date fiable ignorée(s)."
+                _tr('sync_miflora_text_290').format(v0=history_added, v1=history_duplicates, v2=history_undated)
             )
             resultat['message'] = resultat['historique_message_simplifie'] + ' ' + resultat.get('message', '')
             resultat['historique_action'] = 'donnees_recues'
         else:
             resultat['historique_message_simplifie'] = (
-                "Historique simplifié via Raspberry : aucune nouvelle entrée historique disponible pour l’instant. "
-                "Le Raspberry n’a rien de plus à transmettre sur ce passage. "
-                "Attendez une prochaine collecte Raspberry, ou lancez un import PC long si vous voulez tenter de compléter directement par Bluetooth."
+                _tr('sync_miflora_text_298')
             )
             resultat['message'] = resultat['historique_message_simplifie'] + ' ' + resultat.get('message', '')
             resultat['historique_action'] = 'rien_de_nouveau'
@@ -316,11 +312,11 @@ async def synchroniser_capteur(capteur_id=None):
     else:
         capteur = database.get_capteur(capteur_id)
     if capteur is None:
-        return {'ok': False, 'message': 'Aucun capteur actif disponible.'}
+        return {'ok': False, 'message': _tr('sync_miflora_text_269')}
     if not capteur[8]:
-        return {'ok': False, 'message': 'Le capteur est désactivé.'}
+        return {'ok': False, 'message': _tr('sync_miflora_text_271')}
     if not capteur[2]:
-        return {'ok': False, 'message': "Le capteur n'a pas d'adresse Bluetooth."}
+        return {'ok': False, 'message': _tr('sync_miflora_text_273')}
     if raspberry_sync.owned(capteur[2]):
         return await asyncio.to_thread(raspberry_sync.synchronize)
 
@@ -329,7 +325,7 @@ async def synchroniser_capteur(capteur_id=None):
             capteur[2], silencieux=True
         )
     except Exception as erreur:
-        return {'ok': False, 'message': f"Erreur Bluetooth : {message_erreur_mesure_bluetooth(erreur)}"}
+        return {'ok': False, 'message': _tr('sync_miflora_text_332').format(v0=message_erreur_mesure_bluetooth(erreur))}
     date = iso_local()
     try:
         database.enregistrer_mesure(capteur[0], date, temperature, humidite,
@@ -338,7 +334,7 @@ async def synchroniser_capteur(capteur_id=None):
         return {'ok': False, 'message': f'Enregistrement impossible : {erreur}'}
     return {
         'ok': True,
-        'message': 'Mesure actuelle enregistrée.',
+        'message': _tr('sync_miflora_text_341'),
         'mesure': {
             'capteur_id': capteur[0], 'capteur': capteur[1], 'plante_id': capteur[3],
             'date_heure': date, 'temperature': temperature, 'humidite': humidite,
@@ -354,16 +350,16 @@ async def synchroniser_capteur_direct_pc(capteur):
             capteur[2], silencieux=True
         )
     except Exception as erreur:
-        return {'ok': False, 'message': f"Mesure Bluetooth PC impossible : {message_erreur_mesure_bluetooth(erreur)}"}
+        return {'ok': False, 'message': _tr('sync_miflora_text_357').format(v0=message_erreur_mesure_bluetooth(erreur))}
     date = iso_local()
     try:
         database.enregistrer_mesure(capteur[0], date, temperature, humidite,
                                     luminosite, conductivite, brut)
     except Exception as erreur:
-        return {'ok': False, 'message': f'Enregistrement mesure PC impossible : {erreur}'}
+        return {'ok': False, 'message': _tr('sync_miflora_text_363').format(v0=erreur)}
     return {
         'ok': True,
-        'message': f'Mesure Bluetooth PC enregistrée à {date} : {humidite} % humidité, {luminosite} lux.',
+        'message': _tr('sync_miflora_text_366').format(v0=date, v1=humidite, v2=luminosite),
         'mesure': {
             'capteur_id': capteur[0], 'capteur': capteur[1], 'plante_id': capteur[3],
             'date_heure': date, 'temperature': temperature, 'humidite': humidite,
@@ -388,11 +384,11 @@ async def synchroniser_capteur_prioritaire(capteur_id=None, reason="post_arrosag
     else:
         capteur = database.get_capteur(capteur_id)
     if capteur is None:
-        return {'ok': False, 'message': 'Aucun capteur actif disponible.'}
+        return {'ok': False, 'message': _tr('sync_miflora_text_269')}
     if not capteur[8]:
-        return {'ok': False, 'message': 'Le capteur est désactivé.'}
+        return {'ok': False, 'message': _tr('sync_miflora_text_271')}
     if not capteur[2]:
-        return {'ok': False, 'message': "Le capteur n'a pas d'adresse Bluetooth."}
+        return {'ok': False, 'message': _tr('sync_miflora_text_273')}
 
     raspberry_resultat = None
     doit_tenter_pc = True
@@ -418,8 +414,8 @@ async def synchroniser_capteur_prioritaire(capteur_id=None, reason="post_arrosag
     if raspberry_resultat is None:
         return {**resultat_pc, 'capteur_id': capteur[0], 'nom': capteur[1], 'collecteur': 'pc'}
 
-    message_pi = raspberry_resultat.get('message', 'Raspberry interrogé.')
-    message_pc = resultat_pc.get('message', 'Mesure PC terminée.')
+    message_pi = raspberry_resultat.get('message', _tr('sync_miflora_text_417'))
+    message_pc = resultat_pc.get('message', _tr('sync_miflora_text_418'))
     ok = bool(resultat_pc.get('ok')) or bool(raspberry_resultat.get('ok'))
     collecteur = 'pc' if resultat_pc.get('ok') else 'raspberry'
     retour = {**raspberry_resultat, **resultat_pc}
@@ -428,7 +424,7 @@ async def synchroniser_capteur_prioritaire(capteur_id=None, reason="post_arrosag
         'capteur_id': capteur[0],
         'nom': capteur[1],
         'collecteur': collecteur,
-        'message': f"{message_pi}\nPriorité PC : {message_pc}",
+        'message': _tr('sync_miflora_text_431').format(v0=message_pi, v1=message_pc),
         'raspberry_result': raspberry_resultat,
         'pc_result': resultat_pc,
     })
@@ -451,16 +447,16 @@ async def synchroniser_tous(on_progress=None):
             else:
                 resultat = await synchroniser_capteur(capteur[0])
         except Exception:
-            resultat = {'ok': False, 'message': 'Synchronisation du capteur impossible.'}
+            resultat = {'ok': False, 'message': _tr('sync_miflora_text_454')}
         resultat.update(capteur_id=capteur[0], nom=capteur[1])
         resultats.append(resultat)
         if index < len(capteurs):
             await asyncio.sleep(2)
     succes = sum(bool(r['ok']) for r in resultats)
     detail = "\n".join(('✓ ' if r['ok'] else '⚠ ') + str(r['nom']) + ' : ' + r['message'] for r in resultats)
-    message = f'{succes}/{len(resultats)} capteur(s) synchronisé(s).'
+    message = _tr('sync_miflora_text_461').format(v0=succes, v1=len(resultats))
     if not capteurs:
-        message = 'Aucun capteur actif. Utilisez Ajouter un capteur.'
+        message = _tr('sync_miflora_text_463')
     return {'ok': bool(resultats) and succes == len(resultats),
             'message': message, 'resultats': resultats, 'detail': detail}
 
@@ -508,12 +504,12 @@ async def synchroniser_tous_avec_historique(on_progress=None):
         except Exception:
             mesure = {
                 'ok': False,
-                'message': 'Synchronisation du capteur impossible.'
+                'message': _tr('sync_miflora_text_454')
             }
 
         resultat = {
             'ok': bool(mesure.get('ok')),
-            'message': mesure.get('message', 'Mesure terminée.'),
+            'message': mesure.get('message', _tr('sync_miflora_text_512')),
             'historique_ok': bool(historique.get('ok')),
             'historique_message': historique.get('message', ''),
             'historique_resume': historique.get('resume'),
@@ -557,23 +553,21 @@ async def synchroniser_tous_avec_historique(on_progress=None):
         lignes.append(prefixe + str(resultat['nom']) + ' : ' + resultat['message'])
         if resultat.get('historique_message'):
             prefixe_historique = '✓ ' if resultat.get('historique_ok') else '⚠ '
-            lignes.append(prefixe_historique + str(resultat['nom']) + ' historique : ' + resultat['historique_message'])
+            lignes.append(prefixe_historique + str(resultat['nom']) + _tr('sync_miflora_text_556') + resultat['historique_message'])
 
     if not capteurs:
-        message = 'Aucun capteur actif. Utilisez Ajouter un capteur.'
+        message = _tr('sync_miflora_text_463')
     else:
         message = (
-            f'{succes_mesures}/{len(resultats)} capteur(s) synchronisé(s), '
-            f'{succes_historiques}/{len(resultats)} historique(s) importé(s).'
+            _tr('sync_miflora_text_566').format(v0=succes_mesures, v1=len(resultats), v2=succes_historiques, v3=len(resultats))
         )
         if historiques_incomplets:
             morceaux = []
             for resultat in historiques_incomplets:
                 morceaux.append(
-                    f"{resultat['nom']} : {resultat.get('historique_total_lues', 0)}/{resultat.get('historique_total_annonce', '?')} "
-                    f"récupérée(s), {resultat.get('historique_manque', 0)} restante(s)"
+                    _tr('sync_miflora_text_573').format(v0=resultat['nom'], v1=resultat.get('historique_total_lues', 0), v2=resultat.get('historique_total_annonce', '?'), v3=resultat.get('historique_manque', 0))
                 )
-            message += ' Historique encore à récupérer · ' + ' ; '.join(morceaux) + '.'
+            message += _tr('sync_miflora_text_576') + ' ; '.join(morceaux) + '.'
         elif historiques_complets:
             message += ' Historique complet.'
 

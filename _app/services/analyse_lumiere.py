@@ -1,6 +1,8 @@
 """Analyse des expositions lumineuses et des sorties balcon."""
 from __future__ import annotations
 
+from i18n import traduire_courant as _tr, traduire_texte_courant as _texte
+
 import math
 from datetime import datetime, timedelta
 
@@ -81,16 +83,15 @@ def calculer_exposition_lumineuse(mesures):
 def resume_exposition_lumineuse(mesures):
     stats = calculer_exposition_lumineuse(mesures)
     if stats["points"] < 2 or stats["duree_totale_h"] <= 0:
-        return "Exposition lumineuse cumulée : données insuffisantes."
+        return _tr('analyse_lumiere_text_84')
 
     plages = []
     for _minimum, _maximum, nom in PLAGES_LUMIERE:
         duree = stats["durees_par_plage_h"].get(nom, 0)
         if duree > 0:
-            plages.append(f"{nom} {formater_nombre(duree)} h")
+            plages.append(f"{_texte(nom)} {formater_nombre(duree)} h")
     return (
-        f"Exposition lumineuse cumulée : {formater_nombre(stats['cumul_lux_h'])} lux·h "
-        f"sur {formater_nombre(stats['duree_totale_h'])} h mesurées"
+        _tr('analyse_lumiere_text_92').format(v0=formater_nombre(stats['cumul_lux_h']), v1=formater_nombre(stats['duree_totale_h']))
         + (" · " + " ; ".join(plages) if plages else "")
         + "."
     )
@@ -151,15 +152,15 @@ def mesure_dans_exposition(date, expositions):
 
 def resume_expositions_jour(mesures, expositions):
     if not expositions:
-        return "Exposition balcon : aucune notée ce jour."
+        return _tr('analyse_lumiere_text_154')
 
-    lignes = ["Exposition balcon :"]
+    lignes = [_tr("light_balcony_header")]
     for sortie, retour in expositions:
         if retour:
             duree = (retour - sortie).total_seconds() / 3600
-            lignes.append(f"- {sortie.strftime('%H:%M')} → {retour.strftime('%H:%M')} · durée {formater_nombre(duree)} h.")
+            lignes.append(_tr('analyse_lumiere_text_160').format(v0=sortie.strftime('%H:%M'), v1=retour.strftime('%H:%M'), v2=formater_nombre(duree)))
         else:
-            lignes.append(f"- {sortie.strftime('%H:%M')} → retour non noté.")
+            lignes.append(_tr('analyse_lumiere_text_162').format(v0=sortie.strftime('%H:%M')))
 
     valeurs_globales = []
     valeurs_interieur = []
@@ -179,12 +180,12 @@ def resume_expositions_jour(mesures, expositions):
             valeurs_interieur.append(lux)
 
     if valeurs_globales:
-        lignes.append(f"- Lumière globale : moyenne {formater_nombre(sum(valeurs_globales) / len(valeurs_globales))} lux, max {formater_nombre(max(valeurs_globales))} lux.")
+        lignes.append(_tr('analyse_lumiere_text_182').format(v0=formater_nombre(sum(valeurs_globales) / len(valeurs_globales)), v1=formater_nombre(max(valeurs_globales))))
         lignes.append(f"- {resume_exposition_lumineuse(mesures)}")
     if valeurs_interieur:
-        lignes.append(f"- Hors balcon : moyenne {formater_nombre(sum(valeurs_interieur) / len(valeurs_interieur))} lux, max {formater_nombre(max(valeurs_interieur))} lux.")
+        lignes.append(_tr('analyse_lumiere_text_186').format(v0=formater_nombre(sum(valeurs_interieur) / len(valeurs_interieur)), v1=formater_nombre(max(valeurs_interieur))))
     if valeurs_balcon:
-        lignes.append(f"- Pendant balcon : {len(valeurs_balcon)} mesure(s), max {formater_nombre(max(valeurs_balcon))} lux.")
+        lignes.append(_tr('analyse_lumiere_text_187').format(v0=len(valeurs_balcon), v1=formater_nombre(max(valeurs_balcon))))
     if valeurs_interieur and valeurs_balcon:
-        lignes.append("- Lecture : les pics lumineux de cette journée sont expliqués par l'exposition balcon ; interpréter séparément l'emplacement intérieur.")
+        lignes.append(_tr('analyse_lumiere_text_189'))
     return "\n".join(lignes)

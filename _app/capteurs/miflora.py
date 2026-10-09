@@ -1,3 +1,4 @@
+
 import asyncio
 
 # Conserve aussi la possibilite d'execution directe du module.
@@ -5,6 +6,7 @@ if __package__ in (None, ""):
     import sys
     from pathlib import Path
     sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+from i18n import traduire_courant as _tr
 from capteur_infos import enregistrer_infos
 
 from bleak import BleakClient, BleakScanner
@@ -82,12 +84,11 @@ def decoder_mesure_directe(data):
     """Décode la trame de mesure directe Mi Flora."""
 
     if len(data) < 10:
-        raise ValueError("Réponse Mi Flora trop courte.")
+        raise ValueError(_tr('miflora_text_85'))
 
     if data == TRAME_INVALIDE:
         raise ValueError(
-            "Le Mi Flora a renvoyé une trame invalide "
-            "(AA BB CC...)."
+            _tr('miflora_text_89')
         )
 
     temperature = (
@@ -114,12 +115,12 @@ def decoder_mesure_directe(data):
 
     if not 0 <= humidite <= 100:
         raise ValueError(
-            f"Humidité Mi Flora invalide : {humidite} %"
+            _tr('miflora_text_117').format(v0=humidite)
         )
 
     if not -20 <= temperature <= 60:
         raise ValueError(
-            f"Température Mi Flora invalide : {temperature} C"
+            _tr('miflora_text_122').format(v0=temperature)
         )
 
     return (
@@ -144,8 +145,7 @@ async def lire_mesure_et_historique(
         if not silencieux:
             print()
             print(
-                f"Recherche du Mi Flora "
-                f"(tentative {tentative}/3)..."
+                _tr('miflora_text_147').format(v0=tentative)
             )
 
         appareil = await scanner_avec_progression(
@@ -158,8 +158,7 @@ async def lire_mesure_et_historique(
 
             if not silencieux:
                 print(
-                    f"Mi Flora trouvé à la tentative "
-                    f"{tentative}/3."
+                    _tr('miflora_text_161').format(v0=tentative)
                 )
 
             break
@@ -168,7 +167,7 @@ async def lire_mesure_et_historique(
 
     if appareil is None:
         raise MiFloraIntrouvable(
-            f"Mi Flora introuvable après 3 tentatives : {adresse}"
+            _tr('miflora_text_171').format(v0=adresse)
         )
 
     async with BleakClient(
@@ -228,8 +227,7 @@ async def lire_mesure(
         if not silencieux:
             print()
             print(
-                f"Recherche du Mi Flora "
-                f"(tentative {tentative}/3)..."
+                _tr('miflora_text_147').format(v0=tentative)
             )
 
         appareil = await scanner_avec_progression(
@@ -242,8 +240,7 @@ async def lire_mesure(
 
             if not silencieux:
                 print(
-                    f"Mi Flora trouvé à la tentative "
-                    f"{tentative}/3."
+                    _tr('miflora_text_161').format(v0=tentative)
                 )
 
             break
@@ -258,15 +255,15 @@ async def lire_mesure(
 
         if not silencieux:
             print()
-            print("Mi Flora introuvable après 3 tentatives.")
-            print("Code retour : 3")
+            print(_tr('miflora_text_261'))
+            print(_tr('miflora_text_259'))
 
         raise MiFloraIntrouvable(
-            f"Mi Flora introuvable après 3 tentatives : {adresse}"
+            _tr('miflora_text_171').format(v0=adresse)
         )
 
     if not silencieux:
-        print(f"Mi Flora trouvé : {appareil.address}")
+        print(_tr('miflora_text_269').format(v0=appareil.address))
         print("Connexion...")
 
     async with BleakClient(
@@ -275,7 +272,7 @@ async def lire_mesure(
     ) as client:
 
         if not silencieux:
-            print("Connecté !")
+            print(_tr('miflora_text_278'))
 
         # Lecture batterie et firmware
         donnees_batterie = b""
@@ -299,7 +296,7 @@ async def lire_mesure(
 
                     if not silencieux:
                         print(
-                            "🔋 Batterie : valeur invalide"
+                            _tr('miflora_text_299')
                         )
 
                 if len(donnees_batterie) >= 7:
@@ -330,7 +327,7 @@ async def lire_mesure(
                           services=services_observes)
 
         if not silencieux:
-            print("Demande de mesure...")
+            print(_tr('miflora_text_333'))
 
         await client.write_gatt_char(
             COMMANDE,
@@ -344,13 +341,12 @@ async def lire_mesure(
 
         if len(data) < 10:
             raise ValueError(
-                "Réponse Mi Flora trop courte."
+                _tr('miflora_text_85')
             )
 
         if data == TRAME_INVALIDE:
             raise ValueError(
-                "Le Mi Flora a renvoyé une trame invalide "
-                "(AA BB CC...)."
+                _tr('miflora_text_89')
             )
 
         temperature = (
@@ -377,16 +373,16 @@ async def lire_mesure(
 
         if not 0 <= humidite <= 100:
             raise ValueError(
-                f"Humidité Mi Flora invalide : {humidite} %"
+                _tr('miflora_text_117').format(v0=humidite)
             )
 
         if not -20 <= temperature <= 60:
             raise ValueError(
-                f"Température Mi Flora invalide : {temperature} C"
+                _tr('miflora_text_122').format(v0=temperature)
             )
 
         if not silencieux:
-            print("Mesure reçue.")
+            print(_tr('miflora_text_389'))
 
         return (
             temperature,

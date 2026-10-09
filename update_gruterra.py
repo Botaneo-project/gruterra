@@ -26,6 +26,7 @@ if str(APP_DIR) not in sys.path:
     sys.path.insert(0, str(APP_DIR))
 
 import botaneo_update  # noqa: E402
+from i18n import traduire_courant as _tr
 
 DONNEES_A_PRESERVER = {
     "plantes.db",
@@ -84,7 +85,7 @@ def construire_message_validation(diagnostic: dict) -> str:
     lignes = [
         botaneo_update.formater_diagnostic_mise_a_jour(diagnostic),
         "",
-        "Vérification avant installation :",
+        _tr('updater_cli_0'),
     ]
 
     archive_url = str(version.get("archive_url", "") or "").strip()
@@ -92,21 +93,21 @@ def construire_message_validation(diagnostic: dict) -> str:
     manifest_auto_update = bool(version.get("manifest_auto_update", False))
 
     if not manifest_auto_update:
-        lignes.append("- installation depuis GitHub désactivée pour cette version")
+        lignes.append(_tr('updater_cli_1'))
     if not archive_url:
-        lignes.append("- paquet de mise à jour absent des informations GitHub")
+        lignes.append(_tr('updater_cli_2'))
     if not sha256:
-        lignes.append("- contrôle d’intégrité du paquet absent")
+        lignes.append(_tr('updater_cli_3'))
 
     statut_version = str(version.get("statut") or "").strip()
     if statut_version == "a_jour":
-        lignes.append("- résultat : Gruterra est déjà à jour, aucune mise à jour normale à appliquer")
+        lignes.append(_tr('updater_cli_4'))
     elif statut_version == "version_locale_plus_recente":
-        lignes.append("- résultat : la version locale est plus récente que la version distante, aucune mise à jour normale à appliquer")
+        lignes.append(_tr('updater_cli_5'))
     elif manifest_auto_update and archive_url and sha256 and diagnostic.get("statut_global") != "bloque":
-        lignes.append("- tout est prêt ; l’installation peut être lancée après sauvegarde locale")
+        lignes.append(_tr('updater_cli_6'))
     else:
-        lignes.append("- résultat : information seulement, aucune installation lancée")
+        lignes.append(_tr('updater_cli_7'))
 
     return "\n".join(lignes)
 
@@ -115,19 +116,19 @@ def valider_manifest_applicable(diagnostic: dict) -> tuple[bool, list[str]]:
     erreurs = []
     version = diagnostic.get("version", {})
     if diagnostic.get("statut_global") == "bloque":
-        erreurs.append("installation bloquée : protections locales insuffisantes")
+        erreurs.append(_tr('updater_cli_8'))
     statut_version = str(version.get("statut") or "").strip()
     if statut_version == "a_jour":
-        erreurs.append("Gruterra est déjà à jour")
+        erreurs.append(_tr('updater_cli_9'))
     elif statut_version == "version_locale_plus_recente":
-        erreurs.append("version locale plus récente que la version distante")
+        erreurs.append(_tr('updater_cli_10'))
     if not version.get("manifest_auto_update"):
-        erreurs.append("installation depuis GitHub désactivée pour cette version")
+        erreurs.append(_tr('updater_cli_11'))
     if not str(version.get("archive_url", "") or "").strip():
-        erreurs.append("paquet de mise à jour absent des informations GitHub")
+        erreurs.append(_tr('updater_cli_12'))
     sha256 = str(version.get("sha256", "") or "").strip().lower()
     if len(sha256) != 64 or any(car not in "0123456789abcdef" for car in sha256):
-        erreurs.append("contrôle d’intégrité du paquet absent ou invalide")
+        erreurs.append(_tr('updater_cli_13'))
     return not erreurs, erreurs
 
 
@@ -138,7 +139,7 @@ def telecharger_archive(url: str, destination: Path) -> None:
             with destination.open("wb") as fichier:
                 shutil.copyfileobj(reponse, fichier)
     except (HTTPError, URLError, TimeoutError, OSError) as erreur:
-        raise RuntimeError(f"Téléchargement impossible : {erreur}") from erreur
+        raise RuntimeError(_tr('updater_download_error').format(error=erreur)) from erreur
 
 
 def calculer_sha256(chemin: Path) -> str:
@@ -152,7 +153,7 @@ def calculer_sha256(chemin: Path) -> str:
 def verifier_sha256(chemin: Path, attendu: str) -> None:
     obtenu = calculer_sha256(chemin)
     if obtenu.lower() != attendu.lower():
-        raise RuntimeError(f"SHA256 invalide : attendu {attendu}, obtenu {obtenu}")
+        raise RuntimeError(_tr('updater_checksum_error').format(expected=attendu, actual=obtenu))
 
 
 def trouver_racine_archive(dossier_extrait: Path) -> Path:
@@ -202,7 +203,7 @@ def appliquer_fichiers(source: Path, racine: Path, fichiers: list[Path]) -> int:
 def appliquer_mise_a_jour(diagnostic: dict, racine: Path, dry_run: bool = True) -> dict:
     ok, erreurs = valider_manifest_applicable(diagnostic)
     if not ok:
-        return {"ok": False, "applique": False, "erreurs": erreurs, "message": "Installation refusée."}
+        return {"ok": False, "applique": False, "erreurs": erreurs, "message": _tr('updater_cli_14')}
 
     version = diagnostic.get("version", {})
     archive_url = str(version.get("archive_url", "")).strip()
@@ -220,13 +221,13 @@ def appliquer_mise_a_jour(diagnostic: dict, racine: Path, dry_run: bool = True) 
         source = trouver_racine_archive(extraction)
         fichiers = lister_fichiers_programme(source)
         if not fichiers:
-            return {"ok": False, "applique": False, "erreurs": ["paquet téléchargé sans fichier Gruterra exploitable"], "message": "Installation refusée."}
+            return {"ok": False, "applique": False, "erreurs": [_tr('updater_cli_15')], "message": _tr('updater_cli_14')}
         if dry_run:
             return {
                 "ok": True,
                 "applique": False,
                 "fichiers": len(fichiers),
-                "message": f"Vérification OK : {len(fichiers)} fichier(s) du programme seraient mis à jour.",
+                "message": _tr('updater_dry_run').format(count=len(fichiers)),
             }
         backup = sauvegarder_programme(racine, fichiers)
         copies = appliquer_fichiers(source, racine, fichiers)
@@ -235,17 +236,17 @@ def appliquer_mise_a_jour(diagnostic: dict, racine: Path, dry_run: bool = True) 
             "applique": True,
             "fichiers": copies,
             "backup": str(backup),
-            "message": f"Mise à jour appliquée : {copies} fichier(s) du programme remplacé(s). Sauvegarde créée : {backup}",
+            "message": _tr('updater_applied').format(count=copies, backup=backup),
         }
 
 
 def main(argv: list[str] | None = None) -> int:
     configurer_sorties_utf8()
-    parser = argparse.ArgumentParser(description="Vérifie ou applique une mise à jour Gruterra en préservant les données locales.")
-    parser.add_argument("--local", action="store_true", help="utilise seulement le manifeste local")
-    parser.add_argument("--json", action="store_true", help="affiche le diagnostic JSON")
-    parser.add_argument("--apply", action="store_true", help="applique l'archive officielle après contrôle SHA256 et sauvegarde locale")
-    parser.add_argument("--dry-run", action="store_true", help="simule l'application de l'archive officielle sans remplacer les fichiers")
+    parser = argparse.ArgumentParser(description=_tr('updater_cli_16'))
+    parser.add_argument("--local", action="store_true", help=_tr('updater_cli_17'))
+    parser.add_argument("--json", action="store_true", help=_tr('updater_cli_18'))
+    parser.add_argument("--apply", action="store_true", help=_tr('updater_cli_19'))
+    parser.add_argument("--dry-run", action="store_true", help=_tr('updater_cli_20'))
     args = parser.parse_args(argv)
 
     diagnostic = botaneo_update.construire_diagnostic_mise_a_jour(
@@ -261,11 +262,11 @@ def main(argv: list[str] | None = None) -> int:
 
     if args.apply or args.dry_run:
         safe_print("")
-        safe_print("Installation demandée :" if args.apply else "Vérification sans installation demandée :")
+        safe_print(_tr('updater_cli_21') if args.apply else _tr('updater_cli_22'))
         try:
             resultat = appliquer_mise_a_jour(diagnostic, RACINE, dry_run=not args.apply)
         except RuntimeError as erreur:
-            safe_print(f"- échec : {erreur}")
+            safe_print(_tr('updater_download_error').format(error=erreur))
             return 3
         safe_print(f"- {resultat.get('message')}")
         for erreur in resultat.get("erreurs", []):

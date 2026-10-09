@@ -1,3 +1,5 @@
+
+from i18n import traduire_courant as _tr
 import database
 
 
@@ -28,7 +30,7 @@ def ajouter_capteur(
     nom = nom.strip()
 
     if not nom:
-        raise ValueError("Le nom du capteur est obligatoire.")
+        raise ValueError(_tr('capteurs_text_31'))
 
     return database.ajouter_capteur(
         nom,

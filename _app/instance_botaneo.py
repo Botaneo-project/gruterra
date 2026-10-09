@@ -1,4 +1,6 @@
 """Verrou interprocessus conserve jusqu'a la fermeture de Gruterra."""
+
+from i18n import traduire_courant as _tr
 import atexit
 import os
 from pathlib import Path
@@ -31,7 +33,7 @@ class VerrouInstance:
                 fcntl.flock(stream.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
         except OSError:
             stream.close()
-            raise InstanceOccupee('Gruterra est déjà ouvert. Utilisez la fenêtre existante ou fermez-la avant de relancer.') from None
+            raise InstanceOccupee(_tr('instance_botaneo_text_34')) from None
         self.file = stream
 
     def liberer(self):
@@ -48,7 +50,7 @@ def exiger_instance_unique(graphique=False):
     try:
         _verrou.acquerir()
     except (InstanceOccupee, OSError) as erreur:
-        message = str(erreur) if isinstance(erreur, InstanceOccupee) else 'Impossible de sécuriser le lancement de Gruterra (verrou inaccessible).'
+        message = str(erreur) if isinstance(erreur, InstanceOccupee) else _tr('instance_botaneo_text_51')
         if graphique:
             import tkinter as tk
             from tkinter import messagebox

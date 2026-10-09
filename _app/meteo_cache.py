@@ -1,4 +1,6 @@
 """Etat prive/public independant. Une erreur ne rajeunit jamais le cache."""
+
+from i18n import traduire_courant as _tr
 from datetime import datetime, timezone
 from botaneo_config import lire_json, ecrire_json
 
@@ -42,17 +44,17 @@ class CacheMeteo:
 
     def libelle(self):
         lignes = []
-        for key, label in [('privees','Privée'),('publiques','Publiques')]:
+        for key, label in [('privees',_tr('meteo_cache_text_45')),('publiques',_tr('meteo_cache_text_47'))]:
             source = self.sources[key]
             date = source['date']
-            when = datetime.fromisoformat(date).astimezone().strftime('%d/%m/%Y à %H:%M:%S') if date else 'date inconnue'
+            when = datetime.fromisoformat(date).astimezone().strftime('%d/%m/%Y à %H:%M:%S') if date else _tr('botaneo_email_text_192')
             if source['date'] or source['data']:
-                etat = 'en cache' if source['cache'] else 'lecture réussie'
+                etat = _tr('meteo_cache_text_52') if source['cache'] else _tr('meteo_cache_text_50')
                 texte = f'{label} : {when} · {etat}'
             else:
-                texte = label + ' : aucune lecture connue'
+                texte = label + _tr('meteo_cache_text_55')
             if source['error']:
-                texte += ' · connexion indisponible'
+                texte += _tr('meteo_cache_text_57')
             lignes.append(texte)
         return '\n'.join(lignes)
 
@@ -64,5 +66,5 @@ def recuperer_sources(api):
             data = function()
             result[key] = {'data': data, 'date': datetime.now(timezone.utc).isoformat(timespec='seconds'), 'error': None}
         except Exception:
-            result[key] = {'data': None, 'date': None, 'error': 'Lecture météo indisponible'}
+            result[key] = {'data': None, 'date': None, 'error': _tr('meteo_cache_text_67')}
     return result

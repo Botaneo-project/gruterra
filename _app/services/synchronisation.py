@@ -1,3 +1,5 @@
+
+from i18n import traduire_courant as _tr
 import asyncio
 from datetime import datetime
 
@@ -32,7 +34,7 @@ async def synchroniser_capteur(capteur, silencieux=False):
 
     if not actif:
         if not silencieux:
-            print(f"⏭️ Capteur ID {capteur_id} inactif — ignoré.")
+            print(_tr('synchronisation_text_35').format(v0=capteur_id))
         return None
 
     if raspberry_sync.owned(adresse):
@@ -44,7 +46,7 @@ async def synchroniser_capteur(capteur, silencieux=False):
     if not silencieux:
         print()
         print("=" * 45)
-        print(f"🌿 Plante  : {nom_plante} ({espece})")
+        print(_tr('synchronisation_text_47').format(v0=nom_plante, v1=espece))
         print(f"📍 Lieu    : {emplacement} - {zone}")
         print(f"📡 Capteur : {nom_capteur}")
         print(f"🔗 Adresse : {adresse}")
@@ -62,18 +64,17 @@ async def synchroniser_capteur(capteur, silencieux=False):
         heure_mesure = datetime.now()
 
         if not silencieux:
-            print("✅ Connecté !")
-            print("📡 Lecture des mesures...")
+            print(_tr('synchronisation_text_65'))
+            print(_tr('synchronisation_text_66'))
             print()
-            print("🌱 MESURES")
+            print(_tr('synchronisation_text_70_more'))
             print("-" * 30)
-            print(f"🌡️ Température : {temperature:.1f} °C")
-            print(f"💧 Humidité    : {humidite} %")
-            print(f"☀️ Luminosité  : {luminosite} lux")
-            print(f"🧪 Conductivité : {conductivite} µS/cm")
+            print(_tr('synchronisation_text_70').format(v0=temperature))
+            print(_tr('netatmo_text_946').format(v0=humidite))
+            print(_tr('synchronisation_text_72').format(v0=luminosite))
+            print(_tr('synchronisation_text_73').format(v0=conductivite))
             print(
-                f"🕐 Heure de mesure : "
-                f"{heure_mesure.strftime('%d/%m/%Y %H:%M:%S')}"
+                _tr('synchronisation_text_75').format(v0=heure_mesure.strftime('%d/%m/%Y %H:%M:%S'))
             )
 
         database.enregistrer_mesure(
@@ -89,9 +90,9 @@ async def synchroniser_capteur(capteur, silencieux=False):
         if not silencieux:
             print()
             print(
-                f"💾 Mesure enregistrée — capteur ID {capteur_id}"
+                _tr('synchronisation_text_92').format(v0=capteur_id)
             )
-            print("🔌 Déconnexion.")
+            print(_tr('synchronisation_text_94'))
 
         return True
 
@@ -99,8 +100,7 @@ async def synchroniser_capteur(capteur, silencieux=False):
         if not silencieux:
             print()
             print(
-                f"❌ Erreur avec ce capteur : "
-                f"{type(e).__name__}"
+                _tr('synchronisation_text_102').format(v0=type(e).__name__)
             )
             print(f"   Message : {repr(e)}")
 
@@ -122,14 +122,14 @@ async def synchroniser_tous_les_capteurs(silencieux=False):
 
     if not capteurs:
         if not silencieux:
-            print("❌ Aucun capteur dans la base.")
+            print(_tr('synchronisation_text_125'))
         return
 
     if not silencieux:
         print()
-        print("🌱 SYNCHRONISATION DES CAPTEURS")
+        print(_tr('synchronisation_text_130'))
         print("=" * 45)
-        print(f"📊 {len(capteurs)} capteur(s) enregistré(s)")
+        print(_tr('synchronisation_text_132').format(v0=len(capteurs)))
 
     succes = 0
     echecs = 0
@@ -156,11 +156,11 @@ async def synchroniser_tous_les_capteurs(silencieux=False):
     if not silencieux:
         print()
         print("=" * 45)
-        print("📊 RÉSULTAT DE LA SYNCHRONISATION")
+        print(_tr('synchronisation_text_159'))
         print("=" * 45)
-        print(f"✅ Réussites : {succes}")
-        print(f"❌ Échecs    : {echecs}")
-        print(f"⏭️ Ignorés   : {ignores}")
+        print(_tr('synchronisation_text_161').format(v0=succes))
+        print(_tr('synchronisation_text_162').format(v0=echecs))
+        print(_tr('synchronisation_text_163').format(v0=ignores))
         print(f"📡 Total     : {len(capteurs)}")
         print("=" * 45)
 

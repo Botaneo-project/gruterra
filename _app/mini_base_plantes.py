@@ -325,14 +325,13 @@ def trouver_plante(nom):
 
 
 def resume_besoins(plante):
+    from i18n import traduire_courant, traduire_texte_courant
     if not plante:
-        return "Plante non connue dans la mini base. La saisie manuelle reste possible."
-    lignes = [
-        f"Espèce : {plante.get('espece') or 'non renseignée'}",
-        f"Type : {plante.get('type') or 'non renseigné'}",
-        f"Lumière : {plante.get('lumiere') or 'non renseignée'}",
-        f"Humidité du sol : {plante.get('humidite_sol') or 'non renseignée'}",
-        f"Température : {plante.get('temperature') or 'non renseignée'}",
-        f"Arrosage : {plante.get('arrosage') or 'non renseigné'}",
-    ]
+        return traduire_courant("plant_catalog_unknown")
+    lignes = []
+    for champ, cle in (("espece", "plant_catalog_species"), ("type", "plant_catalog_type"), ("lumiere", "plant_catalog_light"), ("humidite_sol", "plant_catalog_soil"), ("temperature", "plant_catalog_temperature"), ("arrosage", "plant_catalog_watering")):
+        valeur = plante.get(champ) or traduire_courant("unknown_room")
+        if champ != "espece":
+            valeur = traduire_texte_courant(valeur)
+        lignes.append(traduire_courant(cle).format(value=valeur))
     return "\n".join(lignes)

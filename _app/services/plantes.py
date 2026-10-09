@@ -1,3 +1,5 @@
+
+from i18n import traduire_courant as _tr
 import database
 
 
@@ -29,17 +31,17 @@ def ajouter_plante(
     espece = espece.strip()
 
     if not nom:
-        raise ValueError("Le nom de la plante est obligatoire.")
+        raise ValueError(_tr('plant_name_required'))
 
     if not espece:
-        raise ValueError("L'espèce de la plante est obligatoire.")
+        raise ValueError(_tr('plantes_text_35'))
 
     if emplacement:
         emplacement = emplacement.strip()
 
         if emplacement not in EMPLACEMENTS_VALIDES:
             raise ValueError(
-                "L'emplacement doit être 'Intérieur' ou 'Extérieur'."
+                _tr('plantes_text_42')
             )
 
     if zone:
@@ -66,17 +68,17 @@ def modifier_plante(
     espece = espece.strip()
 
     if not nom:
-        raise ValueError("Le nom de la plante est obligatoire.")
+        raise ValueError(_tr('plant_name_required'))
 
     if not espece:
-        raise ValueError("L'espèce de la plante est obligatoire.")
+        raise ValueError(_tr('plantes_text_35'))
 
     if emplacement:
         emplacement = emplacement.strip()
 
         if emplacement not in EMPLACEMENTS_VALIDES:
             raise ValueError(
-                "L'emplacement doit être 'Intérieur' ou 'Extérieur'."
+                _tr('plantes_text_42')
             )
 
     if zone:
@@ -97,6 +99,6 @@ def supprimer_plante(plante_id):
     plante = database.get_plante(plante_id)
 
     if plante is None:
-        raise ValueError("La plante n'existe pas.")
+        raise ValueError(_tr('analyse_text_15'))
 
     database.supprimer_plante(plante_id)

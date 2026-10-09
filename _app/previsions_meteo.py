@@ -3,6 +3,8 @@
 Par sécurité, aucun appel externe n'est effectué tant que la prévision n'est pas activée
 explicitement dans C:\\Plantes\\_config\\botaneo.local.json.
 """
+
+from i18n import traduire_courant as _tr
 from datetime import datetime, timezone
 from urllib.parse import urlencode
 from urllib.request import urlopen, Request
@@ -21,20 +23,20 @@ def parametres_prevision():
 
     prevision = config.get("previsions_meteo", {})
     if not isinstance(prevision, dict) or not prevision.get("active", False):
-        raise RuntimeError("Prévisions météo externes désactivées.") from None
+        raise RuntimeError(_tr('previsions_meteo_text_24')) from None
 
     source = prevision.get("source", "open_meteo_meteofrance")
     if source != "open_meteo_meteofrance":
-        raise RuntimeError("Source de prévision inconnue.") from None
+        raise RuntimeError(_tr('previsions_meteo_text_28')) from None
 
     try:
         latitude = float(prevision["latitude"])
         longitude = float(prevision["longitude"])
     except (KeyError, TypeError, ValueError):
-        raise RuntimeError("Coordonnées de prévision météo absentes ou invalides.") from None
+        raise RuntimeError(_tr('previsions_meteo_text_34')) from None
 
     if not (-90 <= latitude <= 90 and -180 <= longitude <= 180):
-        raise RuntimeError("Coordonnées de prévision météo invalides.") from None
+        raise RuntimeError(_tr('previsions_meteo_text_37')) from None
 
     return latitude, longitude
 
@@ -57,16 +59,16 @@ def _arrondir(valeur, precision=1):
 
 def _interpretation_pluie(cumul):
     if cumul is None:
-        return "Quantité de pluie non disponible."
+        return _tr('previsions_meteo_text_60')
     if cumul == 0:
-        return "Pas de pluie prévue dans les 2 prochaines heures."
+        return _tr('previsions_meteo_text_62')
     if cumul < 0.5:
-        return "Quelques gouttes possibles, peu utile pour les plantes dehors."
+        return _tr('previsions_meteo_text_64')
     if cumul < 2:
-        return "Pluie faible prévue."
+        return _tr('previsions_meteo_text_66')
     if cumul < 5:
-        return "Pluie utile possible pour les plantes dehors."
-    return "Pluie importante possible, arrosage naturel probable dehors."
+        return _tr('previsions_meteo_text_68')
+    return _tr('previsions_meteo_text_69')
 
 
 def _interpretation_code_meteo(code):
@@ -79,38 +81,38 @@ def _interpretation_code_meteo(code):
         return None
 
     if code == 0:
-        return "ciel clair"
+        return _tr('previsions_meteo_text_84_more')
     if code in (1, 2):
-        return "ciel plutôt lumineux"
+        return _tr('previsions_meteo_text_84')
     if code == 3:
-        return "ciel couvert"
+        return _tr('previsions_meteo_text_88')
     if code in (45, 48):
-        return "brouillard"
+        return _tr('previsions_meteo_text_90')
     if code in (51, 53, 55, 56, 57):
-        return "bruine"
+        return _tr('previsions_meteo_text_92')
     if code in (61, 63, 65, 66, 67, 80, 81, 82):
-        return "pluie"
+        return _tr('previsions_meteo_text_94')
     if code in (71, 73, 75, 77, 85, 86):
-        return "neige"
+        return _tr('previsions_meteo_text_96')
     if code in (95, 96, 99):
-        return "orage"
+        return _tr('previsions_meteo_text_98')
     return None
 
 
 def _interpretation_lumiere(rayonnement, nuages):
     if rayonnement is not None:
         if rayonnement < 80:
-            return "lumière faible"
+            return _tr('previsions_meteo_text_103')
         if rayonnement < 250:
-            return "lumière moyenne"
-        return "lumière correcte"
+            return _tr('previsions_meteo_text_105')
+        return _tr('previsions_meteo_text_106')
     if nuages is not None:
         if nuages >= 80:
-            return "ciel très couvert"
+            return _tr('previsions_meteo_text_109')
         if nuages >= 50:
-            return "ciel variable"
-        return "ciel plutôt lumineux"
-    return "non disponible"
+            return _tr('previsions_meteo_text_113')
+        return _tr('previsions_meteo_text_84')
+    return _tr('interface_text_5146')
 
 
 def recuperer_prevision_2h():
@@ -160,7 +162,7 @@ def recuperer_prevision_2h():
         indexes = list(range(min(2, len(heures))))
 
     if not indexes:
-        raise RuntimeError("Prévision météo indisponible.")
+        raise RuntimeError(_tr('previsions_meteo_text_163'))
 
     def valeurs(cle):
         source = hourly.get(cle, [])
@@ -191,11 +193,11 @@ def recuperer_prevision_2h():
         ciel = _interpretation_code_meteo(code_meteo) or ciel
     if ciel == "non disponible":
         if cumul_pluie > 0.5:
-            ciel = "pluie prévue"
+            ciel = _tr('previsions_meteo_text_194')
         elif cumul_pluie > 0:
-            ciel = "pluie possible"
+            ciel = _tr('previsions_meteo_text_198_more')
         else:
-            ciel = "sec prévu"
+            ciel = _tr('previsions_meteo_text_198')
 
     return {
         "date": datetime.now(timezone.utc).isoformat(timespec="seconds"),

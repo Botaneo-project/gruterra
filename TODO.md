@@ -2,6 +2,14 @@
 
 Ce fichier sert à garder une trace claire des idées et des prochaines étapes. Les éléments déjà en place sont conservés ici uniquement pour savoir où on en est, mais ils ne doivent plus être relancés sauf bug ou amélioration ciblée.
 
+## Traduction FR/EN — 2026-10-09
+
+- [x] Grand lot de traduction : interface, paramètres, synchronisation PC/Raspberry, historique et cycles, fiches de besoins, Netatmo, sauvegardes et diagnostics de mise à jour.
+- [x] Catalogue JSON FR/EN commun ; les textes des nouvelles fonctionnalités doivent être ajoutés dans les deux langues avec les mêmes paramètres de formatage.
+- [x] Identifiants métier préservés : séries de mesures, filtres, état de santé et événements balcon continuent de fonctionner indépendamment de la langue affichée.
+- [x] Contrôles automatisés des clés et paramètres FR/EN, calculs des cycles inchangés, sélection des séries et fiches botaniques ; lancement isolé de la démo FR puis EN, paramètres, À propos, historique et filtres.
+- [ ] Dernière relecture visuelle utilisateur sur le PC de secours : longueur des textes anglais, fenêtres étroites et messages provenant du Raspberry réel. Les observations personnelles, noms de plantes et anciennes notes de version restent dans leur langue d'origine.
+
 ## État des lieux urgent — 2026-10-05
 
 Cette section sert de point d'entrée rapide après les grosses modifications récentes. Elle ne remplace pas les sections détaillées plus bas ; elle indique ce qu'il faut vérifier en premier si un agent reprend le dossier ou si un bug apparaît.

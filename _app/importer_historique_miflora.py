@@ -4,6 +4,8 @@ Par defaut : verification seulement. --appliquer cree une sauvegarde SQLite
 puis importe en une transaction. Les dates sont stockees en heure locale du PC,
 comme les mesures existantes. Precision de l'horloge Mi Flora : quelques secondes.
 """
+
+from i18n import traduire_courant as _tr
 import argparse
 import json
 import sqlite3
@@ -13,9 +15,9 @@ from pathlib import Path
 
 def preparer(export):
     if export.get('reading_mode', 'count_limited') != 'count_limited':
-        raise ValueError('Mode de lecture historique non compatible.')
+        raise ValueError(_tr('importer_historique_miflora_text_16'))
     if export.get('status') not in ('complete', 'partial'):
-        raise ValueError('Statut historique non compatible.')
+        raise ValueError(_tr('importer_historique_miflora_text_18'))
     epochs = []
     device_seconds = None
     horloges = ['clock_before']
@@ -29,12 +31,12 @@ def preparer(export):
         if before.tzinfo is None or after.tzinfo is None or len(raw) != 4:
             raise ValueError('Repere temporel invalide.')
         if not 0 <= (after-before).total_seconds() <= 2:
-            raise ValueError('Lecture de l horloge trop lente.')
+            raise ValueError(_tr('importer_historique_miflora_text_32'))
         seconds = int.from_bytes(raw, 'little')
         if name == 'clock_before':
             device_seconds = seconds
         elif seconds < device_seconds:
-            raise ValueError('Horloge du capteur remise a zero.')
+            raise ValueError(_tr('importer_historique_miflora_text_37'))
         epochs.append(before + (after-before)/2 - timedelta(seconds=seconds))
     if len(epochs) > 1 and abs((epochs[1]-epochs[0]).total_seconds()) > 15:
         raise ValueError('Reperes temporels incoherents.')
@@ -54,11 +56,11 @@ def preparer(export):
             raise ValueError('Valeurs historiques invalides.')
         timestamp = (epoch + timedelta(seconds=seconds)).astimezone().replace(tzinfo=None).isoformat(timespec='seconds')
         if seconds in seen:
-            raise ValueError('Plusieurs entrees pour le meme temps interne.')
+            raise ValueError(_tr('importer_historique_miflora_text_57'))
         seen.add(seconds)
         rows.append((timestamp, temperature, moisture, light, conductivity, raw.hex()))
     if not rows:
-        raise ValueError('Aucune mesure.')
+        raise ValueError(_tr('importer_historique_miflora_text_61'))
     return sorted(rows)
 
 
@@ -80,7 +82,7 @@ def importer(export_path, db_path, appliquer=False, sauvegarder=True):
         capteurs = conn.execute('SELECT id, plante_id, actif FROM capteurs WHERE UPPER(adresse_ble)=?', (export['address'].upper(),)).fetchall()
         # Pas d'inference d'affectation historique en presence de deplacements.
         if len(capteurs) != 1 or capteurs[0][1] is None:
-            raise ValueError('Affectation a une plante ambigue ou absente.')
+            raise ValueError(_tr('importer_historique_miflora_text_83'))
         capteur_id = capteurs[0][0]
         before = conn.execute('SELECT COUNT(*) FROM mesures').fetchone()[0]
         pending = []
@@ -98,9 +100,9 @@ def importer(export_path, db_path, appliquer=False, sauvegarder=True):
                 (date_heure,temperature,humidite,luminosite,conductivite,donnees_brutes,capteur_id)
                 VALUES (?,?,?,?,?,?,?)''', pending)
             if conn.execute('PRAGMA foreign_key_check').fetchall():
-                raise ValueError('Relations de la base invalides : annulation.')
+                raise ValueError(_tr('importer_historique_miflora_text_101'))
             if conn.execute('PRAGMA integrity_check').fetchone()[0] != 'ok':
-                raise ValueError('Integrite de la base invalide : annulation.')
+                raise ValueError(_tr('importer_historique_miflora_text_103'))
             conn.commit()
         return {'applique': appliquer, 'avant': before, 'ajoutees' if appliquer else 'a_importer': len(pending), 'deja_presentes': len(rows)-len(pending), 'premiere_date_locale': rows[0][0], 'derniere_date_locale': rows[-1][0], 'sauvegarde': str(backup_path) if backup_path else None}
     except Exception:

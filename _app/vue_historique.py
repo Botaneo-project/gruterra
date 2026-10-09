@@ -25,11 +25,11 @@ from services.analyse_lumiere import (
 )
 from botaneo_dates import formater_local, maintenant_local, vers_local_naif
 from ui_preferences import charger_theme_sombre, charger_langue_interface
-from i18n import traduire, normaliser_langue
+from i18n import traduire, normaliser_langue, traduire_courant, traduire_texte_courant as _texte
 
 
 def vh_t(cle):
-    return traduire(cle, normaliser_langue(charger_langue_interface()))
+    return traduire_courant(cle)
 
 
 THEME_CLAIR = {
@@ -66,6 +66,27 @@ SERIES = {
     "Lumière": {"colonne": 4, "titre": "Luminosité", "unite": "lux", "couleur": "BLUE", "minimum": 0},
     "Conductivité": {"colonne": 5, "titre": "Conductivité", "unite": "µS/cm", "couleur": "PURPLE", "minimum": 0}
 }
+
+
+
+SERIES_LOCALES = {"Humidité": "series_moisture_choice", "Température": "series_temperature_title", "Lumière": "series_light_choice", "Conductivité": "series_conductivity_title"}
+
+
+def nom_serie_affiche(nom):
+    return vh_t(SERIES_LOCALES[nom]) if nom in SERIES_LOCALES else nom
+
+
+class SerieLocaleVar(tk.StringVar):
+    """Affiche une traduction, retourne aux calculs l'identifiant canonique de la série."""
+    def __init__(self, master=None, value=None, name=None):
+        super().__init__(master, nom_serie_affiche(value) if value else value, name)
+
+    def get(self):
+        valeur = super().get()
+        return next((cle for cle in SERIES if nom_serie_affiche(cle) == valeur), valeur)
+
+    def set(self, value):
+        super().set(nom_serie_affiche(value))
 
 
 def theme_actuel():
@@ -187,10 +208,10 @@ def analyser_points(points, nom_serie):
         tendance = vh_t("trend_stable")
         couleur = "GREEN"
     elif variation_jour > 0:
-        tendance = f"+{formater_nombre(variation_jour)} {unite}/jour"
+        tendance = vh_t('vue_historique_text_190').format(v0=formater_nombre(variation_jour), v1=unite)
         couleur = "BLUE"
     else:
-        tendance = f"{formater_nombre(variation_jour)} {unite}/jour"
+        tendance = vh_t('vue_historique_text_193').format(v0=formater_nombre(variation_jour), v1=unite)
         couleur = "ORANGE"
 
     if nom_serie == "Humidité":
@@ -342,8 +363,7 @@ def formater_statistique_jour(nom, stats, unite):
     if not stats:
         return f"- {nom} : —"
     return (
-        f"- {nom} : moyenne {formater_nombre(stats['moyenne'])} {unite} · "
-        f"min {formater_nombre(stats['minimum'])} · max {formater_nombre(stats['maximum'])}"
+        vh_t('vue_historique_text_366').format(v0=nom, v1=formater_nombre(stats['moyenne']), v2=unite, v3=formater_nombre(stats['minimum']), v4=formater_nombre(stats['maximum']))
     )
 
 
@@ -427,10 +447,10 @@ def heures_depuis_debut_cycle(cycle, date):
 def reperes_visuels_cycle(cycle):
     """Repères simples pour dessiner un cycle : arrosage, pic, 24 h, 48 h."""
 
-    reperes = [{"cle": "arrosage", "heures": 0, "libelle": "Arrosage", "couleur": "WATER", "style": "plein"}]
+    reperes = [{"cle": "arrosage", "heures": 0, "libelle": vh_t("watering"), "couleur": "WATER", "style": "plein"}]
     pic_heures = heures_depuis_debut_cycle(cycle, cycle.get("pic_date"))
     if pic_heures is not None:
-        reperes.append({"cle": "pic", "heures": pic_heures, "libelle": "Pic", "couleur": "ORANGE", "style": "plein"})
+        reperes.append({"cle": "pic", "heures": pic_heures, "libelle": vh_t('canonical_peak'), "couleur": "ORANGE", "style": "plein"})
     reperes.extend([
         {"cle": "24h", "heures": 24, "libelle": "24 h", "couleur": "PURPLE", "style": "pointille"},
         {"cle": "48h", "heures": 48, "libelle": "48 h", "couleur": "PURPLE", "style": "pointille"},
@@ -487,9 +507,9 @@ def comparer_deux_cycles(cycle_a, cycle_b):
         vh_t('comparison_report_8').format(v0=fmt_repere(repere_24_a), v1=fmt_repere(repere_24_b)),
         vh_t('comparison_report_9').format(v0=fmt_repere(repere_48_a), v1=fmt_repere(repere_48_b)),
         vh_t('comparison_report_10').format(v0=fmt(fin_a, '%'), v1=fmt(fin_b, '%')),
-        vh_t('comparison_report_11').format(v0=fmt(hausse_a, 'pt'), v1=fmt(hausse_b, 'pt')),
-        vh_t('comparison_report_12').format(v0=fmt(sechage_a, 'pt/j'), v1=fmt(sechage_b, 'pt/j')),
-        vh_t('comparison_report_13').format(v0=fmt(vitesse_24h_a, 'pt/j'), v1=fmt(vitesse_24h_b, 'pt/j')),
+        vh_t('comparison_report_11').format(v0=fmt(hausse_a, vh_t('comparison_report_34')), v1=fmt(hausse_b, vh_t('comparison_report_34'))),
+        vh_t('comparison_report_12').format(v0=fmt(sechage_a, vh_t('comparison_report_35')), v1=fmt(sechage_b, vh_t('comparison_report_35'))),
+        vh_t('comparison_report_13').format(v0=fmt(vitesse_24h_a, vh_t('comparison_report_35')), v1=fmt(vitesse_24h_b, vh_t('comparison_report_35'))),
         vh_t('comparison_report_14').format(v0=cycle_a.get('qualite') or '—', v1=cycle_b.get('qualite') or '—'),
         comparabilite["texte"],
     ]
@@ -519,7 +539,7 @@ def comparer_deux_cycles(cycle_a, cycle_b):
             (vh_t('comparison_report_30'), cycle_b.get("lecture_sechage") or "—", "", ""),
             (vh_t('comparison_report_31'), fmt(trou_a, "h"), fmt(trou_b, "h"), fmt((trou_a - trou_b) if trou_a is not None and trou_b is not None else None, "h")),
             (vh_t('comparison_report_32'), cycle_a.get("qualite") or "—", cycle_b.get("qualite") or "—", "—"),
-            (vh_t('comparison_report_33'), comparabilite["niveau"], "", "; ".join(comparabilite["alertes"])),
+            (vh_t('comparison_report_33'), _texte(comparabilite["niveau"]), "", "; ".join(comparabilite["alertes"])),
         ],
     }
 
@@ -629,7 +649,7 @@ def ouvrir_historique(parent, plante_id, action_synchroniser=None):
     barre.pack(fill="x", padx=24, pady=12)
 
     periode = tk.StringVar(value=vh_t("period_all"))
-    serie = tk.StringVar(value="Humidité")
+    serie = SerieLocaleVar(value="Humidité")
     jour_selectionne = tk.StringVar(value="")
     bilan = tk.StringVar()
     tri_table = {"colonne": None}
@@ -651,7 +671,7 @@ def ouvrir_historique(parent, plante_id, action_synchroniser=None):
     tk.Label(barre, text=vh_t("measurement"), bg=couleurs["BG"],
              fg=couleurs["TEXT"]).pack(side="left", padx=(18, 8))
     choix_serie = ttk.Combobox(barre, textvariable=serie,
-                               values=tuple(SERIES.keys()),
+                               values=tuple(nom_serie_affiche(nom) for nom in SERIES),
                                state="readonly", width=16)
     choix_serie.pack(side="left")
 
@@ -793,14 +813,12 @@ def ouvrir_historique(parent, plante_id, action_synchroniser=None):
                 dates.append(date)
         dates.sort()
         if not dates:
-            return "Qualité des données : aucune mesure sur cette période.", "SECONDARY"
+            return vh_t('vue_historique_text_796'), "SECONDARY"
         debut = dates[0]
         fin = dates[-1]
         if periode_affichee == vh_t("period_all"):
             return (
-                f"Données disponibles : {len(dates)} mesure(s) conservée(s) · "
-                f"période {debut.strftime('%d/%m %H:%M')} au {fin.strftime('%d/%m %H:%M')}. "
-                "Les trous ne sont pas estimés en vue complète.",
+                vh_t('vue_historique_text_801').format(v0=len(dates), v1=debut.strftime('%d/%m %H:%M'), v2=fin.strftime('%d/%m %H:%M')),
                 "SECONDARY"
             )
         duree_heures = max((fin - debut).total_seconds() / 3600, 0)
@@ -813,14 +831,12 @@ def ouvrir_historique(parent, plante_id, action_synchroniser=None):
         manque_estime = max(attendu - len(dates), 0)
         couverture = f"{len(dates)}/{attendu}" if attendu else str(len(dates))
         texte = (
-            f"Qualité des données : {couverture} mesure(s) attendues environ · "
-            f"période {debut.strftime('%d/%m %H:%M')} au {fin.strftime('%d/%m %H:%M')} · "
-            f"plus grand trou {plus_grand_trou:.1f} h"
+            vh_t('vue_historique_text_816').format(v0=couverture, v1=debut.strftime('%d/%m %H:%M'), v2=fin.strftime('%d/%m %H:%M'), v3=plus_grand_trou)
         )
         if manque_estime or trous_importants:
-            texte += f" · ⚠ données probablement incomplètes ({manque_estime} manquante(s) estimée(s), {trous_importants} trou(s) > 1h48). Relancer Synchroniser ou Importer historique peut compléter."
+            texte += vh_t('vue_historique_text_821').format(v0=manque_estime, v1=trous_importants)
             return texte, "ORANGE"
-        texte += " · suivi régulier sur cette période."
+        texte += vh_t('vue_historique_text_823')
         return texte, "GREEN"
 
     def valeur_tri_mesure(mesure, colonne):
@@ -850,12 +866,12 @@ def ouvrir_historique(parent, plante_id, action_synchroniser=None):
 
     def libelle_tri(colonne):
         return {
-            "date": "date la plus récente",
-            "humidite": "humidité la plus haute",
-            "temperature": "température la plus haute",
-            "lumiere": "lumière la plus forte",
-            "conductivite": "conductivité la plus haute"
-        }.get(colonne, "ordre normal")
+            "date": vh_t('vue_historique_text_853'),
+            "humidite": vh_t('vue_historique_text_854'),
+            "temperature": vh_t('vue_historique_text_855'),
+            "lumiere": vh_t('vue_historique_text_856'),
+            "conductivite": vh_t('vue_historique_text_857')
+        }.get(colonne, vh_t('vue_historique_text_874'))
 
 
     def afficher_mesures_table(mesures, colonne_tri=None):
@@ -901,7 +917,7 @@ def ouvrir_historique(parent, plante_id, action_synchroniser=None):
                     date = formater_local(meilleure[1], str(meilleure[1] or "—"))
                 except (ValueError, TypeError):
                     date = str(meilleure[1] or "—")
-                bilan.set(f"{len(mesures_courantes)} mesure(s) · tri : {libelle_tri(colonne)} · {date}")
+                bilan.set(vh_t('vue_historique_text_904').format(v0=len(mesures_courantes), v1=libelle_tri(colonne), v2=date))
             elif math.isfinite(valeur):
                 unite = {
                     "humidite": "%",
@@ -909,9 +925,9 @@ def ouvrir_historique(parent, plante_id, action_synchroniser=None):
                     "lumiere": "lux",
                     "conductivite": "µS/cm"
                 }.get(colonne, "")
-                bilan.set(f"{len(mesures_courantes)} mesure(s) · tri : {libelle_tri(colonne)} · {formater_nombre(valeur)} {unite}")
+                bilan.set(vh_t('vue_historique_text_912').format(v0=len(mesures_courantes), v1=libelle_tri(colonne), v2=formater_nombre(valeur), v3=unite))
             else:
-                bilan.set(f"{len(mesures_courantes)} mesure(s) · tri : {libelle_tri(colonne)}")
+                bilan.set(vh_t('vue_historique_text_914').format(v0=len(mesures_courantes), v1=libelle_tri(colonne)))
 
 
     def colonne_serie_actuelle():
@@ -925,7 +941,7 @@ def ouvrir_historique(parent, plante_id, action_synchroniser=None):
 
     def selectionner_mesure(mesure, libelle, valeur=None, unite=""):
         if not mesure:
-            bilan.set(f"{len(mesures_courantes)} mesure(s) · aucun repère disponible")
+            bilan.set(vh_t('vue_historique_text_928').format(v0=len(mesures_courantes)))
             return
         mesure_id = str(mesure[0])
         for item in table.get_children():
@@ -935,7 +951,7 @@ def ouvrir_historique(parent, plante_id, action_synchroniser=None):
                 table.see(item)
                 break
         detail = f" · {formater_nombre(valeur)} {unite}" if valeur is not None and math.isfinite(valeur) else ""
-        bilan.set(f"{len(mesures_courantes)} mesure(s) · {libelle}{detail}")
+        bilan.set(vh_t('vue_historique_text_938').format(v0=len(mesures_courantes), v1=libelle, v2=detail))
 
 
     def selectionner_repere(type_repere):
@@ -946,24 +962,24 @@ def ouvrir_historique(parent, plante_id, action_synchroniser=None):
             if math.isfinite(valeur):
                 valeurs.append((mesure, valeur))
         if not valeurs:
-            selectionner_mesure(None, "aucune valeur exploitable")
+            selectionner_mesure(None, vh_t('vue_historique_text_965'))
             return
 
         unite = SERIES[serie.get()]["unite"]
         if type_repere == "max":
             mesure, valeur = max(valeurs, key=lambda item: item[1])
-            selectionner_mesure(mesure, f"maximum {serie.get().lower()}", valeur, unite)
+            selectionner_mesure(mesure, f"maximum {nom_serie_affiche(serie.get()).lower()}", valeur, unite)
         elif type_repere == "min":
             mesure, valeur = min(valeurs, key=lambda item: item[1])
-            selectionner_mesure(mesure, f"minimum {serie.get().lower()}", valeur, unite)
+            selectionner_mesure(mesure, f"minimum {nom_serie_affiche(serie.get()).lower()}", valeur, unite)
         elif type_repere == "moyenne":
             moyenne = sum(valeur for _, valeur in valeurs) / len(valeurs)
             mesure, valeur = min(valeurs, key=lambda item: abs(item[1] - moyenne))
-            selectionner_mesure(mesure, f"plus proche de la moyenne {formater_nombre(moyenne)} {unite}", valeur, unite)
+            selectionner_mesure(mesure, vh_t('vue_historique_text_962').format(v0=formater_nombre(moyenne), v1=unite), valeur, unite)
         elif type_repere == "derniere":
             mesure = max(mesures_courantes, key=lambda item: valeur_tri_mesure(item, "date"))
             valeur = valeur_tri_mesure(mesure, colonne)
-            selectionner_mesure(mesure, f"dernière mesure {serie.get().lower()}", valeur, unite)
+            selectionner_mesure(mesure, vh_t('vue_historique_text_966').format(v0=nom_serie_affiche(serie.get()).lower()), valeur, unite)
 
 
     def minutes_repere(repere):
@@ -980,10 +996,10 @@ def ouvrir_historique(parent, plante_id, action_synchroniser=None):
 
     def selectionner_apres_arrosage(repere):
         if not arrosages_courants:
-            selectionner_mesure(None, "aucun arrosage visible sur cette période")
+            selectionner_mesure(None, vh_t('vue_historique_text_983'))
             return
         if not mesures_courantes:
-            selectionner_mesure(None, "aucune mesure visible sur cette période")
+            selectionner_mesure(None, vh_t('vue_historique_text_986'))
             return
 
         dernier_arrosage = max(
@@ -992,7 +1008,7 @@ def ouvrir_historique(parent, plante_id, action_synchroniser=None):
         )
         date_arrosage = date_locale_depuis_iso(dernier_arrosage[2])
         if not date_arrosage:
-            selectionner_mesure(None, "date d'arrosage inexploitable")
+            selectionner_mesure(None, vh_t('vue_historique_text_995'))
             return
 
         cible = date_arrosage + timedelta(minutes=minutes_repere(repere))
@@ -1005,7 +1021,7 @@ def ouvrir_historique(parent, plante_id, action_synchroniser=None):
                 mesures_apres.append((mesure, date_mesure))
 
         if not mesures_apres:
-            selectionner_mesure(None, f"aucune mesure après {repere[2]}")
+            selectionner_mesure(None, vh_t('vue_historique_text_1008').format(v0=repere[2]))
             return
 
         mesure, date_mesure = min(mesures_apres, key=lambda item: abs((item[1] - cible).total_seconds()))
@@ -1015,7 +1031,7 @@ def ouvrir_historique(parent, plante_id, action_synchroniser=None):
         ecart_min = abs((date_mesure - cible).total_seconds()) / 60
         selectionner_mesure(
             mesure,
-            f"{repere[2]} · mesure la plus proche, écart {ecart_min:.0f} min",
+            vh_t('vue_historique_text_1018').format(v0=repere[2], v1=ecart_min),
             valeur,
             unite
         )
@@ -1024,7 +1040,7 @@ def ouvrir_historique(parent, plante_id, action_synchroniser=None):
     def remettre_ordre_normal():
         tri_table["colonne"] = None
         afficher_mesures_table(mesures_courantes)
-        bilan.set(f"{len(mesures_courantes)} mesure(s) · ordre normal")
+        bilan.set(vh_t('vue_historique_text_1027').format(v0=len(mesures_courantes)))
 
 
     def graduations_temps(start, end):
@@ -1070,8 +1086,7 @@ def ouvrir_historique(parent, plante_id, action_synchroniser=None):
         repere_graphique["index"] = index
         unite = SERIES[serie.get()]["unite"]
         bilan.set(
-            f"{len(mesures_courantes)} mesure(s) · repère graphique : "
-            f"{date.strftime('%d/%m/%Y %H:%M')} · {formater_nombre(valeur)} {unite}"
+            vh_t('vue_historique_text_1073').format(v0=len(mesures_courantes), v1=date.strftime('%d/%m/%Y %H:%M'), v2=formater_nombre(valeur), v3=unite)
         )
         dessiner()
 
@@ -1088,7 +1103,7 @@ def ouvrir_historique(parent, plante_id, action_synchroniser=None):
         couleur_grille = melanger_couleurs(couleurs["GRID"], couleurs["CARD"], 0.35)
         couleur_zone = melanger_couleurs(couleur_ligne, couleurs["CARD"], 0.82)
 
-        canvas.create_text(x0, 22, text=f"{config['titre']} ({config['unite']})",
+        canvas.create_text(x0, 22, text=f"{_texte(config['titre'])} ({config['unite']})",
                            anchor="w", fill=couleurs["TEXT"],
                            font=("Segoe UI", 12, "bold"))
         if serie.get() == "Lumière":
@@ -1103,7 +1118,7 @@ def ouvrir_historique(parent, plante_id, action_synchroniser=None):
             fill=couleur_secondaire,
             font=("Segoe UI", 8)
         )
-        canvas.create_text(x1, 22, text=f"{len(points)} point(s)",
+        canvas.create_text(x1, 22, text=vh_t('vue_historique_text_1101').format(v0=len(points)),
                            anchor="e", fill=couleur_secondaire,
                            font=("Segoe UI", 9))
 
@@ -1394,15 +1409,15 @@ def ouvrir_historique(parent, plante_id, action_synchroniser=None):
         cycles = calculer_cycles_arrosage(toutes_mesures, tous_arrosages)
         texte = resumer_cycles_arrosage(toutes_mesures, tous_arrosages)
         if not cycles:
-            messagebox.showinfo("Cycles d’arrosage", "Aucun cycle d’arrosage exploitable pour cette plante.", parent=fenetre)
+            messagebox.showinfo(vh_t('vue_historique_text_1400'), vh_t('vue_historique_text_1397'), parent=fenetre)
             return
         detail = tk.Toplevel(fenetre)
-        detail.title("Cycles d’arrosage")
+        detail.title(vh_t('vue_historique_text_1400'))
         detail.configure(bg=couleurs["CARD"])
         detail.transient(fenetre)
         detail.geometry("980x690+70+50")
-        tk.Label(detail, text="💧 Cycles d’arrosage", bg=couleurs["CARD"], fg=couleurs["WATER"], font=("Segoe UI", 16, "bold")).pack(anchor="w", padx=18, pady=(16, 4))
-        tk.Label(detail, text="Comparaison des réponses à l’arrosage, calculée sur la zone mesurée par le Mi Flora.", bg=couleurs["CARD"], fg=couleurs["SECONDARY"], font=("Segoe UI", 9)).pack(anchor="w", padx=18, pady=(0, 6))
+        tk.Label(detail, text=vh_t('vue_historique_text_1404'), bg=couleurs["CARD"], fg=couleurs["WATER"], font=("Segoe UI", 16, "bold")).pack(anchor="w", padx=18, pady=(16, 4))
+        tk.Label(detail, text=vh_t('vue_historique_text_1405'), bg=couleurs["CARD"], fg=couleurs["SECONDARY"], font=("Segoe UI", 9)).pack(anchor="w", padx=18, pady=(0, 6))
         analyse_cycles_var = tk.StringVar(value=analyser_cycles_arrosage(cycles))
         fond_analyse = melanger_couleurs(couleurs["BLUE"], couleurs["CARD"], 0.88)
         tk.Label(detail, textvariable=analyse_cycles_var, bg=fond_analyse, fg=couleurs["BLUE"], font=("Segoe UI", 9, "bold"), anchor="w", justify="left", wraplength=860, padx=10, pady=7).pack(fill="x", padx=18, pady=(0, 10))
@@ -1410,18 +1425,18 @@ def ouvrir_historique(parent, plante_id, action_synchroniser=None):
         colonnes_cycles = ("date", "quantite", "mesures", "avant", "depart", "pic", "fin", "sechage", "vitesse24", "trou", "qualite", "suivi")
         tableau = ttk.Treeview(detail, columns=colonnes_cycles, show="headings", height=6)
         titres_cycles = {
-            "date": "Arrosage",
-            "quantite": "Quantité",
-            "mesures": "Mesures",
-            "avant": "Avant",
-            "depart": "Après",
-            "pic": "Pic",
-            "fin": "Fin",
-            "sechage": "Séchage",
+            "date": vh_t('watering_title'),
+            "quantite": vh_t('vue_historique_text_1414'),
+            "mesures": vh_t('comparison_report_20'),
+            "avant": vh_t('canonical_before'),
+            "depart": vh_t('vue_historique_text_1417'),
+            "pic": vh_t('canonical_peak'),
+            "fin": vh_t('canonical_end'),
+            "sechage": vh_t('vue_historique_text_1420'),
             "vitesse24": "24 h",
-            "trou": "Trou max",
-            "qualite": "Qualité",
-            "suivi": "Suivi",
+            "trou": vh_t('vue_historique_text_1437'),
+            "qualite": vh_t('comparison_report_32'),
+            "suivi": vh_t('canonical_tracking'),
         }
         largeurs_cycles = {
             "date": 135,
@@ -1446,7 +1461,7 @@ def ouvrir_historique(parent, plante_id, action_synchroniser=None):
         for cycle in cycles_affiches:
             arrosage = cycle.get("arrosage")
             quantite = quantite_arrosage_courte(arrosage)
-            suivi = f"→ {formater_date_courte(cycle.get('fin'))}" if cycle.get("fin") else "cycle en cours"
+            suivi = f"→ {formater_date_courte(cycle.get('fin'))}" if cycle.get("fin") else vh_t('vue_historique_text_1464')
             tableau.insert("", "end", values=(
                 formater_date_courte(cycle.get("date")),
                 quantite,
@@ -1464,27 +1479,27 @@ def ouvrir_historique(parent, plante_id, action_synchroniser=None):
 
         comparaison_frame = tk.Frame(detail, bg=couleurs["CARD"])
         comparaison_frame.pack(fill="x", padx=18, pady=(0, 8))
-        tk.Label(comparaison_frame, text="Comparer deux cycles", bg=couleurs["CARD"], fg=couleurs["TEXT"], font=("Segoe UI", 10, "bold")).pack(anchor="w")
+        tk.Label(comparaison_frame, text=vh_t('vue_historique_text_1462'), bg=couleurs["CARD"], fg=couleurs["TEXT"], font=("Segoe UI", 10, "bold")).pack(anchor="w")
         choix_cycles = tk.Frame(comparaison_frame, bg=couleurs["CARD"])
         choix_cycles.pack(fill="x", pady=(6, 6))
         libelles_cycles = [libelle_cycle(cycle) for cycle in cycles_affiches]
         cycles_lookup = dict(zip(libelles_cycles, cycles_affiches))
         cycle_a_var = tk.StringVar(value=libelles_cycles[0] if libelles_cycles else "")
         cycle_b_var = tk.StringVar(value=libelles_cycles[1] if len(libelles_cycles) > 1 else (libelles_cycles[0] if libelles_cycles else ""))
-        tk.Label(choix_cycles, text="Cycle A", bg=couleurs["CARD"], fg=couleurs["TEXT"]).pack(side="left", padx=(0, 6))
+        tk.Label(choix_cycles, text=vh_t('vue_historique_text_1469'), bg=couleurs["CARD"], fg=couleurs["TEXT"]).pack(side="left", padx=(0, 6))
         combo_cycle_a = ttk.Combobox(choix_cycles, textvariable=cycle_a_var, values=libelles_cycles, state="readonly", width=28)
         combo_cycle_a.pack(side="left", padx=(0, 12))
-        tk.Label(choix_cycles, text="Cycle B", bg=couleurs["CARD"], fg=couleurs["TEXT"]).pack(side="left", padx=(0, 6))
+        tk.Label(choix_cycles, text=vh_t('vue_historique_text_1472'), bg=couleurs["CARD"], fg=couleurs["TEXT"]).pack(side="left", padx=(0, 6))
         combo_cycle_b = ttk.Combobox(choix_cycles, textvariable=cycle_b_var, values=libelles_cycles, state="readonly", width=28)
         combo_cycle_b.pack(side="left", padx=(0, 12))
-        serie_cycle_var = tk.StringVar(value="Humidité")
-        tk.Label(choix_cycles, text="Graphique", bg=couleurs["CARD"], fg=couleurs["TEXT"]).pack(side="left", padx=(0, 6))
-        combo_serie_cycle = ttk.Combobox(choix_cycles, textvariable=serie_cycle_var, values=tuple(SERIES.keys()), state="readonly", width=13)
+        serie_cycle_var = SerieLocaleVar(value="Humidité")
+        tk.Label(choix_cycles, text=vh_t('vue_historique_text_1476'), bg=couleurs["CARD"], fg=couleurs["TEXT"]).pack(side="left", padx=(0, 6))
+        combo_serie_cycle = ttk.Combobox(choix_cycles, textvariable=serie_cycle_var, values=tuple(nom_serie_affiche(nom) for nom in SERIES), state="readonly", width=13)
         combo_serie_cycle.pack(side="left")
 
         colonnes_cmp_cycles = ("indicateur", "cycle_a", "cycle_b", "ecart")
         tableau_cmp = ttk.Treeview(comparaison_frame, columns=colonnes_cmp_cycles, show="headings", height=8)
-        for colonne, titre, largeur in (("indicateur", "Indicateur", 155), ("cycle_a", "Cycle A", 130), ("cycle_b", "Cycle B", 130), ("ecart", "Écart A-B", 130)):
+        for colonne, titre, largeur in (("indicateur", vh_t('canonical_indicator'), 155), ("cycle_a", vh_t('vue_historique_text_1469'), 130), ("cycle_b", vh_t('vue_historique_text_1472'), 130), ("ecart", vh_t('compare_difference'), 130)):
             tableau_cmp.heading(colonne, text=titre)
             tableau_cmp.column(colonne, width=largeur, anchor="center")
         tableau_cmp.pack(fill="x")
@@ -1503,7 +1518,7 @@ def ouvrir_historique(parent, plante_id, action_synchroniser=None):
             points_b = points_cycle(cycle_b, nom_serie)
             tous_points = points_a + points_b
             if not tous_points:
-                graphique_cycles.create_text(largeur / 2, hauteur / 2, text=f"Aucune donnée exploitable pour {nom_serie.lower()} sur ces cycles.", fill=couleurs["SECONDARY"], font=("Segoe UI", 10))
+                graphique_cycles.create_text(largeur / 2, hauteur / 2, text=vh_t('vue_historique_text_1506').format(v0=nom_serie.lower()), fill=couleurs["SECONDARY"], font=("Segoe UI", 10))
                 return
             reperes_a = reperes_visuels_cycle(cycle_a)
             reperes_b = reperes_visuels_cycle(cycle_b)
@@ -1531,14 +1546,14 @@ def ouvrir_historique(parent, plante_id, action_synchroniser=None):
             def y_depuis_valeur(valeur):
                 return y1 - (y1 - y0) * (valeur - bas) / (haut - bas)
 
-            graphique_cycles.create_text(x0, 17, text=f"{config_serie['titre']} depuis arrosage ({config_serie['unite']})", anchor="w", fill=couleurs["TEXT"], font=("Segoe UI", 10, "bold"))
+            graphique_cycles.create_text(x0, 17, text=vh_t('vue_historique_text_1534').format(v0=_texte(config_serie['titre']), v1=config_serie['unite']), anchor="w", fill=couleurs["TEXT"], font=("Segoe UI", 10, "bold"))
             graphique_cycles.create_rectangle(x0, y0, x1, y1, outline=couleurs["BORDER"])
 
             legendes = [
-                (couleurs["GREEN"], "Cycle A"),
-                (couleurs["BLUE"], "Cycle B"),
-                (couleurs["WATER"], "Arrosage"),
-                (couleurs["ORANGE"], "Pic"),
+                (couleurs["GREEN"], vh_t('vue_historique_text_1469')),
+                (couleurs["BLUE"], vh_t('vue_historique_text_1472')),
+                (couleurs["WATER"], vh_t('watering_title')),
+                (couleurs["ORANGE"], vh_t('canonical_peak')),
                 (couleurs["PURPLE"], "24 h / 48 h"),
             ]
             x_legende = x0
@@ -1584,7 +1599,7 @@ def ouvrir_historique(parent, plante_id, action_synchroniser=None):
                     dessiner_repere({
                         "cle": "pic",
                         "heures": pic_heures,
-                        "libelle": f"Pic {suffixe}",
+                        "libelle": vh_t('vue_historique_text_1603').format(v0=suffixe),
                         "couleur": "ORANGE",
                         "style": "plein",
                     })
@@ -1653,20 +1668,20 @@ def ouvrir_historique(parent, plante_id, action_synchroniser=None):
         def copier_cycles():
             detail.clipboard_clear()
             detail.clipboard_append((texte + "\n\n" + comparaison_texte.get("texte", "")).strip())
-            bilan.set(f"{bilan.get()} · cycles copiés")
-        ttk.Button(boutons, text="Copier", command=copier_cycles).pack(side="left")
-        ttk.Button(boutons, text="Fermer", command=detail.destroy).pack(side="right")
+            bilan.set(vh_t('vue_historique_text_1656').format(v0=bilan.get()))
+        ttk.Button(boutons, text=vh_t('compare_copy'), command=copier_cycles).pack(side="left")
+        ttk.Button(boutons, text=vh_t('compare_close'), command=detail.destroy).pack(side="right")
 
 
     def copier_journee():
-        nom_plante = plante[1] if plante else "Plante"
+        nom_plante = plante[1] if plante else vh_t('plant')
         texte_jour = bilan_jour_courant.get("texte") or ""
         if periode.get() != vh_t("period_day") or not texte_jour:
-            bilan.set(f"{bilan.get()} · aucune journée sélectionnée à copier")
+            bilan.set(vh_t('vue_historique_text_1665').format(v0=bilan.get()))
             return
         texte_expositions = bilan_jour_courant.get("expositions") or ""
         lignes = [
-            f"Gruterra — Bilan journalier {nom_plante}",
+            vh_t('vue_historique_text_1685').format(v0=nom_plante),
             "",
             texte_jour,
         ]
@@ -1678,27 +1693,27 @@ def ouvrir_historique(parent, plante_id, action_synchroniser=None):
         ])
         fenetre.clipboard_clear()
         fenetre.clipboard_append("\n".join(lignes).strip())
-        bilan.set(f"{bilan.get()} · journée copiée")
+        bilan.set(vh_t('vue_historique_text_1681').format(v0=bilan.get()))
 
 
     def copier_resume_historique():
-        nom_plante = plante[1] if plante else "Plante"
+        nom_plante = plante[1] if plante else vh_t('plant')
         lignes = [
-            f"Historique Gruterra — {nom_plante}",
-            f"Période affichée : {periode.get()}",
-            f"Mesure affichée : {serie.get()}",
+            vh_t('vue_historique_text_1703').format(v0=nom_plante),
+            vh_t('vue_historique_text_1688').format(v0=periode.get()),
+            vh_t('vue_historique_text_1689').format(v0=nom_serie_affiche(serie.get())),
             "",
-            "Résumé visible :",
-            f"- Dernière : {resume_vars['dernier'].get()}",
-            f"- Moyenne : {resume_vars['moyenne'].get()}",
-            f"- Minimum : {resume_vars['minimum'].get()}",
-            f"- Maximum : {resume_vars['maximum'].get()}",
-            f"- Tendance : {resume_vars['tendance'].get()}",
+            vh_t('vue_historique_text_1691'),
+            vh_t('vue_historique_text_1692').format(v0=resume_vars['dernier'].get()),
+            vh_t('vue_historique_text_1709').format(v0=resume_vars['moyenne'].get()),
+            vh_t('vue_historique_text_1710_more').format(v0=resume_vars['minimum'].get()),
+            vh_t('vue_historique_text_1711').format(v0=resume_vars['maximum'].get()),
+            vh_t('vue_historique_text_1712_more').format(v0=resume_vars['tendance'].get()),
             "",
             jour_resume_var.get(),
             qualite_var.get(),
             lecture_var.get(),
-            f"Tableau : {bilan.get()}",
+            vh_t('vue_historique_text_1717').format(v0=bilan.get()),
         ]
 
         selection = table.selection()
@@ -1707,17 +1722,17 @@ def ouvrir_historique(parent, plante_id, action_synchroniser=None):
             if valeurs:
                 lignes.extend([
                     "",
-                    "Ligne sélectionnée :",
-                    f"- Date : {valeurs[0]}",
-                    f"- Humidité : {valeurs[1]} %",
-                    f"- Température : {valeurs[2]} °C",
-                    f"- Lumière : {valeurs[3]} lux",
-                    f"- Conductivité : {valeurs[4]} µS/cm",
+                    vh_t('vue_historique_text_1710'),
+                    vh_t('vue_historique_text_1727').format(v0=valeurs[0]),
+                    vh_t('vue_historique_text_1712').format(v0=valeurs[1]),
+                    vh_t('interface_text_5921').format(v0=valeurs[2]),
+                    vh_t('vue_historique_text_1714').format(v0=valeurs[3]),
+                    vh_t('vue_historique_text_1715').format(v0=valeurs[4]),
                 ])
 
         fenetre.clipboard_clear()
         fenetre.clipboard_append("\n".join(lignes).strip())
-        bilan.set(f"{bilan.get()} · résumé copié")
+        bilan.set(vh_t('vue_historique_text_1720').format(v0=bilan.get()))
 
 
     def actualiser(event=None):
@@ -1726,7 +1741,7 @@ def ouvrir_historique(parent, plante_id, action_synchroniser=None):
         try:
             mesures = database.get_mesures(plante_id=plante_id, limite=-1)
         except Exception:
-            bilan.set("Impossible de lire les mesures. Réessayez.")
+            bilan.set(vh_t('vue_historique_text_1729'))
             return
 
         try:
@@ -1767,7 +1782,7 @@ def ouvrir_historique(parent, plante_id, action_synchroniser=None):
                 mesures = []
                 arrosages = []
                 expositions = []
-                jour_resume_var.set("Journée : aucune date disponible pour cette plante.")
+                jour_resume_var.set(vh_t('vue_historique_text_1770'))
                 bilan_jour_courant["texte"] = ""
                 bilan_jour_courant["expositions"] = ""
                 bilan_jour_courant["jour"] = ""
@@ -1835,8 +1850,7 @@ def ouvrir_historique(parent, plante_id, action_synchroniser=None):
         qualite_texte, qualite_couleur = analyser_qualite_donnees(mesures, periode.get())
         if mesures_suspectes_ids:
             qualite_texte += (
-                f" · ⚠ {len(mesures_suspectes_ids)} humidité à 0 % isolée(s) conservée(s) "
-                "dans le tableau, exclue(s) du graphique et des statistiques."
+                vh_t('vue_historique_text_1838').format(v0=len(mesures_suspectes_ids))
             )
             qualite_couleur = "ORANGE"
         qualite_var.set(qualite_texte)
@@ -1844,8 +1858,8 @@ def ouvrir_historique(parent, plante_id, action_synchroniser=None):
 
         lecture_var.set(analyse["lecture"])
         lecture_label.configure(fg=couleurs.get(analyse["couleur"], couleurs["TEXT"]))
-        suffixe_arrosage = f" · {len(arrosages_courants)} arrosage(s)" if arrosages_courants else ""
-        suffixe_exposition = f" · {len(expositions_courantes)} exposition(s) balcon" if expositions_courantes else ""
+        suffixe_arrosage = vh_t('vue_historique_text_1847').format(v0=len(arrosages_courants)) if arrosages_courants else ""
+        suffixe_exposition = vh_t('vue_historique_text_1863').format(v0=len(expositions_courantes)) if expositions_courantes else ""
         if periode.get() == vh_t("period_day"):
             if outils_post_arrosage.winfo_ismapped():
                 outils_post_arrosage.pack_forget()
@@ -1854,9 +1868,9 @@ def ouvrir_historique(parent, plante_id, action_synchroniser=None):
                 outils_post_arrosage.pack(fill="x", padx=24, pady=(0, 8), before=cadre)
 
         if tri_table["colonne"]:
-            bilan.set(f"{len(mesures)} mesure(s){suffixe_arrosage}{suffixe_exposition} · tri : {libelle_tri(tri_table['colonne'])}")
+            bilan.set(vh_t('vue_historique_text_1857').format(v0=len(mesures), v1=suffixe_arrosage, v2=suffixe_exposition, v3=libelle_tri(tri_table['colonne'])))
         else:
-            bilan.set(f"{len(mesures)} mesure(s){suffixe_arrosage}{suffixe_exposition}")
+            bilan.set(vh_t('vue_historique_text_1859').format(v0=len(mesures), v1=suffixe_arrosage, v2=suffixe_exposition))
         dessiner()
 
     for texte, repere in (

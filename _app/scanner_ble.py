@@ -1,3 +1,5 @@
+
+from i18n import traduire_courant as _tr
 import asyncio
 import os
 import sys
@@ -12,21 +14,21 @@ async def scanner():
 
     print()
     print("=" * 60)
-    print("SCAN BLUETOOTH - MI FLORA")
+    print(_tr('scanner_ble_text_17'))
     print("=" * 60)
     print()
 
     if ADRESSE_MIFLORA == "AA:BB:CC:DD:EE:FF":
-        print("Aucune adresse Mi Flora réelle configurée.")
-        print("Définissez BOTANEO_MIFLORA_ADDRESS pour chercher un capteur précis,")
-        print("ou utilisez capteurs/scanner_ble.py pour afficher tous les appareils proches.")
+        print(_tr('scanner_ble_text_20'))
+        print(_tr('scanner_ble_text_21'))
+        print(_tr('scanner_ble_text_22'))
         print()
-        print("CODE RETOUR : 2")
+        print(_tr('scanner_ble_text_26'))
         return 2
 
-    print("Recherche du Mi Flora...")
-    print(f"   Adresse recherchée : {ADRESSE_MIFLORA}")
-    print("   Durée : 10 secondes")
+    print(_tr('scanner_ble_text_27'))
+    print(_tr('scanner_ble_text_28').format(v0=ADRESSE_MIFLORA))
+    print(_tr('scanner_ble_text_29'))
     print()
 
     appareils = await BleakScanner.discover(timeout=10)
@@ -37,9 +39,9 @@ async def scanner():
 
         if adresse.upper() == ADRESSE_MIFLORA.upper():
 
-            nom = appareil.name or "Nom inconnu"
+            nom = appareil.name or _tr('scanner_ble_text_24')
 
-            print("MI FLORA TROUVÉ")
+            print(_tr('scanner_ble_text_42'))
             print(f"   Nom     : {nom}")
             print(f"   Adresse : {adresse}")
 
@@ -47,14 +49,14 @@ async def scanner():
                 print(f"   Signal  : {appareil.rssi} dBm")
 
             print()
-            print("CODE RETOUR : 0")
+            print(_tr('scanner_ble_text_52'))
             print()
 
             return 0
 
-    print("MI FLORA NON TROUVÉ")
+    print(_tr('scanner_ble_text_55'))
     print()
-    print("CODE RETOUR : 3")
+    print(_tr('scanner_ble_text_59'))
     print()
 
     return 3

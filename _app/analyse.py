@@ -1,3 +1,5 @@
+
+from i18n import traduire_courant as _tr
 from datetime import datetime
 
 import database
@@ -12,7 +14,7 @@ def analyser_plante(plante_id):
     plante = database.get_plante(plante_id)
 
     if plante is None:
-        raise ValueError("La plante n'existe pas.")
+        raise ValueError(_tr('analyse_text_15'))
 
     mesures = database.get_mesures()
 
@@ -23,7 +25,7 @@ def analyser_plante(plante_id):
     ]
 
     if not mesures:
-        print("❌ Aucune mesure disponible.")
+        print(_tr('analyse_text_26'))
         return
 
     # Recherche des mesures associées aux capteurs
@@ -43,7 +45,7 @@ def analyser_plante(plante_id):
     ]
 
     if not mesures_plante:
-        print("❌ Aucune mesure disponible pour cette plante.")
+        print(_tr('analyse_text_46'))
         return
 
     # Dernier arrosage
@@ -64,18 +66,18 @@ def analyser_plante(plante_id):
 
     print()
     print("=" * 60)
-    print("🧠 ANALYSE GRUTERRA")
+    print(_tr('analyse_text_69'))
     print("=" * 60)
 
     print()
-    print(f"🌿 Plante : {plante[1]}")
-    print(f"   Espèce : {plante[2]}")
-    print(f"   Lieu   : {plante[3]} - {plante[4]}")
+    print(_tr('analyse_text_71').format(v0=plante[1]))
+    print(_tr('analyse_text_72').format(v0=plante[2]))
+    print(_tr('analyse_text_75').format(v0=plante[3], v1=plante[4]))
 
     if dernier_arrosage is None:
         print()
-        print("💧 Aucun arrosage enregistré.")
-        print("ℹ️ Impossible d'analyser un cycle de séchage.")
+        print(_tr('analyse_text_77'))
+        print(_tr('analyse_text_78'))
         return
 
     date_arrosage = datetime.fromisoformat(
@@ -89,26 +91,25 @@ def analyser_plante(plante_id):
     ]
 
     print()
-    print("💧 DERNIER ARROSAGE")
+    print(_tr('analyse_text_94'))
     print("-" * 30)
     print(
-        f"🕐 Date : "
-        f"{date_arrosage.strftime('%d/%m/%Y %H:%M:%S')}"
+        _tr('analyse_text_97').format(v0=date_arrosage.strftime('%d/%m/%Y %H:%M:%S'))
     )
-    print(f"💦 Quantité : {dernier_arrosage[1]} ml")
+    print(_tr('analyse_text_98').format(v0=dernier_arrosage[1]))
 
     if dernier_arrosage[2]:
-        print(f"   Type : {dernier_arrosage[2]}")
+        print(_tr('analyse_text_103').format(v0=dernier_arrosage[2]))
 
     if dernier_arrosage[3]:
-        print(f"   Fertilisant : {dernier_arrosage[3]}")
+        print(_tr('analyse_text_106').format(v0=dernier_arrosage[3]))
 
     if dernier_arrosage[4]:
-        print(f"   Dosage : {dernier_arrosage[4]}")
+        print(_tr('analyse_text_109').format(v0=dernier_arrosage[4]))
 
     if not mesures_apres:
         print()
-        print("ℹ️ Aucune mesure après cet arrosage.")
+        print(_tr('analyse_text_111'))
         return
 
     # Tri chronologique
@@ -134,56 +135,51 @@ def analyser_plante(plante_id):
     )
 
     print()
-    print("💧 ÉVOLUTION DE L'HUMIDITÉ")
+    print(_tr('analyse_text_137'))
     print("-" * 30)
-    print(f"Première mesure : {humidite_depart:.1f} %")
-    print(f"Dernière mesure : {humidite_actuelle:.1f} %")
+    print(_tr('analyse_text_139').format(v0=humidite_depart))
+    print(_tr('analyse_text_140').format(v0=humidite_actuelle))
 
     if variation_humidite < 0:
         print(
-            f"📉 Variation : "
-            f"{variation_humidite:.1f} point(s)"
+            _tr('analyse_text_146').format(v0=variation_humidite)
         )
     elif variation_humidite > 0:
         print(
-            f"📈 Variation : "
-            f"+{variation_humidite:.1f} point(s)"
+            _tr('analyse_text_151').format(v0=variation_humidite)
         )
     else:
-        print("➡️ Variation : stable")
+        print(_tr('analyse_text_152'))
 
     if duree_heures > 0:
         vitesse = variation_humidite / duree_heures
 
         print(
-            f"⏱️ Durée observée : "
-            f"{duree_heures:.1f} h"
+            _tr('analyse_text_159').format(v0=duree_heures)
         )
         print(
-            f"📊 Variation moyenne : "
-            f"{vitesse:.3f} point/h"
+            _tr('analyse_text_164').format(v0=vitesse)
         )
 
         vitesse_jour = vitesse * 24
 
         print(
-            f"📅 Variation moyenne : "
-            f"{vitesse_jour:.2f} point(s)/jour"
+            _tr('analyse_text_170').format(v0=vitesse_jour)
         )
 
     # Dernières conditions mesurées
     print()
-    print("🌡️ DERNIÈRES CONDITIONS")
+    print(_tr('analyse_text_172'))
     print("-" * 30)
-    print(f"🌡️ Température : {derniere[2]:.1f} °C")
-    print(f"💧 Humidité sol : {derniere[3]:.1f} %")
-    print(f"☀️ Luminosité : {derniere[4]:.1f} lux")
-    print(f"🧪 Conductivité : {derniere[5]:.1f} µS/cm")
+    print(_tr('synchronisation_text_70').format(v0=derniere[2]))
+    print(_tr('analyse_text_179').format(v0=derniere[3]))
+    print(_tr('analyse_text_180').format(v0=derniere[4]))
+    print(_tr('analyse_text_181').format(v0=derniere[5]))
 
     print()
     print("=" * 60)
-    print("ℹ️ Cette analyse est descriptive.")
-    print("Aucune recommandation d'arrosage n'est encore générée.")
+    print(_tr('analyse_text_185'))
+    print(_tr('analyse_text_186'))
     print("=" * 60)
 
 

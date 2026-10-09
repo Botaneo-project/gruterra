@@ -1,4 +1,5 @@
 
+
 # ============================================================
 # GRUTERRA - NETATMO
 # Récupération des données Netatmo
@@ -37,6 +38,7 @@ if __package__ in (None, ""):
     import sys
     from pathlib import Path
     sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+from i18n import traduire_courant as _tr
 from botaneo_config import NETATMO_CONFIG, lire_json, ecrire_json, parametres_netatmo
 from botaneo_journal import evenement
 
@@ -48,7 +50,7 @@ def _requete(method, *args, **kwargs):
         response = getattr(requests, method)(*args, **kwargs)
     except requests.RequestException:
         evenement("netatmo_network_error")
-        raise RuntimeError("Connexion Netatmo impossible (erreur reseau).") from None
+        raise RuntimeError(_tr('netatmo_text_51')) from None
     if not response.ok:
         evenement("netatmo_http_error", response.status_code)
     return response
@@ -91,24 +93,21 @@ def rafraichir_token(config):
 
     if not config.get("client_id"):
         raise RuntimeError(
-            "Le fichier netatmo_config.json ne contient pas "
-            "de client_id."
+            _tr('netatmo_text_94')
         )
 
     if not config.get("client_secret"):
         raise RuntimeError(
-            "Le fichier netatmo_config.json ne contient pas "
-            "de client_secret."
+            _tr('netatmo_text_100')
         )
 
     if not config.get("refresh_token"):
         raise RuntimeError(
-            "Aucun refresh_token n'est présent dans "
-            "netatmo_config.json."
+            _tr('netatmo_text_106')
         )
 
-    print("🔄 Access token expiré.")
-    print("🔐 Renouvellement automatique du token Netatmo...")
+    print(_tr('netatmo_text_110'))
+    print(_tr('netatmo_text_111'))
 
     donnees = {
         "grant_type": "refresh_token",
@@ -126,13 +125,12 @@ def rafraichir_token(config):
 
     except requests.RequestException as erreur:
         raise RuntimeError(
-            f"Impossible de contacter le serveur OAuth Netatmo : {erreur}"
+            _tr('netatmo_text_129').format(v0=erreur)
         )
 
     if not reponse.ok:
         raise RuntimeError(
-            f"Erreur OAuth Netatmo {reponse.status_code} : "
-            "Reponse serveur masquee."
+            _tr('netatmo_text_134').format(v0=reponse.status_code)
         )
 
     try:
@@ -140,14 +138,14 @@ def rafraichir_token(config):
 
     except ValueError:
         raise RuntimeError(
-            "Netatmo a retourné une réponse OAuth invalide."
+            _tr('netatmo_text_143')
         )
 
     nouvel_access_token = resultat.get("access_token")
 
     if not nouvel_access_token:
         raise RuntimeError(
-            "Netatmo n'a pas retourné de nouvel access_token."
+            _tr('netatmo_text_150')
         )
 
     # --------------------------------------------------------
@@ -172,8 +170,8 @@ def rafraichir_token(config):
     sauvegarder_configuration(config)
     evenement("netatmo_refresh_ok")
 
-    print("✅ Token Netatmo renouvelé automatiquement.")
-    print("💾 Nouveau token sauvegardé.")
+    print(_tr('netatmo_text_175'))
+    print(_tr('netatmo_text_176'))
 
     return config["access_token"]
 
@@ -211,7 +209,7 @@ def recuperer_donnees(access_token):
 
         except requests.RequestException as erreur:
             raise RuntimeError(
-                f"Impossible de contacter l'API Netatmo : {erreur}"
+                _tr('netatmo_text_214').format(v0=erreur)
             )
 
         if reponse.status_code != 503:
@@ -222,7 +220,7 @@ def recuperer_donnees(access_token):
 
     if reponse is None:
         raise RuntimeError(
-            "Aucune réponse reçue de l'API Netatmo."
+            _tr('netatmo_text_225')
         )
 
     # ========================================================
@@ -256,13 +254,11 @@ def recuperer_donnees(access_token):
     if not reponse.ok:
         if reponse.status_code == 503:
             raise RuntimeError(
-                "Service Netatmo temporairement indisponible "
-                "(erreur 503)."
+                _tr('netatmo_text_259')
             )
 
         raise RuntimeError(
-            f"Erreur Netatmo {reponse.status_code} : "
-            "Reponse serveur masquee."
+            _tr('netatmo_text_264').format(v0=reponse.status_code)
         )
 
     # ========================================================
@@ -274,7 +270,7 @@ def recuperer_donnees(access_token):
 
     except ValueError:
         raise RuntimeError(
-            "Netatmo a retourné une réponse JSON invalide."
+            _tr('netatmo_text_277')
         )
 
 
@@ -298,8 +294,7 @@ def recuperer_donnees_avec_auth(config):
 
     if not config.get("access_token"):
         raise RuntimeError(
-            "Le fichier netatmo_config.json ne contient pas "
-            "de access_token."
+            _tr('netatmo_text_301')
         )
 
     # --------------------------------------------------------
@@ -329,8 +324,7 @@ def recuperer_donnees_avec_auth(config):
 
     if not token_valide:
         raise RuntimeError(
-            "Le nouveau token Netatmo est également refusé. "
-            "Une nouvelle autorisation OAuth peut être nécessaire."
+            _tr('netatmo_text_332')
         )
 
     return donnees
@@ -485,12 +479,12 @@ def recuperer_token_weathermap():
 
     except requests.RequestException as erreur:
         raise RuntimeError(
-            f"Impossible de récupérer le token public Netatmo : {erreur}"
+            _tr('netatmo_text_488').format(v0=erreur)
         )
 
     if not reponse.ok:
         raise RuntimeError(
-            f"Erreur token public Netatmo {reponse.status_code}."
+            _tr('netatmo_text_493').format(v0=reponse.status_code)
         )
 
     try:
@@ -498,14 +492,14 @@ def recuperer_token_weathermap():
 
     except ValueError:
         raise RuntimeError(
-            "Netatmo a retourné un token public invalide."
+            _tr('netatmo_text_501')
         )
 
     token = donnees.get("body")
 
     if not token:
         raise RuntimeError(
-            "Netatmo n'a pas retourné de token public."
+            _tr('netatmo_text_508')
         )
 
     return f"Bearer {token}"
@@ -530,12 +524,12 @@ def recuperer_mesure_publique_station(station_id):
 
     except requests.RequestException as erreur:
         raise RuntimeError(
-            f"Impossible de récupérer la station publique Netatmo : {erreur}"
+            _tr('netatmo_text_533').format(v0=erreur)
         )
 
     if not reponse.ok:
         raise RuntimeError(
-            f"Erreur station publique Netatmo {reponse.status_code}."
+            _tr('netatmo_text_538').format(v0=reponse.status_code)
         )
 
     try:
@@ -543,14 +537,14 @@ def recuperer_mesure_publique_station(station_id):
 
     except ValueError:
         raise RuntimeError(
-            "Netatmo a retourné une station publique invalide."
+            _tr('netatmo_text_546')
         )
 
     body = donnees.get("body", [])
 
     if not body:
         raise RuntimeError(
-            f"Aucune donnée publique pour la station {station_id}."
+            _tr('netatmo_text_553').format(v0=station_id)
         )
 
     station = body[0]
@@ -657,7 +651,7 @@ def normaliser_station_publique(station, latitude, longitude):
 
     return {
         "id": station.get("_id") or station.get("id"),
-        "nom": station.get("name") or "Station publique",
+        "nom": station.get("name") or _tr('public_station_default'),
         "favorite": favorite,
         "distance_m": distance,
         "latitude": lat_station,
@@ -677,8 +671,7 @@ def recuperer_stations_publiques(
 
     if not config.get("access_token"):
         raise RuntimeError(
-            "Le fichier netatmo_config.json ne contient pas "
-            "de access_token."
+            _tr('netatmo_text_301')
         )
 
     zone = calculer_zone(
@@ -715,7 +708,7 @@ def recuperer_stations_publiques(
 
         except requests.RequestException as erreur:
             raise RuntimeError(
-                f"Impossible de contacter l'API publique Netatmo : {erreur}"
+                _tr('netatmo_text_718').format(v0=erreur)
             )
 
         if reponse.status_code in (401, 403):
@@ -740,7 +733,7 @@ def recuperer_stations_publiques(
 
         except ValueError:
             raise RuntimeError(
-                "Netatmo a retourné une réponse publique JSON invalide."
+                _tr('netatmo_text_743')
             )
 
         for station in donnees.get("body", []):
@@ -802,7 +795,7 @@ def recuperer_stations_publiques(
 
     if not stations and erreurs:
         raise RuntimeError(
-            "Stations publiques Netatmo indisponibles : "
+            _tr('netatmo_text_798')
             + ", ".join(erreurs)
         )
 
@@ -933,24 +926,21 @@ def afficher_mesures(nom, type_module, mesures):
 
     print("-" * 60)
     print(f"📦 {nom}")
-    print(f"🔧 Type : {type_module}")
+    print(_tr('netatmo_text_929').format(v0=type_module))
 
     if mesures["temperature"] is not None:
         print(
-            f"🌡️ Température : "
-            f"{mesures['temperature']} °C"
+            _tr('netatmo_text_940').format(v0=mesures['temperature'])
         )
 
     if mesures["humidite"] is not None:
         print(
-            f"💧 Humidité    : "
-            f"{mesures['humidite']} %"
+            _tr('netatmo_text_946').format(v0=mesures['humidite'])
         )
 
     if mesures["pression"] is not None:
         print(
-            f"🔵 Pression    : "
-            f"{mesures['pression']} hPa"
+            _tr('netatmo_text_943').format(v0=mesures['pression'])
         )
 
     if mesures["co2"] is not None:
@@ -961,62 +951,52 @@ def afficher_mesures(nom, type_module, mesures):
 
     if mesures["bruit"] is not None:
         print(
-            f"🔊 Bruit       : "
-            f"{mesures['bruit']} dB"
+            _tr('netatmo_text_955').format(v0=mesures['bruit'])
         )
 
     if mesures["vent"] is not None:
         print(
-            f"💨 Vent        : "
-            f"{mesures['vent']} km/h"
+            _tr('netatmo_text_961').format(v0=mesures['vent'])
         )
 
     if mesures["direction_vent"] is not None:
         print(
-            f"🧭 Direction   : "
-            f"{mesures['direction_vent']}°"
+            _tr('netatmo_text_967').format(v0=mesures['direction_vent'])
         )
 
     if mesures["rafale"] is not None:
         print(
-            f"💨 Rafale      : "
-            f"{mesures['rafale']} km/h"
+            _tr('netatmo_text_973').format(v0=mesures['rafale'])
         )
 
     if mesures["pluie"] is not None:
         print(
-            f"🌧️ Pluie       : "
-            f"{mesures['pluie']} mm"
+            _tr('netatmo_text_979').format(v0=mesures['pluie'])
         )
 
     if mesures["pluie_1h"] is not None:
         print(
-            f"🌧️ Pluie 1h    : "
-            f"{mesures['pluie_1h']} mm"
+            _tr('netatmo_text_985').format(v0=mesures['pluie_1h'])
         )
 
     if mesures["pluie_24h"] is not None:
         print(
-            f"🌧️ Pluie 24h   : "
-            f"{mesures['pluie_24h']} mm"
+            _tr('netatmo_text_991').format(v0=mesures['pluie_24h'])
         )
 
     if mesures["date_max_temp"]:
         print(
-            f"🌡️ Date max    : "
-            f"{mesures['date_max_temp']}"
+            _tr('netatmo_text_997').format(v0=mesures['date_max_temp'])
         )
 
     if mesures["date_min_temp"]:
         print(
-            f"❄️ Date min    : "
-            f"{mesures['date_min_temp']}"
+            _tr('netatmo_text_1003').format(v0=mesures['date_min_temp'])
         )
 
     if mesures["date_mesure"]:
         print(
-            f"🕐 Mesure      : "
-            f"{mesures['date_mesure']}"
+            _tr('netatmo_text_1018').format(v0=mesures['date_mesure'])
         )
 
 
@@ -1029,19 +1009,18 @@ def afficher_resultat(stations):
 
     print()
     print("=" * 60)
-    print("🌦️ GRUTERRA - NETATMO")
+    print(_tr('netatmo_text_1012'))
     print("=" * 60)
     print()
 
-    print(f"📡 Stations trouvées : {len(stations)}")
+    print(_tr('netatmo_text_1036').format(v0=len(stations)))
     print()
 
     for station in stations:
 
         print("=" * 60)
         print(
-            f"🏠 STATION : "
-            f"{station['nom']}"
+            _tr('netatmo_text_1033').format(v0=station['nom'])
         )
         print("=" * 60)
 
@@ -1061,7 +1040,7 @@ def afficher_resultat(stations):
 
     print()
     print("=" * 60)
-    print("✅ LECTURE TERMINÉE")
+    print(_tr('netatmo_text_1064'))
     print("=" * 60)
 
 
@@ -1075,22 +1054,22 @@ def main():
 
         print()
         print("=" * 60)
-        print("🌦️ GRUTERRA - NETATMO")
+        print(_tr('netatmo_text_1012'))
         print("=" * 60)
         print()
 
-        print("🔐 Connexion à Netatmo...")
+        print(_tr('netatmo_text_1082'))
 
         stations = recuperer_netatmo()
 
-        print("✅ Connexion réussie")
+        print(_tr('netatmo_text_1086'))
 
         afficher_resultat(stations)
 
     except Exception as erreur:
 
         print()
-        print("❌ ERREUR NETATMO")
+        print(_tr('netatmo_text_1072'))
         print(f"   {erreur}")
         print()
 

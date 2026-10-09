@@ -4,6 +4,12 @@ Ce module ne lance aucune commande de suppression. Il lit le compteur,
 récupère les entrées annoncées par le capteur et décode les mesures quand
 la trame est exploitable.
 """
+
+if __package__ in (None, ""):
+    import sys
+    from pathlib import Path
+    sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+from i18n import traduire_courant as _tr
 import asyncio
 from datetime import datetime, timedelta, timezone
 import struct
@@ -17,10 +23,10 @@ def decoder_entree_historique(raw):
     """Décode une entrée historique brute de 16 octets."""
 
     if len(raw) != 16:
-        raise ValueError('Entrée historique trop courte ou trop longue')
+        raise ValueError(_tr('historique_text_20'))
 
     if raw == bytes([0xff]) * 16:
-        raise ValueError('Entrée historique vide')
+        raise ValueError(_tr('historique_text_23'))
 
     timestamp_capteur = struct.unpack('<I', raw[0:4])[0]
     temperature = struct.unpack('<h', raw[4:6])[0] / 10
@@ -29,10 +35,10 @@ def decoder_entree_historique(raw):
     conductivite = struct.unpack('<H', raw[12:14])[0]
 
     if not -20 <= temperature <= 60:
-        raise ValueError(f'Température historique invalide : {temperature}')
+        raise ValueError(_tr('historique_text_32').format(v0=temperature))
 
     if not 0 <= humidite <= 100:
-        raise ValueError(f'Humidité historique invalide : {humidite}')
+        raise ValueError(_tr('historique_text_35').format(v0=humidite))
 
     return {
         'timestamp_capteur': timestamp_capteur,
@@ -103,10 +109,10 @@ async def lire_historique(client, adresse, start_index=0, max_entries=None, hist
         await asyncio.sleep(.5)
         raw_count = await client.read_gatt_char(DATA)
         if len(raw_count) < 2:
-            raise ValueError('Compteur historique invalide')
+            raise ValueError(_tr('historique_text_108'))
         count = int.from_bytes(raw_count[:2], 'little')
     if count > 2000:
-        raise ValueError('Compteur historique inattendu')
+        raise ValueError(_tr('historique_text_111'))
     export['history_count'] = count
 
     end_index = count
@@ -123,7 +129,7 @@ async def lire_historique(client, adresse, start_index=0, max_entries=None, hist
             await asyncio.sleep(.35)
             raw = await client.read_gatt_char(DATA)
             if len(raw) != 16 or raw == bytes([0xff]) * 16:
-                raise ValueError(f'Entrée historique {index} invalide')
+                raise ValueError(_tr('historique_text_126').format(v0=index))
             entree = decoder_entree_historique(raw)
             entree['index'] = index
             entree['date_heure_utc'] = reconstruire_date_mesure(

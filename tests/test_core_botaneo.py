@@ -185,6 +185,12 @@ class TestRappelsArrosage(BaseTemporaireMixin, unittest.TestCase):
 
 
 class TestAlertesEmail(unittest.TestCase):
+    def setUp(self):
+        from i18n import utiliser_langue
+        contexte = utiliser_langue("fr")
+        contexte.__enter__()
+        self.addCleanup(contexte.__exit__, None, None, None)
+
     def test_memoire_alerte_respecte_delai_minimal(self):
         botaneo_email = importlib.import_module("botaneo_email")
         settings = botaneo_email.EmailSettings(
@@ -254,6 +260,13 @@ class TestSessionsArrosage(unittest.TestCase):
 
 
 class TestCyclesArrosage(unittest.TestCase):
+    def setUp(self):
+        # Ces assertions textuelles vérifient la version française indépendamment du poste.
+        from unittest.mock import patch
+        preference = patch("ui_preferences.charger_langue_interface", return_value="fr")
+        preference.start()
+        self.addCleanup(preference.stop)
+
     def test_cycle_arrosage_calcule_pic_et_sechage_simple(self):
         analyse_arrosage = importlib.import_module("services.analyse_arrosage")
         vue_historique = importlib.import_module("vue_historique")
@@ -432,6 +445,13 @@ class TestCyclesArrosage(unittest.TestCase):
 
 
 class TestAnalyseLumiere(unittest.TestCase):
+    def setUp(self):
+        # Ces assertions textuelles vérifient la version française indépendamment du poste.
+        from unittest.mock import patch
+        preference = patch("ui_preferences.charger_langue_interface", return_value="fr")
+        preference.start()
+        self.addCleanup(preference.stop)
+
     def test_construit_expositions_balcon_et_filtre_par_jour(self):
         analyse_lumiere = importlib.import_module("services.analyse_lumiere")
         evenements = [
@@ -619,6 +639,12 @@ class TestHistoriqueZerosSuspects(unittest.TestCase):
 
 
 class TestPreparationMiseAJour(unittest.TestCase):
+    def setUp(self):
+        from i18n import utiliser_langue
+        contexte = utiliser_langue("fr")
+        contexte.__enter__()
+        self.addCleanup(contexte.__exit__, None, None, None)
+
     def test_plan_mise_a_jour_preserve_les_donnees_personnelles(self):
         botaneo_update = importlib.import_module("botaneo_update")
         with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as dossier:
@@ -897,6 +923,12 @@ if __name__ == "__main__":
     unittest.main()
 
 class TestAssistantMiseAJour(unittest.TestCase):
+    def setUp(self):
+        from i18n import utiliser_langue
+        contexte = utiliser_langue("fr")
+        contexte.__enter__()
+        self.addCleanup(contexte.__exit__, None, None, None)
+
     def test_manifest_incomplet_refuse_application(self):
         update_gruterra = importlib.import_module("update_gruterra")
         diagnostic = {
@@ -1138,6 +1170,12 @@ class TestLanceursWindows(unittest.TestCase):
 
 
 class TestSauvegardeUtilisateur(unittest.TestCase):
+    def setUp(self):
+        from i18n import utiliser_langue
+        contexte = utiliser_langue("fr")
+        contexte.__enter__()
+        self.addCleanup(contexte.__exit__, None, None, None)
+
     def test_manifest_sauvegarde_complete_signale_le_prive(self):
         sauvegarde = importlib.import_module("sauvegarde_utilisateur")
         with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as dossier:
@@ -1229,7 +1267,9 @@ class TestPatchNoteUpdateInterface(unittest.TestCase):
         contenu = interface.read_text(encoding="utf-8")
 
         self.assertIn("def patch_note_update_a_propos", contenu)
-        self.assertIn("Patch note Gruterra", contenu)
+        self.assertIn("t('interface_text_5200')", contenu)
+        from i18n import traduire
+        self.assertEqual(traduire("interface_text_5200", "fr"), "Patch note Gruterra")
         self.assertIn("patch_note_update_a_propos(verifier_distant=True)", contenu)
 
 

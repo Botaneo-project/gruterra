@@ -1,3 +1,5 @@
+
+from i18n import traduire_courant as _tr
 import database
 from datetime import datetime, timedelta
 
@@ -40,27 +42,27 @@ def analyser_humidite(humidite):
         return {
             "etat": "sec",
             "niveau": "rouge",
-            "message": "Sol actuellement très sec."
+            "message": _tr('analyse_text_43')
         }
 
     if humidite < 30:
         return {
             "etat": "en_dessechement",
             "niveau": "orange",
-            "message": "Le sol commence à être sec."
+            "message": _tr('analyse_text_50')
         }
 
     if humidite < 40:
         return {
             "etat": "a_surveille",
             "niveau": "jaune",
-            "message": "Humidité à surveiller."
+            "message": _tr('analyse_text_57')
         }
 
     return {
         "etat": "humide",
         "niveau": "vert",
-        "message": "Humidité du sol actuellement correcte."
+        "message": _tr('analyse_text_63')
     }
 
 
@@ -154,18 +156,17 @@ def analyser_capteur(capteur_id, heures=24):
     if len(mesures) < 5:
         confiance = "faible"
         explication_confiance = (
-            "Historique encore trop court pour une prévision fiable."
+            _tr('analyse_text_157')
         )
     elif len(mesures) < 20:
         confiance = "moyenne"
         explication_confiance = (
-            "Historique en cours de constitution."
+            _tr('analyse_text_162')
         )
     else:
         confiance = "bonne"
         explication_confiance = (
-            "Historique suffisant pour commencer à identifier "
-            "les tendances."
+            _tr('analyse_text_167')
         )
 
     return {
@@ -195,7 +196,7 @@ def afficher_analyse(capteur_id, heures=24):
 
     if analyse is None:
         print()
-        print("❌ Aucune donnée disponible pour l'analyse.")
+        print(_tr('analyse_text_198'))
         return
 
     mesure = analyse["mesure"]
@@ -203,83 +204,82 @@ def afficher_analyse(capteur_id, heures=24):
 
     print()
     print("=" * 60)
-    print("🌿 GRUTERRA - ANALYSE DE LA PLANTE")
+    print(_tr('analyse_text_207'))
     print("=" * 60)
 
     print()
-    print("💧 HUMIDITÉ DU SOL")
+    print(_tr('analyse_text_210'))
     print("-" * 30)
     print(f"   {mesure['humidite']} %")
     print(f"   {humidite['message']}")
 
     print()
-    print("🌡️ TEMPÉRATURE")
+    print(_tr('analyse_text_216'))
     print("-" * 30)
     print(f"   {mesure['temperature']:.1f} °C")
 
     print()
-    print("☀️ LUMINOSITÉ")
+    print(_tr('analyse_text_221'))
     print("-" * 30)
     print(f"   {mesure['luminosite']} lux")
 
     print()
-    print("🧪 CONDUCTIVITÉ")
+    print(_tr('analyse_text_226'))
     print("-" * 30)
     print(f"   {mesure['conductivite']} µS/cm")
 
     print()
-    print("📈 TENDANCE")
+    print(_tr('analyse_text_232'))
     print("-" * 30)
 
     if analyse["tendance_humidite"] == "baisse":
-        print("   💧 Humidité : ↓ baisse")
+        print(_tr('analyse_text_235'))
 
     elif analyse["tendance_humidite"] == "hausse":
-        print("   💧 Humidité : ↑ hausse")
+        print(_tr('analyse_text_238'))
 
     elif analyse["tendance_humidite"] == "stable":
-        print("   💧 Humidité : → stable")
+        print(_tr('analyse_text_241'))
 
     else:
-        print("   💧 Humidité : ? inconnue")
+        print(_tr('analyse_text_244'))
 
     vitesse = analyse["vitesse_humidite_par_heure"]
 
     if vitesse is not None:
         print(
-            f"   Variation : "
-            f"{vitesse:+.2f} point(s) / heure"
+            _tr('analyse_text_251').format(v0=vitesse)
         )
 
     print()
-    print("🎯 FIABILITÉ DE L'ANALYSE")
+    print(_tr('analyse_text_255'))
     print("-" * 30)
-    print(f"   Confiance : {analyse['confiance']}")
+    print(_tr('analyse_text_258').format(v0=analyse['confiance']))
     print(f"   {analyse['explication_confiance']}")
     print(
-        f"   {analyse['nombre_mesures']} mesure(s) analysée(s)"
+        _tr('analyse_text_260').format(v0=analyse['nombre_mesures'])
     )
 
     print()
-    print("💡 ACTION")
+    print(_tr('analyse_text_264'))
     print("-" * 30)
 
     if humidite["etat"] == "sec":
-        print("   🔴 Le sol est actuellement très sec.")
-        print("   ⚠️ Arrosage à envisager.")
-        print("   ℹ️ Gruterra ne donne pas encore de délai")
-        print("      précis : l'historique doit encore s'enrichir.")
+        print(_tr('analyse_text_268'))
+        print(_tr('analyse_text_269'))
+        print(_tr('analyse_text_270'))
+        print(_tr('analyse_text_271'))
 
     elif humidite["etat"] == "en_dessechement":
-        print("   🟠 Le sol est en phase de dessèchement.")
-        print("   👀 Surveillance recommandée.")
+        print(_tr('analyse_text_274'))
+        print(_tr('analyse_text_275'))
 
     elif humidite["etat"] == "a_surveille":
-        print("   🟡 Humidité à surveiller.")
-        print("   👀 Gruterra observe actuellement l'évolution.")
+        print(_tr('analyse_text_278'))
+        print(_tr('analyse_text_279'))
 
     else:
-        print("   🟢 Pas d'action immédiate sur l'humidité.")
+        print(_tr('analyse_text_282'))
 
     print()
     print("=" * 60)
@@ -294,11 +294,11 @@ def afficher_evolution(capteur_id, heures=24):
     )
 
     if mesures is None:
-        print("❌ Aucune mesure disponible sur cette période.")
+        print(_tr('analyse_text_297'))
         return
 
     print()
-    print("📊 ÉVOLUTION DU SOL")
+    print(_tr('analyse_text_301'))
     print("=" * 50)
 
     for mesure in mesures:
@@ -318,8 +318,7 @@ def afficher_evolution(capteur_id, heures=24):
 
     print("=" * 50)
     print(
-        f"📈 {len(mesures)} mesure(s) "
-        f"sur les dernières {heures} h"
+        _tr('analyse_text_321').format(v0=len(mesures), v1=heures)
     )
 
 

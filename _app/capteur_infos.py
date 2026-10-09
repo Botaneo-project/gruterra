@@ -1,4 +1,6 @@
 """Informations observees pendant la connexion existante; aucune operation BLE."""
+
+from i18n import traduire_courant as _tr
 from datetime import datetime, timezone
 import hashlib
 import logging
@@ -73,16 +75,16 @@ def enregistrer_infos(adresse, data, nom=None, services=None):
             ecrire_json(chemin(adresse), info)
         return True
     except (OSError, RuntimeError, ValueError, TypeError):
-        logging.getLogger('botaneo.capteurs').warning('Cache des informations capteur indisponible.')
+        logging.getLogger('botaneo.capteurs').warning(_tr('capteur_infos_text_76'))
         return False
 
 
 def resume_infos(info):
-    batterie = str(info['batterie']) + ' %' if info.get('batterie') is not None else 'non lue'
-    firmware = info.get('firmware') or 'non lu'
+    batterie = str(info['batterie']) + ' %' if info.get('batterie') is not None else _tr('capteur_infos_text_83')
+    firmware = info.get('firmware') or _tr('capteur_infos_text_84')
     texte = f'Batterie : {batterie}  ·  Firmware : {firmware}'
     if len(info.get('versions', [])) > 1:
-        texte += '  ·  Changement de version observé'
+        texte += _tr('capteur_infos_text_85')
     return texte
 
 
@@ -92,18 +94,18 @@ def details_infos(info):
         try:
             return datetime.fromisoformat(value).astimezone().strftime('%d/%m/%Y à %H:%M:%S')
         except (ValueError, TypeError):
-            return 'jamais'
-    lignes = [resume_infos(info), '', 'Nom Bluetooth : ' + (info.get('nom_ble') or 'non lu'),
-              'Batterie lue le : ' + date('batterie_lue_le'),
-              'Firmware lu le : ' + date('firmware_lu_le'),
-              'Dernière tentative : ' + date('derniere_tentative'), '',
-              'Versions observées (50 derniers changements au maximum) :']
+            return _tr('capteur_infos_text_97_more')
+    lignes = [resume_infos(info), '', _tr('capteur_infos_text_98_more') + (info.get('nom_ble') or _tr('capteur_infos_text_84')),
+              _tr('capteur_infos_text_97') + date('batterie_lue_le'),
+              _tr('capteur_infos_text_98') + date('firmware_lu_le'),
+              _tr('capteur_infos_text_99') + date('derniere_tentative'), '',
+              _tr('capteur_infos_text_100')]
     for version in info.get('versions', []):
         lignes.append(version['version'] + ' — ' + version['observe_le'])
     if not info.get('versions'):
-        lignes.append('Aucune version lue pour le moment.')
-    lignes.extend(['', 'Services Bluetooth observés :', *info.get('services', []), '',
-                   'Ces informations sont conservées depuis la dernière lecture réussie.',
-                   'Une version identique ne garantit pas que le contenu du firmware est identique.',
-                   'Aucune recherche de mise à jour ni modification du firmware automatique.'])
+        lignes.append(_tr('capteur_infos_text_104'))
+    lignes.extend(['', _tr('capteur_infos_text_105'), *info.get('services', []), '',
+                   _tr('capteur_infos_text_106'),
+                   _tr('capteur_infos_text_107'),
+                   _tr('capteur_infos_text_108')])
     return '\n'.join(lignes)

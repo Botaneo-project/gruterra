@@ -4,6 +4,8 @@ Ce module contient la logique pure utilisée par l'historique graphique.
 Il ne dépend pas de Tkinter et peut être testé sans interface.
 """
 
+from i18n import traduire_courant as _tr, traduire_texte_courant as _texte
+
 import math
 
 import database
@@ -24,7 +26,7 @@ def formater_nombre(valeur):
 
 def formater_date_courte(date):
     if not date:
-        return "date inconnue"
+        return _tr('botaneo_email_text_192')
     return date.strftime("%d/%m/%Y %H:%M")
 
 
@@ -37,18 +39,18 @@ def date_debut_arrosage(arrosage):
 def quantite_arrosage_texte(arrosage):
     if isinstance(arrosage, dict):
         total = arrosage.get("quantite_totale_ml")
-        total_txt = f"{formater_nombre(total)} ml" if total is not None else "quantité non notée"
+        total_txt = f"{formater_nombre(total)} ml" if total is not None else _tr('quantity_not_noted')
         apports = arrosage.get("apports") or []
         if len(apports) > 1:
             details = []
             for apport in apports:
                 date = vers_local_naif(apport[2])
-                heure = date.strftime("%H:%M") if date else "heure inconnue"
-                quantite = f"{formater_nombre(apport[3])} ml" if apport[3] is not None else "quantité non notée"
-                details.append(f"{quantite} à {heure}")
-            return f"session {total_txt} ({' + '.join(details)})"
+                heure = date.strftime("%H:%M") if date else _tr('unknown_time')
+                quantite = f"{formater_nombre(apport[3])} ml" if apport[3] is not None else _tr('quantity_not_noted')
+                details.append(_tr('analyse_arrosage_text_48').format(v0=quantite, v1=heure))
+            return _tr('analyse_arrosage_text_51').format(v0=total_txt, v1=' + '.join(details))
         return total_txt
-    return f"{formater_nombre(arrosage[3])} ml" if arrosage and arrosage[3] is not None else "quantité non notée"
+    return f"{formater_nombre(arrosage[3])} ml" if arrosage and arrosage[3] is not None else _tr('quantity_not_noted')
 
 
 def quantite_arrosage_courte(arrosage):
@@ -56,7 +58,7 @@ def quantite_arrosage_courte(arrosage):
         total = arrosage.get("quantite_totale_ml")
         total_txt = f"{formater_nombre(total)} ml" if total is not None else "—"
         if arrosage.get("fractionnee"):
-            return f"session {total_txt}"
+            return _tr('analyse_arrosage_text_61').format(v0=total_txt)
         return total_txt
     return f"{formater_nombre(arrosage[3])} ml" if arrosage and arrosage[3] is not None else "—"
 
@@ -111,34 +113,34 @@ def comparer_conditions_cycles(cycle_a, cycle_b):
         reference = max(quantite_a, quantite_b, 1)
         if ecart_quantite > 20 and ecart_quantite / reference > 0.2:
             niveau = "à éviter"
-            alertes.append(f"quantités différentes ({formater_nombre(quantite_a)} ml / {formater_nombre(quantite_b)} ml)")
+            alertes.append(_tr('analyse_arrosage_text_114').format(v0=formater_nombre(quantite_a), v1=formater_nombre(quantite_b)))
         elif ecart_quantite > 10:
             niveau = "prudence"
-            alertes.append(f"quantités légèrement différentes ({formater_nombre(quantite_a)} ml / {formater_nombre(quantite_b)} ml)")
+            alertes.append(_tr('analyse_arrosage_text_117').format(v0=formater_nombre(quantite_a), v1=formater_nombre(quantite_b)))
 
     eau_a = type_eau_arrosage(cycle_a.get("arrosage"))
     eau_b = type_eau_arrosage(cycle_b.get("arrosage"))
     if eau_a and eau_b and eau_a != eau_b:
         niveau = "à éviter" if niveau == "à éviter" else "prudence"
-        alertes.append(f"types d’eau différents ({eau_a} / {eau_b})")
+        alertes.append(_tr('analyse_arrosage_text_123').format(v0=eau_a, v1=eau_b))
 
     niveaux_qualite = {"bonne": 0, "correcte": 1, "prudence": 2, "interruption longue": 3}
     qa = niveaux_qualite.get(cycle_a.get("qualite_niveau"), 2)
     qb = niveaux_qualite.get(cycle_b.get("qualite_niveau"), 2)
     if max(qa, qb) >= 3:
         niveau = "à éviter"
-        alertes.append("au moins un cycle contient une interruption longue")
+        alertes.append(_tr('analyse_arrosage_text_130'))
     elif max(qa, qb) >= 2 and niveau == "proche":
         niveau = "prudence"
-        alertes.append("au moins un cycle demande une lecture prudente")
+        alertes.append(_tr('analyse_arrosage_text_133'))
 
     if not alertes:
-        alertes.append("conditions disponibles proches")
+        alertes.append(_tr('analyse_arrosage_text_138'))
 
     return {
         "niveau": niveau,
         "alertes": alertes,
-        "texte": f"Comparabilité : {niveau} · " + "; ".join(alertes),
+        "texte": _tr('analyse_arrosage_text_141').format(v0=_texte(niveau)) + "; ".join(alertes),
     }
 
 
@@ -154,27 +156,27 @@ def analyser_qualite_cycle(humidites, pic_date=None, derniere_date=None):
 
     if len(humidites) < 4:
         niveau = "prudence"
-        libelle = "prudence : peu de mesures"
+        libelle = _tr('analyse_arrosage_text_157')
     elif plus_grand_trou > 24:
         niveau = "interruption longue"
-        libelle = f"interruption longue : trou {formater_nombre(plus_grand_trou)} h"
+        libelle = _tr("quality_gap_long").format(hours=formater_nombre(plus_grand_trou))
     elif plus_grand_trou > 8:
         niveau = "prudence"
-        libelle = f"prudence : trou {formater_nombre(plus_grand_trou)} h"
+        libelle = _tr('analyse_arrosage_text_165').format(v0=formater_nombre(plus_grand_trou))
     elif plus_grand_trou > 3:
         niveau = "correcte"
-        libelle = f"correcte avec trou {formater_nombre(plus_grand_trou)} h"
+        libelle = _tr('analyse_arrosage_text_166').format(v0=formater_nombre(plus_grand_trou))
     else:
         niveau = "bonne"
-        libelle = "bonne"
+        libelle = _tr('analyse_arrosage_text_171')
 
     avertissements = []
-    for cible, nom in ((pic_date, "pic"), (derniere_date, "dernière mesure")):
+    for cible, nom in ((pic_date, "pic"), (derniere_date, _tr('analyse_arrosage_text_172'))):
         if not cible:
             continue
         for ecart in ecarts:
             if ecart["heures"] > 8 and ecart["fin"] == cible:
-                avertissements.append(f"{nom} après trou {formater_nombre(ecart['heures'])} h")
+                avertissements.append(_tr('analyse_arrosage_text_177').format(v0=nom, v1=formater_nombre(ecart['heures'])))
                 break
 
     if avertissements and niveau == "bonne":
@@ -184,7 +186,7 @@ def analyser_qualite_cycle(humidites, pic_date=None, derniere_date=None):
 
     return {
         "niveau": niveau,
-        "libelle": libelle,
+        "libelle": _texte(libelle),
         "plus_grand_trou_h": plus_grand_trou,
         "avertissements": avertissements,
     }
@@ -218,26 +220,26 @@ def vitesse_humidite_sur_24h(humidites):
 
 def qualifier_vitesse_sechage(sechage):
     if sechage is None:
-        return "vitesse de séchage non calculable"
+        return _tr('analyse_arrosage_text_221')
     if sechage < -8:
-        return "séchage rapide après le pic"
+        return _tr('analyse_arrosage_text_223')
     if sechage < -3:
-        return "séchage progressif après le pic"
+        return _tr('analyse_arrosage_text_225')
     if sechage < -0.5:
-        return "séchage lent après le pic"
+        return _tr('analyse_arrosage_text_227')
     if sechage <= 0.5:
-        return "humidité presque stable après le pic"
-    return "humidité encore en hausse après le pic"
+        return _tr('analyse_arrosage_text_229')
+    return _tr('analyse_arrosage_text_230')
 
 
 def resumer_indicateurs_cycle(cycle):
     return {
-        "reponse_arrosage": cycle.get("lecture_courte") or "Réponse à l’arrosage non interprétable.",
+        "reponse_arrosage": cycle.get("lecture_courte") or _tr('analyse_arrosage_text_235'),
         "sechage_apres_pic": qualifier_vitesse_sechage(cycle.get("sechage")),
         "tendance_24h": (
-            f"tendance sur 24 h : {formater_nombre(cycle.get('vitesse_24h'))} pt/j"
+            _tr('analyse_arrosage_text_238').format(v0=formater_nombre(cycle.get('vitesse_24h')))
             if cycle.get("vitesse_24h") is not None
-            else "tendance sur 24 h non calculable"
+            else _tr('analyse_arrosage_text_240')
         ),
     }
 
@@ -247,21 +249,21 @@ def interpreter_reponse_cycle(reference_depart, premiere_humidite, pic_humidite,
         return {
             "hausse_apres_arrosage": None,
             "ecart_final_depart": None,
-            "lecture_courte": "Réponse à l’arrosage non interprétable avec les mesures disponibles.",
+            "lecture_courte": _tr('analyse_arrosage_text_250'),
         }
     if reference_depart is None:
         reference_depart = premiere_humidite
     hausse = pic_humidite - reference_depart
     ecart_final = derniere_humidite - reference_depart
-    prudence = " Lecture prudente : qualité des mesures à surveiller." if qualite_niveau in {"prudence", "interruption longue"} else ""
+    prudence = _tr('analyse_arrosage_text_256') if qualite_niveau in {"prudence", "interruption longue"} else ""
     if hausse < 2:
-        lecture = "Réponse faible dans la zone du capteur : l’humidité mesurée monte peu après l’arrosage."
+        lecture = _tr('analyse_arrosage_text_258')
     elif ecart_final <= 2:
-        lecture = "Retour proche du niveau de départ dans la zone du capteur."
+        lecture = _tr('analyse_arrosage_text_260')
     elif ecart_final >= 8:
-        lecture = "Humidité encore nettement au-dessus du départ dans la zone du capteur."
+        lecture = _tr('analyse_arrosage_text_262')
     else:
-        lecture = "Réponse visible à l’arrosage, avec retour partiel vers le niveau de départ."
+        lecture = _tr('analyse_arrosage_text_264')
     return {
         "hausse_apres_arrosage": hausse,
         "ecart_final_depart": ecart_final,
@@ -303,8 +305,8 @@ def mesurer_cycle_arrosage(arrosage, prochain_arrosage, mesures):
             "mesures": [],
             "humidite_avant": avant_humidite,
             "delai_avant_h": delai_avant_h,
-            "qualite": "aucune mesure après",
-            "texte": f"{formater_date_courte(date_arrosage)} · aucune mesure après arrosage",
+            "qualite": _tr('analyse_arrosage_text_306'),
+            "texte": _tr('analyse_arrosage_text_307').format(v0=formater_date_courte(date_arrosage)),
         }
 
     humidites = [(vers_local_naif(m[1]), float(m[3])) for m in mesures_cycle if m[3] is not None]
@@ -317,8 +319,8 @@ def mesurer_cycle_arrosage(arrosage, prochain_arrosage, mesures):
             "mesures": mesures_cycle,
             "humidite_avant": avant_humidite,
             "delai_avant_h": delai_avant_h,
-            "qualite": "humidité inexploitable",
-            "texte": f"{formater_date_courte(date_arrosage)} · {len(mesures_cycle)} mesure(s), humidité inexploitable",
+            "qualite": _tr('analyse_arrosage_text_320'),
+            "texte": _tr('analyse_arrosage_text_321').format(v0=formater_date_courte(date_arrosage), v1=len(mesures_cycle)),
         }
 
     premiere_date, premiere_humidite = humidites[0]
@@ -337,23 +339,21 @@ def mesurer_cycle_arrosage(arrosage, prochain_arrosage, mesures):
     quantite = quantite_arrosage_texte(arrosage)
     avant_txt = formater_nombre(avant_humidite) if avant_humidite is not None else "—"
     texte = (
-        f"{formater_date_courte(date_arrosage)} · {quantite} · {len(mesures_cycle)} mesure(s) · "
-        f"avant {avant_txt} → après {formater_nombre(premiere_humidite)} → pic {formater_nombre(pic_humidite)} → fin {formater_nombre(derniere_humidite)} % · "
-        f"hausse +{formater_nombre(interpretation['hausse_apres_arrosage'])} pt · retour {formater_nombre(interpretation['ecart_final_depart'])} pt · qualité {qualite}"
+        _tr('analyse_arrosage_text_340').format(v0=formater_date_courte(date_arrosage), v1=quantite, v2=len(mesures_cycle), v3=avant_txt, v4=formater_nombre(premiere_humidite), v5=formater_nombre(pic_humidite), v6=formater_nombre(derniere_humidite), v7=formater_nombre(interpretation['hausse_apres_arrosage']), v8=formater_nombre(interpretation['ecart_final_depart']), v9=qualite)
     )
     lecture_sechage = qualifier_vitesse_sechage(sechage)
     if sechage is not None:
-        texte += f" · baisse après pic {formater_nombre(baisse_apres_pic)} pt ({formater_nombre(sechage)} pt/j, {lecture_sechage})"
+        texte += _tr('analyse_arrosage_text_346').format(v0=formater_nombre(baisse_apres_pic), v1=formater_nombre(sechage), v2=lecture_sechage)
     else:
         texte += f" · {lecture_sechage}"
     if vitesse_24h is not None:
-        texte += f" · vitesse 24 h {formater_nombre(vitesse_24h)} pt/j"
+        texte += _tr('analyse_arrosage_text_350').format(v0=formater_nombre(vitesse_24h))
     if qualite_detail["avertissements"]:
         texte += " · " + "; ".join(qualite_detail["avertissements"])
     if date_fin:
-        texte += f" · prochain arrosage {formater_date_courte(date_fin)}"
+        texte += _tr('analyse_arrosage_text_354').format(v0=formater_date_courte(date_fin))
     elif duree_heures:
-        texte += f" · suivi {formater_nombre(duree_heures / 24)} jour(s)"
+        texte += _tr('analyse_arrosage_text_356').format(v0=formater_nombre(duree_heures / 24))
     return {
         "date": date_arrosage,
         "fin": date_fin,
@@ -401,7 +401,7 @@ def analyser_cycles_arrosage(cycles):
         and cycle.get("derniere_humidite") is not None
     ]
     if not cycles_humidite:
-        return "Analyse cycles : pas encore assez de mesures d'humidité après arrosage pour interpréter."
+        return _tr('analyse_arrosage_text_404')
 
     recent = cycles_humidite[-1]
     reference_depart = recent.get("humidite_avant")
@@ -410,29 +410,29 @@ def analyser_cycles_arrosage(cycles):
     hausse = recent["pic_humidite"] - reference_depart
     baisse = recent.get("baisse_apres_pic")
     retour = recent["derniere_humidite"] - reference_depart
-    qualite = recent.get("qualite") or "à vérifier"
+    qualite = recent.get("qualite") or _tr('analyse_arrosage_text_413')
     indicateurs = resumer_indicateurs_cycle(recent)
     morceaux = [
-        "Analyse cycles : lecture simple du dernier cycle",
-        "réponse à l’arrosage : " + indicateurs["reponse_arrosage"],
-        f"avant {formater_nombre(reference_depart)} %",
-        f"pic {formater_nombre(recent['pic_humidite'])} %",
-        f"hausse observée +{formater_nombre(hausse)} point(s)",
-        f"fin {formater_nombre(retour)} point(s) par rapport à l'avant-arrosage",
-        "séchage après pic : " + indicateurs["sechage_apres_pic"],
-        "tendance récente : " + indicateurs["tendance_24h"],
-        f"qualité {qualite}",
+        _tr('analyse_arrosage_text_416'),
+        _tr('analyse_arrosage_text_417') + indicateurs["reponse_arrosage"],
+        _tr('analyse_arrosage_text_418').format(v0=formater_nombre(reference_depart)),
+        f"{_texte('pic')} {formater_nombre(recent['pic_humidite'])} %",
+        _tr('analyse_arrosage_text_420').format(v0=formater_nombre(hausse)),
+        _tr('analyse_arrosage_text_421').format(v0=formater_nombre(retour)),
+        _tr('analyse_arrosage_text_422') + indicateurs["sechage_apres_pic"],
+        _tr('analyse_arrosage_text_423') + indicateurs["tendance_24h"],
+        _tr('analyse_arrosage_text_424').format(v0=qualite),
     ]
     if baisse is not None:
-        morceaux.append(f"baisse après pic {formater_nombre(baisse)} point(s)")
+        morceaux.append(_tr('analyse_arrosage_text_427').format(v0=formater_nombre(baisse)))
     else:
-        morceaux.append("baisse après pic non calculable")
+        morceaux.append(_tr('analyse_arrosage_text_429'))
     if recent.get("sechage") is not None:
-        morceaux.append(f"vitesse de séchage après pic {formater_nombre(recent['sechage'])} pt/j")
+        morceaux.append(_tr('analyse_arrosage_text_431').format(v0=formater_nombre(recent['sechage'])))
     if recent.get("vitesse_24h") is not None:
-        morceaux.append(f"tendance sur les dernières 24 h {formater_nombre(recent['vitesse_24h'])} pt/j")
+        morceaux.append(_tr('analyse_arrosage_text_433').format(v0=formater_nombre(recent['vitesse_24h'])))
     if recent.get("avertissements_qualite"):
-        morceaux.append("points à vérifier : " + ", ".join(recent["avertissements_qualite"]))
+        morceaux.append(_tr('analyse_arrosage_text_435') + ", ".join(recent["avertissements_qualite"]))
 
     if len(cycles_humidite) >= 2:
         precedent = cycles_humidite[-2]
@@ -440,21 +440,21 @@ def analyser_cycles_arrosage(cycles):
         if depart_precedent is None:
             depart_precedent = precedent["premiere_humidite"]
         hausse_precedente = precedent["pic_humidite"] - depart_precedent
-        morceaux.append(f"cycle précédent : hausse +{formater_nombre(hausse_precedente)} point(s)")
+        morceaux.append(_tr('analyse_arrosage_text_443').format(v0=formater_nombre(hausse_precedente)))
 
-    return "; ".join(morceaux) + ". Interprétation prudente : zone du capteur uniquement."
+    return "; ".join(morceaux) + _tr('analyse_arrosage_text_445')
 
 
 def resumer_cycles_arrosage(mesures, arrosages, limite=6):
     cycles = calculer_cycles_arrosage(mesures, arrosages, limite=limite)
     if not cycles:
-        return "Cycles d’arrosage : aucun arrosage exploitable avec les données actuelles."
-    lignes = ["Cycles d’arrosage détectés", "", analyser_cycles_arrosage(cycles), ""]
+        return _tr('analyse_arrosage_text_451')
+    lignes = [_tr('analyse_arrosage_text_452'), "", analyser_cycles_arrosage(cycles), ""]
     for cycle in reversed(cycles):
         lignes.append("- " + cycle["texte"])
     lignes.extend([
         "",
-        "Lecture prudente : le Mi Flora mesure une zone du pot. La vitesse de séchage décrit la zone du capteur, pas forcément toute la motte.",
+        _tr('analyse_arrosage_text_457'),
     ])
     return "\n".join(lignes)
 

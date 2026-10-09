@@ -1,3 +1,5 @@
+
+from i18n import traduire_courant as _tr
 import asyncio
 import threading
 
@@ -51,11 +53,11 @@ def afficher_etat():
 
     print()
     print("=" * 55)
-    print("🌿 ÉTAT DE GRUTERRA")
+    print(_tr('app_text_54'))
     print("=" * 55)
 
     if not plantes:
-        print("❌ Aucune plante enregistrée.")
+        print(_tr('app_text_58'))
     else:
 
         for plante in plantes:
@@ -70,9 +72,9 @@ def afficher_etat():
 
             print()
             print(f"🌱 {nom}")
-            print(f"   Espèce      : {espece}")
-            print(f"   Emplacement : {emplacement}")
-            print(f"   Zone        : {zone}")
+            print(_tr('app_text_73').format(v0=espece))
+            print(_tr('app_text_76').format(v0=emplacement))
+            print(_tr('app_text_77').format(v0=zone))
 
             capteurs_plante = [
                 capteur
@@ -99,14 +101,14 @@ def afficher_etat():
                     ) = capteur
 
                     print(
-                        f"   📡 Capteur : {nom_capteur}"
+                        _tr('app_text_104').format(v0=nom_capteur)
                     )
                     print(
-                        f"      Adresse : {adresse}"
+                        _tr('app_text_107').format(v0=adresse)
                     )
 
             else:
-                print("   📡 Aucun capteur actif")
+                print(_tr('app_text_109'))
 
 
 def afficher_netatmo():
@@ -116,7 +118,7 @@ def afficher_netatmo():
 
     print()
     print("=" * 55)
-    print("🌦️ ACTUALISATION NETATMO")
+    print(_tr('app_text_121'))
     print("=" * 55)
 
     try:
@@ -124,11 +126,11 @@ def afficher_netatmo():
         donnees = recuperer_netatmo()
 
         if not donnees:
-            print("❌ Aucune donnée Netatmo.")
+            print(_tr('app_text_127'))
             return
 
         print()
-        print("✅ Données Netatmo récupérées.")
+        print(_tr('app_text_131'))
 
         afficher_resultat(donnees)
 
@@ -138,16 +140,15 @@ def afficher_netatmo():
         message = str(e)
 
         if "503" in message:
-            print("⚠️ Netatmo est temporairement indisponible.")
-            print("   Les serveurs Netatmo ont refusé la requête.")
-            print("   Réessayez dans quelques minutes.")
+            print(_tr('app_text_141'))
+            print(_tr('app_text_142'))
+            print(_tr('app_text_143'))
         else:
             print(
-                f"❌ Erreur Netatmo : "
-                f"{type(e).__name__}"
+                _tr('app_text_146').format(v0=type(e).__name__)
             )
             print(
-                f"   Message : {message}"
+                _tr('app_text_151').format(v0=message)
             )
 
 
@@ -172,13 +173,13 @@ def menu():
         print("🌿 GRUTERRA")
         print("=" * 55)
         print()
-        print("1. 📊 Afficher l'état")
-        print("2. 📡 Synchroniser les capteurs")
-        print("3. 🌦️ Actualiser Netatmo")
-        print("4. ❌ Quitter")
+        print(_tr('app_text_175'))
+        print(_tr('app_text_176'))
+        print(_tr('cli_refresh_netatmo'))
+        print(_tr('cli_quit'))
         print()
 
-        choix = input("Votre choix : ").strip()
+        choix = input(_tr('app_text_182')).strip()
 
         if choix == "1":
 
@@ -195,13 +196,13 @@ def menu():
         elif choix == "4":
 
             print()
-            print("👋 Fermeture de Gruterra.")
+            print(_tr('app_text_198'))
             break
 
         else:
 
             print()
-            print("❌ Choix invalide.")
+            print(_tr('cli_invalid_choice'))
 
 
 if __name__ == "__main__":

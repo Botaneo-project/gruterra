@@ -9,6 +9,8 @@ Le module prépare la base technique sans restauration automatique destructive.
 """
 from __future__ import annotations
 
+from i18n import traduire, traduire_courant as _tr
+
 import json
 import zipfile
 from dataclasses import dataclass
@@ -17,9 +19,7 @@ from pathlib import Path
 
 DOSSIER_SAUVEGARDES = "_user_backups"
 AVERTISSEMENT_SAUVEGARDE_PRIVEE = (
-    "Cette sauvegarde complète peut contenir des informations privées : base réelle, "
-    "réglages personnels, accès de connexion et informations privées. Ne la partagez "
-    "pas et ne la publiez jamais sur GitHub."
+    traduire('sauvegarde_utilisateur_text_20', 'fr')
 )
 
 ELEMENTS_EXPORT_DONNEES = (
@@ -66,7 +66,7 @@ def lister_elements_sauvegarde(racine, mode="complete") -> list[ElementSauvegard
         elements = ELEMENTS_SAUVEGARDE_COMPLETE + FICHIERS_OPTIONNELS_COMPLETS
         prives = {"_config", "discord_bot/.env"}
     else:
-        raise ValueError("mode de sauvegarde inconnu")
+        raise ValueError(_tr('sauvegarde_utilisateur_text_69'))
 
     resultat = []
     for relatif in elements:
@@ -90,7 +90,7 @@ def construire_manifest_sauvegarde(racine, mode="complete") -> dict:
         "mode": mode,
         "cree_le": datetime.now().isoformat(timespec="seconds"),
         "contient_elements_prives": contient_prive,
-        "avertissement": AVERTISSEMENT_SAUVEGARDE_PRIVEE if mode == "complete" else "Export de données destiné au partage ou à l’analyse, sans réglages privés volontairement inclus.",
+        "avertissement": _tr('sauvegarde_utilisateur_text_20') if mode == "complete" else _tr('sauvegarde_utilisateur_text_93'),
         "elements": [item.__dict__ for item in elements],
         "restauration_automatique": False,
     }
@@ -100,23 +100,23 @@ def construire_manifest_sauvegarde(racine, mode="complete") -> dict:
 def formater_rapport_sauvegarde(manifest: dict) -> str:
     """Retourne un rapport court et copiable pour l'utilisateur."""
 
-    mode = manifest.get("mode", "inconnu")
-    cree_le = manifest.get("cree_le", "horaire inconnu")
+    mode = manifest.get("mode", _tr('interface_text_1854'))
+    cree_le = manifest.get("cree_le", _tr('sauvegarde_utilisateur_text_104'))
     elements = manifest.get("elements", [])
     presents = [item.get("chemin") for item in elements if item.get("existe")]
     absents = [item.get("chemin") for item in elements if not item.get("existe")]
     lignes = [
-        "Rapport de sauvegarde Gruterra",
-        f"Horaire : {cree_le}",
-        f"Type de sauvegarde : {'complète personnelle' if mode == 'complete' else 'données uniquement'}",
-        f"Contient des informations privées : {'oui' if manifest.get('contient_elements_prives') else 'non'}",
-        f"Contenu inclus : {', '.join(presents) if presents else 'aucun'}",
+        _tr('sauvegarde_utilisateur_text_109'),
+        _tr('sauvegarde_utilisateur_text_110').format(v0=cree_le),
+        _tr('sauvegarde_utilisateur_text_111').format(v0=_tr('sauvegarde_utilisateur_text_111_more') if mode == 'complete' else _tr('sauvegarde_utilisateur_text_111_more_more')),
+        _tr('sauvegarde_utilisateur_text_112').format(v0=_tr('botaneo_update_text_346') if manifest.get('contient_elements_prives') else _tr('botaneo_update_text_346_more')),
+        _tr('sauvegarde_utilisateur_text_113_more').format(v0=', '.join(presents) if presents else _tr('sauvegarde_utilisateur_text_113')),
     ]
     if absents:
-        lignes.append(f"Non trouvés sur ce poste : {', '.join(absents)}")
+        lignes.append(_tr('sauvegarde_utilisateur_text_116').format(v0=', '.join(absents)))
     avertissement = manifest.get("avertissement")
     if avertissement:
-        lignes.append(f"Attention : {avertissement}")
+        lignes.append(_tr('sauvegarde_utilisateur_text_119').format(v0=avertissement))
     return "\n".join(lignes)
 
 

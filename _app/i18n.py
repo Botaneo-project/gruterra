@@ -62,3 +62,53 @@ def traduire(cle, langue="fr"):
 
     secours = TRADUCTIONS_SECOURS.get(cle, {})
     return secours.get(code) or secours.get(LANGUE_DEFAUT) or cle
+
+
+
+from contextlib import contextmanager
+from contextvars import ContextVar
+
+_LANGUE_EXPLICITE = ContextVar("gruterra_langue", default=None)
+_LECTURE_PREFERENCE = ContextVar("gruterra_lecture_langue", default=False)
+
+
+def langue_courante():
+    """La langue du poste avec protection contre les erreurs de configuration récursives."""
+    explicite = _LANGUE_EXPLICITE.get()
+    if explicite:
+        return explicite
+    if _LECTURE_PREFERENCE.get():
+        return LANGUE_DEFAUT
+    jeton = _LECTURE_PREFERENCE.set(True)
+    try:
+        from ui_preferences import charger_langue_interface
+        return normaliser_langue(charger_langue_interface())
+    except (OSError, RuntimeError, ValueError, ImportError):
+        return LANGUE_DEFAUT
+    finally:
+        _LECTURE_PREFERENCE.reset(jeton)
+
+
+@contextmanager
+def utiliser_langue(langue):
+    """Contexte explicite pour tests et exports, sans modifier les préférences utilisateur."""
+    jeton = _LANGUE_EXPLICITE.set(normaliser_langue(langue))
+    try:
+        yield
+    finally:
+        _LANGUE_EXPLICITE.reset(jeton)
+
+
+def traduire_courant(cle):
+    return traduire(cle, langue_courante())
+
+
+@lru_cache(maxsize=1)
+def index_textes_francais():
+    return {texte: cle for cle, texte in charger_locale("fr").items() if isinstance(texte, str)}
+
+
+def traduire_texte_courant(texte):
+    """Localise un libellé canonique à l'affichage ; les valeurs métier restent stables."""
+    cle = index_textes_francais().get(texte) if isinstance(texte, str) else None
+    return traduire_courant(cle) if cle else texte

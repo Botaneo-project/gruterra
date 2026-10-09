@@ -1,4 +1,6 @@
 """Fetch verified daily snapshots; never replace the live PC database."""
+
+from i18n import traduire_courant as _tr
 import hashlib,json,os,re,sqlite3,subprocess,tempfile
 from datetime import datetime, timedelta
 from pathlib import Path
@@ -41,9 +43,9 @@ def retention_status(folder, retention_days=RETENTION_JOURS):
             old += 1
 
     if old:
-        return f' Rétention sauvegardes Pi : {total} copie(s), dont {old} ancienne(s) à vérifier plus tard.'
+        return _tr('raspberry_backup_text_44').format(v0=total, v1=old)
     if total:
-        return f' Rétention sauvegardes Pi : {total} copie(s), aucune ancienne.'
+        return _tr('raspberry_backup_text_46').format(v0=total)
     return ''
 
 
@@ -65,7 +67,7 @@ def retrieve(config, folder):
     if target.exists():
         try:
             verify(target,metadata)
-            return 'Sauvegarde Pi déjà vérifiée sur le PC ('+metadata['name'][10:20]+').' + retention_status(folder)
+            return _tr('raspberry_backup_text_68')+metadata['name'][10:20]+').' + retention_status(folder)
         except (ValueError,sqlite3.Error):
             pass
     fd,tmp=tempfile.mkstemp(dir=folder,suffix='.part')
@@ -77,7 +79,7 @@ def retrieve(config, folder):
         verify(temporary,metadata)
         with temporary.open('r+b') as stream: os.fsync(stream.fileno())
         os.replace(temporary,target)
-        return 'Sauvegarde Pi copiée et vérifiée sur le PC ('+metadata['name'][10:20]+').' + retention_status(folder)
+        return _tr('raspberry_backup_text_80')+metadata['name'][10:20]+').' + retention_status(folder)
     finally:
         temporary.unlink(missing_ok=True)
 

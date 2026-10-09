@@ -1,4 +1,6 @@
 """Configuration locale commune, sans dependance et sans ouverture reseau."""
+
+from i18n import traduire_courant as _tr
 import json
 import os
 import tempfile
@@ -36,9 +38,9 @@ def lire_json(path):
     try:
         data = json.loads(Path(path).read_text(encoding="utf-8-sig"))
     except (OSError, ValueError):
-        raise RuntimeError("Configuration locale absente, inaccessible ou JSON invalide.") from None
+        raise RuntimeError(_tr('config_unreadable')) from None
     if not isinstance(data, dict):
-        raise RuntimeError("La configuration locale doit etre un objet JSON.")
+        raise RuntimeError(_tr('botaneo_config_text_41'))
     return data
 
 
@@ -53,7 +55,7 @@ def ecrire_json(path, data):
             os.fsync(stream.fileno())
         os.replace(temporary, path)
     except OSError:
-        raise RuntimeError("Ecriture de la configuration locale impossible.") from None
+        raise RuntimeError(_tr('botaneo_config_text_56')) from None
     finally:
         if os.path.exists(temporary):
             os.unlink(temporary)
@@ -77,7 +79,7 @@ def diagnostiquer_config_netatmo():
             "ok": False,
             "niveau": "absente",
             "message": "Configuration Netatmo absente.",
-            "details": "Créer _config/netatmo_config.json à partir de netatmo_config.example.json.",
+            "details": _tr('botaneo_config_text_80'),
             "manquants": list(champs_requis),
         }
 
@@ -106,16 +108,16 @@ def diagnostiquer_config_netatmo():
         return {
             "ok": False,
             "niveau": "incomplete",
-            "message": "Configuration Netatmo incomplète.",
-            "details": "Champs à renseigner : " + ", ".join(problemes) + ".",
+            "message": _tr('botaneo_config_text_109'),
+            "details": _tr('botaneo_config_text_110') + ", ".join(problemes) + ".",
             "manquants": problemes,
         }
 
     return {
         "ok": True,
         "niveau": "prete",
-        "message": "Configuration Netatmo présente.",
-        "details": "Les champs nécessaires existent. Utilisez Actualiser Netatmo pour tester la connexion réelle.",
+        "message": _tr('botaneo_config_text_117'),
+        "details": _tr('botaneo_config_text_118'),
         "manquants": [],
     }
 
@@ -124,7 +126,7 @@ def creer_config_netatmo_exemple():
     """Cree le fichier prive Netatmo avec des valeurs d'exemple si absent."""
 
     if NETATMO_CONFIG.exists():
-        return False, "Le fichier de configuration Netatmo existe déjà."
+        return False, _tr('botaneo_config_text_127')
 
     CONFIG_DIR.mkdir(parents=True, exist_ok=True)
     data = {
@@ -134,7 +136,7 @@ def creer_config_netatmo_exemple():
         "refresh" + "_" + "token": "votre_" + "refresh" + "_" + "token" + "_netatmo",
     }
     ecrire_json(NETATMO_CONFIG, data)
-    return True, "Fichier _config/netatmo_config.json créé. Remplacez les valeurs d'exemple par vos informations Netatmo."
+    return True, _tr('botaneo_config_text_137')
 
 
 def parametres_netatmo():
@@ -151,5 +153,5 @@ def parametres_netatmo():
         favorites = [normaliser_station_favorite(x) for x in favorites]
         favorites = [x for x in favorites if x]
     except (KeyError, TypeError, ValueError, OverflowError):
-        raise RuntimeError("Parametres locaux Netatmo invalides.") from None
+        raise RuntimeError(_tr('netatmo_local_invalid')) from None
     return lat, lon, radius, search, set(favorites)

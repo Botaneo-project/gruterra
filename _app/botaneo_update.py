@@ -7,6 +7,8 @@ sauvegardes.
 """
 from __future__ import annotations
 
+from i18n import traduire_courant as _tr, traduire_texte_courant as _texte
+
 import json
 import os
 from dataclasses import dataclass
@@ -65,17 +67,17 @@ def detecter_element_personnel(racine, chemin_relatif) -> ElementPersonnel:
     else:
         type_element = "absent"
     raisons = {
-        "plantes.db": "base SQLite personnelle",
-        "_config": "configuration privée, tokens et secrets locaux",
-        "_security_backups": "sauvegardes locales de sécurité",
-        "_historique": "anciens fichiers conservés localement",
-        "_app/data": "suivis locaux, caches et états runtime",
+        "plantes.db": _tr('personal_sqlite'),
+        "_config": _tr('botaneo_update_text_69'),
+        "_security_backups": _tr('botaneo_update_text_70'),
+        "_historique": _tr('botaneo_update_text_71'),
+        "_app/data": _tr('botaneo_update_text_72'),
     }
     return ElementPersonnel(
         chemin=chemin_relatif,
         existe=chemin.exists(),
         type=type_element,
-        raison=raisons.get(chemin_relatif, "donnée locale à préserver"),
+        raison=raisons.get(chemin_relatif, _tr('botaneo_update_text_80')),
     )
 
 
@@ -92,14 +94,14 @@ def construire_separation_programme_donnees(racine) -> dict:
         ],
         "donnees_utilisateur_actuelles": list(ELEMENTS_PERSONNELS),
         "donnees_utilisateur_futures": [
-            "dossier utilisateur Gruterra dédié",
-            "base SQLite réelle",
-            "configuration privée",
-            "secrets et tokens",
-            "préférences locales",
-            "sauvegardes et caches runtime",
+            _tr('botaneo_update_text_95'),
+            _tr('botaneo_update_text_96'),
+            _tr('botaneo_update_text_97'),
+            _tr('botaneo_update_text_100'),
+            _tr('botaneo_update_text_99'),
+            _tr('botaneo_update_text_102_more'),
         ],
-        "principe": "le programme pourra être remplacé, les données utilisateur devront rester conservées",
+        "principe": _tr('botaneo_update_text_102'),
         "racine_actuelle": str(racine),
     }
 
@@ -137,17 +139,17 @@ def construire_plan_mise_a_jour(racine, verifier_distant=False) -> dict:
             verifier_distant=verifier_distant,
         ),
         "actions_avant_update": [
-            "fermer Gruterra",
-            "lancer une sauvegarde locale",
-            "vérifier que la base SQLite personnelle est sauvegardée",
-            "préserver _config et les fichiers *.local.json",
-            "appliquer la mise à jour seulement après validation explicite",
+            _tr('canonical_close_app'),
+            _tr('botaneo_update_text_141'),
+            _tr('botaneo_update_text_142'),
+            _tr('botaneo_update_text_143'),
+            _tr('botaneo_update_text_144'),
         ],
         "actions_interdites_sans_validation": [
-            "supprimer la base réelle",
-            "écraser _config",
-            "supprimer les sauvegardes locales",
-            "lancer un git reset ou un nettoyage destructeur",
+            _tr('botaneo_update_text_147'),
+            _tr('botaneo_update_text_148'),
+            _tr('botaneo_update_text_149'),
+            _tr('botaneo_update_text_152'),
         ],
     }
     plan["verification"] = verifier_plan_mise_a_jour(plan)
@@ -169,13 +171,13 @@ def verifier_plan_mise_a_jour(plan) -> dict:
 
     separation = plan.get("separation_programme_donnees", {})
     if not separation.get("programme_actuel") or not separation.get("donnees_utilisateur_actuelles"):
-        bloquants.append("séparation programme/données absente du plan")
+        bloquants.append(_tr('botaneo_update_text_172'))
     else:
         donnees_attendues = set(ELEMENTS_PERSONNELS)
         donnees_plan = set(separation.get("donnees_utilisateur_actuelles", []))
         manquantes = sorted(donnees_attendues - donnees_plan)
         if manquantes:
-            bloquants.append("données personnelles absentes du plan : " + ", ".join(manquantes))
+            bloquants.append(_tr('botaneo_update_text_178') + ", ".join(manquantes))
 
     contexte = plan.get("contexte_execution", {})
     mode_demo = bool(contexte.get("mode_demo"))
@@ -183,17 +185,17 @@ def verifier_plan_mise_a_jour(plan) -> dict:
     base = elements.get("plantes.db")
     if mode_demo:
         if not contexte.get("base_demo_detectee"):
-            bloquants.append("base de démonstration plantes_demo.db introuvable")
+            bloquants.append(_tr('botaneo_update_text_186'))
     elif not base or not base.existe or base.type != "fichier":
-        avertissements.append("base plantes.db absente : installation fraîche, démo ou base réelle non créée")
+        avertissements.append(_tr('botaneo_update_text_188'))
 
     config = elements.get("_config")
     if not config or not config.existe or config.type != "dossier":
-        avertissements.append("dossier _config absent ou non détecté")
+        avertissements.append(_tr('botaneo_update_text_192'))
 
     sauvegardes = elements.get("_security_backups")
     if not mode_demo and (not sauvegardes or not sauvegardes.existe):
-        avertissements.append("aucune sauvegarde locale _security_backups détectée")
+        avertissements.append(_tr('botaneo_update_text_196'))
 
     statut = "pret"
     if avertissements:
@@ -213,10 +215,10 @@ def verifier_plan_mise_a_jour(plan) -> dict:
 
 def message_verification_plan(statut, bloquants, avertissements):
     if statut == "pret":
-        return "Données personnelles repérées ; l’installation restera soumise à votre validation."
+        return _tr('botaneo_update_text_216')
     if statut == "bloque":
-        return "Installation bloquée pour protéger vos données : " + ", ".join(bloquants)
-    return "Installation possible, mais quelques points sont à contrôler : " + ", ".join(avertissements)
+        return _tr('botaneo_update_text_218') + ", ".join(bloquants)
+    return _tr('botaneo_update_text_219') + ", ".join(avertissements)
 
 
 def resume_court_mise_a_jour(plan) -> str:
@@ -229,22 +231,22 @@ def resume_court_mise_a_jour(plan) -> str:
 
     statut_version = plan.get("statut_version", {})
     lignes = [
-        "Mise à jour Gruterra : " + ("mode démo" if contexte.get("mode_demo") else "poste réel"),
-        f"- état général : {statut}",
-        f"- protection des données : {verification.get('message', 'non effectuée')}",
-        f"- version : {statut_version.get('message', 'vérification non configurée')}",
+        _tr('botaneo_update_text_232') + (_tr('botaneo_update_text_232_more') if contexte.get("mode_demo") else _tr('botaneo_update_text_232_more_more')),
+        _tr('botaneo_update_text_233').format(v0=statut),
+        _tr('botaneo_update_text_234').format(v0=verification.get('message', _tr('botaneo_update_text_236'))),
+        _tr('botaneo_update_text_237').format(v0=statut_version.get('message', _tr('botaneo_update_text_237_more'))),
     ]
     if statut_version.get("notes"):
-        lignes.append(f"- note de version : {statut_version.get('notes')}")
+        lignes.append(_tr('botaneo_update_text_238').format(v0=statut_version.get('notes')))
     if statut_version.get("url"):
-        lignes.append(f"- page du projet : {statut_version.get('url')}")
+        lignes.append(_tr('botaneo_update_text_240').format(v0=statut_version.get('url')))
     if contexte.get("mode_demo"):
-        lignes.append("- base de démonstration détectée : " + ("plantes_demo.db" if contexte.get("base_demo_detectee") else "absente"))
+        lignes.append(_tr('botaneo_update_text_242') + ("plantes_demo.db" if contexte.get("base_demo_detectee") else _texte("absente")))
     lignes.extend([
-        "- installation sans votre accord : non",
-        "- données personnelles : conservées séparément du programme",
-        "- fichiers privés : détails masqués",
-        "- données à conserver : " + (", ".join(presents) if presents else "aucun élément personnel détecté"),
+        _tr('botaneo_update_text_244'),
+        _tr('botaneo_update_text_245'),
+        _tr('botaneo_update_text_246'),
+        _tr('botaneo_update_text_365') + (", ".join(presents) if presents else _tr('botaneo_update_text_247')),
     ])
     if absents:
         if contexte.get("mode_demo"):
@@ -252,8 +254,8 @@ def resume_court_mise_a_jour(plan) -> str:
         else:
             absents_affiches = absents
         if absents_affiches:
-            lignes.append("- éléments non encore créés sur ce poste : " + ", ".join(absents_affiches))
-    lignes.append("- règle : sauvegarde locale puis validation explicite avant installation")
+            lignes.append(_tr('botaneo_update_text_255') + ", ".join(absents_affiches))
+    lignes.append(_tr('botaneo_update_text_256'))
     return "\n".join(lignes)
 
 
@@ -278,15 +280,15 @@ def construire_diagnostic_mise_a_jour(racine, verifier_distant=False) -> dict:
         statut_global = "bloque"
 
     prochaines_actions = [
-        "faire une sauvegarde locale",
-        "vérifier les données personnelles détectées",
-        "relire les notes de version",
-        "demander une validation explicite avant toute application",
+        _tr('botaneo_update_text_281'),
+        _tr('botaneo_update_text_282'),
+        _tr('botaneo_update_text_283'),
+        _tr('botaneo_update_text_284'),
     ]
     if statut_global == "bloque":
-        prochaines_actions.insert(0, "corriger les éléments bloquants avant toute mise à jour")
+        prochaines_actions.insert(0, _tr('botaneo_update_text_287'))
     elif statut_global == "prudence":
-        prochaines_actions.insert(0, "contrôler les avertissements avant de continuer")
+        prochaines_actions.insert(0, _tr('botaneo_update_text_289'))
 
     return {
         "statut_global": statut_global,
@@ -305,11 +307,11 @@ def construire_diagnostic_mise_a_jour(racine, verifier_distant=False) -> dict:
 
 def libelle_statut_global(statut) -> str:
     libelles = {
-        "pret_a_verifier": "Prêt à installer après validation",
-        "prudence": "À contrôler avant mise à jour",
-        "bloque": "Installation bloquée pour protéger les données",
+        "pret_a_verifier": _tr('botaneo_update_text_308'),
+        "prudence": _tr('botaneo_update_text_309'),
+        "bloque": _tr('botaneo_update_text_310'),
     }
-    return libelles.get(statut, "État inconnu")
+    return libelles.get(statut, _tr('botaneo_update_text_314'))
 
 
 def exporter_diagnostic_mise_a_jour_json(diagnostic) -> str:
@@ -332,20 +334,20 @@ def exporter_diagnostic_mise_a_jour_json(diagnostic) -> str:
 def formater_diagnostic_mise_a_jour(diagnostic) -> str:
     statut_global = diagnostic.get('statut_global', 'inconnu')
     lignes = [
-        "Mise à jour Gruterra",
-        f"État : {libelle_statut_global(statut_global)}",
-        f"Référence technique : {statut_global}",
-        f"Mode : {diagnostic.get('mode', 'préparation uniquement')}",
+        _tr('update_apply_result_title'),
+        _tr('interface_text_5653').format(v0=libelle_statut_global(statut_global)),
+        _tr('botaneo_update_text_337').format(v0=statut_global),
+        _tr("mode_value").format(mode=_texte(diagnostic.get("mode", "préparation uniquement"))),
     ]
     contexte = diagnostic.get("contexte_execution", {})
     if contexte.get("mode_demo"):
-        lignes.append("Base de démonstration détectée : " + ("plantes_demo.db" if contexte.get("base_demo_detectee") else "absente"))
+        lignes.append(_tr('botaneo_update_text_342') + ("plantes_demo.db" if contexte.get("base_demo_detectee") else _texte("absente")))
     lignes.extend([
-        f"Installation sans validation : {'oui' if diagnostic.get('application_autorisee') else 'non'}",
+        _tr('botaneo_update_text_344').format(v0=_tr('botaneo_update_text_346') if diagnostic.get('application_autorisee') else _tr('botaneo_update_text_346_more')),
         "",
-        diagnostic.get("resume", "Résumé indisponible."),
+        diagnostic.get("resume", _tr('botaneo_update_text_348')),
         "",
-        "Prochaines actions :",
+        _tr("next_actions"),
     ])
     lignes.extend(f"- {action}" for action in diagnostic.get("prochaines_actions", []))
     return "\n".join(lignes)
@@ -353,25 +355,25 @@ def formater_diagnostic_mise_a_jour(diagnostic) -> str:
 
 def formater_plan_mise_a_jour(plan) -> str:
     lignes = [
-        "Plan de mise à jour Gruterra",
-        f"Mode : {plan.get('mode', 'préparation')}",
-        f"Racine : {plan.get('racine', 'inconnue')}",
-        plan.get("statut_version", {}).get("message", "Vérification de version non configurée."),
-        plan.get("verification", {}).get("message", "Vérification du plan non effectuée."),
+        _tr('botaneo_update_text_356'),
+        _tr("mode_value").format(mode=_texte(plan.get("mode", "préparation"))),
+        _tr("root_value").format(root=plan.get("racine", _texte("inconnue"))),
+        plan.get("statut_version", {}).get("message", _tr('botaneo_update_text_361')),
+        plan.get("verification", {}).get("message", _tr('botaneo_update_text_362_more')),
         "",
-        "Séparation programme / données :",
-        f"- principe : {plan.get('separation_programme_donnees', {}).get('principe', 'à définir')}",
-        "- programme remplaçable : " + ", ".join(plan.get("separation_programme_donnees", {}).get("programme_actuel", [])),
-        "- données à conserver : " + ", ".join(plan.get("separation_programme_donnees", {}).get("donnees_utilisateur_actuelles", [])),
+        _tr('botaneo_update_text_362'),
+        _tr('botaneo_update_text_365_more').format(v0=plan.get('separation_programme_donnees', {}).get('principe', _tr('botaneo_update_text_365_more_more'))),
+        _tr('botaneo_update_text_364') + ", ".join(plan.get("separation_programme_donnees", {}).get("programme_actuel", [])),
+        _tr('botaneo_update_text_365') + ", ".join(plan.get("separation_programme_donnees", {}).get("donnees_utilisateur_actuelles", [])),
         "",
-        "Éléments personnels à préserver :",
+        _tr('botaneo_update_text_367'),
     ]
     for element in plan.get("elements_personnels", []):
-        etat = "présent" if element.existe else "absent"
+        etat = _tr('botaneo_update_text_370') if element.existe else _texte("absent")
         lignes.append(f"- {element.chemin} · {etat} · {element.raison}")
-    lignes.extend(["", "Avant toute mise à jour :"])
+    lignes.extend(["", _tr('botaneo_update_text_372')])
     lignes.extend(f"- {action}" for action in plan.get("actions_avant_update", []))
-    lignes.extend(["", "Interdit sans validation explicite :"])
+    lignes.extend(["", _tr('botaneo_update_text_374')])
     lignes.extend(f"- {action}" for action in plan.get("actions_interdites_sans_validation", []))
     return "\n".join(lignes)
 
@@ -416,12 +418,12 @@ def comparer_versions(version_locale, version_distante):
 
 def message_version(statut, version_locale, version_distante):
     if statut == "mise_a_jour_disponible":
-        return f"Nouvelle version disponible : {version_distante}. Une sauvegarde sera faite avant installation."
+        return _tr('botaneo_update_text_419').format(v0=version_distante)
     if statut == "version_stable_disponible":
-        return f"Version stable {version_distante} disponible pour remplacer la version locale {version_locale}."
+        return _tr('botaneo_update_text_421').format(v0=version_distante, v1=version_locale)
     if statut == "a_jour":
-        return f"Gruterra {version_locale} est à jour."
-    return f"Cette installation ({version_locale}) est plus récente que la version publiée ({version_distante})."
+        return _tr('botaneo_update_text_423').format(v0=version_locale)
+    return _tr('botaneo_update_text_424').format(v0=version_locale, v1=version_distante)
 
 
 def analyser_manifest_version(donnees, source):
@@ -432,7 +434,7 @@ def analyser_manifest_version(donnees, source):
             "disponible": False,
             "version": None,
             "source": str(source),
-            "message": "Manifeste de version au format invalide.",
+            "message": _tr('botaneo_update_text_435'),
         }
     version = donnees.get("version")
     if not version:
@@ -440,7 +442,7 @@ def analyser_manifest_version(donnees, source):
             "disponible": False,
             "version": None,
             "source": str(source),
-            "message": "Manifeste de version sans champ version exploitable.",
+            "message": _tr('botaneo_update_text_443'),
         }
     return {
         "disponible": True,
@@ -451,7 +453,7 @@ def analyser_manifest_version(donnees, source):
         "archive_url": str(donnees.get("archive_url", "")),
         "sha256": str(donnees.get("sha256", "")),
         "mise_a_jour_automatique": bool(donnees.get("mise_a_jour_automatique", False)),
-        "message": f"Version publiée : {version}",
+        "message": _tr('botaneo_update_text_454').format(v0=version),
     }
 
 
@@ -464,7 +466,7 @@ def lire_manifest_version(chemin_manifest):
             "disponible": False,
             "version": None,
             "source": str(chemin),
-            "message": "Fichier local de version absent.",
+            "message": _tr('botaneo_update_text_467'),
         }
     try:
         donnees = json.loads(chemin.read_text(encoding="utf-8"))
@@ -473,7 +475,7 @@ def lire_manifest_version(chemin_manifest):
             "disponible": False,
             "version": None,
             "source": str(chemin),
-            "message": f"Fichier local de version illisible : {erreur}",
+            "message": _tr('botaneo_update_text_476').format(v0=erreur),
         }
     return analyser_manifest_version(donnees, chemin)
 
@@ -486,7 +488,7 @@ def lire_manifest_version_distant(url, timeout=TIMEOUT_MANIFEST_SECONDES, ouvreu
             "disponible": False,
             "version": None,
             "source": "",
-            "message": "Adresse de vérification GitHub non configurée.",
+            "message": _tr('botaneo_update_text_489'),
         }
     try:
         requete = Request(str(url), headers={"User-Agent": "Gruterra-update-check/1.0"})
@@ -498,18 +500,18 @@ def lire_manifest_version_distant(url, timeout=TIMEOUT_MANIFEST_SECONDES, ouvreu
             "disponible": False,
             "version": None,
             "source": str(url),
-            "message": f"Vérification GitHub indisponible : HTTP {erreur.code}.",
+            "message": _tr('botaneo_update_text_501').format(v0=erreur.code),
         }
     except (URLError, TimeoutError, OSError, json.JSONDecodeError, UnicodeDecodeError) as erreur:
         return {
             "disponible": False,
             "version": None,
             "source": str(url),
-            "message": f"Vérification GitHub impossible : {erreur}",
+            "message": _tr('botaneo_update_text_508').format(v0=erreur),
         }
     manifest = analyser_manifest_version(donnees, url)
     if manifest.get("disponible"):
-        manifest["message"] = f"Version publiée sur GitHub : {manifest.get('version')}"
+        manifest["message"] = _tr('botaneo_update_text_512').format(v0=manifest.get('version'))
     return manifest
 
 
@@ -547,8 +549,8 @@ def construire_statut_version(version_locale, version_distante=None, chemin_mani
             local = lire_manifest_version(chemin_manifest_local)
             statut = construire_statut_version_depuis_manifest_charge(version_locale, local)
             if local.get("disponible"):
-                statut["message"] = "GitHub n’est pas joignable ; Gruterra utilise les informations locales."
-                statut["avertissement_distant"] = manifest.get("message", "vérification distante indisponible")
+                statut["message"] = _tr('botaneo_update_text_550')
+                statut["avertissement_distant"] = manifest.get("message", _tr('botaneo_update_text_553'))
             else:
                 statut["message"] = manifest.get("message", statut.get("message"))
             statut["source_distante"] = manifest.get("source")
@@ -570,5 +572,5 @@ def construire_statut_version_base(version_locale):
         "version_distante": None,
         "statut": "verification_non_configuree",
         "application_autorisee": False,
-        "message": "Vérification GitHub non configurée ; aucune installation automatique active.",
+        "message": _tr('botaneo_update_text_573'),
     }

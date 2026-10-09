@@ -1,4 +1,6 @@
 """Évolutions observées, sans déduire un déplacement ou une durée d'exposition."""
+
+from i18n import traduire_courant as _tr
 from collections import defaultdict
 from datetime import datetime, timedelta
 from math import isfinite
@@ -25,7 +27,7 @@ def analyser_evolutions(mesures, maintenant=None):
     jours = {jour: {h: median(v) for h, v in valeurs.items()}
              for jour, valeurs in heures.items()}
     evenements = []
-    noms = ('Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi', 'Dimanche')
+    noms = (_tr('evolutions_lumiere_text_30'), _tr('evolutions_lumiere_text_30_more'), _tr('evolutions_lumiere_text_30_more_more'), _tr('evolutions_lumiere_text_30_more_more_more'), _tr('evolutions_lumiere_text_30_more_more_more_more'), _tr('evolutions_lumiere_text_30_more_more_more_more_more'), _tr('evolutions_lumiere_text_30_more_more_more_more_more_more'))
     for jour in sorted(jours, reverse=True):
         precedent = jour - timedelta(days=1)
         commun = sorted(set(jours[jour]) & set(jours.get(precedent, {})))
@@ -43,10 +45,8 @@ def analyser_evolutions(mesures, maintenant=None):
             'date': jour.isoformat(),
             'sens': 'hausse' if hausse else 'baisse',
             'titre': f"{noms[jour.weekday()]} {jour:%d/%m} · " + (
-                'Amélioration de l’exposition lumineuse' if hausse else 'Baisse de l’exposition lumineuse'),
-            'detail': f"Moyenne sur {len(commun)} créneaux horaires communs : "
-                      f"{avant:.0f} à {apres:.0f} lux par rapport à la veille. "
-                      f"Pic diurne : {pic:.0f} lux.",
+                _tr('evolutions_lumiere_text_46') if hausse else _tr('evolutions_lumiere_text_46_more')),
+            'detail': _tr('evolutions_lumiere_text_47').format(v0=len(commun), v1=avant, v2=apres, v3=pic),
         })
     return evenements
 

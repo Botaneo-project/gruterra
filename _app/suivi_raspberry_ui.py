@@ -1,4 +1,6 @@
 """Carte Tkinter ; seul le thread principal manipule les widgets."""
+
+from i18n import traduire_courant as _tr
 import raspberry_sync
 import queue
 import threading
@@ -53,7 +55,7 @@ class SuiviRaspberry:
             self.render()
         except Exception:
             # Ne jamais arrêter la boucle Tkinter ni révéler d'exception contenant des chemins.
-            self.runtime_error = 'Suivi indisponible : vérifier le fichier d’état local.'
+            self.runtime_error = _tr('suivi_raspberry_ui_text_56')
             self.title.set(self.runtime_error)
         self.root.after(5000, self.tick)
 
@@ -74,32 +76,28 @@ class SuiviRaspberry:
                 self.last_pending = result.get('pending_remaining')
                 self.store.record(ok, reason, due)
             except Exception:
-                error = 'Impossible d’enregistrer le contrôle. Aucun succès confirmé.'
+                error = _tr('suivi_raspberry_ui_text_77')
             self.queue.put(error)
         threading.Thread(target=worker, daemon=True).start()
 
     def render(self):
         if not self.config:
             self.title.set(self.config_error)
-            self.detail.set('Configurer le suivi avant de lancer un contrôle.')
+            self.detail.set(_tr('suivi_raspberry_ui_text_84'))
             return
         state = self.store.read()
-        self.title.set(self.runtime_error or ('Contrôle en cours…' if self.busy else status(self.config, state)))
-        next_at = local_date(self.next_attempt.isoformat()) if self.next_attempt else 'Dès l’ouverture'
+        self.title.set(self.runtime_error or (_tr('suivi_raspberry_ui_text_87') if self.busy else status(self.config, state)))
+        next_at = local_date(self.next_attempt.isoformat()) if self.next_attempt else _tr('suivi_raspberry_ui_text_88')
         if not self.config['enabled'] or self.config['away']:
-            next_at = 'Suspendu'
+            next_at = _tr('suivi_raspberry_ui_text_92')
         attente = ''
         if self.last_pending is not None:
             if self.last_pending > 0:
-                attente = f"Mesures encore en attente sur le Raspberry : {self.last_pending}.\n"
+                attente = _tr('suivi_raspberry_ui_text_94').format(v0=self.last_pending)
             else:
-                attente = "Mesures encore en attente sur le Raspberry : aucune connue.\n"
+                attente = _tr('suivi_raspberry_ui_text_96')
         self.detail.set(
-            f"Dernière synchronisation confirmée : {local_date(state.get('last_contact'))} · Prochain contrôle : {next_at}\n"
-            f"Dernière tentative : {local_date(state.get('last_attempt'))} · {state.get('last_error') or 'Aucune erreur de contact'}\n"
-            f"{self.last_result or 'Les données reçues sont conservées sur le PC et sur le Pi.'}\n"
-            f"{attente}"
-            'Synchronisation active quand Gruterra est ouvert. Une synchronisation ne garantit pas une collecte récente.')
+            _tr('suivi_raspberry_ui_text_98').format(v0=local_date(state.get('last_contact')), v1=next_at, v2=local_date(state.get('last_attempt')), v3=state.get('last_error') or _tr('suivi_raspberry_ui_text_99'), v4=self.last_result or _tr('suivi_raspberry_ui_text_100'), v5=attente))
         self.buttons = [button for button in self.buttons if button.winfo_exists()]
         for button in self.buttons:
             button.configure(state='disabled' if self.busy else 'normal')
@@ -107,12 +105,12 @@ class SuiviRaspberry:
     def card(self, parent, colors):
         card = tk.Frame(parent, bg=colors['CARD'], highlightbackground=colors['BORDER'], highlightthickness=1)
         card.pack(fill='x', padx=20, pady=(0, 12))
-        tk.Label(card, text='Raspberry Pi · Synchronisation automatique', bg=colors['CARD'], fg=colors['TEXT'], font=('Segoe UI', 13, 'bold')).pack(anchor='w', padx=12, pady=(10, 4))
+        tk.Label(card, text=_tr('suivi_raspberry_ui_text_108'), bg=colors['CARD'], fg=colors['TEXT'], font=('Segoe UI', 13, 'bold')).pack(anchor='w', padx=12, pady=(10, 4))
         tk.Label(card, textvariable=self.title, bg=colors['CARD'], fg=colors['TEXT'], font=('Segoe UI', 10, 'bold')).pack(anchor='w', padx=12)
         tk.Label(card, textvariable=self.detail, bg=colors['CARD'], fg=colors['SECONDARY'], justify='left', anchor='w', wraplength=820).pack(fill='x', padx=12, pady=6)
         bar = tk.Frame(card, bg=colors['CARD'])
         bar.pack(fill='x', padx=12, pady=(0, 10))
-        for text, command in [('Récupérer les mesures', self.check), ('Réglages du suivi', self.settings)]:
+        for text, command in [(_tr('suivi_raspberry_ui_text_115'), self.check), (_tr('suivi_raspberry_ui_text_115_more'), self.settings)]:
             button = tk.Button(bar, text=text, command=command)
             button.pack(side='left', padx=(0, 8))
             self.buttons.append(button)
@@ -122,24 +120,24 @@ class SuiviRaspberry:
         if self.busy:
             return
         window = tk.Toplevel(self.root)
-        window.title('Suivi Raspberry')
+        window.title(_tr('suivi_raspberry_ui_text_123'))
         window.transient(self.root)
         window.grab_set()
         config = dict(self.config or {})
         enabled = tk.BooleanVar(window, value=config.get('enabled', False))
         away = tk.BooleanVar(window, value=config.get('away', False))
-        tk.Checkbutton(window, text='Récupérer à l’ouverture puis périodiquement', variable=enabled).pack(anchor='w', padx=16, pady=6)
-        tk.Checkbutton(window, text='Déplacement : suspendre les contrôles et alertes', variable=away).pack(anchor='w', padx=16)
+        tk.Checkbutton(window, text=_tr('suivi_raspberry_ui_text_131'), variable=enabled).pack(anchor='w', padx=16, pady=6)
+        tk.Checkbutton(window, text=_tr('suivi_raspberry_ui_text_132'), variable=away).pack(anchor='w', padx=16)
         fields = {}
-        for key, label, default in [('hour', 'Heure de référence des alertes (HH:MM)', '18:00'), ('retry_minutes', 'Intervalle entre récupérations (minutes)', 15), ('grace_minutes', 'Tolérance après échéance (minutes)', 60), ('host', 'Adresse du Raspberry', ''), ('user', 'Utilisateur SSH', 'botaneo'), ('hostname', 'Nom attendu du Raspberry', 'botaneo-pi'), ('key', 'Fichier de clé SSH sur ce PC', '')]:
+        for key, label, default in [('hour', _tr('suivi_raspberry_ui_text_134'), '18:00'), ('retry_minutes', _tr('suivi_raspberry_ui_text_134_more'), 15), ('grace_minutes', _tr('suivi_raspberry_ui_text_134_more_more'), 60), ('host', _tr('suivi_raspberry_ui_text_134_more_more_more'), ''), ('user', _tr('suivi_raspberry_ui_text_132_more'), 'botaneo'), ('hostname', _tr('suivi_raspberry_ui_text_134_more_more_more_more'), 'botaneo-pi'), ('key', _tr('suivi_raspberry_ui_text_134_more_more_more_more_more'), '')]:
             tk.Label(window, text=label).pack(anchor='w', padx=16, pady=(6, 0))
             value = tk.StringVar(window, value=str(config.get(key, default)))
             tk.Entry(window, textvariable=value, width=65).pack(fill='x', padx=16)
             fields[key] = value
-        tk.Label(window, text='Récupération à chaque ouverture, puis à intervalle régulier, même après un succès.\nGruterra doit rester ouvert. Aucun e-mail ne sera envoyé.', justify='left').pack(padx=16, pady=10)
+        tk.Label(window, text=_tr('suivi_raspberry_ui_text_139'), justify='left').pack(padx=16, pady=10)
         def save():
             if self.busy:
-                messagebox.showinfo('Suivi Raspberry', 'Attendez la fin du contrôle en cours.', parent=window)
+                messagebox.showinfo(_tr('suivi_raspberry_ui_text_123'), _tr('suivi_raspberry_ui_text_142'), parent=window)
                 return
             try:
                 updated = dict(config)
@@ -157,5 +155,5 @@ class SuiviRaspberry:
                 window.destroy()
                 self.render()
             except (ValueError, OSError):
-                messagebox.showerror('Suivi Raspberry', 'Vérifiez l’heure, les délais, les champs SSH et les droits du dossier.', parent=window)
-        tk.Button(window, text='Enregistrer', command=save).pack(pady=(0, 12))
+                messagebox.showerror(_tr('suivi_raspberry_ui_text_123'), _tr('suivi_raspberry_ui_text_160'), parent=window)
+        tk.Button(window, text=_tr('save'), command=save).pack(pady=(0, 12))

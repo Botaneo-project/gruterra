@@ -1,3 +1,9 @@
+
+if __package__ in (None, ""):
+    import sys
+    from pathlib import Path
+    sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+from i18n import traduire_courant as _tr
 import asyncio
 
 from bleak import BleakScanner
@@ -7,7 +13,7 @@ async def scanner():
 
     print()
     print("=" * 60)
-    print("🔎 SCAN BLUETOOTH")
+    print(_tr('scanner_ble_text_12'))
     print("=" * 60)
     print()
 
@@ -16,12 +22,12 @@ async def scanner():
     )
 
     if not appareils:
-        print("❌ Aucun appareil trouvé.")
+        print(_tr('scanner_ble_text_19'))
         return
 
     for appareil in appareils:
 
-        nom = appareil.name or "Nom inconnu"
+        nom = appareil.name or _tr('scanner_ble_text_24')
 
         print("-" * 60)
         print(f"📡 Nom     : {nom}")
@@ -32,7 +38,7 @@ async def scanner():
 
     print()
     print("=" * 60)
-    print(f"📊 {len(appareils)} appareil(s) trouvé(s)")
+    print(_tr('scanner_ble_text_35').format(v0=len(appareils)))
     print("=" * 60)
 
 

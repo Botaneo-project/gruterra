@@ -105,6 +105,22 @@ def t(cle):
     return traduire(cle, langue_interface)
 
 
+FILTER_CHOICES = {"Toutes": "filter_all", "Avec capteur": "filter_with_sensor", "Sans capteur": "filter_without_sensor"}
+
+def nom_filtre_affiche(valeur):
+    return t(FILTER_CHOICES[valeur]) if valeur in FILTER_CHOICES else valeur
+
+class FiltreLocaleVar(tk.StringVar):
+    """Localise les choix fixes sans changer les identifiants des filtres."""
+    def __init__(self, master=None, value=None, name=None):
+        super().__init__(master, nom_filtre_affiche(value), name)
+    def get(self):
+        valeur = super().get()
+        return next((cle for cle in FILTER_CHOICES if nom_filtre_affiche(cle) == valeur), valeur)
+    def set(self, value):
+        super().set(nom_filtre_affiche(value))
+
+
 def texte_interface_utf8_sur(texte):
     """Prépare un texte Unicode pour Tkinter sans supprimer accents ni emojis valides."""
 
@@ -154,10 +170,10 @@ def rafraichir_texte_synchronisation(*_):
     sync_detail_text.configure(state="disabled")
 
 
-auto_sync_var = tk.StringVar(value="Auto 18:00 en attente")
+auto_sync_var = tk.StringVar(value=t('interface_text_157'))
 
 netatmo_status_var = tk.StringVar(
-    value="🌦️ Données météo non chargées"
+    value=t('interface_text_160')
 )
 
 netatmo_date_var = tk.StringVar(
@@ -187,10 +203,10 @@ netatmo_sections_ouvertes = {
     "equipements_prives": True
 }
 
-filtre_zone_var = tk.StringVar(value="Toutes")
-filtre_piece_var = tk.StringVar(value="Toutes")
-filtre_capteur_var = tk.StringVar(value="Toutes")
-filtre_attention_var = tk.StringVar(value="Toutes")
+filtre_zone_var = FiltreLocaleVar(value="Toutes")
+filtre_piece_var = FiltreLocaleVar(value="Toutes")
+filtre_capteur_var = FiltreLocaleVar(value="Toutes")
+filtre_attention_var = FiltreLocaleVar(value="Toutes")
 
 NETATMO_CACHE = (
     Path(__file__).resolve().parent
@@ -241,11 +257,11 @@ HISTORIQUE_IMPORT_CONFIG = (
 
 def formater_date(date_heure):
     if not date_heure:
-        return "Jamais"
+        return t('interface_text_244')
 
     try:
         dt = datetime.fromisoformat(date_heure)
-        return dt.strftime("%d/%m/%Y à %H:%M:%S")
+        return dt.strftime(t("display_datetime_seconds"))
 
     except Exception:
         return str(date_heure)
@@ -308,15 +324,15 @@ def etat_batterie_capteur(info):
     seuil = int(alertes_config.get("seuil_batterie", 50))
 
     if batterie is None:
-        return "Batterie : non lue", SECONDARY, BG
+        return t('interface_text_311'), SECONDARY, BG
 
     if batterie <= seuil:
-        return f"🔴 Batterie faible : {batterie} % · seuil {seuil} %", RED, LIGHT_RED
+        return t('interface_text_314').format(v0=batterie, v1=seuil), RED, LIGHT_RED
 
     if batterie <= min(seuil + 15, 100):
-        return f"🟠 Batterie à surveiller : {batterie} % · seuil {seuil} %", ORANGE, LIGHT_ORANGE
+        return t('interface_text_317').format(v0=batterie, v1=seuil), ORANGE, LIGHT_ORANGE
 
-    return f"🟢 Batterie OK : {batterie} %", GREEN, LIGHT_GREEN
+    return t('interface_text_319').format(v0=batterie), GREEN, LIGHT_GREEN
 
 
 def plante_avec_rappel_email(plante_id):
@@ -358,21 +374,21 @@ def dernier_resultat_import_historique(capteur_id):
 def texte_dernier_import_historique(capteur_id):
     dernier = dernier_resultat_import_historique(capteur_id)
     if not dernier:
-        return "Historique Mi Flora : aucun import lancé depuis l'interface."
+        return t('interface_text_361')
 
     date = formater_date(dernier.get("date"))
     if dernier.get("ok"):
         details = []
         if dernier.get("total_lues") is not None:
-            details.append(f"{dernier.get('total_lues')} lue(s)")
+            details.append(t('interface_text_367').format(v0=dernier.get('total_lues')))
         if dernier.get("ajoutees") is not None:
-            details.append(f"{dernier.get('ajoutees')} nouvelle(s)")
+            details.append(t('interface_text_369').format(v0=dernier.get('ajoutees')))
         if dernier.get("doublons") is not None:
-            details.append(f"{dernier.get('doublons')} déjà connue(s)")
-        suffixe = " · ".join(details) if details else dernier.get("message", "import réussi")
-        return f"Historique Mi Flora : dernier import le {date} · {suffixe}"
+            details.append(t('interface_text_371').format(v0=dernier.get('doublons')))
+        suffixe = " · ".join(details) if details else dernier.get("message", t('interface_text_372'))
+        return t('interface_text_373').format(v0=date, v1=suffixe)
 
-    return f"Historique Mi Flora : dernier essai le {date} · {dernier.get('message', 'échec')}"
+    return t('interface_text_375').format(v0=date, v1=dernier.get('message', t('interface_text_375_more')))
 
 
 def charger_layout_interface():
@@ -460,11 +476,11 @@ def sauvegarder_config_sync_auto():
 def libelle_jours_sync_auto():
     jours = auto_sync_config.get("jours", [0, 1, 2, 3, 4, 5, 6])
     if sorted(jours) == [0, 1, 2, 3, 4, 5, 6]:
-        return "tous les jours"
+        return t('interface_text_463')
     if sorted(jours) == [0, 1, 2, 3, 4]:
-        return "lundi à vendredi"
+        return t('interface_text_465')
     noms = ["lun", "mar", "mer", "jeu", "ven", "sam", "dim"]
-    return ", ".join(noms[jour] for jour in sorted(jours)) if jours else "aucun jour"
+    return ", ".join(noms[jour] for jour in sorted(jours)) if jours else t('interface_text_467')
 
 
 def libelle_sync_auto():
@@ -475,12 +491,12 @@ def libelle_sync_auto():
     faite_aujourdhui = auto_sync_config.get("derniere_date") == aujourd_hui
 
     if not auto_sync_config.get("active", True):
-        return f"Auto désactivée · {heure} · {jours}"
+        return t('interface_text_478').format(v0=heure, v1=jours)
 
     if faite_aujourdhui and derniere:
-        return f"Auto {heure} · déjà faite aujourd'hui à {datetime.fromisoformat(derniere).strftime('%H:%M')}"
+        return t('interface_text_481').format(v0=heure, v1=datetime.fromisoformat(derniere).strftime('%H:%M'))
 
-    return f"Auto {heure} · {jours} · en attente"
+    return t('interface_text_483').format(v0=heure, v1=jours)
 
 
 def actualiser_affichage_sync_auto():
@@ -542,13 +558,12 @@ def appliquer_resultats_meteo(resultats):
     netatmo_public_data = meteo_etat.sources['publiques']['data']
     actualiser_statut_meteo()
     if not sauvegarde_ok:
-        netatmo_date_var.set(netatmo_date_var.get() + "\nCache non enregistré sur disque.")
+        netatmo_date_var.set(netatmo_date_var.get() + t('interface_text_545'))
 
 
 def actualiser_statut_meteo():
     netatmo_status_var.set(
-        f"{len(netatmo_data)} privée{'s' if len(netatmo_data) != 1 else ''} · "
-        f"{len(netatmo_public_data)} publique{'s' if len(netatmo_public_data) != 1 else ''}")
+        t('interface_text_550').format(v0=len(netatmo_data), v1='s' if len(netatmo_data) != 1 else '', v2=len(netatmo_public_data), v3='s' if len(netatmo_public_data) != 1 else ''))
     netatmo_date_var.set(meteo_etat.libelle())
 
 
@@ -1128,10 +1143,10 @@ def afficher_zone_decision(parent, plante_id, mesure, analyse_lumiere):
              anchor="w").pack(fill="x", padx=10, pady=(8, 4))
     try:
         evenements = lire_evolutions(database, plante_id)
-        vide = "Aucune variation marquée détectée sur les journées comparables. Si les relevés sont insuffisants, aucune conclusion n’est tirée."
+        vide = t('interface_text_1131')
     except Exception:
         evenements = []
-        vide = "Historique lumineux indisponible : actualisez le panneau pour réessayer."
+        vide = t('interface_text_1134')
     for evenement in evenements:
         couleur = GREEN if evenement["sens"] == "hausse" else ORANGE
         tk.Label(historique, text=evenement["titre"], fg=couleur, bg=CARD,
@@ -1140,8 +1155,7 @@ def afficher_zone_decision(parent, plante_id, mesure, analyse_lumiere):
         tk.Label(historique, text=evenement["detail"], fg=TEXT, bg=CARD,
                  font=("Segoe UI", 9), anchor="w", justify="left",
                  wraplength=780).pack(fill="x", padx=10)
-    note = ("Une hausse ne garantit pas que les besoins de la plante sont couverts. "
-            "Les mesures seules ne permettent pas de déduire une sortie dehors ni sa durée.") if evenements else vide
+    note = (t('interface_text_1143')) if evenements else vide
     tk.Label(historique, text=note, fg=SECONDARY, bg=CARD,
              font=("Segoe UI", 9), anchor="w", justify="left",
              wraplength=780).pack(fill="x", padx=10, pady=(6, 8))
@@ -1165,17 +1179,17 @@ def afficher_besoins_plante(parent, plante_id):
 
     lignes = []
     if type_plante:
-        lignes.append(f"Type : {type_plante}")
+        lignes.append(t('interface_text_1166').format(v0=type_plante))
     if lumiere:
-        lignes.append(f"☀️ Lumière : {lumiere}")
+        lignes.append(t('interface_text_1170').format(v0=lumiere))
     if arrosage:
-        lignes.append(f"💧 Arrosage : {arrosage}")
+        lignes.append(t('interface_text_1172').format(v0=arrosage))
     if humidite_sol:
-        lignes.append(f"🌱 Sol : {humidite_sol}")
+        lignes.append(t('interface_text_1172_more').format(v0=humidite_sol))
     if temperature:
-        lignes.append(f"🌡️ Température : {temperature}")
+        lignes.append(t('interface_text_1176').format(v0=temperature))
     if notes:
-        lignes.append(f"📝 Note : {notes}")
+        lignes.append(t('interface_text_1176_more').format(v0=notes))
 
     if not lignes:
         return
@@ -1620,8 +1634,8 @@ def lancer_collecte_prioritaire(
     libelle="contrôle",
     delai_ms=1000,
     demande_id=None,
-    message_sans_capteur="Aucune collecte prioritaire : pas de capteur actif",
-    message_lancement="Collecte prioritaire demandée"
+    message_sans_capteur=t('interface_text_1623'),
+    message_lancement=t('interface_text_1624')
 ):
     """Demande une collecte prioritaire au collecteur responsable du capteur."""
 
@@ -1643,11 +1657,11 @@ def lancer_collecte_prioritaire(
                 except Exception as erreur:
                     resultat = {
                         "ok": False,
-                        "message": f"Collecte prioritaire impossible : {erreur}"
+                        "message": t('interface_text_1644').format(v0=erreur)
                     }
 
                 def terminer():
-                    message = resultat.get("message", "Collecte prioritaire terminée.")
+                    message = resultat.get("message", t('interface_text_1648'))
                     collecteur = resultat.get("collecteur")
                     prefixe = "Raspberry" if collecteur == "raspberry" else "PC"
                     if demande_id:
@@ -1659,14 +1673,14 @@ def lancer_collecte_prioritaire(
                             )
                         except Exception:
                             pass
-                    status_var.set(f"Collecte {libelle} {prefixe} : {message}")
+                    status_var.set(t('interface_text_1660').format(v0=libelle, v1=prefixe, v2=message))
                     actualiser_interface()
 
                 root.after(0, terminer)
 
             threading.Thread(target=arriere_plan, daemon=True).start()
         except Exception:
-            status_var.set(f"Collecte {libelle} non lancée")
+            status_var.set(t('interface_text_1669').format(v0=libelle))
 
     root.after(delai_ms, lancer)
 
@@ -1678,8 +1692,8 @@ def lancer_collecte_prioritaire_apres_arrosage(plante_id, demande_id=None, delai
         libelle="post-arrosage",
         delai_ms=delai_ms,
         demande_id=demande_id,
-        message_sans_capteur="Arrosage enregistré · aucune collecte prioritaire : pas de capteur actif",
-        message_lancement="Arrosage enregistré · collecte prioritaire demandée"
+        message_sans_capteur=t('interface_text_1681'),
+        message_lancement=t('interface_text_1682')
     )
 
 
@@ -1689,8 +1703,8 @@ def lancer_controle_humidite_zero(plante_id, delai_ms=10 * 60 * 1000):
         reason="controle_humidite_zero",
         libelle="contrôle humidité 0 %",
         delai_ms=delai_ms,
-        message_sans_capteur="Humidité 0 % détectée · aucun contrôle : pas de capteur actif",
-        message_lancement="Humidité 0 % détectée · contrôle programmé lancé"
+        message_sans_capteur=t('interface_text_1692'),
+        message_lancement=t('interface_text_1693')
     )
 
 
@@ -1729,7 +1743,7 @@ def ouvrir_exposition_balcon_passee(plante_id, nom_plante):
 
     tk.Label(
         fenetre,
-        text=f"☀️ Exposition balcon · {nom_plante}",
+        text=t('interface_text_1730').format(v0=nom_plante),
         font=("Segoe UI", 15, "bold"),
         fg=TEXT,
         bg=CARD
@@ -1766,21 +1780,21 @@ def ouvrir_exposition_balcon_passee(plante_id, nom_plante):
         sortie = parser_date_saisie_utilisateur(sortie_var.get())
         retour = parser_date_saisie_utilisateur(retour_var.get())
         if sortie is None or retour is None:
-            erreur.set("Date invalide. Format conseillé : 25/09/2026 14:30")
+            erreur.set(t('interface_text_1769'))
             return
         if retour <= sortie:
-            erreur.set("Le retour doit être après la sortie.")
+            erreur.set(t('interface_text_1772'))
             return
 
         commentaire_libre = commentaire_entry.get().strip()
         duree = formater_duree_heures((retour - sortie).total_seconds() / 3600)
-        suffixe = f" Commentaire : {commentaire_libre}" if commentaire_libre else ""
+        suffixe = t('interface_text_1775').format(v0=commentaire_libre) if commentaire_libre else ""
 
         try:
             database.ajouter_observation_plante(
                 plante_id,
                 sortie.isoformat(timespec="seconds"),
-                f"Plante sortie temporairement sur le balcon. Durée déclarée : {duree}.{suffixe} Les pics de lumière de cette période doivent être interprétés comme une exposition extérieure ponctuelle.",
+                t('interface_text_1783').format(v0=duree, v1=suffixe),
                 titre="Sortie balcon",
                 type_evenement="exposition",
                 source="botaneo"
@@ -1788,18 +1802,18 @@ def ouvrir_exposition_balcon_passee(plante_id, nom_plante):
             database.ajouter_observation_plante(
                 plante_id,
                 retour.isoformat(timespec="seconds"),
-                f"Plante rentrée à l'intérieur après une exposition balcon déclarée de {duree}.{suffixe} Les mesures suivantes correspondent de nouveau à l'emplacement habituel.",
+                t('interface_text_1791').format(v0=duree, v1=suffixe),
                 titre="Retour intérieur",
                 type_evenement="exposition",
                 source="botaneo"
             )
         except Exception as exception:
-            erreur.set(f"Impossible d'enregistrer l'exposition : {exception}")
+            erreur.set(t('interface_text_1795').format(v0=exception))
             return
 
         fenetre.destroy()
         actualiser_interface()
-        status_var.set(f"Exposition balcon ajoutée pour {nom_plante} · {duree}.")
+        status_var.set(t('interface_text_1802').format(v0=nom_plante, v1=duree))
 
     boutons = tk.Frame(fenetre, bg=CARD)
     boutons.pack(fill="x", padx=20, pady=(0, 15))
@@ -1814,20 +1828,20 @@ def enregistrer_evenement_balcon(plante_id, nom_plante, action):
 
     maintenant_dt = datetime.now()
     maintenant = maintenant_dt.isoformat(timespec="seconds")
-    heure_lisible = maintenant_dt.strftime("%d/%m/%Y à %H:%M")
+    heure_lisible = maintenant_dt.strftime(t("display_datetime_minutes"))
     if action == "sortie":
         titre = "Sortie balcon"
         commentaire = "Plante sortie temporairement sur le balcon. Les pics de lumière suivants doivent être interprétés comme une exposition extérieure ponctuelle."
-        message = f"Sortie balcon notée pour {nom_plante}."
-        question = f"Confirmer la sortie balcon de {nom_plante} maintenant ({heure_lisible}) ?"
+        message = t('interface_text_1821').format(v0=nom_plante)
+        question = t('interface_text_1822').format(v0=nom_plante, v1=heure_lisible)
     else:
         titre = "Retour intérieur"
         commentaire = "Plante rentrée à l'intérieur. Les mesures suivantes correspondent de nouveau à l'emplacement habituel."
-        message = f"Retour intérieur noté pour {nom_plante}."
-        question = f"Confirmer le retour intérieur de {nom_plante} maintenant ({heure_lisible}) ?"
+        message = t('interface_text_1826').format(v0=nom_plante)
+        question = t('interface_text_1827').format(v0=nom_plante, v1=heure_lisible)
 
     if not messagebox.askyesno(t("confirm_balcony_exposure"), question, parent=root):
-        status_var.set(f"{titre} annulé : aucun événement ajouté.")
+        status_var.set(t('interface_text_1830').format(v0=titre))
         return
 
     try:
@@ -1840,7 +1854,7 @@ def enregistrer_evenement_balcon(plante_id, nom_plante, action):
             source="botaneo"
         )
     except Exception as erreur:
-        status_var.set(f"Événement balcon impossible : {erreur}")
+        status_var.set(t('interface_text_1843').format(v0=erreur))
         return
 
     actualiser_interface()
@@ -1936,13 +1950,13 @@ def ouvrir_evaluation_sante_plante(plante_id, nom_plante):
         signes_selectionnes = [(code, libelle) for code, libelle, var in signes_vars if var.get()]
         lignes = [
             f"etat_sante={etat_code}",
-            f"État déclaré : {etat_libelle}.",
+            t('interface_text_1939').format(v0=etat_libelle),
         ]
         if signes_selectionnes:
             lignes.append("signes=" + ",".join(code for code, _libelle in signes_selectionnes))
-            lignes.append("Signes confirmés : " + "; ".join(libelle for _code, libelle in signes_selectionnes) + ".")
+            lignes.append(t('interface_text_1943') + "; ".join(libelle for _code, libelle in signes_selectionnes) + ".")
         if commentaire_libre:
-            lignes.append(f"Commentaire : {commentaire_libre}")
+            lignes.append(t('interface_text_1943_more').format(v0=commentaire_libre))
         try:
             database.ajouter_observation_plante(
                 plante_id,
@@ -1976,7 +1990,7 @@ def ouvrir_arrosage_plante(plante_id, nom_plante):
 
     tk.Label(
         fenetre,
-        text=f"💧 Arrosage · {nom_plante}",
+        text=t('interface_text_1979').format(v0=nom_plante),
         font=("Segoe UI", 15, "bold"),
         fg=TEXT,
         bg=CARD
@@ -2215,7 +2229,7 @@ def ouvrir_arrosage_plante(plante_id, nom_plante):
                 date_creation=date_arrosage,
                 raison="post_arrosage",
                 priorite=10,
-                commentaire="Collecte prioritaire déclenchée après validation d'arrosage."
+                commentaire=t('interface_text_2218')
             )
         except Exception:
             erreur.set(t("watering_save_failed"))
@@ -2299,9 +2313,9 @@ def alerte_principale_plante(plante_id):
 
 def valeur_filtre_plante(valeur):
     if valeur is None:
-        return "Non renseigné"
+        return t('not_specified')
     texte = str(valeur).strip()
-    return texte if texte else "Non renseigné"
+    return texte if texte else t('not_specified')
 
 
 def options_filtre_plantes(plantes, index):
@@ -2356,7 +2370,7 @@ def creer_menu_filtre(parent, titre, variable, valeurs, commande=None):
     ).pack(anchor="w")
 
     action = commande or actualiser_interface
-    menu = tk.OptionMenu(bloc, variable, *valeurs, command=lambda _=None: action())
+    menu = tk.OptionMenu(bloc, variable, *(nom_filtre_affiche(v) for v in valeurs), command=lambda _=None: action())
     menu.configure(
         bg=BG,
         fg=TEXT,
@@ -2389,7 +2403,7 @@ def afficher_filtres_plantes(parent, plantes, plantes_filtrees, commande=None):
 
     tk.Label(
         haut,
-        text=f"{len(plantes_filtrees)} / {len(plantes)} affichée(s)",
+        text=t('interface_text_7832').format(v0=len(plantes_filtrees), v1=len(plantes)),
         font=("Segoe UI", 8),
         fg=SECONDARY,
         bg=CARD
@@ -2399,10 +2413,10 @@ def afficher_filtres_plantes(parent, plantes, plantes_filtrees, commande=None):
     ligne.pack(fill="x", padx=14, pady=(0, 8))
 
     action = commande or actualiser_interface
-    creer_menu_filtre(ligne, "Zone", filtre_zone_var, options_filtre_plantes(plantes, 4), action)
-    creer_menu_filtre(ligne, "Pièce", filtre_piece_var, options_filtre_plantes(plantes, 3), action)
-    creer_menu_filtre(ligne, "Capteur", filtre_capteur_var, ["Toutes", "Avec capteur", "Sans capteur"], action)
-    creer_menu_filtre(ligne, "État", filtre_attention_var, ["Toutes", t("decision_watch")], action)
+    creer_menu_filtre(ligne, t('interface_text_2400'), filtre_zone_var, options_filtre_plantes(plantes, 4), action)
+    creer_menu_filtre(ligne, t('interface_text_2401'), filtre_piece_var, options_filtre_plantes(plantes, 3), action)
+    creer_menu_filtre(ligne, t('sensor'), filtre_capteur_var, ["Toutes", "Avec capteur", "Sans capteur"], action)
+    creer_menu_filtre(ligne, t('interface_text_2403'), filtre_attention_var, ["Toutes", t("decision_watch")], action)
 
     tk.Button(
         ligne,
@@ -2443,10 +2457,10 @@ def creer_carte_plante_compacte(parent, plante):
         tk.Label(ligne, text=" • ".join(details), font=("Segoe UI", 8), fg=SECONDARY, bg=CARD).pack(side="left", padx=10)
 
     if capteur:
-        etat_capteur = "📡 capteur actif"
+        etat_capteur = t('interface_text_2444')
         couleur_capteur = GREEN
     else:
-        etat_capteur = "⚪ sans capteur"
+        etat_capteur = t('interface_text_2449')
         couleur_capteur = BLUE
     tk.Label(ligne, text=etat_capteur, font=("Segoe UI", 8, "bold"), fg=couleur_capteur, bg=CARD).pack(side="right")
 
@@ -2464,19 +2478,19 @@ def creer_carte_plante_compacte(parent, plante):
     else:
         humidite_txt = "—"
         lumiere_txt = "—"
-        mesure_txt = "aucune mesure"
+        mesure_txt = t('interface_text_2467')
         fraicheur_txt, fraicheur_couleur, fraicheur_fond = etat_fraicheur_mesure(None)
 
     infos = [
-        ("💧 Sol", humidite_txt),
-        ("☀️ Lumière", lumiere_txt),
-        ("🕐 Mesure", mesure_txt),
+        (t('interface_text_2469'), humidite_txt),
+        (t('interface_text_2472'), lumiere_txt),
+        (t('interface_text_2473'), mesure_txt),
     ]
 
     if dernier:
-        infos.append(("💦 Arrosage", formater_date(dernier[2])))
+        infos.append((t('interface_text_2477'), formater_date(dernier[2])))
     if rappel and rappel[9]:
-        infos.append(("🔔 Rappel", formater_date(rappel[9])))
+        infos.append((t('interface_text_2477_more'), formater_date(rappel[9])))
 
     for titre, valeur in infos:
         bloc = tk.Frame(ligne2, bg=BG, highlightbackground=BORDER, highlightthickness=1)
@@ -2656,25 +2670,25 @@ def creer_carte_plante(parent, plante):
 
     creer_valeur(
         ligne_mesures,
-        "🌡️ Température",
+        t('temperature'),
         temp_txt
     )
 
     creer_valeur(
         ligne_mesures,
-        "💧 Humidité",
+        t('interface_text_2665'),
         humidite_txt
     )
 
     creer_valeur(
         ligne_mesures,
-        "☀️ Luminosité",
+        t('interface_text_2671'),
         luminosite_txt
     )
 
     creer_valeur(
         ligne_mesures,
-        "🧪 Conductivité",
+        t('interface_text_2677'),
         conductivite_txt
     )
 
@@ -2788,7 +2802,7 @@ def creer_carte_plante(parent, plante):
 
         tk.Label(
             capteur_frame,
-            text=f"Adresse : {adresse_ble}",
+            text=t('interface_text_2789').format(v0=adresse_ble),
             font=("Segoe UI", 8),
             fg=SECONDARY,
             bg=CARD,
@@ -2804,16 +2818,16 @@ def creer_carte_plante(parent, plante):
         tk.Label(batterie_frame, text=texte_batterie, font=("Segoe UI", 9, "bold"),
                  fg=couleur_batterie, bg=fond_batterie, anchor="w", wraplength=800,
                  justify="left").pack(fill="x", padx=10, pady=(6, 0))
-        tk.Label(batterie_frame, text="Firmware : " + (infos.get("firmware") or "non lu"), font=("Segoe UI", 8),
+        tk.Label(batterie_frame, text=t('interface_text_2805') + (infos.get("firmware") or t('capteur_infos_text_84')), font=("Segoe UI", 8),
                  fg=SECONDARY, bg=fond_batterie, anchor="w", wraplength=800,
                  justify="left").pack(fill="x", padx=10, pady=(0, 6))
         date_infos = infos.get("derniere_tentative")
         if date_infos:
-            indication = "Dernière lecture : " + formater_date(date_infos)
+            indication = t('interface_text_2812') + formater_date(date_infos)
             if not infos.get("lecture_complete"):
-                indication += " · lecture incomplète, dernières valeurs conservées"
+                indication += t('interface_text_2814')
         else:
-            indication = "Batterie et firmware disponibles après la prochaine synchronisation."
+            indication = t('interface_text_2816')
         tk.Label(capteur_frame, text=indication, font=("Segoe UI", 8),
                  fg=SECONDARY, bg=CARD, anchor="w", wraplength=800,
                  justify="left").pack(fill="x")
@@ -2867,8 +2881,7 @@ def creer_carte_plante(parent, plante):
             tk.Label(
                 capteur_frame,
                 text=(
-                    "Dernière synchronisation : "
-                    f"{formater_date(derniere_sync)}"
+                    t('interface_text_2870').format(v0=formater_date(derniere_sync))
                 ),
                 font=("Segoe UI", 9),
                 fg=SECONDARY,
@@ -2902,16 +2915,13 @@ def creer_carte_plante(parent, plante):
 
         if capteurs_historique:
             texte_capteur = (
-                "📡 Aucun capteur actif · "
-                f"{len(capteurs_historique)} ancien"
-                f"{'s' if len(capteurs_historique) != 1 else ''} "
-                "conservé"
+                t('interface_text_2905').format(v0=len(capteurs_historique), v1='s' if len(capteurs_historique) != 1 else '')
             )
             couleur_capteur = ORANGE
             fond_capteur = LIGHT_ORANGE
         else:
             texte_capteur = (
-                "📡 Aucun capteur actif · prêt pour une association"
+                t('interface_text_2914')
             )
             couleur_capteur = BLUE
             fond_capteur = LIGHT_BLUE
@@ -3418,7 +3428,7 @@ def renommer_station_netatmo(station):
     def enregistrer():
         nouveau_nom = entree.get().strip()
         if not nouveau_nom:
-            erreur.set("Le nom ne peut pas être vide.")
+            erreur.set(t('interface_text_3421'))
             return
         netatmo_preferences.setdefault("noms", {})[station_id] = nouveau_nom
         sauvegarder_preferences_netatmo()
@@ -3511,24 +3521,24 @@ def formater_nombre(valeur, unite=""):
 
 
 NETATMO_LIBELLES_BRUTS = {
-    "Temperature": "Température",
-    "Humidity": "Humidité",
-    "Pressure": "Pression",
+    "Temperature": t('series_temperature_short'),
+    "Humidity": t('series_soil_humidity_short'),
+    "Pressure": t('canonical_pressure'),
     "CO2": "CO₂",
-    "Noise": "Bruit",
-    "WindStrength": "Vent",
-    "WindAngle": "Direction du vent",
-    "GustStrength": "Rafale",
-    "GustAngle": "Direction rafale",
-    "Rain": "Pluie actuelle",
-    "sum_rain_1": "Pluie 1 h",
-    "sum_rain_24": "Pluie 24 h",
-    "min_temp": "Température min",
-    "max_temp": "Température max",
+    "Noise": t('canonical_noise'),
+    "WindStrength": t('canonical_wind'),
+    "WindAngle": t('interface_text_3514'),
+    "GustStrength": t('canonical_gust'),
+    "GustAngle": t('canonical_gust_angle'),
+    "Rain": t('canonical_rain_now'),
+    "sum_rain_1": t('canonical_rain_hour'),
+    "sum_rain_24": t('canonical_rain_day'),
+    "min_temp": t('interface_text_3520'),
+    "max_temp": t('interface_text_3521'),
     "date_min_temp": "Date temp. min",
     "date_max_temp": "Date temp. max",
-    "time_utc": "Horodatage UTC",
-    "time": "Horodatage"
+    "time_utc": t('interface_text_3524'),
+    "time": t('interface_text_3525')
 }
 
 
@@ -3611,7 +3621,7 @@ def style_valeur_netatmo(titre, valeur):
 
     valeur_txt = str(valeur)
 
-    if valeur_txt in ("—", "non remonté", "non disponible"):
+    if valeur_txt in ("—", t('interface_text_4100'), t('interface_text_5146')):
         return CARD, SECONDARY
 
     titre_min = titre.lower()
@@ -3665,7 +3675,7 @@ def creer_valeur_netatmo(parent, titre, valeur):
     bloc.pack_propagate(False)
 
     valeur_txt = str(valeur)
-    if valeur_txt in ("—", "non remonté", "non disponible"):
+    if valeur_txt in ("—", t('interface_text_4100'), t('interface_text_5146')):
         valeur_font = ("Segoe UI", 9, "bold")
     else:
         valeur_font = ("Segoe UI", 14, "bold")
@@ -3761,7 +3771,7 @@ def libelle_capteur_public(disponible, present):
     if disponible:
         return "dispo"
     if present:
-        return "présent, non remonté"
+        return t('interface_text_3764')
     return "absent"
 
 
@@ -3785,9 +3795,9 @@ def adresse_station_netatmo(station):
     latitude = station.get("latitude")
     longitude = station.get("longitude")
     if latitude is not None and longitude is not None:
-        return f"Coordonnées : {latitude:.5f}, {longitude:.5f}"
+        return t('interface_text_3788').format(v0=latitude, v1=longitude)
 
-    return "Adresse non fournie"
+    return t('interface_text_3784')
 
 
 def resume_station_publique(mesures):
@@ -3796,9 +3806,9 @@ def resume_station_publique(mesures):
     humidite = formater_nombre(mesures.get("humidite"), " %")
 
     if temperature != "—":
-        morceaux.append(f"Température {temperature}")
+        morceaux.append(t('interface_text_3799').format(v0=temperature))
     if humidite != "—":
-        morceaux.append(f"humidité {humidite}")
+        morceaux.append(t('interface_text_3801').format(v0=humidite))
 
     pluie_dispo = any(mesures.get(cle) is not None for cle in ("pluie", "pluie_1h", "pluie_24h"))
     vent_dispo = any(mesures.get(cle) is not None for cle in ("vent", "rafale", "direction_vent", "direction_rafale"))
@@ -3811,8 +3821,8 @@ def resume_station_publique(mesures):
 
 def creer_bloc_netatmo(parent, element):
 
-    nom = element.get("nom") or "Équipement Netatmo"
-    type_element = element.get("type") or "Inconnu"
+    nom = element.get("nom") or t('interface_text_3814')
+    type_element = element.get("type") or t('plant_health_unknown')
     mesures = element.get("mesures", {})
 
     bloc = tk.Frame(
@@ -3868,28 +3878,28 @@ def creer_bloc_netatmo(parent, element):
 
     creer_titre_section(
         bloc,
-        "Conditions"
+        t('interface_text_3865')
     )
 
     creer_ligne_netatmo_compacte(
         bloc,
         [
         (
-            "🌡️ Température",
+            t('temperature'),
             formater_nombre(
                 mesures.get("temperature"),
                 " °C"
             )
         ),
         (
-            "💧 Humidité",
+            t('interface_text_2665'),
             formater_nombre(
                 mesures.get("humidite"),
                 " %"
             )
         ),
         (
-            "🌬️ Pression",
+            t('interface_text_4456'),
             formater_nombre(
                 mesures.get("pression"),
                 " hPa"
@@ -3902,7 +3912,7 @@ def creer_bloc_netatmo(parent, element):
 
         creer_titre_section(
             bloc,
-            "Air intérieur"
+            t('interface_text_3905')
         )
 
         creer_ligne_netatmo_compacte(
@@ -3916,7 +3926,7 @@ def creer_bloc_netatmo(parent, element):
                 )
             ),
             (
-                "🔊 Bruit",
+                t('interface_text_3913'),
                 formater_nombre(
                     mesures.get("bruit"),
                     " dB"
@@ -3932,14 +3942,14 @@ def creer_bloc_netatmo(parent, element):
 
         creer_titre_section(
             bloc,
-            "Pluie"
+            t('interface_text_3929')
         )
 
         creer_ligne_netatmo_compacte(
             bloc,
             [
             (
-                "🌧️ Actuelle",
+                t('interface_text_3936'),
                 formater_nombre(
                     mesures.get("pluie"),
                     " mm"
@@ -3969,28 +3979,28 @@ def creer_bloc_netatmo(parent, element):
 
         creer_titre_section(
             bloc,
-            "Vent"
+            t('canonical_wind')
         )
 
         creer_ligne_netatmo_compacte(
             bloc,
             [
             (
-                "💨 Vent",
+                t('wind'),
                 formater_nombre(
                     mesures.get("vent"),
                     " km/h"
                 )
             ),
             (
-                "🌪️ Rafale",
+                t('interface_text_4488'),
                 formater_nombre(
                     mesures.get("rafale"),
                     " km/h"
                 )
             ),
             (
-                "🧭 Direction",
+                t('interface_text_4495'),
                 formater_nombre(
                     mesures.get("direction_vent"),
                     "°"
@@ -4001,14 +4011,14 @@ def creer_bloc_netatmo(parent, element):
 
     creer_titre_section(
         bloc,
-        "Dates"
+        t('interface_text_3998')
     )
 
     creer_ligne_netatmo_compacte(
         bloc,
         [
         (
-            "🕐 Mesure",
+            t('interface_text_2473'),
             mesures.get("date_mesure") or "—"
         ),
         (
@@ -4040,7 +4050,7 @@ def creer_bloc_netatmo(parent, element):
 
         creer_titre_section(
             bloc,
-            "Autres données Netatmo"
+            t('interface_text_4043')
         )
 
         for index in range(0, len(autres_donnees), 4):
@@ -4088,7 +4098,7 @@ def creer_bloc_station_publique(parent, station):
     distance_txt = (
         f"{distance:.0f} m"
         if distance is not None
-        else "distance inconnue"
+        else t('interface_text_4085')
     )
 
     pluie_txt = formater_nombre(
@@ -4097,9 +4107,9 @@ def creer_bloc_station_publique(parent, station):
     )
 
     if pluie_txt == "—" and mesures.get("pluviometre"):
-        pluie_txt = "non remonté"
+        pluie_txt = t('interface_text_4100')
     elif pluie_txt == "—":
-        pluie_txt = "non disponible"
+        pluie_txt = t('interface_text_5146')
 
     vent_txt = formater_nombre(
         mesures.get("vent"),
@@ -4107,9 +4117,9 @@ def creer_bloc_station_publique(parent, station):
     )
 
     if vent_txt == "—" and mesures.get("anemometre"):
-        vent_txt = "non remonté"
+        vent_txt = t('interface_text_4100')
     elif vent_txt == "—":
-        vent_txt = "non disponible"
+        vent_txt = t('interface_text_5146')
 
     pluie_1h_txt = formater_nombre(
         mesures.get("pluie_1h"),
@@ -4117,9 +4127,9 @@ def creer_bloc_station_publique(parent, station):
     )
 
     if pluie_1h_txt == "—" and mesures.get("pluviometre"):
-        pluie_1h_txt = "non remonté"
+        pluie_1h_txt = t('interface_text_4100')
     elif pluie_1h_txt == "—":
-        pluie_1h_txt = "non disponible"
+        pluie_1h_txt = t('interface_text_5146')
 
     pluie_24h_txt = formater_nombre(
         mesures.get("pluie_24h"),
@@ -4127,9 +4137,9 @@ def creer_bloc_station_publique(parent, station):
     )
 
     if pluie_24h_txt == "—" and mesures.get("pluviometre"):
-        pluie_24h_txt = "non remonté"
+        pluie_24h_txt = t('interface_text_4100')
     elif pluie_24h_txt == "—":
-        pluie_24h_txt = "non disponible"
+        pluie_24h_txt = t('interface_text_5146')
 
     rafale_txt = formater_nombre(
         mesures.get("rafale"),
@@ -4137,9 +4147,9 @@ def creer_bloc_station_publique(parent, station):
     )
 
     if rafale_txt == "—" and mesures.get("anemometre"):
-        rafale_txt = "non remonté"
+        rafale_txt = t('interface_text_4100')
     elif rafale_txt == "—":
-        rafale_txt = "non disponible"
+        rafale_txt = t('interface_text_5146')
 
     direction_txt = formater_nombre(
         mesures.get("direction_vent"),
@@ -4147,9 +4157,9 @@ def creer_bloc_station_publique(parent, station):
     )
 
     if direction_txt == "—" and mesures.get("anemometre"):
-        direction_txt = "non remonté"
+        direction_txt = t('interface_text_4100')
     elif direction_txt == "—":
-        direction_txt = "non disponible"
+        direction_txt = t('interface_text_5146')
 
     direction_rafale_txt = formater_nombre(
         mesures.get("direction_rafale"),
@@ -4157,11 +4167,11 @@ def creer_bloc_station_publique(parent, station):
     )
 
     if direction_rafale_txt == "—" and mesures.get("anemometre"):
-        direction_rafale_txt = "non remonté"
+        direction_rafale_txt = t('interface_text_4100')
     elif direction_rafale_txt == "—":
-        direction_rafale_txt = "non disponible"
+        direction_rafale_txt = t('interface_text_5146')
 
-    titre_station = "⭐ Station favorite" if favorite else "📍 Station proche"
+    titre_station = t('interface_text_4158_more') if favorite else t('interface_text_4158')
 
     bloc_titre = tk.Frame(entete, bg=fond_entete)
     bloc_titre.pack(fill="x")
@@ -4233,13 +4243,13 @@ def creer_bloc_station_publique(parent, station):
 
     creer_badge_netatmo(
         ligne_infos,
-        "Pluie " + libelle_capteur_public(pluie_dispo, bool(mesures.get("pluviometre"))),
+        t('interface_text_4230') + libelle_capteur_public(pluie_dispo, bool(mesures.get("pluviometre"))),
         LIGHT_BLUE if pluie_dispo else BG,
         BLUE if pluie_dispo else SECONDARY
     )
     creer_badge_netatmo(
         ligne_infos,
-        "Vent " + libelle_capteur_public(vent_dispo, bool(mesures.get("anemometre"))),
+        t('interface_text_4236') + libelle_capteur_public(vent_dispo, bool(mesures.get("anemometre"))),
         LIGHT_BLUE if vent_dispo else BG,
         BLUE if vent_dispo else SECONDARY
     )
@@ -4259,14 +4269,14 @@ def creer_bloc_station_publique(parent, station):
         bloc,
         [
         (
-            "🌡️ Température",
+            t('temperature'),
             formater_nombre(
                 mesures.get("temperature"),
                 " °C"
             )
         ),
         (
-            "💧 Humidité",
+            t('interface_text_2665'),
             formater_nombre(
                 mesures.get("humidite"),
                 " %"
@@ -4312,7 +4322,7 @@ def creer_bloc_station_publique(parent, station):
 
 def source_station_netatmo(station, privee=False):
     if privee:
-        return station.get("nom") or "Netatmo intérieur"
+        return station.get("nom") or t('interface_text_4315')
     return nom_station_netatmo(station)
 
 
@@ -4347,8 +4357,8 @@ def choisir_mesure_netatmo(cle, unite=""):
 
     if not candidats:
         return {
-            "texte": "non disponible",
-            "source": "aucune station",
+            "texte": t('interface_text_5146'),
+            "source": t('interface_text_4345'),
             "etat": "absent",
         }
 
@@ -4445,28 +4455,28 @@ def afficher_synthese_netatmo(parent):
 
     creer_tuile_synthese_netatmo(
         ligne1,
-        "🌡️ Température",
+        t('temperature'),
         choisir_mesure_netatmo("temperature", " °C"),
         CARD,
         ORANGE
     )
     creer_tuile_synthese_netatmo(
         ligne1,
-        "💧 Humidité",
+        t('interface_text_2665'),
         choisir_mesure_netatmo("humidite", " %"),
         CARD,
         GREEN
     )
     creer_tuile_synthese_netatmo(
         ligne1,
-        "🌬️ Pression",
+        t('interface_text_4456'),
         choisir_mesure_netatmo("pression", " hPa"),
         CARD,
         BLUE
     )
     creer_tuile_synthese_netatmo(
         ligne1,
-        "🌧️ Pluie 1h",
+        t('interface_text_4463'),
         choisir_mesure_netatmo("pluie_1h", " mm"),
         CARD,
         BLUE
@@ -4484,21 +4494,21 @@ def afficher_synthese_netatmo(parent):
     )
     creer_tuile_synthese_netatmo(
         ligne2,
-        "💨 Vent",
+        t('wind'),
         choisir_mesure_netatmo("vent", " km/h"),
         CARD,
         BLUE
     )
     creer_tuile_synthese_netatmo(
         ligne2,
-        "🌪️ Rafale",
+        t('interface_text_4488'),
         choisir_mesure_netatmo("rafale", " km/h"),
         CARD,
         BLUE
     )
     creer_tuile_synthese_netatmo(
         ligne2,
-        "🧭 Direction",
+        t('interface_text_4495'),
         choisir_mesure_netatmo("direction_vent", "°"),
         CARD,
         TEXT
@@ -4656,7 +4666,7 @@ def afficher_netatmo():
         equipements_prives_ouverts = creer_titre_netatmo_repliable(
             netatmo_frame,
             "equipements_prives",
-            "Mes équipements Netatmo",
+            t('interface_text_4659'),
             None,
             len(netatmo_data)
         )
@@ -4710,8 +4720,8 @@ def afficher_netatmo():
 
         creer_titre_netatmo_liste(
             netatmo_frame,
-            "Stations favorites",
-            "Toujours affichées en haut. Les boutons ↑ ↓ changent leur ordre local, Renommer change seulement le nom affiché dans Gruterra."
+            t('interface_text_4707'),
+            t('interface_text_4714')
         )
 
         for station_publique in stations_favorites:
@@ -4724,8 +4734,8 @@ def afficher_netatmo():
     stations_proches_ouvertes = creer_titre_netatmo_repliable(
         netatmo_frame,
         "stations_proches",
-        "Stations publiques proches",
-        "Stations publiques Netatmo autour du point approximatif. Les favoris restent visibles au-dessus.",
+        t('interface_text_4721'),
+        t('interface_text_4728'),
         len(stations_proches)
     )
 
@@ -4737,9 +4747,7 @@ def afficher_netatmo():
         tk.Label(
             netatmo_frame,
             text=(
-                "Aucune autre station publique proche chargée. "
-                "Netatmo n'affiche ici que les stations partagées "
-                "publiquement par leurs propriétaires."
+                t('interface_text_4740')
             ),
             font=("Segoe UI", 9),
             fg=SECONDARY,
@@ -4772,7 +4780,7 @@ def afficher_etape_netatmo(texte, progression=None):
     if progression is not None:
 
         sync_progress_var.set(
-            f"Progression : {progression}%"
+            t('interface_text_4767').format(v0=progression)
         )
 
     root.update_idletasks()
@@ -4792,17 +4800,17 @@ def resume_acquisition_miflora(resultat_miflora):
     if nouvelles_pc or nouvelles_pi:
         morceaux = []
         if nouvelles_pi:
-            morceaux.append(f"{nouvelles_pi} via Raspberry")
+            morceaux.append(t('interface_text_4787').format(v0=nouvelles_pi))
         if nouvelles_pc:
-            morceaux.append(f"{nouvelles_pc} via PC")
-        lignes.append("✅ Nouvelle mesure effectivement acquise : " + ", ".join(morceaux) + ".")
+            morceaux.append(t('interface_text_4789').format(v0=nouvelles_pc))
+        lignes.append(t('interface_text_4798') + ", ".join(morceaux) + ".")
     else:
-        lignes.append("ℹ Aucune nouvelle mesure immédiate acquise sur ce passage.")
+        lignes.append(t('interface_text_4800'))
 
     if historiques_pi:
-        lignes.append(f"Mesures rapatriées depuis le Raspberry : {historiques_pi} mesure(s) ajoutée(s) au PC. Elles peuvent avoir été collectées pendant que Gruterra était fermé.")
+        lignes.append(t('interface_text_4803').format(v0=historiques_pi))
     if attente_pi:
-        lignes.append("Mesure Raspberry demandée : résultat attendu lors du prochain contrôle automatique ou de la prochaine synchronisation.")
+        lignes.append(t('interface_text_4805'))
     return texte_interface_utf8_sur("\n".join(lignes))
 
 
@@ -4870,40 +4878,34 @@ def synchroniser_arriere_plan():
 
                 if phase == "historique_scan_tentative":
                     texte = (
-                        f"📥 Historique Mi Flora {index}/{total} : {nom} · "
-                        f"scan passe {passe}/{max_passes}, tentative {info.get('tentative')}/{info.get('tentatives')} "
-                        f"depuis l’entrée {index_depart} · {compteur} récupérée(s)"
+                        t('interface_text_4873').format(v0=index, v1=total, v2=nom, v3=passe, v4=max_passes, v5=info.get('tentative'), v6=info.get('tentatives'), v7=index_depart, v8=compteur)
                     )
                 elif phase == "historique_connexion":
                     texte = (
-                        f"📥 Historique Mi Flora {index}/{total} : {nom} · "
-                        f"connexion Bluetooth, passe {passe}/{max_passes} · {compteur} récupérée(s)"
+                        t('interface_text_4879').format(v0=index, v1=total, v2=nom, v3=passe, v4=max_passes, v5=compteur)
                     )
                 elif phase == "historique_lecture":
                     texte = (
-                        f"📥 Historique Mi Flora {index}/{total} : {nom} · "
-                        f"lecture mémoire depuis l’entrée {index_depart}, passe {passe}/{max_passes} · {compteur} récupérée(s)"
+                        t('interface_text_4884').format(v0=index, v1=total, v2=nom, v3=index_depart, v4=passe, v5=max_passes, v6=compteur)
                     )
                 elif phase == "historique_passe_finie":
                     texte = (
-                        f"📥 Historique Mi Flora {index}/{total} : {nom} · "
-                        f"passe {passe}/{max_passes} terminée, {info.get('entries_passe', 0)} entrée(s) lue(s) · {compteur} récupérée(s)"
+                        t('interface_text_4889').format(v0=index, v1=total, v2=nom, v3=passe, v4=max_passes, v5=info.get('entries_passe', 0), v6=compteur)
                     )
                 elif phase == "historique_enregistrement":
                     progression = 28
                     texte = (
-                        f"📥 Historique Mi Flora {index}/{total} : {nom} · "
-                        f"enregistrement local, {compteur} entrée(s) récupérée(s), {info.get('passes', 0)} passe(s)"
+                        t('interface_text_4895').format(v0=index, v1=total, v2=nom, v3=compteur, v4=info.get('passes', 0))
                     )
                 elif phase == "historique_raspberry":
-                    texte = f"📥 Historique Mi Flora {index}/{total} : {nom} · récupération via Raspberry"
+                    texte = t('interface_text_4899').format(v0=index, v1=total, v2=nom)
                 else:
-                    texte = f"📥 Historique Mi Flora {index}/{total} : {nom} · traitement en cours"
+                    texte = t('interface_text_4887').format(v0=index, v1=total, v2=nom)
             elif etape == "historique":
-                texte = f"📥 Historique Mi Flora {index}/{total} : {nom} · préparation"
+                texte = t('interface_text_4903').format(v0=index, v1=total, v2=nom)
                 progression = 8 + int(22 * (index - 1) / max(total, 1))
             else:
-                texte = f"🌱 Mesure Mi Flora {index}/{total} : {nom} · mesure directe ou Raspberry"
+                texte = t('interface_text_4906').format(v0=index, v1=total, v2=nom)
                 progression = 30 + int(20 * (index - 1) / max(total, 1))
             root.after(0, afficher_etape_netatmo, texte, progression)
 
@@ -5053,7 +5055,7 @@ def synchronisation_terminee(resultat_miflora, resultats_meteo):
     bilan_sync = t("sync_finished_with_errors") if sources_en_echec else t("sync_finished")
     sync_var.set(
         bilan_sync + " · "
-        + f"{datetime.now().strftime('%d/%m/%Y à %H:%M:%S')}"
+        + f"{datetime.now().strftime(t('display_datetime_seconds'))}"
     )
 
     lignes_detail = [resultat_miflora.get("message", t("sync_miflora_default_done"))]
@@ -5157,21 +5159,21 @@ def git_revision_courte():
             return resultat.stdout.strip()
     except Exception:
         pass
-    return "non disponible"
+    return t('interface_text_5146')
 
 
 def etat_raspberry_a_propos():
     try:
         chemin = CONFIG_DIR / "raspberry.local.json"
         if not chemin.exists():
-            return "Non configuré sur ce poste"
+            return t('interface_text_5167')
         config = lire_json(chemin)
         if not config.get("enabled", False):
-            return "Configuration présente, mais Raspberry désactivé"
+            return t('interface_text_5170')
         capteurs = len(config.get("sensors", []) or [])
-        return f"Activé · {capteurs} capteur(s) déclaré(s)"
+        return t('interface_text_5172').format(v0=capteurs)
     except Exception:
-        return "Configuration présente, à vérifier"
+        return t('interface_text_5174')
 
 
 def resume_mise_a_jour_a_propos(racine, verifier_distant=False):
@@ -5179,7 +5181,7 @@ def resume_mise_a_jour_a_propos(racine, verifier_distant=False):
         diagnostic = botaneo_update.construire_diagnostic_mise_a_jour(racine, verifier_distant=verifier_distant)
         return texte_interface_utf8_sur(botaneo_update.formater_diagnostic_mise_a_jour(diagnostic))
     except Exception as erreur:
-        return f"Mise à jour : diagnostic indisponible ({erreur})"
+        return t('interface_text_5182').format(v0=erreur)
 
 
 def texte_diagnostic_update_json_a_propos(verifier_distant=False):
@@ -5190,7 +5192,7 @@ def texte_diagnostic_update_json_a_propos(verifier_distant=False):
     except Exception as erreur:
         return json.dumps(
             {
-                t("sync_error_fallback"): "diagnostic mise à jour indisponible",
+                t("sync_error_fallback"): t('interface_text_5193'),
                 "message": str(erreur),
                 "application_autorisee": False,
             },
@@ -5206,18 +5208,18 @@ def patch_note_update_a_propos(verifier_distant=True):
     try:
         diagnostic = botaneo_update.construire_diagnostic_mise_a_jour(racine, verifier_distant=verifier_distant)
     except Exception as erreur:
-        return f"Patch note indisponible : {erreur}"
+        return t('interface_text_5195').format(v0=erreur)
     version = diagnostic.get("version", {})
-    version_distante = version.get("version_distante") or version.get("version") or "version non précisée"
+    version_distante = version.get("version_distante") or version.get("version") or t('interface_text_5211')
     notes = str(version.get("notes") or "").strip()
     lignes = [
-        "Patch note Gruterra",
-        f"Version : {version_distante}",
+        t('interface_text_5200'),
+        t('interface_text_5201').format(v0=version_distante),
     ]
     if notes:
         lignes.extend(["", notes])
     else:
-        lignes.extend(["", "Aucune note de version détaillée n'est fournie par le manifeste."])
+        lignes.extend(["", t('interface_text_5220')])
     return texte_interface_utf8_sur("\n".join(lignes))
 
 
@@ -5243,22 +5245,22 @@ def executer_assistant_update_a_propos(appliquer=False):
             creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0),
         )
     except subprocess.TimeoutExpired:
-        return "Assistant update interrompu : délai dépassé."
+        return t('interface_text_5246')
     except Exception as erreur:
-        return f"Assistant update indisponible : {erreur}"
+        return t('interface_text_5234').format(v0=erreur)
 
     sortie = (resultat.stdout or "").strip()
     erreur = (resultat.stderr or "").strip()
     lignes = [
-        "Assistant update Gruterra",
-        f"Mode : {'application' if appliquer else 'simulation'}",
-        f"Code retour : {resultat.returncode}",
+        t('interface_text_5239'),
+        t('interface_text_5240').format(v0='application' if appliquer else 'simulation'),
+        t('interface_text_5241').format(v0=resultat.returncode),
         "",
     ]
     if sortie:
         lignes.append(sortie)
     if erreur:
-        lignes.extend(["", "Erreurs :", erreur])
+        lignes.extend(["", t("updater_errors_label"), erreur])
     if appliquer:
         lignes.extend(["", patch_note_update_a_propos(verifier_distant=True)])
     return texte_interface_utf8_sur("\n".join(lignes)).strip()
@@ -5267,7 +5269,11 @@ def executer_assistant_update_a_propos(appliquer=False):
 
 def update_appliquee_depuis_resultat(contenu):
     texte = str(contenu or "")
-    return "Code retour : 0" in texte and "Mise à jour appliquée" in texte
+    return any(
+        traduire("interface_text_5241", langue).format(v0=0) in texte
+        and traduire("updater_applied", langue).split("{count}", 1)[0] in texte
+        for langue in ("fr", "en")
+    )
 
 
 def script_lancement_courant(racine):
@@ -5380,13 +5386,10 @@ def verifier_update_au_demarrage():
 
         def proposer():
             message = (
-                f"Une mise à jour Gruterra est disponible : {version_distante}.\n\n"
-                "Voulez-vous la télécharger et l'appliquer maintenant ?\n\n"
-                "Vous pouvez répondre Non et continuer à utiliser Gruterra normalement, "
-                "y compris synchroniser les capteurs."
+                t('interface_text_5383').format(v0=version_distante)
             )
             if notes:
-                message += f"\n\nNotes : {notes[:500]}"
+                message += t('interface_text_5372').format(v0=notes[:500])
             if not messagebox.askyesno(t("update_available_title"), message, parent=root):
                 status_var.set(t("update_ignored"))
                 return
@@ -5417,31 +5420,31 @@ def texte_a_propos(verifier_distant=False):
     racine = Path(__file__).resolve().parent.parent
     lignes = [
         "Gruterra",
-        f"Version locale : {APP_VERSION}",
-        f"Révision Git : {git_revision_courte()}",
+        t('interface_text_5403').format(v0=APP_VERSION),
+        t('interface_text_5421').format(v0=git_revision_courte()),
         "",
-        "Dossiers principaux :",
-        f"- Projet : {racine}",
-        f"- Application : {Path(__file__).resolve().parent}",
-        f"- Base locale : {database.DB_PATH}",
-        f"- Réglages personnels : {CONFIG_DIR}",
+        t('interface_text_5406'),
+        t('interface_text_5407').format(v0=racine),
+        t('interface_text_5408').format(v0=Path(__file__).resolve().parent),
+        t('interface_text_5409').format(v0=database.DB_PATH),
+        t('interface_text_5427').format(v0=CONFIG_DIR),
         "",
-        "Fonctions principales :",
-        "- suivi de plantes avec ou sans capteur",
-        "- Mi Flora : mesure directe, historique et batterie",
-        "- Raspberry optionnel : collecte et rattrapage",
-        "- Netatmo privé/public et météo locale",
-        "- arrosage manuel, rappels et alertes locales",
-        "- historique graphique avec qualité des données",
+        t('interface_text_5412'),
+        t('interface_text_5430'),
+        t('interface_text_5431'),
+        t('interface_text_5415'),
+        t('interface_text_5433'),
+        t('interface_text_5434'),
+        t('interface_text_5435'),
         "",
-        f"Raspberry : {etat_raspberry_a_propos()}",
+        t('interface_text_5420').format(v0=etat_raspberry_a_propos()),
         "",
         resume_mise_a_jour_a_propos(racine, verifier_distant=verifier_distant),
         "",
-        "Sécurité :",
-        "- les accès privés, bases réelles et sauvegardes restent sur ce PC",
-        "- lancer py verifier_avant_github.py avant tout envoi GitHub",
-        "- les documents privés de passation ne sont pas publiés",
+        t('interface_text_5441'),
+        t('interface_text_5442'),
+        t('interface_text_5443'),
+        t('interface_text_5444'),
     ]
     return texte_interface_utf8_sur("\n".join(lignes))
 
@@ -5634,33 +5637,33 @@ def texte_maintenance():
     try:
         nombre_mesures = database.get_nombre_mesures()
     except Exception:
-        nombre_mesures = "indisponible"
+        nombre_mesures = t('interface_text_5620')
     try:
         syntheses = database.lister_syntheses_journalieres(limite=8)
         toutes_syntheses = database.lister_syntheses_journalieres(limite=100000)
-        syntheses_info = f"{len(toutes_syntheses)} synthèse(s) calculée(s)" if toutes_syntheses else "aucune synthèse calculée"
+        syntheses_info = t('interface_text_5641').format(v0=len(toutes_syntheses)) if toutes_syntheses else t('interface_text_5641_more')
     except Exception:
         syntheses = []
-        syntheses_info = "table non initialisée"
+        syntheses_info = t('interface_text_5644')
 
-    etat = "allègement à envisager plus tard" if diagnostic.get("compactage_conseille") else "aucune action nécessaire"
+    etat = t('interface_text_5646') if diagnostic.get("compactage_conseille") else t('interface_text_5646_more')
     lignes = [
-        "Données & résumés Gruterra",
+        t('maintenance_title'),
         "",
-        f"Fichier de données utilisé : {database.DB_PATH}",
-        f"Volume actuel : {format_octets(diagnostic.get('taille_octets'))}",
-        f"Seuil à partir duquel un allègement pourra être proposé : {format_octets(diagnostic.get('seuil_octets'))}",
-        f"État : {etat}",
-        f"Mesures conservées : {nombre_mesures}",
-        f"Résumés par jour : {syntheses_info}",
+        t('interface_text_5650').format(v0=database.DB_PATH),
+        t('interface_text_5634').format(v0=format_octets(diagnostic.get('taille_octets'))),
+        t('interface_text_5652').format(v0=format_octets(diagnostic.get('seuil_octets'))),
+        t('interface_text_5653').format(v0=etat),
+        t('interface_text_5654').format(v0=nombre_mesures),
+        t('interface_text_5655').format(v0=syntheses_info),
         "",
-        "Règles actuelles :",
-        "- aucune suppression automatique de mesures brutes",
-        "- aucun allègement automatique",
-        "- les résumés par jour servent seulement à mieux lire l’historique",
-        "- aucune opération qui supprime des mesures n’est autorisée automatiquement",
+        t('interface_text_5657'),
+        t('interface_text_5658'),
+        t('interface_text_5659'),
+        t('interface_text_5660'),
+        t('interface_text_5661'),
         "",
-        "Prochaine étape future : afficher et valider les résumés avant d’envisager un allègement des très anciennes mesures.",
+        t('interface_text_5663'),
     ]
 
     return texte_interface_utf8_sur("\n".join(lignes))
@@ -5733,12 +5736,12 @@ def ouvrir_maintenance():
         texte = texte_maintenance()
         root.clipboard_clear()
         root.clipboard_append(texte)
-        status_var.set("Données & résumés copiés dans le presse-papiers")
+        status_var.set(t('interface_text_5736'))
 
     def ouvrir_detail_synthese():
         selection = tableau_syntheses.selection()
         if not selection:
-            messagebox.showinfo("Synthèse", "Sélectionnez une synthèse dans le tableau.", parent=fenetre)
+            messagebox.showinfo(t('interface_text_5741'), t('interface_text_5741_more'), parent=fenetre)
             return
         valeurs = tableau_syntheses.item(selection[0], "values")
         if not valeurs:
@@ -5752,35 +5755,35 @@ def ouvrir_maintenance():
                 synthese = row
                 break
         if synthese is None:
-            messagebox.showwarning("Synthèse", "Synthèse introuvable ou déjà modifiée.", parent=fenetre)
+            messagebox.showwarning(t('interface_text_5741'), t('interface_text_5755'), parent=fenetre)
             return
 
         detail = tk.Toplevel(fenetre)
-        detail.title(f"Synthèse {jour}")
+        detail.title(t('interface_text_5759').format(v0=jour))
         detail.configure(bg=CARD)
         detail.resizable(False, False)
         detail.transient(fenetre)
 
         infos_capteur = database.get_infos_capteur_pour_synthese(capteur_id)
         lignes = [
-            f"Jour : {synthese[2]}",
-            f"Plante : {infos_capteur['plante_nom']}",
-            f"Capteur : {infos_capteur['capteur_nom']} (ID {synthese[1]})",
-            f"Adresse BLE : {infos_capteur['adresse_ble']}",
-            f"Première mesure : {synthese[3]}",
-            f"Dernière mesure : {synthese[4]}",
-            f"Nombre de mesures : {synthese[5]}",
+            t('interface_text_5766').format(v0=synthese[2]),
+            t('interface_text_5767').format(v0=infos_capteur['plante_nom']),
+            t('interface_text_5751').format(v0=infos_capteur['capteur_nom'], v1=synthese[1]),
+            t('interface_text_5752').format(v0=infos_capteur['adresse_ble']),
+            t('interface_text_5770').format(v0=synthese[3]),
+            t('interface_text_5771').format(v0=synthese[4]),
+            t('interface_text_5772').format(v0=synthese[5]),
             "",
-            f"Température : min {synthese[6]} °C · max {synthese[7]} °C · moyenne {synthese[8]:.2f} °C",
-            f"Humidité : min {synthese[9]} % · max {synthese[10]} % · moyenne {synthese[11]:.2f} %",
-            f"Luminosité : min {synthese[12]} lux · max {synthese[13]} lux · moyenne {synthese[14]:.2f} lux",
-            f"Conductivité : min {synthese[15]} µS/cm · max {synthese[16]} µS/cm · moyenne {synthese[17]:.2f} µS/cm",
+            t('interface_text_5774').format(v0=synthese[6], v1=synthese[7], v2=synthese[8]),
+            t('interface_text_5775').format(v0=synthese[9], v1=synthese[10], v2=synthese[11]),
+            t('interface_text_5776').format(v0=synthese[12], v1=synthese[13], v2=synthese[14]),
+            t('interface_text_5777').format(v0=synthese[15], v1=synthese[16], v2=synthese[17]),
             "",
-            f"Sources : {synthese[18]}",
-            f"Créée le : {synthese[19]}",
-            f"Statut : {synthese[20]}",
+            t('interface_text_5762').format(v0=synthese[18]),
+            t('interface_text_5780').format(v0=synthese[19]),
+            t('interface_text_5764').format(v0=synthese[20]),
             "",
-            "Cette synthèse est informative. Les mesures brutes sont conservées.",
+            t('interface_text_5783'),
         ]
         texte_detail = "\n".join(lignes)
 
@@ -5796,34 +5799,32 @@ def ouvrir_maintenance():
         def copier_detail():
             root.clipboard_clear()
             root.clipboard_append(texte_detail)
-            status_var.set("Détail de synthèse copié dans le presse-papiers")
+            status_var.set(t('interface_text_5799'))
 
         tk.Button(boutons_detail, text=t("copy"), command=copier_detail, bg=LIGHT_BLUE, fg=BLUE, activebackground=LIGHT_BLUE, relief="flat", cursor="hand2").pack(side="left")
         tk.Button(boutons_detail, text=t("close"), command=detail.destroy, bg=BG, fg=TEXT, relief="flat", cursor="hand2").pack(side="right")
 
     def preparer_syntheses():
         if not messagebox.askyesno(
-            "Préparer les synthèses",
-            "Préparer les synthèses journalières existantes ?\n\nAucune mesure brute ne sera supprimée.",
+            t('prepare_summaries'),
+            t('interface_text_5807'),
             parent=fenetre
         ):
             return
         resultat = database.preparer_syntheses_journalieres()
         rafraichir()
         messagebox.showinfo(
-            "Synthèses préparées",
-            f"{resultat['syntheses_preparees']} synthèse(s) préparée(s).\n"
-            f"{resultat['jours_ignores']} jour(s) ignoré(s).\n\n"
-            "Aucune mesure brute n'a été supprimée.",
+            t('interface_text_5814'),
+            t('interface_text_5815').format(v0=resultat['syntheses_preparees'], v1=resultat['jours_ignores']),
             parent=fenetre
         )
-        status_var.set("Synthèses journalières préparées sans suppression")
+        status_var.set(t('interface_text_5820'))
 
     def creer_sauvegarde(mode):
         if mode == "complete":
             if not messagebox.askyesno(
                 t("private_full_backup"),
-                sauvegarde_utilisateur.AVERTISSEMENT_SAUVEGARDE_PRIVEE
+                t('sauvegarde_utilisateur_text_20')
                 + "\n\n" + t("create_private_backup_question"),
                 parent=fenetre,
             ):
@@ -5861,16 +5862,16 @@ def ouvrir_maintenance():
 
 def format_duree_courte(secondes):
     if secondes is None:
-        return "inconnue"
+        return t('interface_text_5845')
     try:
         secondes = int(secondes)
     except (TypeError, ValueError):
-        return "inconnue"
+        return t('interface_text_5845')
     jours, reste = divmod(max(secondes, 0), 86400)
     heures, reste = divmod(reste, 3600)
     minutes = reste // 60
     if jours:
-        return f"{jours} j {heures} h"
+        return t('uptime_days_hours').format(days=jours, hours=heures)
     if heures:
         return f"{heures} h {minutes} min"
     return f"{minutes} min"
@@ -5881,7 +5882,7 @@ def resume_sante_raspberry(etat=None):
     if not etat.get("ok"):
         return {
             "etat": etat,
-            "texte": f"Raspberry indisponible · {etat.get('message', 'aucun détail')}",
+            "texte": t('interface_text_5865').format(v0=etat.get('message', t('interface_text_5889'))),
             "couleur": RED,
             "fond": LIGHT_RED,
         }
@@ -5889,12 +5890,9 @@ def resume_sante_raspberry(etat=None):
     memoire = etat.get("memory") or {}
     statut = etat.get("status") or "ok"
     alertes = etat.get("warnings") or []
-    libelle = "OK" if statut == "ok" and not alertes else "à surveiller"
+    libelle = "OK" if statut == "ok" and not alertes else t('interface_text_5892')
     texte = (
-        f"Raspberry {libelle} · {etat.get('hostname', 'Raspberry')} · "
-        f"{etat.get('temperature_c', 'n/d')} °C · "
-        f"disque libre {disque.get('free_percent', 'n/d')} % · "
-        f"mémoire {memoire.get('available_percent', 'n/d')} %"
+        t('interface_text_5894').format(v0=libelle, v1=etat.get('hostname', 'Raspberry'), v2=etat.get('temperature_c', 'n/d'), v3=disque.get('free_percent', 'n/d'), v4=memoire.get('available_percent', 'n/d'))
     )
     return {
         "etat": etat,
@@ -5906,34 +5904,34 @@ def resume_sante_raspberry(etat=None):
 
 def lignes_sante_raspberry(etat=None):
     etat = etat if etat is not None else raspberry_sync.health_status()
-    lignes = ["Raspberry :"]
+    lignes = [t('interface_text_5887')]
     if not etat.get("ok"):
-        lignes.append(f"- Indisponible ou désactivé : {etat.get('message', 'aucun détail')}")
+        lignes.append(t('interface_text_5911').format(v0=etat.get('message', t('interface_text_5889'))))
         return lignes
 
     disque = etat.get("disk") or {}
     memoire = etat.get("memory") or {}
     charge = etat.get("load_average") or {}
     statut = etat.get("status") or "ok"
-    libelle_statut = "OK" if statut == "ok" else "à surveiller"
+    libelle_statut = "OK" if statut == "ok" else t('interface_text_5892')
     lignes.extend([
-        f"- État : {libelle_statut} · {etat.get('hostname', 'Raspberry')}",
-        f"- Température : {etat.get('temperature_c', 'n/d')} °C",
-        f"- Disque libre : {disque.get('free_percent', 'n/d')} % ({format_octets(disque.get('free_bytes'))} libres)",
-        f"- Mémoire disponible : {memoire.get('available_percent', 'n/d')} % ({format_octets(memoire.get('available_bytes'))})",
-        f"- Charge : {charge.get('1m', 'n/d')} / {charge.get('5m', 'n/d')} / {charge.get('15m', 'n/d')}",
-        f"- Dossier Gruterra inscriptible : {'oui' if etat.get('writable') else 'non'}",
-        f"- Sauvegardes locales Raspberry : {etat.get('backup_files', 0)} fichier(s)",
-        f"- Fonctionne depuis : {format_duree_courte(etat.get('uptime_seconds'))}",
+        t('interface_text_5920').format(v0=libelle_statut, v1=etat.get('hostname', 'Raspberry')),
+        t('interface_text_5921').format(v0=etat.get('temperature_c', 'n/d')),
+        t('interface_text_5900').format(v0=disque.get('free_percent', 'n/d'), v1=format_octets(disque.get('free_bytes'))),
+        t('interface_text_5923').format(v0=memoire.get('available_percent', 'n/d'), v1=format_octets(memoire.get('available_bytes'))),
+        t('interface_text_5902').format(v0=charge.get('1m', 'n/d'), v1=charge.get('5m', 'n/d'), v2=charge.get('15m', 'n/d')),
+        t('interface_text_5903').format(v0=t('yes') if etat.get('writable') else t('no')),
+        t('interface_text_5904').format(v0=etat.get('backup_files', 0)),
+        t('interface_text_5927').format(v0=format_duree_courte(etat.get('uptime_seconds'))),
     ])
     alertes = etat.get("warnings") or []
     erreurs_disque = etat.get("disk_errors") or []
     if alertes:
         lignes.append("- Alertes : " + "; ".join(str(alerte) for alerte in alertes))
     if erreurs_disque:
-        lignes.append(f"- Erreurs disque récentes détectées : {len(erreurs_disque)} ligne(s)")
+        lignes.append(t('interface_text_5934').format(v0=len(erreurs_disque)))
     else:
-        lignes.append("- Erreurs disque récentes : aucune détectée")
+        lignes.append(t('interface_text_5936'))
     return lignes
 
 
@@ -5942,24 +5940,22 @@ def texte_sante_systeme(etat_raspberry=None):
     base = diagnostic["base"]
     syntheses = diagnostic["syntheses"]
     lignes = [
-        "État Gruterra & Raspberry",
+        t('health_title'),
         "",
-        f"Base : {database.DB_PATH}",
-        f"Taille base : {format_octets(base.get('taille_octets'))} / seuil {format_octets(base.get('seuil_octets'))}",
-        f"Mesures brutes : {diagnostic['nombre_mesures']}",
-        f"Mesures entièrement à zéro : {diagnostic.get('mesures_entierement_zero', 0)}",
-        f"Synthèses : {syntheses['nombre']} ({syntheses['premier_jour']} → {syntheses['dernier_jour']})",
-        f"Synthèses entièrement à zéro : {diagnostic.get('syntheses_entierement_zero', 0)}",
-        f"Allègement conseillé plus tard : {'oui' if base.get('compactage_conseille') else 'non'}",
+        t('interface_text_5925').format(v0=database.DB_PATH),
+        t('interface_text_5926').format(v0=format_octets(base.get('taille_octets')), v1=format_octets(base.get('seuil_octets'))),
+        t('interface_text_5949').format(v0=diagnostic['nombre_mesures']),
+        t('interface_text_5950').format(v0=diagnostic.get('mesures_entierement_zero', 0)),
+        t('interface_text_5951').format(v0=syntheses['nombre'], v1=syntheses['premier_jour'], v2=syntheses['dernier_jour']),
+        t('interface_text_5952').format(v0=diagnostic.get('syntheses_entierement_zero', 0)),
+        t('interface_text_5953').format(v0=t('botaneo_update_text_346') if base.get('compactage_conseille') else t('botaneo_update_text_346_more')),
         "",
     ]
     lignes.extend(lignes_sante_raspberry(etat_raspberry))
-    lignes.extend(["", "Capteurs :"])
+    lignes.extend(["", t('interface_text_5935')])
     for capteur in diagnostic["capteurs"]:
         lignes.append(
-            f"- {capteur[3] or 'Sans plante'} · {capteur[1] or 'Capteur'} · "
-            f"{capteur[4]} mesure(s), dernière {capteur[5] or 'jamais'}, "
-            f"passif {capteur[6] or 0}, historique {capteur[8] or 0}"
+            t('interface_text_5960').format(v0=capteur[3] or t('interface_text_5960_more'), v1=capteur[1] or t('sensor'), v2=capteur[4], v3=capteur[5] or t('capteur_infos_text_97_more'), v4=capteur[6] or 0, v5=capteur[8] or 0)
         )
     return texte_interface_utf8_sur("\n".join(lignes))
 
@@ -5974,7 +5970,7 @@ def ouvrir_sante_systeme():
     tk.Label(fenetre, text=t("health_header"), font=("Segoe UI", 18, "bold"), fg=GREEN, bg=CARD).pack(anchor="w", padx=20, pady=(18, 4))
     tk.Label(fenetre, text=t("health_subtitle"), font=("Segoe UI", 10), fg=SECONDARY, bg=CARD).pack(anchor="w", padx=20, pady=(0, 12))
 
-    resume_raspberry_var = tk.StringVar(value="Raspberry : contrôle en cours…")
+    resume_raspberry_var = tk.StringVar(value=t('interface_text_5977'))
     resume_raspberry = tk.Label(
         fenetre,
         textvariable=resume_raspberry_var,
@@ -5996,12 +5992,12 @@ def ouvrir_sante_systeme():
     colonnes = ("plante", "capteur", "mesures", "derniere", "passif", "historique")
     tableau_capteurs = ttk.Treeview(tableau_frame, columns=colonnes, show="headings", height=7)
     for colonne, titre, largeur, ancre in [
-        ("plante", "Plante", 140, "w"),
-        ("capteur", "Capteur", 130, "w"),
-        ("mesures", "Mesures", 80, "center"),
-        ("derniere", "Dernière mesure", 150, "center"),
-        ("passif", "Passif", 70, "center"),
-        ("historique", "Historique", 80, "center"),
+        ("plante", t('plant'), 140, "w"),
+        ("capteur", t('sensor'), 130, "w"),
+        ("mesures", t('comparison_report_20'), 80, "center"),
+        ("derniere", t('interface_text_6002'), 150, "center"),
+        ("passif", t('interface_text_5979'), 70, "center"),
+        ("historique", t('history_title'), 80, "center"),
     ]:
         tableau_capteurs.heading(colonne, text=titre)
         tableau_capteurs.column(colonne, width=largeur, anchor=ancre)
@@ -6023,10 +6019,10 @@ def ouvrir_sante_systeme():
         diagnostic = database.get_diagnostic_global()
         for capteur in diagnostic["capteurs"]:
             tableau_capteurs.insert("", "end", values=(
-                capteur[3] or "Sans plante",
-                capteur[1] or f"Capteur {capteur[0]}",
+                capteur[3] or t('interface_text_5960_more'),
+                capteur[1] or t('interface_text_6003').format(v0=capteur[0]),
                 capteur[4] or 0,
-                capteur[5] or "jamais",
+                capteur[5] or t('capteur_infos_text_97_more'),
                 capteur[6] or 0,
                 capteur[8] or 0,
             ))
@@ -6035,7 +6031,7 @@ def ouvrir_sante_systeme():
         texte = texte_sante_systeme()
         root.clipboard_clear()
         root.clipboard_append(texte)
-        status_var.set("État Gruterra & Raspberry copié dans le presse-papiers")
+        status_var.set(t('interface_text_6038'))
 
     rafraichir()
 
@@ -6168,7 +6164,7 @@ def ouvrir_parametres():
             set_update_info(botaneo_update.formater_diagnostic_mise_a_jour(diagnostic) + "\n\n" + patch_note_update_a_propos(verifier_distant=True))
             status_var.set(t("update_check_done"))
         except Exception as erreur:
-            set_update_info(f"Vérification impossible : {erreur}")
+            set_update_info(t('interface_text_6171').format(v0=erreur))
 
     def settings_tester_update():
         status_var.set(t("update_sim_running"))
@@ -6231,7 +6227,7 @@ def ouvrir_parametres():
 
     jours_vars = []
     jours_config = set(auto_sync_config.get("jours", [0, 1, 2, 3, 4, 5, 6]))
-    for index, nom in enumerate(["Lun", "Mar", "Mer", "Jeu", "Ven", "Sam", "Dim"]):
+    for index, nom in enumerate([t('interface_text_6210'), t('interface_text_6210_more'), t('interface_text_6210_more_more'), t('interface_text_6210_more_more_more'), t('interface_text_6210_more_more_more_more'), t('interface_text_6210_more_more_more_more_more'), t('interface_text_6210_more_more_more_more_more_more')]):
         var = tk.BooleanVar(value=index in jours_config)
         jours_vars.append(var)
         tk.Checkbutton(
@@ -6841,12 +6837,12 @@ def _ligne_stat(label, data, unite=""):
     if not data:
         return None
     suffixe = f" {unite}" if unite else ""
-    return f"- {label} : min {data['min']:.1f}{suffixe}, max {data['max']:.1f}{suffixe}, moyenne {data['moy']:.1f}{suffixe}, dernière {data['dernier']:.1f}{suffixe}."
+    return t('interface_text_6844').format(v0=label, v1=data['min'], v2=suffixe, v3=data['max'], v4=suffixe, v5=data['moy'], v6=suffixe, v7=data['dernier'], v8=suffixe)
 
 
 def _format_export_valeur(valeur, unite="", decimales=0):
     if valeur is None:
-        return "non disponible"
+        return t('interface_text_5146')
     try:
         nombre = float(valeur)
     except (TypeError, ValueError):
@@ -6858,22 +6854,22 @@ def _format_export_valeur(valeur, unite="", decimales=0):
 def _ajouter_resume_export(lignes, titre, resume):
     lignes.append(f"{titre} :")
     if not resume:
-        lignes.append("- Aucune mesure disponible.")
+        lignes.append(t('interface_text_6861'))
         lignes.append("")
         return
-    lignes.append(f"- {resume['count']} mesure(s).")
+    lignes.append(t('interface_text_6864').format(v0=resume['count']))
     for label, cle, unite in (
-        ("Humidité", "humidite", "%"),
-        ("Lumière", "luminosite", "lux"),
-        ("Température", "temperature", "°C"),
-        ("Conductivité", "conductivite", "µS/cm"),
+        (t('series_soil_humidity_short'), "humidite", "%"),
+        (t('series_light_short'), "luminosite", "lux"),
+        (t('series_temperature_short'), "temperature", "°C"),
+        (t('series_conductivity_short'), "conductivite", "µS/cm"),
     ):
         ligne = _ligne_stat(label, resume.get(cle), unite)
         if ligne:
             lignes.append(ligne)
-    lignes.append(f"- Plus grand trou entre deux mesures : {resume.get('plus_grand_trou', 0):.1f} h.")
+    lignes.append(t('interface_text_6874').format(v0=resume.get('plus_grand_trou', 0)))
     if resume.get("trous_importants"):
-        lignes.append(f"- Qualité : {resume['trous_importants']} trou(s) supérieur(s) à environ 1 h 48.")
+        lignes.append(t('interface_text_6876').format(v0=resume['trous_importants']))
     lignes.append("")
 
 
@@ -6956,41 +6952,41 @@ def _ajouter_contexte_lumiere_export(lignes, mesures, evenements):
     if not recentes and not resume_7j:
         return
 
-    lignes.append("Contexte lumière :")
+    lignes.append(t('interface_text_6959'))
     if recentes:
-        lignes.append(f"- {len(recentes)} exposition(s) balcon notée(s) sur les 14 derniers jours.")
+        lignes.append(t('interface_text_6961').format(v0=len(recentes)))
         for sortie, retour in recentes[-4:]:
             if retour:
                 duree = formater_duree_heures((retour - sortie).total_seconds() / 3600)
-                lignes.append(f"- {sortie.strftime('%d/%m %H:%M')} → {retour.strftime('%H:%M')} : sortie balcon déclarée, durée {duree}.")
+                lignes.append(t('interface_text_6965').format(v0=sortie.strftime('%d/%m %H:%M'), v1=retour.strftime('%H:%M'), v2=duree))
             else:
-                lignes.append(f"- {sortie.strftime('%d/%m %H:%M')} : sortie balcon déclarée, retour non noté.")
+                lignes.append(t('interface_text_6967').format(v0=sortie.strftime('%d/%m %H:%M')))
     else:
-        lignes.append("- Aucune exposition balcon récente notée dans le journal.")
+        lignes.append(t('interface_text_6969'))
 
-    for titre, resume in (("24 h", resume_24h), ("7 jours", resume_7j)):
+    for titre, resume in (("24 h", resume_24h), (t('period_7d'), resume_7j)):
         if not resume:
             continue
-        ligne = f"- Lumière {titre} : moyenne globale {resume['moyenne']:.0f} lux, maximum {resume['maximum']:.0f} lux"
+        ligne = t('interface_text_6974').format(v0=titre, v1=resume['moyenne'], v2=resume['maximum'])
         if resume["interieur_moyenne"] is not None:
-            ligne += f", hors balcon {resume['interieur_moyenne']:.0f} lux de moyenne"
+            ligne += t('interface_text_6976').format(v0=resume['interieur_moyenne'])
             if resume["interieur_maximum"] is not None:
-                ligne += f" et {resume['interieur_maximum']:.0f} lux max"
+                ligne += t('interface_text_6954').format(v0=resume['interieur_maximum'])
         if resume["balcon_count"]:
-            ligne += f", {resume['balcon_count']} mesure(s) pendant exposition balcon"
+            ligne += t('interface_text_6980').format(v0=resume['balcon_count'])
             if resume["balcon_maximum"] is not None:
-                ligne += f" jusqu'à {resume['balcon_maximum']:.0f} lux"
+                ligne += t('interface_text_6982').format(v0=resume['balcon_maximum'])
         lignes.append(ligne + ".")
 
     if resume_7j and resume_7j.get("balcon_count") and resume_7j.get("interieur_moyenne") is not None:
-        lignes.append("- Interprétation : les pics lumineux sont contextualisés par les sorties balcon ; ils ne doivent pas masquer la luminosité habituelle de l'emplacement intérieur.")
+        lignes.append(t('interface_text_6986'))
     lignes.append("")
 
 
 def generer_texte_analyse_plante(plante_id):
     plante = database.get_plante(plante_id)
     if not plante:
-        return "Plante introuvable dans Gruterra."
+        return t('interface_text_6993')
     _, nom, espece, emplacement, zone = plante
     capteur = obtenir_capteur_plante(plante_id)
     mesures = database.get_mesures(plante_id=plante_id, limite=-1)
@@ -7006,11 +7002,11 @@ def generer_texte_analyse_plante(plante_id):
         details.append(emplacement)
     if zone:
         details.append(zone)
-    lignes.append(f"Plante suivie : {nom}" + (f" / {' · '.join(details)}" if details else ""))
+    lignes.append(t('interface_text_7009').format(v0=nom) + (f" / {' · '.join(details)}" if details else ""))
     if capteur:
-        lignes.append(f"Capteur actif : {capteur[1]} `{capteur[2]}`.")
+        lignes.append(t('interface_text_6987').format(v0=capteur[1], v1=capteur[2]))
     else:
-        lignes.append("Capteur actif : aucun.")
+        lignes.append(t('interface_text_7013'))
     lignes.append("")
 
     if dernier_arrosage:
@@ -7018,17 +7014,17 @@ def generer_texte_analyse_plante(plante_id):
         quantite_txt = f"{quantite:g} ml" if quantite is not None else t("quantity_not_specified")
         type_eau = dernier_arrosage[8] if len(dernier_arrosage) > 8 else None
         commentaire = dernier_arrosage[7] if len(dernier_arrosage) > 7 else None
-        lignes.append("Dernier arrosage :")
+        lignes.append(t('interface_text_7021'))
         ligne = f"- {formater_date(dernier_arrosage[2])} : {quantite_txt}"
         if type_eau:
-            ligne += f", eau : {type_eau}"
+            ligne += t('interface_text_7000').format(v0=type_eau)
         if commentaire:
-            ligne += f", commentaire : {commentaire}"
+            ligne += t('interface_text_7002').format(v0=commentaire)
         lignes.append(ligne + ".")
         lignes.append("")
 
     if arrosages:
-        lignes.append("Arrosages récents :")
+        lignes.append(t('interface_text_7031'))
         for arrosage in arrosages[:5]:
             quantite = arrosage[3]
             quantite_txt = f"{quantite:g} ml" if quantite is not None else t("quantity_not_specified")
@@ -7036,9 +7032,9 @@ def generer_texte_analyse_plante(plante_id):
             commentaire = arrosage[7] if len(arrosage) > 7 else None
             morceaux = [quantite_txt]
             if type_eau:
-                morceaux.append(f"eau : {type_eau}")
+                morceaux.append(t('interface_text_7015').format(v0=type_eau))
             if commentaire:
-                morceaux.append(f"contexte : {commentaire}")
+                morceaux.append(t('interface_text_7017').format(v0=commentaire))
             lignes.append(f"- {formater_date(arrosage[2])} : " + ", ".join(morceaux) + ".")
         lignes.append("")
 
@@ -7047,7 +7043,7 @@ def generer_texte_analyse_plante(plante_id):
     except Exception:
         evenements = []
     if evenements:
-        lignes.append("Événements / observations notés :")
+        lignes.append(t('interface_text_7050'))
         for evenement in evenements:
             type_evenement = evenement[3] if len(evenement) > 3 else "observation"
             titre = evenement[4] if len(evenement) > 4 and evenement[4] else "Observation"
@@ -7065,42 +7061,38 @@ def generer_texte_analyse_plante(plante_id):
 
     maintenant = datetime.now()
     for titre, debut in (
-        ("Résumé 24 h", maintenant - timedelta(days=1)),
-        ("Résumé 48 h", maintenant - timedelta(days=2)),
-        ("Résumé 7 jours", maintenant - timedelta(days=7)),
+        (t('interface_text_7068'), maintenant - timedelta(days=1)),
+        (t('interface_text_7069'), maintenant - timedelta(days=2)),
+        (t('interface_text_7070'), maintenant - timedelta(days=7)),
     ):
         _ajouter_resume_export(lignes, titre, _resume_mesures_export(mesures, debut))
 
     if dernier_arrosage:
         date_arrosage = _date_locale_depuis_mesure(dernier_arrosage[2])
         if date_arrosage:
-            _ajouter_resume_export(lignes, "Résumé depuis le dernier arrosage", _resume_mesures_export(mesures, date_arrosage))
+            _ajouter_resume_export(lignes, t('interface_text_7077'), _resume_mesures_export(mesures, date_arrosage))
             autour = []
             for mesure in mesures:
                 date = _date_locale_depuis_mesure(mesure[1])
                 if date and date_arrosage - timedelta(hours=8) <= date <= date_arrosage + timedelta(hours=6):
                     autour.append((date, mesure))
             if autour:
-                lignes.append("Mesures autour du dernier arrosage :")
+                lignes.append(t('interface_text_7084'))
                 for date, mesure in autour[-18:]:
                     lignes.append(
-                        f"- {date.strftime('%d/%m %H:%M')} : "
-                        f"humidité {_format_export_valeur(mesure[3], '%')}, "
-                        f"lumière {_format_export_valeur(mesure[4], 'lux')}, "
-                        f"température {_format_export_valeur(mesure[2], '°C', 1)}, "
-                        f"conductivité {_format_export_valeur(mesure[5], 'µS/cm')}."
+                        t('interface_text_7087').format(v0=date.strftime('%d/%m %H:%M'), v1=_format_export_valeur(mesure[3], '%'), v2=_format_export_valeur(mesure[4], 'lux'), v3=_format_export_valeur(mesure[2], '°C', 1), v4=_format_export_valeur(mesure[5], 'µS/cm'))
                     )
                 lignes.append("")
 
     suivi = analyser_apres_arrosage(plante_id)
     if suivi:
-        lignes.append("Lecture Gruterra :")
+        lignes.append(t('interface_text_7069_more'))
         lignes.append(f"- {suivi['titre']} : {suivi['detail']}")
         lignes.append("")
 
-    lignes.append("Point à discuter :")
-    lignes.append("- Comparer l’évolution de l’humidité après arrosage avec l’état réel des feuilles et de la tige.")
-    lignes.append("- Vérifier si la lumière moyenne hors balcon reste insuffisante pour une Crassula, même lorsque quelques pics lumineux apparaissent.")
+    lignes.append(t('interface_text_7101'))
+    lignes.append(t('interface_text_7102'))
+    lignes.append(t('interface_text_7103'))
     return texte_interface_utf8_sur("\n".join(lignes)).strip()
 
 
@@ -7108,11 +7100,11 @@ def copier_analyse_plante(plante_id):
     try:
         texte = generer_texte_analyse_plante(plante_id)
     except Exception as erreur:
-        status_var.set(f"Analyse plante impossible : {erreur}")
+        status_var.set(t('interface_text_7111').format(v0=erreur))
         return
     root.clipboard_clear()
     root.clipboard_append(texte)
-    status_var.set("Analyse plante copiée dans le presse-papiers")
+    status_var.set(t('interface_text_7115'))
 
 
 def afficher_message_analyse(plante_id):
@@ -7127,7 +7119,7 @@ def afficher_message_analyse(plante_id):
 
 def afficher_details_capteur(adresse, nom):
     fenetre = tk.Toplevel(root)
-    fenetre.title("Détails du capteur — " + str(nom))
+    fenetre.title(t('interface_text_7130') + str(nom))
     fenetre.geometry("720x520")
     fenetre.configure(bg=BG)
     zone = tk.Text(fenetre, bg=CARD, fg=TEXT, insertbackground=TEXT,
@@ -7136,7 +7128,7 @@ def afficher_details_capteur(adresse, nom):
     zone.configure(yscrollcommand=scroll.set)
     scroll.pack(side="right", fill="y")
     zone.pack(fill="both", expand=True, padx=12, pady=12)
-    zone.insert("1.0", "Adresse Bluetooth : " + str(adresse) + "\n\n" + details_infos(lire_infos(adresse)))
+    zone.insert("1.0", t('interface_text_7111_more') + str(adresse) + "\n\n" + details_infos(lire_infos(adresse)))
     zone.configure(state="disabled")
 
 
@@ -7160,16 +7152,16 @@ def importer_historique_miflora_plante(plante_id, nom_plante):
 
     if import_historique_en_cours:
         messagebox.showinfo(
-            "Historique Mi Flora",
-            "Un import historique est déjà en cours.",
+            t('interface_text_7135'),
+            t('interface_text_7164'),
             parent=root
         )
         return
 
     if netatmo_loading or str(sync_button["state"]) == "disabled":
         messagebox.showinfo(
-            "Historique Mi Flora",
-            "Une synchronisation est déjà en cours. Attendez qu'elle soit terminée avant d'importer l'historique Mi Flora.",
+            t('interface_text_7135'),
+            t('interface_text_7172'),
             parent=root
         )
         return
@@ -7177,8 +7169,8 @@ def importer_historique_miflora_plante(plante_id, nom_plante):
     pret_bluetooth, secondes_attente = bluetooth_pret_pour_historique()
     if not pret_bluetooth:
         messagebox.showinfo(
-            "Historique Mi Flora",
-            f"Bluetooth vient d'être utilisé. Attendez encore environ {secondes_attente} seconde(s), puis réessayez l'import historique.",
+            t('interface_text_7135'),
+            t('interface_text_7181').format(v0=secondes_attente),
             parent=root
         )
         return
@@ -7186,15 +7178,15 @@ def importer_historique_miflora_plante(plante_id, nom_plante):
     capteur = obtenir_capteur_plante(plante_id)
     if capteur is None:
         messagebox.showinfo(
-            "Historique Mi Flora",
-            "Cette plante n'a pas de capteur actif.",
+            t('interface_text_7135'),
+            t('interface_text_7190'),
             parent=root
         )
         return
 
     import_historique_en_cours = True
-    status_var.set(f"📥 Import historique Mi Flora · {nom_plante}")
-    sync_detail_var.set("Lecture mémoire Mi Flora sans effacement...")
+    status_var.set(t('interface_text_7168').format(v0=nom_plante))
+    sync_detail_var.set(t('interface_text_7197'))
 
     def arriere_plan():
         global import_historique_en_cours
@@ -7203,7 +7195,7 @@ def importer_historique_miflora_plante(plante_id, nom_plante):
         except Exception as erreur:
             resultat = {
                 "ok": False,
-                "message": f"Import historique impossible : {erreur}"
+                "message": t('interface_text_7178').format(v0=erreur)
             }
 
         def terminer():
@@ -7215,25 +7207,25 @@ def importer_historique_miflora_plante(plante_id, nom_plante):
             if resultat.get("ok"):
                 action = resultat.get("historique_action")
                 if action == "rien_de_nouveau":
-                    status_var.set("Historique Mi Flora : rien de nouveau côté Raspberry.")
-                    titre_message = "Historique Mi Flora · rien de nouveau"
+                    status_var.set(t('interface_text_7218'))
+                    titre_message = t('interface_text_7219')
                 else:
-                    status_var.set("Historique Mi Flora importé.")
-                    titre_message = "Historique Mi Flora"
-                sync_detail_var.set(resultat.get("message", "Historique importé."))
+                    status_var.set(t('interface_text_7221'))
+                    titre_message = t('interface_text_7135')
+                sync_detail_var.set(resultat.get("message", t('interface_text_7195')))
                 actualiser_interface()
                 messagebox.showinfo(
                     titre_message,
-                    resultat.get("message", "Historique importé."),
+                    resultat.get("message", t('interface_text_7195')),
                     parent=root
                 )
             else:
-                status_var.set("Import historique Mi Flora impossible.")
-                sync_detail_var.set(resultat.get("message", "Historique non importé."))
+                status_var.set(t('history_import_failed'))
+                sync_detail_var.set(resultat.get("message", t('interface_text_7204')))
                 actualiser_interface()
                 messagebox.showerror(
-                    "Historique Mi Flora",
-                    resultat.get("message", "Historique non importé."),
+                    t('interface_text_7135'),
+                    resultat.get("message", t('interface_text_7204')),
                     parent=root
                 )
 
@@ -7271,7 +7263,7 @@ def plantes_avec_historique_mesures(exclure_plante_id=None, limite=6):
 
 def afficher_raccourcis_historique(plante_id):
     plante = database.get_plante(plante_id)
-    nom_plante = plante[1] if plante else "cette plante"
+    nom_plante = plante[1] if plante else t('interface_text_7274')
     raccourcis = plantes_avec_historique_mesures(
         exclure_plante_id=plante_id
     )
@@ -7393,15 +7385,15 @@ def delai_rappel_arrosage(date_rappel, reference=None):
             date_rappel = datetime.fromisoformat(date_rappel)
         jours = (date_rappel.date() - reference.date()).days
     except Exception:
-        return "date à vérifier"
+        return t('interface_text_7368')
 
     if jours < 0:
-        return f"en retard de {abs(jours)} jour{'s' if abs(jours) != 1 else ''}"
+        return t('interface_text_7399').format(v0=abs(jours), v1='s' if abs(jours) != 1 else '')
     if jours == 0:
-        return "aujourd'hui"
+        return t('interface_text_7373')
     if jours == 1:
-        return "demain"
-    return f"dans {jours} jours"
+        return t('interface_text_7375')
+    return t('interface_text_7404').format(v0=jours)
 
 
 def rappel_mail_texte(plante_id, date_rappel, reference=None):
@@ -7413,10 +7405,10 @@ def rappel_mail_texte(plante_id, date_rappel, reference=None):
             date_rappel = datetime.fromisoformat(date_rappel)
         date_mail = date_rappel - timedelta(days=7)
     except Exception:
-        return "Mail de rappel prévu : une semaine avant, date à vérifier."
+        return t('interface_text_7416')
     if date_mail.date() <= reference.date():
-        return "Mail de rappel : à préparer maintenant, car l’échéance est à moins d’une semaine."
-    return f"Mail de rappel prévu environ le {formater_date(date_mail.isoformat(timespec='seconds'))}."
+        return t('interface_text_7418')
+    return t('interface_text_7419').format(v0=formater_date(date_mail.isoformat(timespec='seconds')))
 
 
 def ajouter_alerte(liste, niveau, titre, detail):
@@ -7460,26 +7452,26 @@ def construire_alertes(plantes):
             dernier_arrosage = None
 
         if not capteurs:
-            details_sans_capteur = ["Suivi manuel actif : arrosage, notes et rappel."]
+            details_sans_capteur = [t('interface_text_7463')]
             niveau_sans_capteur = "info"
-            titre_sans_capteur = f"🌱 {nom} sans capteur actif"
+            titre_sans_capteur = t('interface_text_7465').format(v0=nom)
 
             if rappel and rappel[9]:
                 try:
                     date_rappel = datetime.fromisoformat(rappel[9])
                     delai_txt = delai_rappel_arrosage(date_rappel, maintenant)
-                    details_sans_capteur.append(f"Prochain arrosage : {delai_txt} · {formater_date(rappel[9])}.")
+                    details_sans_capteur.append(t('interface_text_7471').format(v0=delai_txt, v1=formater_date(rappel[9])))
                     mail_txt = rappel_mail_texte(plante_id, date_rappel, maintenant)
                     if mail_txt:
                         details_sans_capteur.append(mail_txt)
                     if date_rappel.date() <= maintenant.date():
                         niveau_sans_capteur = "danger"
-                        titre_sans_capteur = f"💧 Arrosage manuel à faire · {nom}"
+                        titre_sans_capteur = t('interface_text_7477').format(v0=nom)
                     elif (date_rappel - maintenant).days <= 2:
                         niveau_sans_capteur = "attention"
-                        titre_sans_capteur = f"💧 Arrosage manuel bientôt · {nom}"
+                        titre_sans_capteur = t('interface_text_7480').format(v0=nom)
                 except Exception:
-                    details_sans_capteur.append(f"Prochain arrosage : {delai_rappel_arrosage(rappel[9], maintenant)} · {formater_date(rappel[9])}.")
+                    details_sans_capteur.append(t('interface_text_7471').format(v0=delai_rappel_arrosage(rappel[9], maintenant), v1=formater_date(rappel[9])))
                     mail_txt = rappel_mail_texte(plante_id, rappel[9], maintenant)
                     if mail_txt:
                         details_sans_capteur.append(mail_txt)
@@ -7487,10 +7479,10 @@ def construire_alertes(plantes):
             if dernier_arrosage and dernier_arrosage[2]:
                 quantite = dernier_arrosage[3]
                 quantite_txt = f"{quantite:g} ml" if quantite is not None else t("quantity_not_specified")
-                details_sans_capteur.append(f"Dernier arrosage manuel : {formater_date(dernier_arrosage[2])} · {quantite_txt}.")
+                details_sans_capteur.append(t('interface_text_7490').format(v0=formater_date(dernier_arrosage[2]), v1=quantite_txt))
 
             if not rappel:
-                details_sans_capteur.append("Aucun rappel programmé : utile pour les plantes hors domicile ou sans mesure d'humidité.")
+                details_sans_capteur.append(t('interface_text_7493'))
 
             ajouter_alerte(alertes, niveau_sans_capteur, titre_sans_capteur, " ".join(details_sans_capteur))
         else:
@@ -7501,9 +7493,9 @@ def construire_alertes(plantes):
                 batterie = infos.get("batterie")
                 seuil = int(alertes_config.get("seuil_batterie", 50))
                 if batterie is not None and batterie <= seuil:
-                    ajouter_alerte(alertes, "danger", f"🔋 Batterie faible · {nom}", f"{nom_capteur} : {batterie} % · seuil {seuil} %.")
+                    ajouter_alerte(alertes, "danger", t('interface_text_7476').format(v0=nom), t('interface_text_7476_more').format(v0=nom_capteur, v1=batterie, v2=seuil))
                 elif batterie is not None and batterie <= min(seuil + 15, 100):
-                    ajouter_alerte(alertes, "attention", f"🔋 Batterie à surveiller · {nom}", f"{nom_capteur} : {batterie} %.")
+                    ajouter_alerte(alertes, "attention", t('interface_text_7506').format(v0=nom), f"{nom_capteur} : {batterie} %.")
 
                 derniere_sync = obtenir_derniere_synchronisation_capteur(capteur[0])
                 if derniere_sync:
@@ -7511,7 +7503,7 @@ def construire_alertes(plantes):
                         date_sync = datetime.fromisoformat(derniere_sync)
                         heures = (maintenant - date_sync).total_seconds() / 3600
                         if heures >= 48:
-                            ajouter_alerte(alertes, "attention", f"📡 Donnée ancienne · {nom}", f"Dernière mesure {anciennete(derniere_sync)}.")
+                            ajouter_alerte(alertes, "attention", t('interface_text_7514').format(v0=nom), t('interface_text_7514_more').format(v0=anciennete(derniere_sync)))
                     except Exception:
                         pass
 
@@ -7519,19 +7511,19 @@ def construire_alertes(plantes):
             try:
                 date_rappel = datetime.fromisoformat(rappel[9])
                 if date_rappel.date() <= maintenant.date():
-                    detail = f"Rappel {delai_rappel_arrosage(date_rappel, maintenant)} · {formater_date(rappel[9])}."
+                    detail = t('interface_text_7494').format(v0=delai_rappel_arrosage(date_rappel, maintenant), v1=formater_date(rappel[9]))
                     mail_txt = rappel_mail_texte(plante_id, date_rappel, maintenant)
                     if mail_txt:
                         detail += " " + mail_txt
-                    ajouter_alerte(alertes, "danger", f"💧 Arrosage à faire · {nom}", detail)
+                    ajouter_alerte(alertes, "danger", t('interface_text_7526').format(v0=nom), detail)
                 elif (date_rappel - maintenant).days <= 2:
-                    detail = f"Rappel {delai_rappel_arrosage(date_rappel, maintenant)} · {formater_date(rappel[9])}."
+                    detail = t('interface_text_7494').format(v0=delai_rappel_arrosage(date_rappel, maintenant), v1=formater_date(rappel[9]))
                     mail_txt = rappel_mail_texte(plante_id, date_rappel, maintenant)
                     if mail_txt:
                         detail += " " + mail_txt
-                    ajouter_alerte(alertes, "attention", f"💧 Arrosage bientôt · {nom}", detail)
+                    ajouter_alerte(alertes, "attention", t('interface_text_7532').format(v0=nom), detail)
                 elif plante_avec_rappel_email(plante_id) and (date_rappel - maintenant).days <= 7:
-                    ajouter_alerte(alertes, "info", f"📧 Mail de rappel à prévoir · {nom}", f"Arrosage {delai_rappel_arrosage(date_rappel, maintenant)} · {formater_date(rappel[9])}. {rappel_mail_texte(plante_id, date_rappel, maintenant)}")
+                    ajouter_alerte(alertes, "info", t('interface_text_7534').format(v0=nom), t('interface_text_7534_more').format(v0=delai_rappel_arrosage(date_rappel, maintenant), v1=formater_date(rappel[9]), v2=rappel_mail_texte(plante_id, date_rappel, maintenant)))
             except Exception:
                 pass
 
@@ -7539,13 +7531,13 @@ def construire_alertes(plantes):
         try:
             pluie = prevision_2h_data.get("pluie_2h")
             if pluie is not None and float(pluie) > 0:
-                ajouter_alerte(alertes, "info", "🌧️ Pluie locale prévue", f"Prévision +2 h : {pluie} mm.")
+                ajouter_alerte(alertes, "info", t('interface_text_7542'), t('interface_text_7542_more').format(v0=pluie))
         except Exception:
             pass
         try:
             rafale = prevision_2h_data.get("rafale")
             if rafale is not None and float(rafale) >= 35:
-                ajouter_alerte(alertes, "attention", "💨 Rafales à surveiller", f"Prévision +2 h : rafales jusqu’à {rafale} km/h.")
+                ajouter_alerte(alertes, "attention", t('interface_text_7548'), t('interface_text_7548_more').format(v0=rafale))
         except Exception:
             pass
 
@@ -7554,14 +7546,14 @@ def construire_alertes(plantes):
 
 def lignes_email_depuis_alertes(alertes):
     lignes = [
-        "Aperçu des alertes Gruterra.",
+        t('interface_text_7557'),
         "",
-        "Aucun e-mail n'a été envoyé automatiquement.",
-        "La mémoire locale sert seulement à éviter de reproposer trop souvent la même alerte.",
+        t('interface_text_7559'),
+        t('interface_text_7560'),
         "",
     ]
     if not alertes:
-        lignes.append("Aucune alerte importante avec les données actuelles.")
+        lignes.append(t('interface_text_7564'))
         return lignes
 
     try:
@@ -7571,7 +7563,7 @@ def lignes_email_depuis_alertes(alertes):
 
     for alerte in alertes:
         niveau = alerte.get("niveau", "info")
-        titre = alerte.get("titre", "Alerte Gruterra")
+        titre = alerte.get("titre", t('interface_text_7546'))
         detail = alerte.get("detail", "")
         try:
             statut_email = botaneo_email.resume_memoire_alerte(
@@ -7580,7 +7572,7 @@ def lignes_email_depuis_alertes(alertes):
                 settings=settings_email,
             )
         except Exception:
-            statut_email = "Alerte e-mail : statut mémoire indisponible, aucun envoi automatique."
+            statut_email = t('interface_text_7583')
         lignes.append(f"[{niveau.upper()}] {titre}")
         if detail:
             lignes.append(str(detail))
@@ -7591,14 +7583,14 @@ def lignes_email_depuis_alertes(alertes):
 
 def ouvrir_apercu_email_alertes(alertes):
     fenetre = tk.Toplevel(root)
-    fenetre.title("Aperçu e-mail alertes")
+    fenetre.title(t('interface_text_7594'))
     fenetre.configure(bg=CARD)
     fenetre.geometry("760x560+90+70")
     fenetre.transient(root)
 
     tk.Label(
         fenetre,
-        text="📧 Aperçu e-mail des alertes",
+        text=t('interface_text_7601'),
         font=("Segoe UI", 16, "bold"),
         fg=TEXT,
         bg=CARD
@@ -7606,7 +7598,7 @@ def ouvrir_apercu_email_alertes(alertes):
 
     tk.Label(
         fenetre,
-        text="Préparation uniquement : aucun e-mail n'est envoyé depuis cette fenêtre.",
+        text=t('interface_text_7609'),
         font=("Segoe UI", 9),
         fg=SECONDARY,
         bg=CARD
@@ -7627,20 +7619,20 @@ def ouvrir_apercu_email_alertes(alertes):
 
     try:
         apercu = botaneo_email.apercu_message_alerte(
-            "Alertes Gruterra",
+            t('interface_text_7602'),
             lignes_email_depuis_alertes(alertes)
         )
     except Exception as erreur:
         lignes = [
-            "Configuration e-mail locale absente ou incomplète.",
+            t('interface_text_7635'),
             "",
-            "C'est normal tant que le compte dédié Gruterra n'est pas créé.",
-            "Le futur fichier privé devra être placé ici :",
+            t('interface_text_7637'),
+            t('interface_text_7638'),
             str(CONFIG_DIR / "email.local.json"),
             "",
-            f"Détail technique : {erreur}",
+            t('interface_text_7641').format(v0=erreur),
             "",
-            "Aperçu du contenu qui serait préparé :",
+            t('interface_text_7643'),
             "",
             *lignes_email_depuis_alertes(alertes),
         ]
@@ -7655,11 +7647,11 @@ def ouvrir_apercu_email_alertes(alertes):
     def copier():
         fenetre.clipboard_clear()
         fenetre.clipboard_append(apercu)
-        status_var.set("Aperçu e-mail copié dans le presse-papiers")
+        status_var.set(t('interface_text_7658'))
 
     tk.Button(
         boutons,
-        text="Copier l'aperçu",
+        text=t('interface_text_7662'),
         command=copier,
         bg=LIGHT_GREEN,
         fg=GREEN,
@@ -7698,22 +7690,22 @@ def afficher_centre_alertes(parent, plantes):
     nb_surveillance = sum(1 for a in alertes if a["niveau"] == "attention")
 
     if nb_urgentes:
-        resume = f"{nb_urgentes} urgente(s) · {nb_surveillance} à surveiller"
+        resume = t('interface_text_7701').format(v0=nb_urgentes, v1=nb_surveillance)
         couleur = RED
     elif nb_surveillance:
-        resume = f"{nb_surveillance} point(s) à surveiller"
+        resume = t('interface_text_7704').format(v0=nb_surveillance)
         couleur = ORANGE
     elif alertes:
-        resume = f"{len(alertes)} information(s)"
+        resume = t('interface_text_7679').format(v0=len(alertes))
         couleur = BLUE
     else:
         resume = "Aucune alerte importante"
         couleur = GREEN
 
-    tk.Label(entete, text="🔔 Centre d’alertes", font=("Segoe UI", 13, "bold"), fg=TEXT, bg=CARD, anchor="w").pack(side="left")
+    tk.Label(entete, text=t('interface_text_7685'), font=("Segoe UI", 13, "bold"), fg=TEXT, bg=CARD, anchor="w").pack(side="left")
     tk.Button(
         entete,
-        text="📧 Aperçu e-mail",
+        text=t('interface_text_7716'),
         font=("Segoe UI", 8, "bold"),
         bg=BG,
         fg=BLUE,
@@ -7726,14 +7718,14 @@ def afficher_centre_alertes(parent, plantes):
     tk.Label(entete, text=resume, font=("Segoe UI", 9, "bold"), fg=couleur, bg=CARD, anchor="e").pack(side="right")
 
     if not alertes:
-        tk.Label(bloc, text="Tout semble calme avec les données actuelles.", font=("Segoe UI", 9), fg=SECONDARY, bg=CARD, anchor="w").pack(fill="x", padx=12, pady=(0, 10))
+        tk.Label(bloc, text=t('interface_text_7729'), font=("Segoe UI", 9), fg=SECONDARY, bg=CARD, anchor="w").pack(fill="x", padx=12, pady=(0, 10))
         return
 
     for alerte in alertes[:6]:
         afficher_tuile_alerte(bloc, alerte)
 
     if len(alertes) > 6:
-        tk.Label(bloc, text=f"+ {len(alertes) - 6} autre(s) information(s) dans les fiches plantes.", font=("Segoe UI", 8), fg=SECONDARY, bg=CARD, anchor="w").pack(fill="x", padx=12, pady=(0, 10))
+        tk.Label(bloc, text=t('interface_text_7736').format(v0=len(alertes) - 6), font=("Segoe UI", 8), fg=SECONDARY, bg=CARD, anchor="w").pack(fill="x", padx=12, pady=(0, 10))
 
 
 # ============================================================
@@ -7787,23 +7779,23 @@ def actualiser_interface():
     if meteo_en_haut:
         afficher_titre_section(
             content_frame,
-            "🌦️ Météo locale",
-            "Netatmo et prévisions proches"
+            t('interface_text_7790'),
+            t('interface_text_7791')
         )
         netatmo_frame.pack(fill="x", padx=20, pady=(4, 15))
         afficher_netatmo()
 
     afficher_titre_section(
         content_frame,
-        "🔔 À surveiller",
-        "alertes, rappels et points utiles"
+        t('interface_text_7798'),
+        t('interface_text_7771')
     )
     afficher_centre_alertes(content_frame, plantes)
 
     afficher_titre_section(
         content_frame,
-        "🖥️ Suivi système",
-        "état local et contrôles automatiques"
+        t('interface_text_7805'),
+        t('interface_text_7806')
     )
     suivi_raspberry.card(content_frame, globals())
 
@@ -7828,8 +7820,8 @@ def actualiser_interface():
         plantes_filtrees = [plante for plante in plantes if plante_passe_filtres(plante)]
         afficher_titre_section(
             content_frame,
-            "🌱 Plantes",
-            f"{len(plantes_filtrees)} / {len(plantes)} affichée(s)"
+            t('plants'),
+            t('interface_text_7832').format(v0=len(plantes_filtrees), v1=len(plantes))
         )
         afficher_filtres_plantes(content_frame, plantes, plantes_filtrees)
 
@@ -7857,8 +7849,8 @@ def actualiser_interface():
     else:
         afficher_titre_section(
             content_frame,
-            "🌱 Plantes",
-            f"{len(plantes)} plante(s) masquée(s) sur l'accueil"
+            t('plants'),
+            t('interface_text_7861').format(v0=len(plantes))
         )
         bloc_plantes_masquees = tk.Frame(content_frame, bg=CARD, highlightbackground=BORDER, highlightthickness=1)
         bloc_plantes_masquees.pack(fill="x", padx=20, pady=(0, 12))
@@ -7885,8 +7877,8 @@ def actualiser_interface():
     if not meteo_en_haut:
         afficher_titre_section(
             content_frame,
-            "🌦️ Météo locale",
-            "Netatmo et prévisions proches"
+            t('interface_text_7790'),
+            t('interface_text_7791')
         )
         netatmo_frame.pack(fill="x", padx=20, pady=(4, 15))
         afficher_netatmo()
@@ -7947,8 +7939,8 @@ def ouvrir_vue_plantes():
         plantes_filtrees = [plante for plante in plantes if plante_passe_filtres(plante)]
         afficher_titre_section(
             interieur,
-            "🌱 Toutes les plantes",
-            f"{len(plantes_filtrees)} / {len(plantes)} affichée(s)"
+            t('interface_text_7950'),
+            t('interface_text_7832').format(v0=len(plantes_filtrees), v1=len(plantes))
         )
         afficher_filtres_plantes(interieur, plantes, plantes_filtrees, remplir)
         if not plantes_filtrees:

@@ -1,4 +1,6 @@
 """Pi first: durable receipts, replay-safe import, acknowledgement after commit."""
+
+from i18n import traduire_courant as _tr
 import hashlib
 import json
 import math
@@ -49,13 +51,13 @@ def transport(config, operation, request=None):
                             capture_output=True, text=True, timeout=60,
                             creationflags=getattr(subprocess, 'CREATE_NO_WINDOW', 0))
     if result.returncode:
-        raise ConnectionError('Raspberry inaccessible ou transfert refusé. Données conservées, nouvel essai possible.')
+        raise ConnectionError(_tr('raspberry_sync_text_52'))
     return json.loads(result.stdout)
 
 
 def import_batch(db_path, batch, config):
     if batch.get('version') != 1 or batch.get('device_id') != config['device_id'] or len(batch['rows']) > 500:
-        raise ValueError('Identité ou format du collecteur incorrect.')
+        raise ValueError(_tr('raspberry_sync_text_58'))
     counts = {'added': 0, 'duplicates': 0, 'undated': 0, 'history_added': 0, 'history_duplicates': 0, 'history_undated': 0, 'current_added': 0, 'current_duplicates': 0, 'current_undated': 0}
     ack = []
     db = sqlite3.connect(Path(db_path).resolve().as_uri()+'?mode=rw', uri=True, timeout=30)
@@ -75,19 +77,19 @@ def import_batch(db_path, batch, config):
         for row in batch['rows']:
             checksum = digest(row)
             if row['device_id'] != config['device_id'] or row['schema_version'] != 1 or row['kind'] not in ('history', 'current'):
-                raise ValueError('Mesure incompatible.')
+                raise ValueError(_tr('raspberry_sync_text_78'))
             previous = db.execute('SELECT digest FROM raspberry_receipts WHERE device_id=? AND measurement_id=?',
                                   (row['device_id'], row['measurement_id'])).fetchone()
             if previous:
                 if previous[0] != checksum:
-                    raise ValueError('Identifiant réutilisé avec un contenu différent.')
+                    raise ValueError(_tr('raspberry_sync_text_83'))
                 counts['duplicates'] += 1
                 counts[row['kind'] + '_duplicates'] += 1
             else:
                 sensors = db.execute('SELECT id,plante_id,actif FROM capteurs WHERE UPPER(adresse_ble)=?',
                                      (row['sensor_id'].upper(),)).fetchall()
                 if row['sensor_id'].upper() not in [s.upper() for s in config['sensors']] or len(sensors) != 1 or sensors[0][1] is None or not sensors[0][2]:
-                    raise ValueError('Affectation du capteur absente, inactive ou ambiguë ; transfert non confirmé.')
+                    raise ValueError(_tr('raspberry_sync_text_90'))
                 values = [row[k] for k in ('temperature_c', 'moisture_percent', 'illuminance_lux', 'conductivity_us_cm')]
                 if not all(isinstance(v, (int, float)) and math.isfinite(v) for v in values) or not -20 <= values[0] <= 60 or not 0 <= values[1] <= 100 or min(values[2:]) < 0:
                     raise ValueError('Valeurs invalides.')
@@ -99,7 +101,7 @@ def import_batch(db_path, batch, config):
                     decoded = [int.from_bytes(frame[4:6], 'little', signed=True)/10, frame[11],
                                int.from_bytes(frame[7:11], 'little'), int.from_bytes(frame[12:14], 'little')]
                     if decoded != values:
-                        raise ValueError('Historique incohérent.')
+                        raise ValueError(_tr('raspberry_sync_text_102'))
                     # Legacy archive deduplicates by raw frame; keep only dated historical rows.
                     # A row without reliable date is acknowledged as undated, but not stored.
                     if row['measured_at'] and row['time_quality'] == 'estimated_from_sensor_clock':
@@ -154,7 +156,7 @@ def synchronize(config=None, sender=transport, db_path=None, collect_now=False, 
     from suivi_raspberry import load_config
     config = config or load_config(config_path())
     if config.get('away') or not config.get('enabled'):
-        return {'ok': False, 'message': 'Synchronisation Raspberry suspendue dans les réglages.'}
+        return {'ok': False, 'message': _tr('raspberry_sync_text_157')}
     with LOCK:
         totals = {'added': 0, 'duplicates': 0, 'undated': 0, 'history_added': 0, 'history_duplicates': 0, 'history_undated': 0, 'current_added': 0, 'current_duplicates': 0, 'current_undated': 0}
         pending_remaining = None
@@ -171,18 +173,18 @@ def synchronize(config=None, sender=transport, db_path=None, collect_now=False, 
                     collect_status = collect_response.get('status')
                     collect_accepted = collect_response.get('accepted')
                     if collect_accepted:
-                        collect_prefix = 'Mesure immédiate Raspberry demandée.'
+                        collect_prefix = _tr('raspberry_sync_text_174')
                     elif collect_status == 'running':
-                        collect_prefix = 'Mesure Raspberry déjà en cours.'
+                        collect_prefix = _tr('raspberry_sync_text_176')
                     elif collect_status == 'pending':
-                        collect_prefix = 'Mesure Raspberry déjà en attente.'
+                        collect_prefix = _tr('raspberry_sync_text_178')
                     else:
-                        collect_prefix = 'Réponse Raspberry collect_now reçue.'
+                        collect_prefix = _tr('raspberry_sync_text_180')
                     collect_message = collect_prefix + ' ' + collect_response.get('message', '') + ' '
                 except Exception as collect_error:
                     collect_status = 'unavailable'
                     collect_accepted = False
-                    collect_message = f"Mesure immédiate Raspberry indisponible ({collect_error}). Export uniquement des mesures déjà collectées. "
+                    collect_message = _tr('raspberry_sync_text_185').format(v0=collect_error)
             # Bounded work: remaining batches resume at the next retry.
             for _ in range(20):
                 batch = sender(config, 'export')
@@ -193,11 +195,11 @@ def synchronize(config=None, sender=transport, db_path=None, collect_now=False, 
                 if ack['rows']:
                     response = sender(config, 'ack', ack)
                     if response.get('confirmed') != len(ack['rows']):
-                        raise ValueError('Confirmation du Raspberry incomplète.')
+                        raise ValueError(_tr('raspberry_sync_text_241'))
                 if batch['pending'] <= len(batch['rows']):
                     if collect_now and collect_accepted is True and totals.get('current_added', 0) <= 0 and not waited_after_collect:
                         waited_after_collect = True
-                        wait_message = ' Attente courte après demande Raspberry effectuée pour tenter de récupérer la mesure fraîche dans le même passage. '
+                        wait_message = _tr('raspberry_sync_text_200')
                         time.sleep(25)
                         continue
 
@@ -207,19 +209,17 @@ def synchronize(config=None, sender=transport, db_path=None, collect_now=False, 
                             from raspberry_backup import retrieve
                             backup_message = retrieve(config, Path(database.DB_PATH).parent.parent / '_security_backups/raspberry_daily')
                         except Exception:
-                            backup_message = 'Mesures reçues ; sauvegarde Pi non copiée, nouvel essai à la prochaine synchronisation.'
+                            backup_message = _tr('raspberry_sync_text_210')
                     attente_message = ''
                     if pending_remaining:
-                        attente_message = f" Il reste environ {pending_remaining} mesure(s) en attente sur le Raspberry ; elles seront reprises au prochain passage."
+                        attente_message = _tr('raspberry_sync_text_213').format(v0=pending_remaining)
                     history_message = (
-                        f" Historique Pi : {totals['history_added']} ajoutée(s), "
-                        f"{totals['history_duplicates']} déjà reçue(s), "
-                        f"{totals['history_undated']} sans date fiable ignorée(s)."
+                        _tr('raspberry_sync_text_215').format(v0=totals['history_added'], v1=totals['history_duplicates'], v2=totals['history_undated'])
                     )
-                    return {'backup_message': backup_message, 'ok': True, 'message': collect_message + wait_message + backup_message + ' ' + f"Raspberry : {totals['added']} mesure(s) rapatriée(s) vers le PC, {totals['duplicates']} déjà reçue(s), {totals['undated']} sans date fiable ignorée(s)." + history_message + attente_message, 'collect_status': collect_status, 'collect_accepted': collect_accepted, 'pending_remaining': pending_remaining or 0, **totals}
-            raise RuntimeError('Transfert partiel conservé ; suite au prochain essai.')
+                    return {'backup_message': backup_message, 'ok': True, 'message': collect_message + wait_message + backup_message + ' ' + _tr('raspberry_sync_text_219').format(v0=totals['added'], v1=totals['duplicates'], v2=totals['undated']) + history_message + attente_message, 'collect_status': collect_status, 'collect_accepted': collect_accepted, 'pending_remaining': pending_remaining or 0, **totals}
+            raise RuntimeError(_tr('raspberry_sync_text_220'))
         except Exception as error:
-            message = str(error) if isinstance(error, (ValueError, ConnectionError, RuntimeError)) else 'Transfert interrompu ; reprise sans doublons au prochain essai.'
+            message = str(error) if isinstance(error, (ValueError, ConnectionError, RuntimeError)) else _tr('raspberry_sync_text_222')
             return {'ok': False, 'message': message, 'collect_status': collect_status, 'collect_accepted': collect_accepted, 'pending_remaining': pending_remaining, **totals}
 
 
@@ -229,7 +229,7 @@ def replay_recent_history(config=None, sender=transport, db_path=None, limit=500
     from suivi_raspberry import load_config
     config = config or load_config(config_path())
     if config.get('away') or not config.get('enabled'):
-        return {'ok': False, 'message': 'Synchronisation Raspberry suspendue dans les réglages.'}
+        return {'ok': False, 'message': _tr('raspberry_sync_text_157')}
     with LOCK:
         try:
             request = {'limit': limit, 'sensors': config.get('sensors', [])}
@@ -238,14 +238,12 @@ def replay_recent_history(config=None, sender=transport, db_path=None, limit=500
             if ack['rows']:
                 response = sender(config, 'ack', ack)
                 if response.get('confirmed') != len(ack['rows']):
-                    raise ValueError('Confirmation du Raspberry incomplète.')
+                    raise ValueError(_tr('raspberry_sync_text_241'))
             message = (
-                f"Relecture historique Raspberry : {counts['history_added']} ajoutée(s), "
-                f"{counts['history_duplicates']} déjà présente(s), "
-                f"{counts['history_undated']} sans date fiable ignorée(s)."
+                _tr('raspberry_sync_text_243').format(v0=counts['history_added'], v1=counts['history_duplicates'], v2=counts['history_undated'])
             )
             if not ack['rows']:
-                message += ' Aucune entrée historique disponible sur le Raspberry.'
+                message += _tr('raspberry_sync_text_248')
             return {'ok': True, 'message': message, 'mode': 'history_recent', **counts}
         except Exception as error:
             message = str(error) if isinstance(error, (ValueError, ConnectionError, RuntimeError)) else 'Relecture historique Raspberry interrompue.'
@@ -255,7 +253,7 @@ def health_status(config=None, sender=transport):
     from suivi_raspberry import load_config
     config = config or load_config(config_path())
     if config.get('away') or not config.get('enabled'):
-        return {'ok': False, 'message': 'Raspberry suspendu dans les réglages.'}
+        return {'ok': False, 'message': _tr('raspberry_sync_text_258')}
     try:
         return sender(config, 'health_status')
     except Exception as error:

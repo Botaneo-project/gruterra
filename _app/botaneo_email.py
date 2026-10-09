@@ -7,6 +7,8 @@ l'utilisateur et une configuration locale ignorée par Git.
 """
 from __future__ import annotations
 
+from i18n import traduire_courant as _tr
+
 import os
 from dataclasses import dataclass
 from datetime import datetime, timedelta
@@ -65,20 +67,20 @@ def charger_parametres_email(path=EMAIL_CONFIG) -> EmailSettings:
 
 def valider_parametres_email(settings: EmailSettings) -> None:
     if settings.mode not in {"preview", "smtp"}:
-        raise RuntimeError("Configuration e-mail invalide : mode attendu preview ou smtp.")
+        raise RuntimeError(_tr('email_mode_invalid'))
     if settings.port <= 0 or settings.port > 65535:
-        raise RuntimeError("Configuration e-mail invalide : port SMTP incorrect.")
+        raise RuntimeError(_tr('email_port_invalid'))
     if settings.mode == "smtp":
         if not settings.host or not settings.sender or not settings.recipients:
-            raise RuntimeError("Configuration e-mail SMTP incomplète : serveur, expéditeur ou destinataire manquant.")
+            raise RuntimeError(_tr('botaneo_email_text_73'))
         if not settings.user:
-            raise RuntimeError("Configuration e-mail SMTP incomplète : utilisateur manquant.")
+            raise RuntimeError(_tr('botaneo_email_text_75'))
         if not settings.secret_env:
-            raise RuntimeError("Configuration e-mail SMTP incomplète : variable locale du secret absente.")
+            raise RuntimeError(_tr('botaneo_email_text_77'))
         if not os.environ.get(settings.secret_env):
-            raise RuntimeError(f"Secret SMTP absent : définir la variable d'environnement {settings.secret_env}.")
+            raise RuntimeError(_tr('botaneo_email_text_79').format(v0=settings.secret_env))
     if settings.min_delay_hours_same_alert < 1:
-        raise RuntimeError("Configuration e-mail invalide : délai minimal trop court.")
+        raise RuntimeError(_tr('botaneo_email_text_81'))
 
 
 def construire_message_alerte(settings: EmailSettings, titre: str, lignes: Iterable[str]) -> EmailMessage:
@@ -87,12 +89,12 @@ def construire_message_alerte(settings: EmailSettings, titre: str, lignes: Itera
     sujet = f"{settings.subject_prefix} {titre}".strip()
     corps = "\n".join(str(ligne) for ligne in lignes).strip()
     if not corps:
-        corps = "Aucun détail fourni."
+        corps = _tr('botaneo_email_text_90')
 
     message = EmailMessage()
     message["Subject"] = sujet
     message["From"] = settings.sender or settings.user or "botaneo-local"
-    message["To"] = ", ".join(settings.recipients) if settings.recipients else "destinataire non configuré"
+    message["To"] = ", ".join(settings.recipients) if settings.recipients else _tr('botaneo_email_text_95')
     message.set_content(corps)
     return message
 
@@ -159,11 +161,11 @@ def alerte_autorisee(plante_id=None, type_alerte="generale", titre="", reference
     reference = reference or datetime.now()
     derniere = derniere_alerte_envoyee(plante_id, type_alerte, titre, path)
     if not derniere:
-        return {"autorisee": True, "raison": "aucune alerte précédente mémorisée", "prochaine_possible": reference}
+        return {"autorisee": True, "raison": _tr('botaneo_email_text_162'), "prochaine_possible": reference}
     prochaine = derniere + timedelta(hours=settings.min_delay_hours_same_alert)
     if prochaine <= reference:
-        return {"autorisee": True, "raison": "délai minimal écoulé", "derniere_alerte": derniere, "prochaine_possible": prochaine}
-    return {"autorisee": False, "raison": "délai minimal non écoulé", "derniere_alerte": derniere, "prochaine_possible": prochaine}
+        return {"autorisee": True, "raison": _tr('botaneo_email_text_165'), "derniere_alerte": derniere, "prochaine_possible": prochaine}
+    return {"autorisee": False, "raison": _tr('botaneo_email_text_166'), "derniere_alerte": derniere, "prochaine_possible": prochaine}
 
 
 def memoriser_alerte_envoyee(plante_id=None, type_alerte="generale", titre="", date_envoi=None, path=EMAIL_ALERT_STATE) -> dict:
@@ -185,7 +187,7 @@ def memoriser_alerte_envoyee(plante_id=None, type_alerte="generale", titre="", d
 def resume_memoire_alerte(plante_id=None, type_alerte="generale", titre="", settings: EmailSettings | None = None, reference=None, path=EMAIL_ALERT_STATE) -> str:
     etat = alerte_autorisee(plante_id, type_alerte, titre, reference=reference, settings=settings, path=path)
     if etat["autorisee"]:
-        return "Alerte e-mail : autorisée en test, aucun envoi automatique."
+        return _tr('botaneo_email_text_188')
     prochaine = etat.get("prochaine_possible")
-    prochaine_txt = prochaine.strftime("%d/%m/%Y %H:%M") if prochaine else "date inconnue"
-    return f"Alerte e-mail : temporisée jusqu’au {prochaine_txt}, aucun envoi automatique."
+    prochaine_txt = prochaine.strftime("%d/%m/%Y %H:%M") if prochaine else _tr('botaneo_email_text_192')
+    return _tr('botaneo_email_text_191').format(v0=prochaine_txt)

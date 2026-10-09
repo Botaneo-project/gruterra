@@ -1,4 +1,6 @@
 """Suivi de disponibilité. Un contact SSH n'est jamais une synchronisation."""
+
+from i18n import traduire_courant as _tr
 import json
 import os
 import re
@@ -22,18 +24,18 @@ def validate(config):
         raise ValueError('Heure attendue : HH:MM, entre 00:00 et 23:59.')
     for field in ('enabled', 'away'):
         if type(config.get(field)) is not bool:
-            raise ValueError('Options de suivi invalides.')
+            raise ValueError(_tr('suivi_raspberry_text_25'))
     for field, low, high in (('retry_minutes', 1, 1440), ('grace_minutes', 0, 1440)):
         if type(config.get(field)) is not int or not low <= config[field] <= high:
-            raise ValueError('Délais attendus en minutes, entre 1 et 1440 (tolérance : 0 possible).')
+            raise ValueError(_tr('suivi_raspberry_text_28'))
     if not re.fullmatch(r'[A-Za-z0-9][A-Za-z0-9.-]{0,252}', str(config.get('host', ''))):
         raise ValueError('Adresse Raspberry invalide.')
     if not re.fullmatch(r'[a-z_][a-z0-9_-]{0,31}', str(config.get('user', ''))):
         raise ValueError('Utilisateur SSH invalide.')
     if not re.fullmatch(r'[A-Za-z0-9][A-Za-z0-9-]{0,63}', str(config.get('hostname', ''))):
-        raise ValueError('Nom attendu du Raspberry invalide.')
+        raise ValueError(_tr('suivi_raspberry_text_34'))
     if not isinstance(config.get('key'), str) or not config['key']:
-        raise ValueError('Chemin de clé SSH absent.')
+        raise ValueError(_tr('suivi_raspberry_text_36'))
     return config
 
 
@@ -132,7 +134,7 @@ def is_due(config, state, instant=None, local_now=None):
 def probe(config, runner=subprocess.run):
     key = Path(config['key']).expanduser()
     if not key.is_file():
-        return False, 'Clé SSH introuvable sur ce PC.'
+        return False, _tr('suivi_raspberry_text_135')
     ssh = shutil.which('ssh')
     if not ssh:
         return False, 'Client SSH Windows introuvable.'
@@ -144,35 +146,35 @@ def probe(config, runner=subprocess.run):
         result = runner(args, capture_output=True, text=True, timeout=15,
                         creationflags=getattr(subprocess, 'CREATE_NO_WINDOW', 0))
     except subprocess.TimeoutExpired:
-        return False, 'Raspberry injoignable : délai dépassé.'
+        return False, _tr('suivi_raspberry_text_147')
     except OSError:
-        return False, 'Impossible de lancer le contrôle SSH.'
+        return False, _tr('suivi_raspberry_text_149')
     if result.returncode == 0:
         if result.stdout.strip() != config['hostname']:
-            return False, 'Le nom de la machine ne correspond pas au Raspberry attendu.'
+            return False, _tr('suivi_raspberry_text_152')
         return True, None
     stderr = result.stderr.lower()
     if 'host key verification failed' in stderr or 'remote host identification has changed' in stderr:
-        return False, 'Identité SSH à vérifier manuellement.'
+        return False, _tr('suivi_raspberry_text_156')
     if 'permission denied' in stderr:
-        return False, 'Accès SSH refusé : vérifier la clé et ses droits.'
-    return False, 'Raspberry injoignable : réseau, alimentation ou service à vérifier.'
+        return False, _tr('suivi_raspberry_text_158')
+    return False, _tr('suivi_raspberry_text_159')
 
 
 def status(config, state, local_now=None):
     local_now = local_now or datetime.now()
     if not config['enabled']:
-        return 'Suivi désactivé'
+        return _tr('suivi_raspberry_text_165')
     if config['away']:
-        return 'Déplacement : contrôles automatiques suspendus'
+        return _tr('suivi_raspberry_text_167')
     if state.get('last_error'):
         if local_now >= deadline(config, local_now) + timedelta(minutes=config['grace_minutes']):
-            return 'Raspberry injoignable — contrôle en retard'
-        return 'Échec de contact — nouvel essai prévu'
+            return _tr('suivi_raspberry_text_170')
+        return _tr('suivi_raspberry_text_171')
     if state.get('completed_due', '') >= deadline(config, local_now).isoformat():
-        return 'Contact rétabli' if state.get('recovered_at') == state.get('last_contact') else 'Dernier contrôle réussi'
-    return 'Contrôle quotidien en attente'
+        return _tr('suivi_raspberry_text_173') if state.get('recovered_at') == state.get('last_contact') else _tr('suivi_raspberry_text_173_more')
+    return _tr('suivi_raspberry_text_174')
 
 
 def local_date(value):
-    return datetime.fromisoformat(value).astimezone().strftime('%d/%m/%Y %H:%M') if value else 'Jamais'
+    return datetime.fromisoformat(value).astimezone().strftime('%d/%m/%Y %H:%M') if value else _tr('interface_text_244')

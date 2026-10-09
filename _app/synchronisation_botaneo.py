@@ -1,3 +1,5 @@
+
+from i18n import traduire_courant as _tr
 import asyncio
 
 import database
@@ -9,13 +11,13 @@ from capteurs.netatmo import recuperer_netatmo
 async def synchroniser_miflora():
     print()
     print("=" * 60)
-    print("🌿 GRUTERRA - SYNCHRONISATION MI FLORA")
+    print(_tr('synchronisation_botaneo_text_14'))
     print("=" * 60)
 
     capteurs = database.get_capteurs()
 
     if not capteurs:
-        print("❌ Aucun capteur Mi Flora dans la base.")
+        print(_tr('synchronisation_botaneo_text_18'))
         return False
 
     succes = False
@@ -33,7 +35,7 @@ async def synchroniser_miflora():
         ) = capteur
 
         print()
-        print(f"🌱 Plante    : {nom_plante}")
+        print(_tr('synchronisation_botaneo_text_36').format(v0=nom_plante))
         print(f"📍 Emplacement : {emplacement} - {zone}")
         print(f"📡 Capteur   : {nom_capteur}")
         print(f"🔗 Adresse   : {adresse}")
@@ -60,18 +62,18 @@ async def synchroniser_miflora():
             )
 
             print()
-            print("✅ MESURE MI FLORA")
-            print(f"   Température  : {temperature:.1f} °C")
-            print(f"   Humidité     : {humidite} %")
-            print(f"   Luminosité   : {luminosite} lux")
-            print(f"   Conductivité : {conductivite} µS/cm")
-            print("💾 Enregistrée dans plantes.db")
+            print(_tr('synchronisation_botaneo_text_65_more'))
+            print(_tr('synchronisation_botaneo_text_64').format(v0=temperature))
+            print(_tr('synchronisation_botaneo_text_65').format(v0=humidite))
+            print(_tr('synchronisation_botaneo_text_66').format(v0=luminosite))
+            print(_tr('synchronisation_botaneo_text_67').format(v0=conductivite))
+            print(_tr('synchronisation_botaneo_text_68'))
 
             succes = True
 
         except Exception as erreur:
             print()
-            print(f"❌ Erreur Mi Flora : {erreur}")
+            print(_tr('synchronisation_botaneo_text_74').format(v0=erreur))
 
     return succes
 
@@ -79,14 +81,14 @@ async def synchroniser_miflora():
 def synchroniser_netatmo():
     print()
     print("=" * 60)
-    print("🏠 GRUTERRA - SYNCHRONISATION NETATMO")
+    print(_tr('synchronisation_botaneo_text_84'))
     print("=" * 60)
 
     try:
         stations = recuperer_netatmo()
 
         print()
-        print(f"📡 {len(stations)} station(s) trouvée(s)")
+        print(_tr('synchronisation_botaneo_text_89').format(v0=len(stations)))
 
         for station in stations:
             print()
@@ -96,14 +98,12 @@ def synchroniser_netatmo():
 
             if mesures["temperature"] is not None:
                 print(
-                    f"   🌡️ Température : "
-                    f"{mesures['temperature']} °C"
+                    _tr('synchronisation_botaneo_text_99').format(v0=mesures['temperature'])
                 )
 
             if mesures["humidite"] is not None:
                 print(
-                    f"   💧 Humidité    : "
-                    f"{mesures['humidite']} %"
+                    _tr('synchronisation_botaneo_text_105').format(v0=mesures['humidite'])
                 )
 
             for module in station["modules"]:
@@ -114,23 +114,21 @@ def synchroniser_netatmo():
 
                 if mesures["temperature"] is not None:
                     print(
-                        f"      🌡️ Température : "
-                        f"{mesures['temperature']} °C"
+                        _tr('synchronisation_botaneo_text_117').format(v0=mesures['temperature'])
                     )
 
                 if mesures["humidite"] is not None:
                     print(
-                        f"      💧 Humidité    : "
-                        f"{mesures['humidite']} %"
+                        _tr('synchronisation_botaneo_text_123').format(v0=mesures['humidite'])
                     )
 
         print()
-        print("✅ Netatmo synchronisé")
+        print(_tr('synchronisation_botaneo_text_128'))
         return True
 
     except Exception as erreur:
         print()
-        print(f"❌ Erreur Netatmo : {erreur}")
+        print(_tr('app_text_146').format(v0=erreur))
         return False
 
 
@@ -139,7 +137,7 @@ async def main():
     print()
     print("=" * 60)
     print("🌿 GRUTERRA")
-    print("SYNCHRONISATION GLOBALE")
+    print(_tr('synchronisation_botaneo_text_140'))
     print("=" * 60)
 
     resultat_miflora = await synchroniser_miflora()
@@ -151,25 +149,25 @@ async def main():
 
     print()
     print("=" * 60)
-    print("📊 RÉSULTAT GLOBAL")
+    print(_tr('synchronisation_botaneo_text_154'))
     print("=" * 60)
 
     print(
         "🌿 Mi Flora : "
-        + ("✅ OK" if resultat_miflora else "❌ ÉCHEC")
+        + ("✅ OK" if resultat_miflora else _tr('synchronisation_botaneo_text_159'))
     )
 
     print(
         "🏠 Netatmo  : "
-        + ("✅ OK" if resultat_netatmo else "❌ ÉCHEC")
+        + ("✅ OK" if resultat_netatmo else _tr('synchronisation_botaneo_text_159'))
     )
 
     print("=" * 60)
 
     if resultat_miflora and resultat_netatmo:
-        print("🎉 SYNCHRONISATION GRUTERRA RÉUSSIE")
+        print(_tr('synchronisation_botaneo_text_170'))
     else:
-        print("⚠️ SYNCHRONISATION PARTIELLE")
+        print(_tr('synchronisation_botaneo_text_170_more'))
 
 
 if __name__ == "__main__":
