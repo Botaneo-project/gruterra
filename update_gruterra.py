@@ -115,6 +115,8 @@ def construire_message_validation(diagnostic: dict) -> str:
 def valider_manifest_applicable(diagnostic: dict) -> tuple[bool, list[str]]:
     erreurs = []
     version = diagnostic.get("version", {})
+    if version.get("type_source") == "repli_local":
+        erreurs.append(_tr("update_source_fallback"))
     if diagnostic.get("statut_global") == "bloque":
         erreurs.append(_tr('updater_cli_8'))
     statut_version = str(version.get("statut") or "").strip()

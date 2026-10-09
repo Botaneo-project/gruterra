@@ -8,8 +8,10 @@ Ce fichier sert à garder une trace claire des idées et des prochaines étapes.
 - [x] Release v0.1.6-dev publiée avec archive officielle et SHA-256. Passage réel dans un dossier isolé avec l’updater 0.1.5 validé : données démo et préférences conservées.
 - [x] Test fonctionnel utilisateur 0.1.5-dev → 0.1.6-dev réussi : refus de réinstallation identique, détection de la nouvelle version, sauvegarde créée, 115 fichiers installés, relancement OK, un seul bouton et message « Gruterra est à jour ».
 - [ ] Conservation des données/préférences sur le PC de secours : confirmation utilisateur distincte à conserver ; déjà vérifiée dans le test isolé.
-- [ ] Fiabiliser la fermeture et le redémarrage automatiques : une fermeture manuelle a encore été nécessaire pendant le test utilisateur.
-- [ ] Vérifier et rendre explicite la source du manifeste : ancien diagnostic local 0.1.4-dev, interface actuelle 0.1.6-dev. Confirmer GitHub comme source du contrôle et signaler clairement un éventuel repli local.
+- [x] Redémarrage automatique après succès : auxiliaire attendant la fin réelle de l’ancien processus avant de lancer une seule instance dans le même mode. Test Windows avec verrou réel réussi.
+- [ ] Valider ce comportement côté utilisateur après installation de la prochaine release.
+- [x] Source explicite : GitHub, local seul ou repli local en cas d’échec réseau. Pas de confirmation « à jour » en ligne en cas de repli, ni d’installation autorisée depuis un repli local. Tests FR/EN et priorité à GitHub sur un ancien manifeste 0.1.4-dev.
+- [ ] Vérifier ces mentions sur le PC de secours avec et sans réseau après la prochaine release.
 - Ne pas remanier davantage le parcours d’interface validé. Les deux points techniques ci-dessus restent à vérifier avant une diffusion plus large.
 
 ## Mise à jour — parcours progressif du 2026-10-09

@@ -409,3 +409,7 @@ Le nom officiel du projet est désormais **Gruterra**. Pour éviter de casser le
 ### Parcours de mise à jour dans les paramètres
 
 Cliquez sur **Vérifier les mises à jour**. Si Gruterra est à jour, aucune installation n’est proposée. Sinon, **Préparer la mise à jour** vérifie le paquet officiel, son SHA-256 et les protections locales, puis crée une sauvegarde du programme sans remplacer de fichiers. **Appliquer la mise à jour** devient disponible après une préparation réussie. Les contrôles sont répétés avant remplacement ; les données privées restent préservées et le redémarrage est proposé après succès. Une nouvelle vérification réinitialise la préparation.
+
+### Source du contrôle et redémarrage
+
+Le diagnostic indique si la version a été vérifiée sur GitHub ou si seules les informations locales sont disponibles. En cas de repli local après un échec réseau, aucune installation n’est proposée ; relancez la vérification avec une connexion disponible. Après une mise à jour réussie, Gruterra ferme sa fenêtre et un auxiliaire attend la fin effective de l’ancienne instance avant de relancer le même mode, démo ou réel. Si l’ancienne instance ne se termine pas dans le délai de sécurité, aucune seconde instance n’est lancée ; le diagnostic est conservé dans `update_restart.log` du dossier de configuration local.

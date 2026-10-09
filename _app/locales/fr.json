@@ -1805,5 +1805,10 @@
   "update_prepared_report": "Mise à jour préparée : {count} fichier(s) vérifié(s). Sauvegarde créée : {backup}. Aucun fichier remplacé.",
   "update_prepare_help": "vérifie l’archive et crée la sauvegarde sans remplacer les fichiers",
   "update_prepare_apply_exclusive": "Préparation et application doivent être lancées séparément.",
-  "update_open_settings_prompt": "Gruterra {version} est disponible. Ouvrir les paramètres pour vérifier et préparer la mise à jour ?"
+  "update_open_settings_prompt": "Gruterra {version} est disponible. Ouvrir les paramètres pour vérifier et préparer la mise à jour ?",
+  "update_source_github": "Vérifié sur GitHub.",
+  "update_source_local": "Informations locales uniquement — aucune vérification en ligne.",
+  "update_source_fallback": "Vérification en ligne impossible — informations locales. La disponibilité d’une mise à jour n’est pas confirmée en ligne.",
+  "update_source_unavailable": "Source de vérification indisponible.",
+  "update_manifest_source": "Source du manifeste : {source}"
 }

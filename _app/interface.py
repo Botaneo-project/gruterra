@@ -5276,35 +5276,36 @@ def script_lancement_courant(racine):
     return racine / "Lancer_Gruterra.py"
 
 
+_redemarrage_update_lance = False
+
+
 def redemarrer_gruterra(parent=None):
+    global _redemarrage_update_lance
+    if _redemarrage_update_lance:
+        return True
     racine = Path(__file__).resolve().parent.parent
+    helper = racine / "_app" / "restart_gruterra.py"
     script = script_lancement_courant(racine)
-    if not script.exists():
-        messagebox.showwarning(
-            t("update_restart_title"),
-            t("update_restart_missing_launcher"),
-            parent=parent,
-        )
+    if not helper.is_file() or not script.is_file():
+        messagebox.showwarning(t("update_restart_title"), t("update_restart_missing_launcher"), parent=parent)
         return False
     environnement = os.environ.copy()
     environnement["PYTHONIOENCODING"] = "utf-8"
     environnement["PYTHONUTF8"] = "1"
     try:
-        subprocess.Popen(
-            [sys.executable, str(script)],
-            cwd=str(racine),
-            env=environnement,
-            creationflags=getattr(subprocess, "CREATE_NEW_PROCESS_GROUP", 0),
-        )
-    except Exception as erreur:
-        messagebox.showwarning(
-            t("update_restart_title"),
-            f"{t('update_restart_failed')}\n\n{erreur}",
-            parent=parent,
-        )
+        subprocess.Popen([sys.executable, str(helper), "--parent-pid", str(os.getpid()),
+                          "--mode", "demo" if os.environ.get("BOTANEO_DEMO") == "1" else "real"],
+                         cwd=str(racine), env=environnement,
+                         creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0))
+    except OSError as erreur:
+        messagebox.showwarning(t("update_restart_title"), f"{t('update_restart_failed')}\n\n{erreur}", parent=parent)
         return False
+    _redemarrage_update_lance = True
     status_var.set(t("update_restarting"))
-    root.after(500, root.destroy)
+    def fermer():
+        root.quit()
+        root.destroy()
+    root.after_idle(fermer)
     return True
 
 
@@ -5312,13 +5313,7 @@ def proposer_redemarrage_apres_update(parent, contenu):
     if not update_appliquee_depuis_resultat(contenu):
         status_var.set(t("update_apply_done"))
         return
-    status_var.set(t("update_restart_advised"))
-    if messagebox.askyesno(
-        t("update_restart_title"),
-        t("update_restart_question"),
-        parent=parent,
-    ):
-        redemarrer_gruterra(parent=parent)
+    redemarrer_gruterra(parent=parent)
 
 
 def lancer_application_update(parent, afficher_resultat=None):
@@ -5348,12 +5343,8 @@ def lancer_application_update(parent, afficher_resultat=None):
         def terminer():
             if afficher_resultat:
                 afficher_resultat(contenu)
-            else:
-                messagebox.showinfo(
-                    t("update_apply_result_title"),
-                    contenu + "\n\n" + t("update_restart_hint"),
-                    parent=parent,
-                )
+            elif not update_appliquee_depuis_resultat(contenu):
+                messagebox.showinfo(t("update_apply_result_title"), contenu, parent=parent)
             proposer_redemarrage_apres_update(parent, contenu)
 
         root.after(0, terminer)
@@ -5369,14 +5360,14 @@ def update_installable_depuis_diagnostic(diagnostic):
     sha256 = str(version.get("sha256") or "").strip()
     auto_update = bool(version.get("manifest_auto_update"))
     version_disponible = statut_version in {"mise_a_jour_disponible", "version_stable_disponible"}
-    protections_ok = diagnostic.get("statut_global") != "bloque"
+    protections_ok = diagnostic.get("statut_global") != "bloque" and version.get("type_source") != "repli_local"
     return version_disponible and protections_ok and auto_update and archive_url and len(sha256) == 64 and all(c in "0123456789abcdefABCDEF" for c in sha256)
 
 
 def message_parcours_update(diagnostic):
     version = diagnostic.get("version", {})
-    if version.get("statut") == "a_jour":
-        return t("update_current_version").format(version=version.get("version_locale") or APP_VERSION)
+    if version.get("statut") == "a_jour" and version.get("type_source") == "github":
+        return t("update_current_version").format(version=version.get("version_locale") or APP_VERSION) + "\n" + botaneo_update.formater_source_verification(version)
     return botaneo_update.formater_diagnostic_mise_a_jour(diagnostic)
 
 

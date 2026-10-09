@@ -1805,5 +1805,10 @@
   "update_prepared_report": "Update prepared: {count} file(s) checked. Backup created: {backup}. No files replaced.",
   "update_prepare_help": "verify the archive and create the backup without replacing files",
   "update_prepare_apply_exclusive": "Preparation and application must be run separately.",
-  "update_open_settings_prompt": "Gruterra {version} is available. Open settings to check and prepare the update?"
+  "update_open_settings_prompt": "Gruterra {version} is available. Open settings to check and prepare the update?",
+  "update_source_github": "Verified on GitHub.",
+  "update_source_local": "Local information only — no online verification.",
+  "update_source_fallback": "Online check unavailable — local information. Update availability has not been confirmed online.",
+  "update_source_unavailable": "Verification source unavailable.",
+  "update_manifest_source": "Manifest source: {source}"
 }

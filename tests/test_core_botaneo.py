@@ -1294,7 +1294,8 @@ class TestRedemarrageUpdate(unittest.TestCase):
         self.assertIn("def redemarrer_gruterra", contenu)
         self.assertIn("Lancer_Demo.py", contenu)
         self.assertIn("Lancer_Gruterra.py", contenu)
-        self.assertIn("update_restart_question", contenu)
+        self.assertIn("restart_gruterra.py", contenu)
+        self.assertIn("--parent-pid", contenu)
 
 
 class TestUpdateDansParametres(unittest.TestCase):

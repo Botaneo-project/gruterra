@@ -331,6 +331,18 @@ def exporter_diagnostic_mise_a_jour_json(diagnostic) -> str:
     return json.dumps(rapport, ensure_ascii=False, indent=2, sort_keys=True)
 
 
+def formater_source_verification(version):
+    type_source = version.get("type_source", "indisponible")
+    cle = {"github": "update_source_github", "local": "update_source_local",
+           "repli_local": "update_source_fallback"}.get(type_source, "update_source_unavailable")
+    lignes = [_tr(cle)]
+    if version.get("source"):
+        lignes.append(_tr("update_manifest_source").format(source=version["source"]))
+    if version.get("avertissement_distant"):
+        lignes.append(str(version["avertissement_distant"]))
+    return "\n".join(lignes)
+
+
 def formater_diagnostic_mise_a_jour(diagnostic) -> str:
     statut_global = diagnostic.get('statut_global', 'inconnu')
     lignes = [
@@ -339,6 +351,7 @@ def formater_diagnostic_mise_a_jour(diagnostic) -> str:
         _tr('botaneo_update_text_337').format(v0=statut_global),
         _tr("mode_value").format(mode=_texte(diagnostic.get("mode", "préparation uniquement"))),
     ]
+    lignes.append(formater_source_verification(diagnostic.get("version", {})))
     contexte = diagnostic.get("contexte_execution", {})
     if contexte.get("mode_demo"):
         lignes.append(_tr('botaneo_update_text_342') + ("plantes_demo.db" if contexte.get("base_demo_detectee") else _texte("absente")))
@@ -524,6 +537,7 @@ def construire_statut_version_depuis_manifest_charge(version_locale, manifest):
     if not manifest.get("disponible"):
         statut = construire_statut_version_base(version_locale)
         statut["source"] = manifest.get("source")
+        statut["type_source"] = "indisponible"
         statut["message"] = manifest.get("message", statut.get("message"))
         return statut
     statut = comparer_versions(version_locale, manifest.get("version"))
@@ -544,7 +558,9 @@ def construire_statut_version(version_locale, version_distante=None, chemin_mani
     if verifier_distant and url_manifest_distant:
         manifest = lire_manifest_version_distant(url_manifest_distant)
         if manifest.get("disponible"):
-            return construire_statut_version_depuis_manifest_charge(version_locale, manifest)
+            statut = construire_statut_version_depuis_manifest_charge(version_locale, manifest)
+            statut["type_source"] = "github"
+            return statut
         if chemin_manifest_local:
             local = lire_manifest_version(chemin_manifest_local)
             statut = construire_statut_version_depuis_manifest_charge(version_locale, local)
@@ -554,14 +570,18 @@ def construire_statut_version(version_locale, version_distante=None, chemin_mani
             else:
                 statut["message"] = manifest.get("message", statut.get("message"))
             statut["source_distante"] = manifest.get("source")
+            statut["type_source"] = "repli_local" if local.get("disponible") else "indisponible"
             return statut
         statut = construire_statut_version_base(version_locale)
         statut["source"] = manifest.get("source")
+        statut["type_source"] = "indisponible"
         statut["message"] = manifest.get("message", statut.get("message"))
         return statut
 
     if chemin_manifest_local:
-        return construire_statut_version_depuis_manifest(version_locale, chemin_manifest_local)
+        statut = construire_statut_version_depuis_manifest(version_locale, chemin_manifest_local)
+        statut["type_source"] = "local"
+        return statut
 
     return construire_statut_version_base(version_locale)
 
