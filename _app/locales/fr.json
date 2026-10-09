@@ -453,5 +453,17 @@
   "watering_title": "Arrosage",
   "watering_type_fertilizer": "fertilisant",
   "watering_type_normal": "normal",
-  "wind": "💨 Vent"
+  "wind": "💨 Vent",
+  "post_watering_status_1": "💧 Suivi post-arrosage",
+  "post_watering_status_2": "Suivi post-arrosage : {v0:.0f} %, tendance {v1:.1f} point/jour · {v2}",
+  "post_watering_status_3": "Suivi post-arrosage : en attente de la prochaine mesure.",
+  "post_watering_status_4": "💧 Suivi post-arrosage en attente",
+  "post_watering_status_5": "💧 Suivi post-arrosage lancé",
+  "post_watering_status_6": "Suivi post-arrosage : {v0:.0f} %, recul encore court · {v1}",
+  "post_watering_status_7": "💧 Humidité persistante après arrosage",
+  "post_watering_status_8": "Suivi post-arrosage : humidité encore haute ({v0:.0f} %) après {v1} · {v2}",
+  "post_watering_status_9": "💧 Séchage lent après arrosage",
+  "post_watering_status_10": "Suivi post-arrosage : séchage lent ({v0:.0f} %, {v1:.1f} point/jour) · {v2}",
+  "post_watering_status_11": "💧 Retour au niveau initial détecté",
+  "post_watering_status_12": "Suivi post-arrosage : retour au niveau initial dans la zone du capteur, {v0:.0f} % · {v1}"
 }

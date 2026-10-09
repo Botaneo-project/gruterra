@@ -453,5 +453,17 @@
   "watering_title": "Watering",
   "watering_type_fertilizer": "fertilizer",
   "watering_type_normal": "normal",
-  "wind": "💨 Wind"
+  "wind": "💨 Wind",
+  "post_watering_status_1": "💧 Post-watering monitoring",
+  "post_watering_status_2": "Post-watering monitoring: {v0:.0f} %, trend {v1:.1f} percentage points/day · {v2}",
+  "post_watering_status_3": "Post-watering monitoring: waiting for the next measurement.",
+  "post_watering_status_4": "💧 Waiting for post-watering measurements",
+  "post_watering_status_5": "💧 Post-watering monitoring started",
+  "post_watering_status_6": "Post-watering monitoring: {v0:.0f} %, more time is needed · {v1}",
+  "post_watering_status_7": "💧 Persistent moisture after watering",
+  "post_watering_status_8": "Post-watering monitoring: moisture still high ({v0:.0f} %) after {v1} · {v2}",
+  "post_watering_status_9": "💧 Slow drying after watering",
+  "post_watering_status_10": "Post-watering monitoring: slow drying ({v0:.0f} %, {v1:.1f} percentage points/day) · {v2}",
+  "post_watering_status_11": "💧 Return to initial moisture level detected",
+  "post_watering_status_12": "Post-watering monitoring: return to initial moisture level around the sensor, {v0:.0f} % · {v1}"
 }

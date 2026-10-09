@@ -1483,12 +1483,12 @@ def analyser_apres_arrosage(plante_id):
                 f"{reperes_post_arrosage}"
             )
         else:
-            resume = "Suivi post-arrosage : en attente de la prochaine mesure."
+            resume = t('post_watering_status_3')
             detail = f"Arrosage du {formater_date(dernier[2])} · {arrosage_txt}. Aucune mesure Mi Flora enregistrée depuis. {reperes_post_arrosage}"
 
         return {
             "niveau": "info",
-            "titre": "💧 Suivi post-arrosage en attente",
+            "titre": t('post_watering_status_4'),
             "detail": detail,
             "resume": resume,
             "couleur": BLUE,
@@ -1507,9 +1507,9 @@ def analyser_apres_arrosage(plante_id):
     if len(points) == 1 or heures_depuis < 12:
         return {
             "niveau": "info",
-            "titre": "💧 Suivi post-arrosage lancé",
+            "titre": t('post_watering_status_5'),
             "detail": f"Dernière humidité après arrosage : {derniere_humidite:.0f} %. {resume_contexte}. {reperes_post_arrosage} Il faut encore du recul avant d'interpréter.",
-            "resume": f"Suivi post-arrosage : {derniere_humidite:.0f} %, recul encore court · {reperes_post_arrosage}",
+            "resume": t('post_watering_status_6').format(v0=derniere_humidite, v1=reperes_post_arrosage),
             "couleur": BLUE,
             "fond": LIGHT_BLUE
         }
@@ -1522,9 +1522,9 @@ def analyser_apres_arrosage(plante_id):
     if heures_depuis >= 72 and derniere_humidite >= 40:
         return {
             "niveau": "danger",
-            "titre": "💧 Humidité persistante après arrosage",
+            "titre": t('post_watering_status_7'),
             "detail": f"{derniere_humidite:.0f} % encore mesurés environ {formater_duree_heures(heures_depuis)} après l'arrosage. {resume_contexte}. {reperes_post_arrosage} Vérifier le substrat avant tout nouvel arrosage.",
-            "resume": f"Suivi post-arrosage : humidité encore haute ({derniere_humidite:.0f} %) après {formater_duree_heures(heures_depuis)} · {reperes_post_arrosage}",
+            "resume": t('post_watering_status_8').format(v0=derniere_humidite, v1=formater_duree_heures(heures_depuis), v2=reperes_post_arrosage),
             "couleur": RED,
             "fond": LIGHT_RED
         }
@@ -1532,9 +1532,9 @@ def analyser_apres_arrosage(plante_id):
     if heures_depuis >= 48 and derniere_humidite >= 35 and tendance_jour > -3:
         return {
             "niveau": "attention",
-            "titre": "💧 Séchage lent après arrosage",
+            "titre": t('post_watering_status_9'),
             "detail": f"{derniere_humidite:.0f} % après {formater_duree_heures(heures_depuis)}, tendance {tendance_jour:.1f} point/jour. {resume_contexte}. {reperes_post_arrosage} Surveiller avant de remettre de l'eau.",
-            "resume": f"Suivi post-arrosage : séchage lent ({derniere_humidite:.0f} %, {tendance_jour:.1f} point/jour) · {reperes_post_arrosage}",
+            "resume": t('post_watering_status_10').format(v0=derniere_humidite, v1=tendance_jour, v2=reperes_post_arrosage),
             "couleur": ORANGE,
             "fond": LIGHT_ORANGE
         }
@@ -1542,18 +1542,18 @@ def analyser_apres_arrosage(plante_id):
     if derniere_humidite < 25 and heures_depuis >= 24:
         return {
             "niveau": "ok",
-            "titre": "💧 Retour au niveau initial détecté",
+            "titre": t('post_watering_status_11'),
             "detail": f"Humidité revenue à {derniere_humidite:.0f} % dans la zone du capteur. {resume_contexte}. {reperes_post_arrosage} Le Mi Flora ne permet pas de confirmer le séchage complet de toute la motte.",
-            "resume": f"Suivi post-arrosage : retour au niveau initial dans la zone du capteur, {derniere_humidite:.0f} % · {reperes_post_arrosage}",
+            "resume": t('post_watering_status_12').format(v0=derniere_humidite, v1=reperes_post_arrosage),
             "couleur": GREEN,
             "fond": LIGHT_GREEN
         }
 
     return {
         "niveau": "info",
-        "titre": "💧 Suivi post-arrosage",
+        "titre": t('post_watering_status_1'),
         "detail": f"Dernière humidité : {derniere_humidite:.0f} %, tendance {tendance_jour:.1f} point/jour. {resume_contexte}. {reperes_post_arrosage} Rien d'inquiétant détecté pour l'instant.",
-        "resume": f"Suivi post-arrosage : {derniere_humidite:.0f} %, tendance {tendance_jour:.1f} point/jour · {reperes_post_arrosage}",
+        "resume": t('post_watering_status_2').format(v0=derniere_humidite, v1=tendance_jour, v2=reperes_post_arrosage),
         "couleur": BLUE,
         "fond": LIGHT_BLUE
     }
