@@ -556,3 +556,14 @@ La remise en attente a été effectuée uniquement sur une copie de la base Pi. 
 - [ ] Éviter de présenter Discord ou GitHub comme entièrement anglophones tant que l'application reste française.
 
 - [x] Continuer la traduction progressive : boutons plante, historique, ajout plante, vue plantes, synchronisation et messages update visibles en démo.
+
+### Météo locale — amélioration du 09/10/2026
+
+- [x] Afficher la source et la date du relevé sous les indicateurs météo.
+- [x] Adapter les tuiles aux fenêtres étroites (4, 2 ou 1 colonne).
+- [x] Traduire les nouveaux libellés en français et en anglais.
+- [x] Vérifier la disposition avec des données isolées ; audit local : 89 tests réussis.
+- [ ] Confirmer la lisibilité avec les stations réelles sur le poste utilisateur.
+- [ ] Définir les alertes météo importantes selon les plantes extérieures avant d’ajouter une nouvelle classification rouge.
+
+Ces changements sont consolidés sur main ; aucune nouvelle release ne remplace la 0.1.6-dev pour le moment.

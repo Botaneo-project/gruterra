@@ -1810,5 +1810,8 @@
   "update_source_local": "Informations locales uniquement — aucune vérification en ligne.",
   "update_source_fallback": "Vérification en ligne impossible — informations locales. La disponibilité d’une mise à jour n’est pas confirmée en ligne.",
   "update_source_unavailable": "Source de vérification indisponible.",
-  "update_manifest_source": "Source du manifeste : {source}"
+  "update_manifest_source": "Source du manifeste : {source}",
+  "weather_measurement_source": "Source : {source}",
+  "weather_measurement_time": "Relevé : {date}",
+  "weather_rain_24h": "Pluie · 24 h"
 }

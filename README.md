@@ -413,3 +413,7 @@ Cliquez sur **Vérifier les mises à jour**. Si Gruterra est à jour, aucune ins
 ### Source du contrôle et redémarrage
 
 Le diagnostic indique si la version a été vérifiée sur GitHub ou si seules les informations locales sont disponibles. En cas de repli local après un échec réseau, aucune installation n’est proposée ; relancez la vérification avec une connexion disponible. Après une mise à jour réussie, Gruterra ferme sa fenêtre et un auxiliaire attend la fin effective de l’ancienne instance avant de relancer le même mode, démo ou réel. Si l’ancienne instance ne se termine pas dans le délai de sécurité, aucune seconde instance n’est lancée ; le diagnostic est conservé dans `update_restart.log` du dossier de configuration local.
+
+### Lisibilité de la météo locale
+
+La synthèse météo affiche la source et la date du relevé sous chaque indicateur. Les tuiles passent de quatre à deux ou une colonne selon la largeur disponible. Une date absente reste explicitement inconnue ; la date de consultation ne remplace pas celle du relevé. Les messages sont disponibles en français et en anglais.

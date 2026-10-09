@@ -1810,5 +1810,8 @@
   "update_source_local": "Local information only — no online verification.",
   "update_source_fallback": "Online check unavailable — local information. Update availability has not been confirmed online.",
   "update_source_unavailable": "Verification source unavailable.",
-  "update_manifest_source": "Manifest source: {source}"
+  "update_manifest_source": "Manifest source: {source}",
+  "weather_measurement_source": "Source: {source}",
+  "weather_measurement_time": "Measured: {date}",
+  "weather_rain_24h": "Rain · 24 h"
 }

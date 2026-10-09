@@ -4325,6 +4325,7 @@ def choisir_mesure_netatmo(cle, unite=""):
             "valeur": valeur,
             "texte": formater_nombre(valeur, unite),
             "source": source_station_netatmo(station),
+            "date": mesures.get("date_mesure"),
             "favorite": bool(station.get("favorite")),
             "distance": station.get("distance_m") if station.get("distance_m") is not None else 999999,
         })
@@ -4338,6 +4339,7 @@ def choisir_mesure_netatmo(cle, unite=""):
             "valeur": valeur,
             "texte": formater_nombre(valeur, unite),
             "source": source_station_netatmo(element, privee=True),
+            "date": mesures.get("date_mesure"),
             "favorite": False,
             "distance": 999998,
         })
@@ -4354,6 +4356,7 @@ def choisir_mesure_netatmo(cle, unite=""):
     return {
         "texte": choix["texte"],
         "source": choix["source"],
+        "date": choix.get("date"),
         "etat": "ok",
     }
 
@@ -4373,7 +4376,20 @@ def creer_tuile_synthese_netatmo(parent, titre, info, couleur_fond, couleur):
         highlightbackground=BORDER,
         highlightthickness=1
     )
-    bloc.pack(side="left", expand=True, fill="x", padx=4)
+    tuiles = getattr(parent, "tuiles_meteo", [])
+    tuiles.append(bloc)
+    parent.tuiles_meteo = tuiles
+
+    def disposer(event=None):
+        colonnes = 4 if parent.winfo_width() >= 800 else 2 if parent.winfo_width() >= 400 else 1
+        for colonne in range(4):
+            parent.grid_columnconfigure(colonne, weight=1 if colonne < colonnes else 0)
+        for index, tuile in enumerate(parent.tuiles_meteo):
+            tuile.grid(row=index // colonnes, column=index % colonnes,
+                       sticky="nsew", padx=4, pady=4)
+
+    parent.bind("<Configure>", disposer)
+    disposer()
 
     tk.Label(
         bloc,
@@ -4395,13 +4411,21 @@ def creer_tuile_synthese_netatmo(parent, titre, info, couleur_fond, couleur):
 
     tk.Label(
         bloc,
-        text=info["source"],
+        text=t("weather_measurement_source").format(source=info["source"]),
         font=("Segoe UI", 7),
         fg=SECONDARY,
         bg=couleur_fond,
         wraplength=145,
         justify="center"
-    ).pack(pady=(0, 7))
+    ).pack(pady=(0, 3))
+
+    if info["etat"] == "ok":
+        tk.Label(
+            bloc,
+            text=t("weather_measurement_time").format(date=formater_date(info.get("date"))),
+            font=("Segoe UI", 8), fg=SECONDARY, bg=couleur_fond,
+            wraplength=180, justify="center"
+        ).pack(pady=(0, 8))
 
 
 def afficher_synthese_netatmo(parent):
@@ -4474,7 +4498,7 @@ def afficher_synthese_netatmo(parent):
 
     creer_tuile_synthese_netatmo(
         ligne2,
-        "🌧️ 24 h",
+        t("weather_rain_24h"),
         choisir_mesure_netatmo("pluie_24h", " mm"),
         CARD,
         BLUE
