@@ -634,10 +634,11 @@ def appliquer_theme_interface():
     ):
         configurer_widget(widget, bg=BG)
 
-    configurer_widget(add_plant_button, bg=CARD, fg=TEXT, activebackground=CARD, activeforeground=TEXT)
-    configurer_widget(add_sensor_button, bg=CARD, fg=TEXT, activebackground=CARD, activeforeground=TEXT)
-    configurer_widget(settings_button, bg=CARD, fg=TEXT, activebackground=CARD, activeforeground=TEXT)
-    configurer_widget(about_button, bg=CARD, fg=TEXT, activebackground=CARD, activeforeground=TEXT)
+    for bouton in (refresh_button, add_plant_button, add_sensor_button,
+                   plants_view_button, settings_button, about_button,
+                   health_button, maintenance_button, theme_button):
+        configurer_widget(bouton, bg=CARD, fg=TEXT,
+                          activebackground=LIGHT_GREEN, activeforeground=TEXT)
     configurer_widget(auto_sync_label, bg=BG, fg=SECONDARY)
     configurer_widget(header, bg=CARD, highlightbackground=BORDER)
     configurer_widget(footer, bg=CARD, highlightbackground=BORDER)
@@ -645,25 +646,11 @@ def appliquer_theme_interface():
     configurer_widget(sync_frame, bg=LIGHT_BLUE, highlightbackground=BORDER)
 
     configurer_widget(
-        refresh_button,
-        bg=CARD,
-        fg=TEXT,
-        activebackground=CARD
-    )
-
-    configurer_widget(
         sync_button,
         bg=GREEN,
         fg="white",
         activebackground=GREEN,
         activeforeground="white"
-    )
-
-    configurer_widget(
-        theme_button,
-        bg=CARD,
-        fg=TEXT,
-        activebackground=CARD
     )
 
     for widget in header.winfo_children():

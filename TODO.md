@@ -2,6 +2,10 @@
 
 Ce fichier sert à garder une trace claire des idées et des prochaines étapes. Les éléments déjà en place sont conservés ici uniquement pour savoir où on en est, mais ils ne doivent plus être relancés sauf bug ou amélioration ciblée.
 
+## Thèmes — 2026-10-09
+
+- [x] Tous les boutons de navigation suivent la palette lors du passage clair/sombre, y compris Plantes, Données et synthèses et État Gruterra. Libellés FR : Mode clair / Mode sombre ; EN : Light mode / Dark mode.
+
 ## Historique — corrections de lisibilité du 2026-10-09
 
 - [x] Sélection d’une date disponible depuis toutes les périodes, en FR/EN ; le choix ouvre la vue Journée.
