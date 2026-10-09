@@ -465,5 +465,14 @@
   "post_watering_status_9": "💧 Séchage lent après arrosage",
   "post_watering_status_10": "Suivi post-arrosage : séchage lent ({v0:.0f} %, {v1:.1f} point/jour) · {v2}",
   "post_watering_status_11": "💧 Retour au niveau initial détecté",
-  "post_watering_status_12": "Suivi post-arrosage : retour au niveau initial dans la zone du capteur, {v0:.0f} % · {v1}"
+  "post_watering_status_12": "Suivi post-arrosage : retour au niveau initial dans la zone du capteur, {v0:.0f} % · {v1}",
+  "post_watering_waiting_previous_summary": "Suivi post-arrosage : aucune mesure après l'arrosage. Dernière avant : {v0:.0f} %, {v1:.1f} h avant.",
+  "post_watering_waiting_previous_detail": "Arrosage du {v0} · {v1}. Aucune mesure Mi Flora enregistrée depuis. Dernière mesure avant arrosage : {v2:.0f} %, {v3:.1f} h avant. Relancer une mesure directe pour démarrer le suivi. {v4}",
+  "post_watering_waiting_detail": "Arrosage du {v0} · {v1}. Aucune mesure Mi Flora enregistrée depuis. {v2}",
+  "post_watering_measurement_context": "{v0} mesure(s) retenue(s) depuis arrosage, suivi sur {v1}, dernière mesure {v2}",
+  "post_watering_started_detail": "Dernière humidité après arrosage : {v0:.0f} %. {v1}. {v2} Il faut encore du recul avant d'interpréter.",
+  "post_watering_persistent_detail": "{v0:.0f} % encore mesurés environ {v1} après l'arrosage. {v2}. {v3} Vérifier le substrat avant tout nouvel arrosage.",
+  "post_watering_slow_drying_detail": "{v0:.0f} % après {v1}, tendance {v2:.1f} point/jour. {v3}. {v4} Surveiller avant de remettre de l'eau.",
+  "post_watering_initial_level_detail": "Humidité revenue à {v0:.0f} % dans la zone du capteur. {v1}. {v2} Le Mi Flora ne permet pas de confirmer le séchage complet de toute la motte.",
+  "post_watering_general_detail": "Dernière humidité : {v0:.0f} %, tendance {v1:.1f} point/jour. {v2}. {v3} Rien d'inquiétant détecté pour l'instant."
 }

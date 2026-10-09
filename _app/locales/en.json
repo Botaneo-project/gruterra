@@ -465,5 +465,14 @@
   "post_watering_status_9": "💧 Slow drying after watering",
   "post_watering_status_10": "Post-watering monitoring: slow drying ({v0:.0f} %, {v1:.1f} percentage points/day) · {v2}",
   "post_watering_status_11": "💧 Return to initial moisture level detected",
-  "post_watering_status_12": "Post-watering monitoring: return to initial moisture level around the sensor, {v0:.0f} % · {v1}"
+  "post_watering_status_12": "Post-watering monitoring: return to initial moisture level around the sensor, {v0:.0f} % · {v1}",
+  "post_watering_waiting_previous_summary": "Post-watering monitoring: no measurement since watering. Last measurement before watering: {v0:.0f} %, {v1:.1f} hours earlier.",
+  "post_watering_waiting_previous_detail": "Watering on {v0} · {v1}. No Mi Flora measurement recorded since. Last measurement before watering: {v2:.0f} %, {v3:.1f} hours earlier. Take a fresh measurement to start monitoring. {v4}",
+  "post_watering_waiting_detail": "Watering on {v0} · {v1}. No Mi Flora measurement recorded since. {v2}",
+  "post_watering_measurement_context": "{v0} measurement(s) used since watering, monitored over {v1}, latest measurement {v2}",
+  "post_watering_started_detail": "Latest moisture after watering: {v0:.0f} %. {v1}. {v2} More time is needed before interpreting the results.",
+  "post_watering_persistent_detail": "{v0:.0f} % still measured about {v1} after watering. {v2}. {v3} Check the substrate before watering again.",
+  "post_watering_slow_drying_detail": "{v0:.0f} % after {v1}, trend {v2:.1f} percentage points/day. {v3}. {v4} Monitor before adding more water.",
+  "post_watering_initial_level_detail": "Moisture has returned to {v0:.0f} % around the sensor. {v1}. {v2} Mi Flora cannot confirm that the entire root ball has dried completely.",
+  "post_watering_general_detail": "Latest moisture: {v0:.0f} %, trend {v1:.1f} percentage points/day. {v2}. {v3} No concerning change detected so far."
 }
