@@ -1993,7 +1993,7 @@ def ouvrir_arrosage_plante(plante_id, nom_plante):
     quantite_entry.pack(fill="x", padx=20)
 
     tk.Label(fenetre, text=t("type"), bg=CARD, fg=TEXT, font=("Segoe UI", 9, "bold")).pack(anchor="w", padx=20, pady=(10, 3))
-    type_combo = ttk.Combobox(fenetre, state="readonly", values=["normal", "fertilisant"], width=39)
+    type_combo = ttk.Combobox(fenetre, state="readonly", values=[t("watering_type_normal"), t("watering_type_fertilizer")], width=39)
     type_combo.pack(fill="x", padx=20)
     type_combo.current(0)
 
@@ -2002,14 +2002,14 @@ def ouvrir_arrosage_plante(plante_id, nom_plante):
         fenetre,
         state="readonly",
         values=[
-            "Non renseigné",
-            "Eau du robinet",
-            "Eau reposée",
-            "Eau filtrée",
-            "Eau de pluie",
-            "Eau minérale",
+            t("not_specified"),
+            t("water_tap"),
+            t("water_rested"),
+            t("water_filtered"),
+            t("water_rain"),
+            t("water_mineral"),
             "Volvic",
-            "Autre"
+            t("other")
         ],
         width=39
     )
@@ -2040,7 +2040,7 @@ def ouvrir_arrosage_plante(plante_id, nom_plante):
     repartition_combo = ttk.Combobox(
         contexte_frame,
         state="readonly",
-        values=["Non renseigné", "Surface répartie", "Un côté du pot", "Centre du pot", "Bords du pot", "Autre"],
+        values=[t("not_specified"), t("distribution_surface"), t("distribution_one_side"), t("distribution_center"), t("distribution_edges"), t("other")],
         width=18
     )
     repartition_combo.grid(row=2, column=0, sticky="ew", padx=(0, 8))
@@ -2050,7 +2050,7 @@ def ouvrir_arrosage_plante(plante_id, nom_plante):
     ecoulement_combo = ttk.Combobox(
         contexte_frame,
         state="readonly",
-        values=["Non renseigné", "Aucun écoulement observé", "Écoulement léger", "Écoulement net", "Non vérifié"],
+        values=[t("not_specified"), t("drainage_none"), t("drainage_light"), t("drainage_clear"), t("not_checked")],
         width=20
     )
     ecoulement_combo.grid(row=2, column=1, sticky="ew")
@@ -2060,7 +2060,7 @@ def ouvrir_arrosage_plante(plante_id, nom_plante):
     cachepot_combo = ttk.Combobox(
         contexte_frame,
         state="readonly",
-        values=["Non renseigné", "Pas d'eau stagnante", "Eau stagnante retirée", "Eau stagnante présente", "Pas de cache-pot"],
+        values=[t("not_specified"), t("cachepot_no_standing_water"), t("cachepot_water_removed"), t("cachepot_water_present"), t("cachepot_none")],
         width=18
     )
     cachepot_combo.grid(row=4, column=0, sticky="ew", padx=(0, 8))
@@ -2070,7 +2070,7 @@ def ouvrir_arrosage_plante(plante_id, nom_plante):
     substrat_combo = ttk.Combobox(
         contexte_frame,
         state="readonly",
-        values=["Non renseigné", "Sec en surface", "Légèrement humide", "Humide", "Très humide", "Non vérifié"],
+        values=[t("not_specified"), t("substrate_dry_surface"), t("substrate_slightly_moist"), t("substrate_moist"), t("substrate_very_moist"), t("not_checked")],
         width=20
     )
     substrat_combo.grid(row=4, column=1, sticky="ew")
@@ -2080,7 +2080,7 @@ def ouvrir_arrosage_plante(plante_id, nom_plante):
     progressif_combo = ttk.Combobox(
         contexte_frame,
         state="readonly",
-        values=["Non renseigné", "Arrosage en une fois", "Arrosage progressif", "Complément d'arrosage", "Autre"],
+        values=[t("not_specified"), t("watering_mode_once"), t("watering_mode_progressive"), t("watering_mode_complement"), t("other")],
         width=18
     )
     progressif_combo.grid(row=6, column=0, sticky="ew", padx=(0, 8))
@@ -2090,7 +2090,7 @@ def ouvrir_arrosage_plante(plante_id, nom_plante):
     pot_combo = ttk.Combobox(
         contexte_frame,
         state="readonly",
-        values=["Non renseigné", "Pot sorti du cache-pot", "Pot laissé dans le cache-pot", "Pas de cache-pot", "Non vérifié"],
+        values=[t("not_specified"), t("pot_out_cachepot"), t("pot_in_cachepot"), t("cachepot_none"), t("not_checked")],
         width=20
     )
     pot_combo.grid(row=6, column=1, sticky="ew")
@@ -2140,7 +2140,7 @@ def ouvrir_arrosage_plante(plante_id, nom_plante):
                 if quantite < 0:
                     raise ValueError()
             except ValueError:
-                erreur.set("Quantité invalide. Exemple : 250")
+                erreur.set(t("watering_quantity_invalid"))
                 return
 
         rappel_date = None
@@ -2151,12 +2151,12 @@ def ouvrir_arrosage_plante(plante_id, nom_plante):
                     raise ValueError()
                 rappel_date = (datetime.now() + timedelta(days=jours)).isoformat(timespec="seconds")
             except ValueError:
-                erreur.set("Nombre de jours invalide pour le rappel.")
+                erreur.set(t("watering_reminder_days_invalid"))
                 return
 
         commentaire_libre = commentaire_entry.get().strip()
         type_eau = type_eau_combo.get().strip()
-        if type_eau == "Non renseigné":
+        if type_eau == t("not_specified"):
             type_eau = None
 
         etat_sante_libelle = etat_sante_combo.get().strip()
@@ -2164,18 +2164,18 @@ def ouvrir_arrosage_plante(plante_id, nom_plante):
 
         contexte_arrosage = []
         for libelle, combo in (
-                ("Répartition", repartition_combo),
-                ("Écoulement", ecoulement_combo),
-                ("Cache-pot", cachepot_combo),
-                ("Substrat début session", substrat_combo),
-                ("Mode", progressif_combo),
-                ("Pot", pot_combo)):
+                (t("distribution"), repartition_combo),
+                (t("drainage"), ecoulement_combo),
+                (t("cache_pot"), cachepot_combo),
+                (t("substrate_session_start"), substrat_combo),
+                (t("mode"), progressif_combo),
+                (t("pot"), pot_combo)):
             valeur = combo.get().strip()
-            if valeur and valeur != "Non renseigné":
+            if valeur and valeur != t("not_specified"):
                 contexte_arrosage.append(f"{libelle} : {valeur}")
         delai_drainage = drainage_delai_entry.get().strip()
         if delai_drainage:
-            contexte_arrosage.append(f"Délai drainage : {delai_drainage}")
+            contexte_arrosage.append(f"{t("drainage_delay")} : {delai_drainage}")
 
         commentaire_lignes = []
         if commentaire_libre:
@@ -2184,21 +2184,21 @@ def ouvrir_arrosage_plante(plante_id, nom_plante):
         commentaire = " | ".join(commentaire_lignes) or None
 
         confirmation = [
-            f"Plante : {nom_plante}",
-            f"Quantité : {quantite:g} ml" if quantite is not None else "Quantité : non renseignée",
-            f"Type : {type_combo.get()}",
-            f"Type d'eau : {type_eau or 'non renseigné'}",
-            f"État santé : {etat_sante_libelle}",
+            t("confirm_plant").format(plant=nom_plante),
+            t("confirm_quantity_ml").format(quantity=f"{quantite:g}") if quantite is not None else t("confirm_quantity_unknown"),
+            t("confirm_type").format(type=type_combo.get()),
+            t("confirm_water_type").format(water=type_eau or t("not_specified_lower")),
+            t("confirm_health_state").format(state=etat_sante_libelle),
         ]
         confirmation.extend(contexte_arrosage)
         if rappel_date:
-            confirmation.append(f"Rappel : {formater_date(rappel_date)}")
+            confirmation.append(t("confirm_reminder").format(date=formater_date(rappel_date)))
         if commentaire_libre:
-            confirmation.append(f"Commentaire : {commentaire_libre}")
+            confirmation.append(t("confirm_comment").format(comment=commentaire_libre))
 
         if not messagebox.askyesno(
-            "Confirmer l'arrosage",
-            "Confirmer cet arrosage ?\n\n" + "\n".join(confirmation),
+            t("confirm_watering_title"),
+            t("confirm_watering_message") + "\n\n" + "\n".join(confirmation),
             parent=fenetre
         ):
             return
@@ -2224,17 +2224,17 @@ def ouvrir_arrosage_plante(plante_id, nom_plante):
                 commentaire="Collecte prioritaire déclenchée après validation d'arrosage."
             )
         except Exception:
-            erreur.set("Impossible d'enregistrer l'arrosage.")
+            erreur.set(t("watering_save_failed"))
             return
 
         fenetre.destroy()
         actualiser_interface()
         suivi = analyser_apres_arrosage(plante_id)
-        suffixe_suivi = " · suivi post-arrosage lancé" if suivi else ""
+        suffixe_suivi = " · " + t("post_watering_started") if suivi else ""
         if rappel_date:
-            status_var.set(f"Arrosage enregistré · rappel prévu le {formater_date(rappel_date)}{suffixe_suivi}")
+            status_var.set(t("watering_saved_with_reminder").format(date=formater_date(rappel_date)) + suffixe_suivi)
         else:
-            status_var.set(f"Arrosage enregistré{suffixe_suivi}.")
+            status_var.set(t("watering_saved") + suffixe_suivi + ".")
         lancer_collecte_prioritaire_apres_arrosage(plante_id, demande_id, 1000)
         lancer_collecte_prioritaire_apres_arrosage(plante_id, demande_id, 10 * 60 * 1000)
 
