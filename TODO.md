@@ -2,6 +2,11 @@
 
 Ce fichier sert à garder une trace claire des idées et des prochaines étapes. Les éléments déjà en place sont conservés ici uniquement pour savoir où on en est, mais ils ne doivent plus être relancés sauf bug ou amélioration ciblée.
 
+## Historique — corrections de lisibilité du 2026-10-09
+
+- [x] Sélection d’une date disponible depuis toutes les périodes, en FR/EN ; le choix ouvre la vue Journée.
+- [x] Badges sortie/retour balcon et arrosage répartis sur plusieurs lignes sans chevauchement, avec fond lisible dans une fenêtre réduite.
+
 ## Traduction FR/EN — 2026-10-09
 
 - [x] Grand lot de traduction : interface, paramètres, synchronisation PC/Raspberry, historique et cycles, fiches de besoins, Netatmo, sauvegardes et diagnostics de mise à jour.

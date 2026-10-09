@@ -89,6 +89,22 @@ class SerieLocaleVar(tk.StringVar):
         super().set(nom_serie_affiche(value))
 
 
+def placer_etiquettes_evenements(etiquettes, gauche, droite, espacement=8):
+    """Place des badges près de leur date sur des lignes sans chevauchement."""
+    fins_lignes = []
+    resultat = []
+    for x, largeur, texte, couleur in sorted(etiquettes, key=lambda e: e[0]):
+        largeur = min(largeur, max(droite - gauche, 1))
+        debut = max(gauche, min(x + 6, droite - largeur))
+        ligne = next((i for i, fin in enumerate(fins_lignes) if debut >= fin + espacement), len(fins_lignes))
+        if ligne == len(fins_lignes):
+            fins_lignes.append(debut + largeur)
+        else:
+            fins_lignes[ligne] = debut + largeur
+        resultat.append((debut, largeur, ligne, texte, couleur, x))
+    return resultat
+
+
 def theme_actuel():
     return THEME_SOMBRE if charger_theme_sombre() else THEME_CLAIR
 
@@ -1158,6 +1174,12 @@ def ouvrir_historique(parent, plante_id, action_synchroniser=None):
             end = max(end, max(dates_exposition_visibles))
         span = (end - start).total_seconds()
         coords = []
+        etiquettes_evenements = []
+
+        def ajouter_etiquette(x, texte, couleur):
+            from tkinter.font import Font
+            largeur = Font(family="Segoe UI", size=9, weight="bold").measure(texte) + 12
+            etiquettes_evenements.append((x, largeur, texte, couleur))
 
         for sortie_balcon, retour_balcon in expositions_courantes:
             retour_effectif = retour_balcon or end
@@ -1172,24 +1194,10 @@ def ouvrir_historique(parent, plante_id, action_synchroniser=None):
             couleur_balcon = melanger_couleurs(couleurs["ORANGE"], couleurs["CARD"], 0.80)
             canvas.create_rectangle(x_debut, y0, x_fin, y1, fill=couleur_balcon, outline="")
             canvas.create_line(x_debut, y0, x_debut, y1, fill=couleurs["ORANGE"], dash=(2, 4))
-            canvas.create_text(
-                x_debut + 4,
-                y0 + 12,
-                text=vh_t("balcony_out_short"),
-                anchor="w",
-                fill=couleurs["ORANGE"],
-                font=("Segoe UI", 8, "bold")
-            )
+            ajouter_etiquette(x_debut, vh_t("balcony_out_short"), couleurs["ORANGE"])
             if retour_balcon:
                 canvas.create_line(x_fin, y0, x_fin, y1, fill=couleurs["BLUE"], dash=(2, 4))
-                canvas.create_text(
-                    x_fin - 4,
-                    y0 + 28,
-                    text=vh_t("back_inside_short"),
-                    anchor="e",
-                    fill=couleurs["BLUE"],
-                    font=("Segoe UI", 8, "bold")
-                )
+                ajouter_etiquette(x_fin, vh_t("back_inside_short"), couleurs["BLUE"])
             elif x_fin - x_debut > 46:
                 canvas.create_text(
                     (x_debut + x_fin) / 2,
@@ -1220,14 +1228,14 @@ def ouvrir_historique(parent, plante_id, action_synchroniser=None):
                 outline=couleurs["CARD"],
                 width=2
             )
-            canvas.create_text(
-                x_arrosage + 8,
-                y0 + 14,
-                text=f"💧 {quantite_txt}",
-                anchor="w",
-                fill=couleurs["WATER"],
-                font=("Segoe UI", 8, "bold")
-            )
+            ajouter_etiquette(x_arrosage, f"💧 {quantite_txt}", couleurs["WATER"])
+
+        for debut_badge, largeur_badge, ligne_badge, texte_badge, couleur_badge, x_evenement in placer_etiquettes_evenements(etiquettes_evenements, x0, x1):
+            haut_badge = y0 + 5 + ligne_badge * 23
+            canvas.create_rectangle(debut_badge, haut_badge, debut_badge + largeur_badge, haut_badge + 20,
+                                    fill=couleurs["CARD"], outline=couleur_badge, tags="event_labels")
+            canvas.create_text(debut_badge + 6, haut_badge + 10, text=texte_badge, anchor="w",
+                               fill=couleur_badge, font=("Segoe UI", 9, "bold"), tags="event_labels")
 
         points_graphique_courants = []
         for index_point, (date, valeur) in enumerate(points):
@@ -1309,6 +1317,7 @@ def ouvrir_historique(parent, plante_id, action_synchroniser=None):
         canvas.create_text(x1, y1 + 38, text=end.strftime("%d/%m %H:%M"),
                            anchor="e", fill=couleur_secondaire,
                            font=("Segoe UI", 8))
+        canvas.tag_raise("event_labels")
 
     def ouvrir_comparaison_jours():
         try:
@@ -1788,7 +1797,7 @@ def ouvrir_historique(parent, plante_id, action_synchroniser=None):
                 bilan_jour_courant["jour"] = ""
                 jour_resume_label.configure(fg=couleurs["SECONDARY"])
         else:
-            choix_jour.configure(state="disabled")
+            choix_jour.configure(state="readonly" if libelles_jours else "disabled")
             bilan_jour_courant["texte"] = ""
             bilan_jour_courant["jour"] = ""
             jour_resume_label.pack_forget()

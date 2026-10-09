@@ -108,5 +108,24 @@ class TestResultatUpdaterTraduit(unittest.TestCase):
             self.assertFalse(check(code.format(v0=1)+'\n'+applied))
             self.assertFalse(check(code.format(v0=0)+'\n'+traduire('updater_cli_9',lang)))
 
+
+class TestReperesCompacts(unittest.TestCase):
+    def test_reperes_proches_sans_chevauchement(self):
+        from vue_historique import placer_etiquettes_evenements
+        badges = placer_etiquettes_evenements([(100,80,'out','orange'),(103,80,'back','blue'),(108,80,'80 ml','cyan'),(300,80,'out','orange')],72,500)
+        self.assertEqual(len(badges),4)
+        self.assertEqual(len({b[2] for b in badges[:3]}),3)
+        for left,width,lane,*_ in badges:
+            self.assertGreaterEqual(left,72)
+            self.assertLessEqual(left+width,500)
+        for lane in {b[2] for b in badges}:
+            row = sorted((b[0], b[0]+b[1]) for b in badges if b[2]==lane)
+            self.assertTrue(all(a[1] < b[0] for a,b in zip(row,row[1:])))
+
+    def test_badge_pres_du_bord_reste_visible(self):
+        from vue_historique import placer_etiquettes_evenements
+        badges = placer_etiquettes_evenements([(497,90,'back','blue'),(499,75,'out','orange')],72,500)
+        self.assertTrue(all(72 <= b[0] and b[0]+b[1] <= 500 for b in badges))
+
 if __name__ == '__main__':
     unittest.main()
