@@ -575,3 +575,14 @@ Ces changements sont consolidés sur main ; aucune nouvelle release ne remplace 
 - [x] Rafraîchir les alertes à la fin de l’actualisation météo seule.
 - [x] Vérifier l’accueil complet FR/EN avec une prévision de rafales au-dessus du seuil existant, et sans station.
 - [ ] Confirmer le rendu et les alertes sur les données météo réelles du poste utilisateur.
+
+### Contributions — partie application (10/10/2026)
+
+- [x] Information au premier lancement réel et accès depuis les paramètres, FR/EN.
+- [x] Clé locale durable sur demande, sauvegarde et restauration sans remplacement d’une autre clé.
+- [x] Partage désactivé ; aucun transport réseau implémenté.
+- [x] Démo : aucune identité réelle ni envoi.
+- [x] Tester présence de la clé dans le ZIP complet et absence dans l’export de données.
+- [ ] Définir contrat commun application/site et clé de gestion avant activation réseau.
+- [ ] Finaliser notice, finalités, durée de conservation et contact de secours.
+- [ ] Intégrer l’aperçu des contributions et les reçus confirmés par le site.

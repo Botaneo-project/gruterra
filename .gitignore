@@ -102,3 +102,5 @@ discord_bot/.release_state.json
 # Bot Discord local privé, non publié
 discord_bot/
 docs/images/gruterra-discord-*.png
+# Sauvegardes locales des clés privées de contribution
+gruterra-cle-privee*.json

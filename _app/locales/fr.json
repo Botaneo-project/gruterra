@@ -1813,5 +1813,17 @@
   "update_manifest_source": "Source du manifeste : {source}",
   "weather_measurement_source": "Source : {source}",
   "weather_measurement_time": "Relevé : {date}",
-  "weather_rain_24h": "Pluie · 24 h"
+  "weather_rain_24h": "Pluie · 24 h",
+  "contribution_title": "Contributions et confidentialité",
+  "contribution_explanation": "Gruterra pourra proposer de contribuer à une base commune pour mieux comprendre le suivi des plantes. Cette participation sera facultative : refuser ne limite pas l’application.\n\nLes contributions seront pseudonymisées : pas de nom, e-mail, adresse Bluetooth, configuration privée ou secret dans les données partagées. Avant chaque envoi, vous pourrez relire les données et confirmer votre choix.\n\nLe site et les règles de réception ne sont pas encore prêts. Aucun envoi n’est activé. Une clé privée durable peut être préparée localement ; elle servira à gérer vos contributions lorsque le site prendra en charge ce mécanisme. Aucun compte ni e-mail obligatoire.\n\nConservez la clé et sa sauvegarde. Elle est incluse dans la sauvegarde complète privée de Gruterra, jamais dans l’export partageable. Après réinstallation, vous pourrez la restaurer. Sans clé ni sauvegarde, retrouver ou retirer les anciens envois peut devenir impossible ; un contact de secours devra être prévu sur le site. Désinstaller l’application ne supprimera pas les données déjà envoyées.",
+  "contribution_offline": "Partage désactivé. Aucun envoi réseau.",
+  "contribution_demo_blocked": "Mode démo : les données fictives ne peuvent pas être envoyées. Aucune clé réelle n’est créée.",
+  "contribution_invalid_key": "Fichier de clé invalide.",
+  "contribution_no_overwrite": "Choisissez un nouveau fichier : la sauvegarde existante ne sera pas écrasée.",
+  "contribution_existing_key": "Une autre clé existe sur ce poste. Elle ne sera pas remplacée pour éviter de perdre l’accès aux anciennes contributions.",
+  "contribution_key_saved": "Clé privée sauvegardée. Ne la partagez pas et ne la publiez pas sur GitHub. Aucun envoi effectué.",
+  "contribution_key_restored": "Clé restaurée localement. Le partage reste désactivé.",
+  "contribution_backup_key": "Sauvegarder ma clé privée",
+  "contribution_restore_key": "Restaurer ma clé",
+  "contribution_config_unreadable": "Configuration de contribution illisible. Le fichier existant a été conservé."
 }

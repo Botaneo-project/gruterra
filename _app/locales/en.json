@@ -1813,5 +1813,17 @@
   "update_manifest_source": "Manifest source: {source}",
   "weather_measurement_source": "Source: {source}",
   "weather_measurement_time": "Measured: {date}",
-  "weather_rain_24h": "Rain · 24 h"
+  "weather_rain_24h": "Rain · 24 h",
+  "contribution_title": "Contributions and privacy",
+  "contribution_explanation": "Gruterra may offer contributions to a shared database to improve understanding of plant monitoring. Participation will be optional: declining does not restrict the app.\n\nContributions will be pseudonymised: no names, email addresses, Bluetooth addresses, private configuration or secrets in shared data. You will be able to review and confirm each upload.\n\nThe website and receiving rules are not ready yet. No uploads are enabled. A durable private key can be prepared locally; it will manage your contributions once the website supports this mechanism. No account or email required.\n\nKeep your key and its backup. It is included in Gruterra’s private full backup, never in the shareable export. You can restore it after reinstalling. Without a key or backup, finding or removing past uploads may become impossible; the website must provide a fallback contact. Uninstalling the app will not remove previously uploaded data.",
+  "contribution_offline": "Sharing disabled. No network upload.",
+  "contribution_demo_blocked": "Demo mode: fictional data cannot be uploaded. No real key is created.",
+  "contribution_invalid_key": "Invalid key file.",
+  "contribution_no_overwrite": "Choose a new file: the existing backup will not be overwritten.",
+  "contribution_existing_key": "A different key already exists on this computer. It will not be replaced, to preserve access to past contributions.",
+  "contribution_key_saved": "Private key saved. Do not share it or publish it on GitHub. Nothing uploaded.",
+  "contribution_key_restored": "Key restored locally. Sharing remains disabled.",
+  "contribution_backup_key": "Back up my private key",
+  "contribution_restore_key": "Restore my key",
+  "contribution_config_unreadable": "Contribution settings cannot be read. The existing file was preserved."
 }

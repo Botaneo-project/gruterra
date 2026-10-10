@@ -417,3 +417,7 @@ Le diagnostic indique si la version a été vérifiée sur GitHub ou si seules l
 ### Lisibilité de la météo locale
 
 La synthèse météo est placée sur l’accueil juste après le centre d’alertes, indépendamment de la position des détails Netatmo. Sans station, un bloc de prévision (ou son état indisponible) reste visible. L’actualisation météo rafraîchit également les alertes. La synthèse affiche la source et la date du relevé sous chaque indicateur. Les tuiles passent de quatre à deux ou une colonne selon la largeur disponible. Une date absente reste explicitement inconnue ; la date de consultation ne remplace pas celle du relevé. Les messages sont disponibles en français et en anglais.
+
+### Contributions locales — préparation
+
+Une information facultative sur les futures contributions est disponible au premier lancement et dans les paramètres. Aucun envoi n’est activé. Une clé privée durable peut être préparée et sauvegardée explicitement ; sa restauration ne remplace pas une autre identité existante. La clé locale est incluse dans les sauvegardes complètes privées et exclue des exports partageables. En mode démo, aucune identité réelle n’est créée et les données fictives restent exclues du partage. La réception web et les règles de conservation/retrait restent à définir avant activation.

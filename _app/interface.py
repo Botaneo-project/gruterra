@@ -6126,6 +6126,12 @@ def ouvrir_parametres():
         justify="left",
     ).pack(anchor="w", padx=12, pady=(0, 8))
 
+    def ouvrir_contributions():
+        from contribution_locale import ouvrir_information
+        ouvrir_information(fenetre)
+    tk.Button(affichage_bloc, text=t('contribution_title'), command=ouvrir_contributions,
+              bg=CARD, fg=TEXT, relief='flat').pack(anchor='w', padx=12, pady=(0,10))
+
     meteo_haut_var = tk.BooleanVar(value=meteo_affichee_en_haut())
     tk.Checkbutton(
         affichage_bloc,
@@ -8559,5 +8565,8 @@ if os.environ.get("BOTANEO_DEMO") != "1":
     root.after(500, actualiser_netatmo_seul)
     root.after(5000, verifier_sync_auto)
 root.after(3000, verifier_update_au_demarrage)
+
+from contribution_locale import proposer_premier_lancement
+root.after(1800, lambda: proposer_premier_lancement(root))
 
 root.mainloop()
