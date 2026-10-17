@@ -32,6 +32,8 @@ DONNEES_A_PRESERVER = {
     "plantes.db",
     "_config",
     "_security_backups",
+    "_user_backups",
+    ".venv",
     "_historique",
     "_app/data",
     "discord_bot/.env",
@@ -74,7 +76,14 @@ def safe_print(texte="") -> None:
 
 
 def est_chemin_preserve(relatif: Path) -> bool:
-    texte = relatif.as_posix()
+    # Windows paths are case-insensitive. Database files remain private even
+    # when stored outside the standard data directory (including _app/plantes.db).
+    texte = relatif.as_posix().replace("\\", "/").casefold()
+    suffixes_prives = (".db", ".sqlite", ".sqlite3", ".db-wal", ".db-shm", ".db-journal",
+                       ".sqlite-wal", ".sqlite-shm", ".sqlite-journal",
+                       ".sqlite3-wal", ".sqlite3-shm", ".sqlite3-journal", ".local.json")
+    if texte.endswith(suffixes_prives):
+        return True
     if texte in DONNEES_A_PRESERVER or texte in FICHIERS_A_NE_PAS_REMPLACER:
         return True
     return any(texte.startswith(prefix + "/") for prefix in DONNEES_A_PRESERVER)
@@ -183,7 +192,11 @@ def sauvegarder_programme(racine: Path, fichiers: list[Path]) -> Path:
     dossier_backup = racine / "_security_backups"
     dossier_backup.mkdir(exist_ok=True)
     horodatage = datetime.now().strftime("%Y%m%d-%H%M%S")
-    archive = dossier_backup / f"gruterra-pre-update-{horodatage}.zip"
+    # Atomically reserve a unique filename, including multiple calls in one second.
+    descriptor, nom_archive = tempfile.mkstemp(
+        prefix=f"gruterra-pre-update-{horodatage}-", suffix=".zip", dir=dossier_backup)
+    os.close(descriptor)
+    archive = Path(nom_archive)
     with zipfile.ZipFile(archive, "w", compression=zipfile.ZIP_DEFLATED) as zipf:
         for relatif in fichiers:
             chemin = racine / relatif

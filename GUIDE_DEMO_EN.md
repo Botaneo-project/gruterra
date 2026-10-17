@@ -10,11 +10,11 @@ Open the GitHub repository:
 https://github.com/Botaneo-project/gruterra
 ```
 
-Then use **Code → Download ZIP** and extract the folder anywhere you want: Downloads, Documents, Desktop or another local folder.
+Prefer the official `gruterra-<version>.zip` archive under **Releases**, then extract it. **Code → Download ZIP** contains development code that may be newer than the latest release.
 
 ## 2. Install Python
 
-Install Python for Windows from:
+Start with `Installer_Gruterra.bat`; it attempts to install Python automatically when needed. If this is blocked, install Python for Windows from:
 
 ```text
 https://www.python.org/downloads/windows/
@@ -24,7 +24,7 @@ Use a standard installation with Tkinter and the `py` launcher.
 
 ## 3. Launch the demo
 
-Simple method: double-click `Installer_Gruterra.bat`, then run `Lancer_Demo.py`.
+Simple method: double-click `Installer_Gruterra.bat`, then double-click `Lancer_Demo.bat`.
 
 Manual method: open PowerShell in the extracted folder containing `requirements.txt`, then run:
 
@@ -34,7 +34,7 @@ py -m venv .venv
 .\.venv\Scripts\python.exe Lancer_Demo.py
 ```
 
-For later launches, use `Lancer_Demo.py` for the demo or `Lancer_Gruterra.py` for a blank real-use start.
+For later launches, double-click `Lancer_Demo.bat` for the demo or `Lancer_Gruterra.bat` for real use. Avoid double-clicking the Python files on a fresh PC; file associations may not be ready.
 
 No PowerShell activation script is required.
 
@@ -55,6 +55,10 @@ It also uses its own demo configuration. Automatic collection is disabled in dem
 - **Cactus balcony demo**: plant without an active sensor, with manual watering and a future reminder.
 - **Pothos demo**: example of an old preserved sensor state.
 - **Monstera demo**: more regular readings, useful for comparison.
+
+## Test updates in demo mode
+
+Use Settings → Check for updates → Prepare update → Apply update. If already up to date, no installation is offered. Updates require the official archive and a valid SHA-256 and preserve the demo database and preferences. Demo data cannot be contributed to the future shared database.
 
 ## 6. Reset the demo database
 

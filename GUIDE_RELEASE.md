@@ -59,9 +59,9 @@ git push origin main
 
 Si le bot Gruterra tourne, lancer dans Discord :
 
-`	ext
+```text
 !release_gruterra
-`
+```
 
 La commande publie un message dans #changelog si le salon existe, sinon dans #announcements ou #useful-links.
 
@@ -69,10 +69,10 @@ La commande publie un message dans #changelog si le salon existe, sinon dans #an
 
 Dans Gruterra :
 
-1. Ouvrir `À propos`.
-2. Cliquer `Vérifier les mises à jour`.
-3. Cliquer `Update` pour simuler.
-4. Utiliser `Appliquer update` seulement si le diagnostic est cohérent.
+1. Ouvrir `Paramètres`.
+2. Cliquer `Vérifier les mises à jour`. Si la version est à jour, aucune installation n’est proposée.
+3. Si une version plus récente existe, cliquer `Préparer la mise à jour`.
+4. Utiliser `Appliquer la mise à jour` après préparation réussie, puis vérifier le redémarrage et les données dans le même mode.
 
 ## Sécurité
 

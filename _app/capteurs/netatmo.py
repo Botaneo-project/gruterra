@@ -594,37 +594,38 @@ def extraire_mesures_publiques(station):
         "gust": "rafale",
         "wind_angle": "direction_vent",
         "windangle": "direction_vent",
-        "gustangle": "direction_rafale"
+        "gustangle": "direction_rafale",
+        "gust_angle": "direction_rafale"
     }
 
-    for mesure in station.get("measures", {}).values():
+    resultat['dates_mesures'] = {}
+    def retenir(cle,valeur,timestamp):
+        if type(valeur) not in (int,float) or not math.isfinite(valeur):
+            return
+        resultat[cle] = valeur
+        date = convertir_date(timestamp)
+        if date:
+            resultat['dates_mesures'][cle] = date
 
-        if not isinstance(mesure, dict):
-            continue
-
-        types = mesure.get("type")
-        donnees = mesure.get("res")
-
-        if not isinstance(types, list):
-            continue
-
-        if not isinstance(donnees, dict) or not donnees:
-            continue
-
-        valeurs = list(donnees.values())[-1]
-
-        if not isinstance(valeurs, list):
-            continue
-
-        for index, type_mesure in enumerate(types):
-
-            if index >= len(valeurs):
-                continue
-
-            cle = correspondances.get(type_mesure)
-
-            if cle:
-                resultat[cle] = valeurs[index]
+    for mesure in station.get('measures',{}).values():
+        if not isinstance(mesure,dict):continue
+        # Pluie et vent peuvent être fournis hors des tableaux type/res.
+        for api,cle in correspondances.items():
+            if api in mesure:
+                horodatage = mesure.get('rain_timeutc') if cle.startswith('pluie') else mesure.get('wind_timeutc')
+                retenir(cle,mesure[api],horodatage)
+        types,donnees = mesure.get('type'),mesure.get('res')
+        if not isinstance(types,list) or not isinstance(donnees,dict):continue
+        dates=[]
+        for timestamp,valeurs in donnees.items():
+            try:instant=float(timestamp)
+            except (ValueError,TypeError):continue
+            if math.isfinite(instant) and isinstance(valeurs,list):dates.append((instant,valeurs))
+        if not dates:continue
+        timestamp,valeurs=max(dates,key=lambda item:item[0])
+        for index,type_mesure in enumerate(types):
+            cle=correspondances.get(str(type_mesure).lower())
+            if cle and index<len(valeurs):retenir(cle,valeurs[index],timestamp)
 
     return resultat
 
@@ -856,7 +857,7 @@ def extraire_mesures(element):
         ),
 
         "date_mesure": convertir_date(
-            mesures.get("time")
+            mesures.get("time_utc", mesures.get("time"))
         ),
 
         # Données brutes conservées
@@ -895,9 +896,15 @@ def recuperer_netatmo():
             "id": station.get("_id"),
             "nom": station.get("station_name"),
             "type": station.get("type"),
+            "distance_m": None,
             "mesures": extraire_mesures(station),
             "modules": []
         }
+
+        position=extraire_position_publique(station)
+        if position is not None:
+            station_resultat['distance_m']=calculer_distance_metres(
+                LATITUDE_APPROX,LONGITUDE_APPROX,*position)
 
         for module in station.get("modules", []):
 

@@ -24,3 +24,6 @@ os.replace(temporary, target)
 for old in sorted(folder.glob('collector-????-??-??.sqlite3'), reverse=True)[14:]:
     old.unlink()
 print('Verified backup:', target.name, counts, flush=True)
+
+from weather_backup import backup
+print("Weather backup:", backup(base)["status"], flush=True)

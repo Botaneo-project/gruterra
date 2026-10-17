@@ -25,7 +25,7 @@ class CacheMeteo:
             except (TypeError, ValueError):
                 pass
 
-    def appliquer(self, resultats):
+    def appliquer(self, resultats, *, archiver_pluie=False):
         for key, result in resultats.items():
             source = self.sources[key]
             source['error'] = result['error'] is not None
@@ -38,6 +38,14 @@ class CacheMeteo:
             ecrire_json(self.path, {'schema': 2,
                 **{'stations_'+key: val['data'] for key,val in self.sources.items()},
                 'dates': {key: val['date'] for key,val in self.sources.items()}})
+            if archiver_pluie:
+                from meteo_pluie import enregistrer
+                import sqlite3
+                try:
+                    enregistrer(self.path.with_name('netatmo_pluie.sqlite3'), resultats)
+                except (OSError, sqlite3.Error):
+                    import logging
+                    logging.getLogger(__name__).warning('Historique pluie local indisponible')
             return True
         except (OSError, RuntimeError):
             return False

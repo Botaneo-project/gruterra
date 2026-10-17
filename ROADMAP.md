@@ -15,18 +15,20 @@ Cette roadmap donne une vue courte de l’état du projet. Le fichier `TODO.md` 
 - Intégration Netatmo configurable localement.
 - Synchronisation Raspberry Pi optionnelle.
 - Audit local avant envoi GitHub.
-- Base technique pour distinguer export de données et sauvegarde complète privée.
+- Export de données et sauvegarde complète privée accessibles dans Base & synthèses ; restauration complète automatique encore à construire.
 - Assistant de mise à jour GitHub prudent : vérification, simulation, sauvegarde locale et application seulement après validation explicite.
 
 ## Priorités courtes
 
-- Valider l’auto-update en conditions réelles : bouton dans l’application, téléchargement contrôlé, sauvegarde, application et redémarrage.
-- Accélérer la traduction français / anglais sur les écrans visibles par un nouveau testeur.
+- Compléter le test utilisateur de l’update : passage 0.1.5-dev → 0.1.6-dev réussi ; PC de secours validé pour la version actuelle ; contrôler les corrections de redémarrage et de source après leur livraison dans la prochaine release.
+- Maintenir les traductions FR/EN des nouvelles fonctionnalités ; la version actuelle est jugée satisfaisante par l’utilisateur le 10/10/2026.
 - Stabiliser Discord : messages socle épinglés, salons FR/EN cohérents, salons privés admin/bot protégés et tutoriels à jour.
 - Rendre le mode démo plus agréable pour les nouveaux testeurs, avec captures publiques cohérentes.
 - Améliorer encore la lecture graphique des cycles d’arrosage et la prudence des analyses plante.
 - Clarifier l’installation Raspberry Pi et le sens des mesures rapatriées pendant que Gruterra était fermé.
-- Ajouter une interface de sauvegarde/restauration utilisateur complète, avec avertissement secrets et retour arrière.
+- Ajouter la restauration complète utilisateur avec sauvegarde de l’état existant ; les boutons d’export sont déjà présents.
+
+- Préparer le raccordement au futur site : clés locales privées déjà préparées sur main, partage désactivé et démo exclue ; contrat, aperçu et reçus restent à définir.
 
 ## Plus tard
 

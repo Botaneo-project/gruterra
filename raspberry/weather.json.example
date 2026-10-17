@@ -1,0 +1,10 @@
+{
+  "enabled": false,
+  "public_station_ids": [],
+  "public_bounds": {
+    "lat_ne": null,
+    "lat_sw": null,
+    "lon_ne": null,
+    "lon_sw": null
+  }
+}

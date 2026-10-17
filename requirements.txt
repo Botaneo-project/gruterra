@@ -1,2 +1,4 @@
 bleak
 requests
+cryptography==50.0.2
+tzdata

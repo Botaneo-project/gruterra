@@ -42,3 +42,37 @@ class TestPreparationUpdate(unittest.TestCase):
             with patch.object(updater,'telecharger_archive',side_effect=lambda url,dest:dest.write_bytes(b'corrupted')),patch.object(updater,'sauvegarder_programme') as backup:
                 with self.assertRaises(RuntimeError):updater.appliquer_mise_a_jour(diag,Path(d),preparer=True)
                 backup.assert_not_called()
+
+    def test_apply_never_overwrites_database_or_private_configuration(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root=Path(directory)/'installed';root.mkdir()
+            private_names=['_app/plantes.db','custom/observations.sqlite3','custom/observations.sqlite3-wal',
+                           'BOTANEO.LOCAL.JSON','_USER_BACKUPS/saved.json','_CONFIG/private.json']
+            for name in private_names:
+                target=root/name;target.parent.mkdir(parents=True,exist_ok=True)
+                target.write_bytes(b'private-original')
+            archive=Path(directory)/'package.zip'
+            with zipfile.ZipFile(archive,'w') as z:
+                z.writestr('gruterra/program.py','new-program')
+                for name in private_names:z.writestr('gruterra/'+name,'must-not-replace')
+            diag={'version':{'statut':'mise_a_jour_disponible','manifest_auto_update':True,
+                            'archive_url':'https://example.test/test.zip',
+                            'sha256':hashlib.sha256(archive.read_bytes()).hexdigest()}}
+            with patch.object(updater,'telecharger_archive',side_effect=lambda url,dest:dest.write_bytes(archive.read_bytes())):
+                result=updater.appliquer_mise_a_jour(diag,root,dry_run=False)
+            self.assertTrue(result['applique'])
+            self.assertEqual((root/'program.py').read_text(),'new-program')
+            for name in private_names:
+                with self.subTest(path=name):self.assertEqual((root/name).read_bytes(),b'private-original')
+
+    def test_backups_created_in_same_second_do_not_overwrite_each_other(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root=Path(directory);target=root/'program.py';target.write_text('first')
+            with patch.object(updater,'datetime') as clock:
+                clock.now.return_value.strftime.return_value='20261017-120000'
+                first=updater.sauvegarder_programme(root,[Path('program.py')])
+                target.write_text('second')
+                second=updater.sauvegarder_programme(root,[Path('program.py')])
+            self.assertNotEqual(first,second)
+            with zipfile.ZipFile(first) as z:self.assertEqual(z.read('program.py'),b'first')
+            with zipfile.ZipFile(second) as z:self.assertEqual(z.read('program.py'),b'second')

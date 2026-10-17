@@ -91,7 +91,7 @@ if errorlevel 1 (
 
 echo.
 echo [5/6] Verification finale de Gruterra
-"%VENV_PY%" -c "import tkinter, requests, bleak; print('Imports essentiels OK : tkinter, requests, bleak')"
+"%VENV_PY%" -c "import tkinter, requests, bleak; from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey; from zoneinfo import ZoneInfo; ZoneInfo('Europe/Paris'); print('Imports essentiels OK : tkinter, requests, bleak, cryptography (Ed25519), fuseau Europe/Paris')"
 if errorlevel 1 (
     echo.
     echo ERREUR - installation incomplete : un composant indispensable manque.
@@ -141,7 +141,7 @@ if not errorlevel 1 (
 if exist "%PYTHON_EXPECTED_EXE%" (
     "%PYTHON_EXPECTED_EXE%" -c "import sys; raise SystemExit(0)" >nul 2>nul
     if not errorlevel 1 (
-        set "PYTHON_CMD=%PYTHON_EXPECTED_EXE%"
+        set PYTHON_CMD="%PYTHON_EXPECTED_EXE%"
         exit /b 0
     )
 )
@@ -165,7 +165,7 @@ if errorlevel 1 (
     echo ERREUR - l'installation automatique de Python a echoue.
     exit /b 1
 )
-if exist "%PYTHON_EXPECTED_EXE%" set "PYTHON_CMD=%PYTHON_EXPECTED_EXE%"
+if exist "%PYTHON_EXPECTED_EXE%" set PYTHON_CMD="%PYTHON_EXPECTED_EXE%"
 echo Python installe. Gruterra reprend la preparation...
 echo.
 exit /b 0

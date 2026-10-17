@@ -373,11 +373,10 @@ def synchroniser_capteur_sync(capteur_id=None):
 
 
 async def synchroniser_capteur_prioritaire(capteur_id=None, reason="post_arrosage"):
-    """Mesure prioritaire demandée depuis le PC.
+    """Demande une mesure au collecteur propriétaire, sans repli BLE concurrent.
 
-    Si le Raspberry gère normalement le capteur, on lui demande d'abord une collecte.
-    Mais une action manuelle depuis le PC doit rester prioritaire : si le Pi ne fournit
-    pas tout de suite une nouvelle mesure, le PC tente aussi une lecture Bluetooth directe.
+    Le Raspberry peut répondre « en cours » ou « en attente » : cela ne
+    transfère pas la propriété du capteur au PC.
     """
     if capteur_id is None:
         capteur = next((c for c in database.get_capteurs() if c[8]), None)
@@ -390,45 +389,18 @@ async def synchroniser_capteur_prioritaire(capteur_id=None, reason="post_arrosag
     if not capteur[2]:
         return {'ok': False, 'message': _tr('sync_miflora_text_273')}
 
-    raspberry_resultat = None
-    doit_tenter_pc = True
     if raspberry_sync.owned(capteur[2]):
-        raspberry_resultat = await asyncio.to_thread(
-            raspberry_sync.synchronize,
-            None,
-            raspberry_sync.transport,
-            None,
-            True,
-            reason
+        resultat = await asyncio.to_thread(
+            raspberry_sync.synchronize, None, raspberry_sync.transport,
+            None, True, reason
         )
-        ajoutees = raspberry_resultat.get('added', 0) or 0
-        collect_accepted = raspberry_resultat.get('collect_accepted')
-        collect_status = raspberry_resultat.get('collect_status')
-        # Si le Pi a déjà fourni au moins une nouvelle mesure, inutile de relire en Bluetooth PC.
-        # Sinon, l'action manuelle PC prend la priorité et tente une mesure directe.
-        doit_tenter_pc = ajoutees <= 0 or collect_accepted is not True
-        if not doit_tenter_pc:
-            return {**raspberry_resultat, 'capteur_id': capteur[0], 'nom': capteur[1], 'collecteur': 'raspberry'}
+        # Même un échec Pi ne doit pas ouvrir une seconde connexion Bluetooth.
+        return {**resultat, 'capteur_id': capteur[0], 'nom': capteur[1],
+                'collecteur': 'raspberry'}
 
     resultat_pc = await synchroniser_capteur_direct_pc(capteur)
-    if raspberry_resultat is None:
-        return {**resultat_pc, 'capteur_id': capteur[0], 'nom': capteur[1], 'collecteur': 'pc'}
-
-    message_pi = raspberry_resultat.get('message', _tr('sync_miflora_text_417'))
-    message_pc = resultat_pc.get('message', _tr('sync_miflora_text_418'))
-    ok = bool(resultat_pc.get('ok')) or bool(raspberry_resultat.get('ok'))
-    collecteur = 'pc' if resultat_pc.get('ok') else 'raspberry'
-    retour = {**raspberry_resultat, **resultat_pc}
-    retour.update({
-        'ok': ok,
-        'capteur_id': capteur[0],
-        'nom': capteur[1],
-        'collecteur': collecteur,
-        'message': _tr('sync_miflora_text_431').format(v0=message_pi, v1=message_pc),
-        'raspberry_result': raspberry_resultat,
-        'pc_result': resultat_pc,
-    })
-    return retour
+    return {**resultat_pc, 'capteur_id': capteur[0], 'nom': capteur[1],
+            'collecteur': 'pc'}
 
 
 def synchroniser_capteur_prioritaire_sync(capteur_id=None, reason="post_arrosage"):

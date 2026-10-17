@@ -15,15 +15,15 @@ C:\Gruterra
 
 Éviter de lancer Gruterra directement depuis le ZIP non décompressé.
 
-## 2. Installer Python
+## 2. Préparer Python
 
-Installer Python pour Windows depuis :
+Commencez par `Installer_Gruterra.bat` : si Python manque, il tente d’installer Python 3.12.10 puis enchaîne sur les dépendances. Une installation manuelle est seulement un recours si cette étape est bloquée. Dans ce cas, utilisez :
 
 ```text
 https://www.python.org/downloads/windows/
 ```
 
-Version recommandée : Python 3.10 ou plus récent. Pendant l’installation, garder le lanceur `py` activé si possible et cocher l’ajout de Python au PATH quand l’installateur le propose. Tkinter doit être disponible, car l’interface graphique l’utilise.
+Version utilisée par l’installation automatique : Python 3.12.10. Pendant l’installation, garder le lanceur `py` activé si possible et cocher l’ajout de Python au PATH quand l’installateur le propose. Tkinter doit être disponible, car l’interface graphique l’utilise.
 
 ## 3. Installer les dépendances
 
@@ -33,9 +33,9 @@ Méthode simple, sans PowerShell : double-cliquer sur le fichier situé à la ra
 Installer_Gruterra.bat
 ```
 
-Ce script détecte `py` ou `python`, crée l'environnement local `.venv`, vérifie `pip` sans le mettre à jour systématiquement, installe les dépendances de `requirements.txt`, puis vérifie les imports essentiels : `tkinter`, `requests` et `bleak`.
+Ce script détecte `py` ou `python`, crée l'environnement local `.venv`, vérifie `pip` sans le mettre à jour systématiquement, installe les dépendances de `requirements.txt`, puis vérifie les imports essentiels : `tkinter`, `requests`, `bleak` le support Ed25519 de `cryptography` et le fuseau `Europe/Paris` fourni par `tzdata`.
 
-La fenêtre affiche des étapes lisibles (`[1/5]` à `[5/5]`) et reste ouverte en cas d'erreur pour permettre de copier le message. L'installation n'est considérée comme réussie qu'après cette vérification finale.
+La fenêtre affiche des étapes lisibles (`[1/6]` à `[6/6]`) et reste ouverte en cas d'erreur pour permettre de copier le message. L'installation n'est considérée comme réussie qu'après cette vérification finale.
 
 Méthode manuelle si besoin : ouvrir PowerShell dans le dossier décompressé, puis lancer :
 
@@ -48,7 +48,7 @@ Si Python est introuvable, le BAT tente d’installer automatiquement Python dep
 
 ## 4. Tester sans matériel
 
-Après une installation réussie, le premier test conseillé est le mode démo. Il ne demande ni capteur, ni Raspberry Pi, ni compte Netatmo :
+Après une installation réussie, double-cliquez sur `Lancer_Demo.bat`. Le premier test conseillé est le mode démo. Il ne demande ni capteur, ni Raspberry Pi, ni compte Netatmo :
 
 ```powershell
 .\.venv\Scripts\python.exe Lancer_Demo.py
@@ -58,7 +58,7 @@ Le mode démo n’utilise ni Mi Flora, ni Raspberry Pi, ni compte Netatmo.
 
 ## 5. Lancer l’application principale
 
-Quand vous voulez utiliser votre propre base locale :
+Quand vous voulez utiliser votre propre base locale, double-cliquez sur `Lancer_Gruterra.bat`. Équivalent en PowerShell :
 
 ```powershell
 .\.venv\Scripts\python.exe Lancer_Gruterra.py
@@ -68,7 +68,7 @@ Gruterra créera ou utilisera ses fichiers locaux selon la configuration disponi
 
 ## 6. Mise à jour
 
-Si une release officielle contient une archive et un SHA256 valide, Gruterra peut proposer la mise à jour au démarrage ou depuis `Paramètres` ou `À propos`.
+Si une release officielle contient une archive et un SHA256 valide, Gruterra peut proposer la mise à jour au démarrage ou depuis `Paramètres`. `À propos` renvoie vers les paramètres pour l’installation.
 
 Le système de mise à jour :
 
@@ -77,7 +77,9 @@ Le système de mise à jour :
 - sauvegarde les fichiers actuels ;
 - remplace les fichiers du programme ;
 - préserve les données personnelles ;
-- demande de relancer Gruterra après application.
+- le code actuel ferme Gruterra et attend la fin de l’ancienne instance avant de relancer le même mode ; ce redémarrage automatique reste à confirmer sur le PC de secours après la prochaine release.
+
+Si Gruterra est à jour, aucun remplacement n’est proposé. Le passage 0.1.5-dev → 0.1.6-dev a été testé ; les corrections ultérieures sur main ne font pas encore partie de cette archive.
 
 Les données locales à préserver ne doivent pas être envoyées sur GitHub :
 

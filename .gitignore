@@ -104,3 +104,9 @@ discord_bot/
 docs/images/gruterra-discord-*.png
 # Sauvegardes locales des clés privées de contribution
 gruterra-cle-privee*.json
+
+# Weather backup runtime module
+!_app/weather_backup_pc.py
+
+# Private home network access notes
+docs/ACCES_LOCAL_RASPBERRY.md

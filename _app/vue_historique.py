@@ -32,33 +32,9 @@ def vh_t(cle):
     return traduire_courant(cle)
 
 
-THEME_CLAIR = {
-    "BG": "#F5F7F5",
-    "CARD": "#FFFFFF",
-    "TEXT": "#26332A",
-    "SECONDARY": "#718078",
-    "BORDER": "#E1E7E2",
-    "GREEN": "#4F8A5B",
-    "BLUE": "#4677A8",
-    "ORANGE": "#D98C32",
-    "PURPLE": "#6B55A3",
-    "WATER": "#2C9FD6",
-    "GRID": "#E1E7E2"
-}
-
-THEME_SOMBRE = {
-    "BG": "#111816",
-    "CARD": "#1B2521",
-    "TEXT": "#E8F0EA",
-    "SECONDARY": "#9FB0A6",
-    "BORDER": "#30423A",
-    "GREEN": "#82C990",
-    "BLUE": "#8DBAF0",
-    "ORANGE": "#F0B35D",
-    "PURPLE": "#B8A7F4",
-    "WATER": "#65C7FF",
-    "GRID": "#30423A"
-}
+from ui_palette import history_palette
+THEME_CLAIR = history_palette(False)
+THEME_SOMBRE = history_palette(True)
 
 SERIES = {
     "Humidité": {"colonne": 3, "titre": "Humidité du sol", "unite": "%", "couleur": "GREEN", "minimum": 0, "maximum": 100},
@@ -661,6 +637,8 @@ def ouvrir_historique(parent, plante_id, action_synchroniser=None):
              bg=couleurs["BG"], fg=couleurs["SECONDARY"],
              font=("Segoe UI", 10)).pack(anchor="w", padx=24)
 
+    from light_window_ui import open_window as open_lighting_window
+    ttk.Button(fenetre, text=vh_t("lighting_title"), command=lambda: open_lighting_window(fenetre, plante_id)).pack(anchor="w", padx=24, pady=6)
     barre = tk.Frame(fenetre, bg=couleurs["BG"])
     barre.pack(fill="x", padx=24, pady=12)
 

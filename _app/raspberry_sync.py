@@ -210,6 +210,12 @@ def synchronize(config=None, sender=transport, db_path=None, collect_now=False, 
                             backup_message = retrieve(config, Path(database.DB_PATH).parent.parent / '_security_backups/raspberry_daily')
                         except Exception:
                             backup_message = _tr('raspberry_sync_text_210')
+                    if sender is transport and db_path is None:
+                        try:
+                            from lamp_sync import synchronize as sync_lamp
+                            backup_message += ' ' + sync_lamp(config)
+                        except Exception:
+                            backup_message += _tr('lamp_sync_retry')
                     attente_message = ''
                     if pending_remaining:
                         attente_message = _tr('raspberry_sync_text_213').format(v0=pending_remaining)

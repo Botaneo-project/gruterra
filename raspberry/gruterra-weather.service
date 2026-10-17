@@ -1,0 +1,13 @@
+[Unit]
+Description=Gruterra hourly Netatmo collection
+Wants=network-online.target
+After=network-online.target
+ConditionPathExists=%h/botaneo/config/weather-oauth.json
+
+[Service]
+Type=oneshot
+WorkingDirectory=%h/botaneo
+ExecStart=/usr/bin/python3 %h/botaneo/collector/weather_collect.py
+TimeoutStartSec=180
+UMask=0077
+NoNewPrivileges=true

@@ -58,37 +58,7 @@ BORDER = "#D6E2D8"
 BLUE = "#3F6F99"
 LIGHT_BLUE = "#E4EEF7"
 
-THEME_CLAIR = {
-    "BG": "#F2F6F1",
-    "CARD": "#FBFDF9",
-    "TEXT": "#223228",
-    "SECONDARY": "#68786E",
-    "GREEN": "#3F7F52",
-    "LIGHT_GREEN": "#E4F1E7",
-    "ORANGE": "#C77D25",
-    "LIGHT_ORANGE": "#FFF0D8",
-    "RED": "#B94A48",
-    "LIGHT_RED": "#F8E1E0",
-    "BORDER": "#D6E2D8",
-    "BLUE": "#3F6F99",
-    "LIGHT_BLUE": "#E4EEF7"
-}
-
-THEME_SOMBRE = {
-    "BG": "#111816",
-    "CARD": "#1B2521",
-    "TEXT": "#E8F0EA",
-    "SECONDARY": "#9FB0A6",
-    "GREEN": "#82C990",
-    "LIGHT_GREEN": "#203B2A",
-    "ORANGE": "#F0B35D",
-    "LIGHT_ORANGE": "#3B2C1C",
-    "RED": "#EF7979",
-    "LIGHT_RED": "#3A2224",
-    "BORDER": "#30423A",
-    "BLUE": "#8DBAF0",
-    "LIGHT_BLUE": "#203044"
-}
+from ui_palette import THEME_CLAIR, THEME_SOMBRE
 
 theme_sombre_actif = charger_theme_sombre()
 langue_interface = normaliser_langue(charger_langue_interface())
@@ -553,7 +523,7 @@ def lancer_sync_auto():
 
 def appliquer_resultats_meteo(resultats):
     global netatmo_data, netatmo_public_data
-    sauvegarde_ok = meteo_etat.appliquer(resultats)
+    sauvegarde_ok = meteo_etat.appliquer(resultats, archiver_pluie=False)
     netatmo_data = meteo_etat.sources['privees']['data']
     netatmo_public_data = meteo_etat.sources['publiques']['data']
     actualiser_statut_meteo()
@@ -4314,51 +4284,9 @@ def source_station_netatmo(station, privee=False):
 
 
 def choisir_mesure_netatmo(cle, unite=""):
-    candidats = []
-
-    for station in netatmo_public_data:
-        mesures = station.get("mesures", {})
-        valeur = mesures.get(cle)
-        if valeur is None:
-            continue
-        candidats.append({
-            "valeur": valeur,
-            "texte": formater_nombre(valeur, unite),
-            "source": source_station_netatmo(station),
-            "date": mesures.get("date_mesure"),
-            "favorite": bool(station.get("favorite")),
-            "distance": station.get("distance_m") if station.get("distance_m") is not None else 999999,
-        })
-
-    for element in netatmo_data:
-        mesures = element.get("mesures", {})
-        valeur = mesures.get(cle)
-        if valeur is None:
-            continue
-        candidats.append({
-            "valeur": valeur,
-            "texte": formater_nombre(valeur, unite),
-            "source": source_station_netatmo(element, privee=True),
-            "date": mesures.get("date_mesure"),
-            "favorite": False,
-            "distance": 999998,
-        })
-
-    if not candidats:
-        return {
-            "texte": t('interface_text_5146'),
-            "source": t('interface_text_4345'),
-            "etat": "absent",
-        }
-
-    candidats.sort(key=lambda c: (not c["favorite"], c["distance"]))
-    choix = candidats[0]
-    return {
-        "texte": choix["texte"],
-        "source": choix["source"],
-        "date": choix.get("date"),
-        "etat": "ok",
-    }
+    from meteo_synthese import choisir_mesure
+    return choisir_mesure(cle, netatmo_data, netatmo_public_data,
+                          nom_station_netatmo, formater_nombre, unite)
 
 
 def creer_tuile_synthese_netatmo(parent, titre, info, couleur_fond, couleur):
@@ -4391,13 +4319,15 @@ def creer_tuile_synthese_netatmo(parent, titre, info, couleur_fond, couleur):
     parent.bind("<Configure>", disposer)
     disposer()
 
-    tk.Label(
-        bloc,
-        text=titre,
-        font=("Segoe UI Emoji", 9, "bold"),
-        fg=couleur,
-        bg=couleur_fond
-    ).pack(pady=(7, 0))
+    from meteo_synthese import dessiner_picto
+    entete=tk.Frame(bloc,bg=couleur_fond)
+    entete.pack(pady=(7,0))
+    dessiner_picto(entete,info['cle'],couleur,couleur_fond)
+    titre_sans_emoji=titre
+    while titre_sans_emoji and not titre_sans_emoji[0].isalnum():
+        titre_sans_emoji=titre_sans_emoji[1:]
+    tk.Label(entete,text=titre_sans_emoji,font=('Segoe UI',10,'bold'),
+             fg=couleur,bg=couleur_fond).pack(side='left')
 
     tk.Label(
         bloc,
@@ -4409,23 +4339,18 @@ def creer_tuile_synthese_netatmo(parent, titre, info, couleur_fond, couleur):
         justify="center"
     ).pack(pady=(2, 0))
 
-    tk.Label(
-        bloc,
-        text=t("weather_measurement_source").format(source=info["source"]),
-        font=("Segoe UI", 7),
-        fg=SECONDARY,
-        bg=couleur_fond,
-        wraplength=145,
-        justify="center"
-    ).pack(pady=(0, 3))
-
-    if info["etat"] == "ok":
-        tk.Label(
-            bloc,
-            text=t("weather_measurement_time").format(date=formater_date(info.get("date"))),
-            font=("Segoe UI", 8), fg=SECONDARY, bg=couleur_fond,
-            wraplength=180, justify="center"
-        ).pack(pady=(0, 8))
+    if info.get('source'):
+        tk.Label(bloc,text=t('weather_measurement_source').format(source=info['source']),
+                 font=('Segoe UI',8),fg=SECONDARY,bg=couleur_fond,
+                 wraplength=185,justify='center').pack(pady=(0,5))
+    if info.get('explication'):
+        tk.Label(bloc,text=info['explication'],font=('Segoe UI',8),fg=SECONDARY,
+                 bg=couleur_fond,wraplength=185,justify='center').pack(pady=(0,8))
+    # Un horaire absent n'est pas un relevé « jamais ».
+    if info['etat']=='ok' and info.get('date'):
+        tk.Label(bloc,text=t('weather_measurement_time').format(date=formater_date(info['date'])),
+                 font=('Segoe UI',8),fg=SECONDARY,bg=couleur_fond,
+                 wraplength=185,justify='center').pack(pady=(0,8))
 
 
 def afficher_synthese_netatmo(parent):
@@ -4526,6 +4451,18 @@ def afficher_synthese_netatmo(parent):
         CARD,
         TEXT
     )
+
+    from meteo_pluie import derniere_pluie
+    import sqlite3
+    try:
+        dernier = derniere_pluie(Path(__file__).resolve().parent / 'data' / 'netatmo_pluie.sqlite3')
+    except sqlite3.Error:
+        dernier = None
+    texte_pluie = t('weather_rain_history_empty')
+    if dernier:
+        date, mm, source, periode = dernier
+        texte_pluie = t('weather_rain_history_last').format(date=date.replace('T', ' '), mm=mm, source=source, periode='1 h' if periode == 'pluie_1h' else '24 h')
+    tk.Label(bloc, text=texte_pluie, bg=LIGHT_GREEN, fg=SECONDARY, anchor='w', justify='left', wraplength=850).pack(fill='x', padx=12, pady=(0,8))
 
 
 def creer_titre_netatmo_liste(parent, titre, sous_titre=None):
@@ -4938,6 +4875,9 @@ def synchroniser_arriere_plan():
     # --------------------------------------------------------
     # Netatmo : lectures et dates independantes.
     root.after(0, afficher_etape_netatmo, t("sync_netatmo_reading"), 55)
+    import weather_sync
+    if os.environ.get('BOTANEO_DEMO') != '1':
+        resultat_miflora['weather_result'] = weather_sync.synchronize()
     resultats_meteo = recuperer_sources(netatmo)
     root.after(0, afficher_etape_netatmo, t("sync_forecast_reading"), 70)
     recuperer_prevision_2h_avec_cache()
@@ -5072,6 +5012,9 @@ def synchronisation_terminee(resultat_miflora, resultats_meteo):
     )
 
     lignes_detail = [resultat_miflora.get("message", t("sync_miflora_default_done"))]
+    import weather_sync
+    weather_message=weather_sync.result_message(resultat_miflora.get('weather_result',{'status':'disabled'}))
+    if weather_message:lignes_detail.append(weather_message)
     lignes_detail.append(t("sync_display_refreshed"))
     acquisition_miflora = resume_acquisition_miflora(resultat_miflora)
     if acquisition_miflora:
@@ -6083,6 +6026,17 @@ def ouvrir_parametres():
         fg=TEXT,
         bg=CARD
     ).pack(anchor="w", padx=20, pady=(18, 8))
+
+    import meteo_nappes
+    import home_assistant_ui
+    tk.Button(contenu,text=t('ha_settings_title'),command=lambda:home_assistant_ui.open_window(fenetre,{key:globals()[key] for key in meteo_nappes.PALETTE}),bg=LIGHT_BLUE,fg=BLUE).pack(anchor='w',padx=20,pady=(0,8))
+    import arome_credentials_ui
+    tk.Button(contenu,text=t('arome_auth_title'),command=lambda:arome_credentials_ui.open_window(fenetre,{key:globals()[key] for key in meteo_nappes.PALETTE}),bg=LIGHT_BLUE,fg=BLUE).pack(anchor='w',padx=20,pady=(0,8))
+    import pluie_meteofrance
+    tk.Button(contenu,text=t('mf_rain_title'),command=lambda:pluie_meteofrance.open_window(fenetre,{key:globals()[key] for key in meteo_nappes.PALETTE}),bg=LIGHT_BLUE,fg=BLUE).pack(anchor='w',padx=20,pady=(0,8))
+    import weather_sync
+    tk.Button(contenu,text=t('weather_pi_preferences'),command=lambda:weather_sync.preferences(fenetre,{key:globals()[key] for key in meteo_nappes.PALETTE}),bg=LIGHT_BLUE,fg=BLUE).pack(anchor='w',padx=20,pady=(0,8))
+    tk.Button(contenu, text=t('groundwater_settings'), command=lambda:meteo_nappes.ouvrir(fenetre,{key:globals()[key] for key in meteo_nappes.PALETTE}), bg=LIGHT_BLUE, fg=BLUE).pack(anchor='w', padx=20, pady=(0,8))
 
     affichage_bloc = tk.Frame(contenu, bg=LIGHT_GREEN, highlightbackground=BORDER, highlightthickness=1)
     affichage_bloc.pack(fill="x", padx=20, pady=(0, 12))
@@ -7880,6 +7834,8 @@ def actualiser_interface():
     )
     afficher_centre_alertes(content_frame, plantes)
     afficher_synthese_netatmo(content_frame)
+    import meteo_nappes
+    meteo_nappes.carte(content_frame,{key:globals()[key] for key in meteo_nappes.PALETTE})
 
     afficher_titre_section(
         content_frame,

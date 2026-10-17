@@ -1,0 +1,11 @@
+{
+  "protocol": "gruterra-weather-sync",
+  "protocol_version": 1,
+  "device_id": "pi-fictif",
+  "rows": [
+    {
+      "observation_id": "w1_18438dd9db42061bb5c8c81941e59de479451ae7ca71663d98460747f07a95a9",
+      "revision_hash": "4e4059ce1b1c9db8fc56cc6100840cb6a5f3e85fe6f4b9b7c560603bb94c1c7b"
+    }
+  ]
+}

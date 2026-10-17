@@ -1,0 +1,9 @@
+{
+  "schema_version": 1,
+  "enabled": false,
+  "base_url": "",
+  "access_token": "",
+  "instance_id": "",
+  "max_state_age_seconds": 7200,
+  "entities": []
+}

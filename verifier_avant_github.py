@@ -1,5 +1,8 @@
 from __future__ import annotations
 
+import ast
+import hashlib
+import json
 import fnmatch
 import os
 import re
@@ -9,6 +12,7 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent
+from publication_value_scanner import scan as scanner_valeurs
 
 
 def trouver_git() -> str:
@@ -73,30 +77,25 @@ SENSITIVE_FILE_PATTERNS = [
 
 TEXT_EXTENSIONS = {
     ".py", ".md", ".txt", ".json", ".toml", ".yml", ".yaml",
-    ".ps1", ".bat", ".cmd", ".ini", ".cfg", ".gitignore", ".svg"
+    ".ps1", ".bat", ".cmd", ".ini", ".cfg", ".gitignore", ".svg", ".example", ".sh", ".service", ".timer"
 }
 
-SECRET_PATTERNS = [
-    re.compile(r"access[_-]?token", re.IGNORECASE),
-    re.compile(r"refresh[_-]?token", re.IGNORECASE),
-    re.compile(r"client[_-]?secret", re.IGNORECASE),
-    re.compile(r"api[_-]?key", re.IGNORECASE),
-    re.compile(r"authorization\s*[:=]", re.IGNORECASE),
-    re.compile(r"bearer\s+[A-Za-z0-9._\-]{20,}", re.IGNORECASE),
-    re.compile(r"password\s*[:=]", re.IGNORECASE),
-]
+def exception_fictive_valide(path, contenu):
+    """Reviewed fictional data only; any file edit invalidates the exception."""
+    try:
+        approved=json.loads((ROOT/"publication_fixtures_reviewed.json").read_text(encoding="utf-8"))
+        expected=approved.get(path)
+        return isinstance(expected,str) and hashlib.sha256(contenu.encode("utf-8")).hexdigest()==expected
+    except (OSError,ValueError,TypeError):
+        return False
 
-ALLOWLIST_CONTENT = {
-    "README.md",
-    "GITHUB_PREPARATION.md",
-    "SECURITE_CONFIGURATION.md",
-    "botaneo.local.example.json",
-    "netatmo_config.example.json",
-    "verifier_avant_github.py",
-    "_app/SECURITE_CONFIGURATION.md",
-    "_app/capteurs/netatmo.py",
-    "GUIDE_NETATMO.md",
-}
+
+def problemes_valeurs(path, contenu):
+    reasons=scanner_valeurs(contenu,Path(path).suffix.lower())
+    if reasons=={"filled_secret_field"} and exception_fictive_valide(path,contenu):
+        return set()
+    return reasons
+
 
 ALLOWLIST_PATHS = {
     "docs/images/netatmo_tokens_schema.svg",
@@ -147,6 +146,20 @@ def est_sensible(path: str) -> bool:
     name = Path(p).name
     for pattern in SENSITIVE_FILE_PATTERNS:
         if fnmatch.fnmatch(name, pattern.lower()):
+            # Credential-handling source code is not a credential file. This
+            # requires parseable Python or a JSON template, and a value scan.
+            if pattern in {"*token*", "*secret*", "*password*", "*credential*", "*auth*"}:
+                content=lire_fichier_texte(path)
+                if content is not None:
+                    suffix=Path(path).suffix.lower()
+                    if suffix==".py" and not problemes_valeurs(path,content):
+                        return False
+                    if name.endswith(".json.example"):
+                        try:json.loads(content)
+                        except ValueError:pass
+                        else:
+                            # Templates must be empty, never use fixture exceptions.
+                            if not scanner_valeurs(content,suffix):return False
             return True
     return False
 
@@ -179,8 +192,6 @@ def lire_fichier_texte(path: str) -> str | None:
     if local.suffix.lower() not in TEXT_EXTENSIONS and local.name != ".gitignore":
         return None
     try:
-        if local.stat().st_size > 500_000:
-            return None
         return local.read_text(encoding="utf-8", errors="replace")
     except OSError:
         return None
@@ -234,37 +245,24 @@ def verifier_fichiers_sensibles_non_ignores(status: list[tuple[str, str]]) -> li
 
 
 def verifier_contenu_secret(tracked: list[str]) -> list[str]:
-    problemes = []
+    problemes=[]
     for path in tracked:
-        if path in ALLOWLIST_CONTENT:
-            continue
-        contenu = lire_fichier_texte(path)
-        if contenu is None:
-            continue
-        for regex in SECRET_PATTERNS:
-            if regex.search(contenu):
-                problemes.append(f"{path} : motif suspect `{regex.pattern}`")
-                break
+        contenu=lire_fichier_texte(path)
+        if contenu is None:continue
+        reasons=problemes_valeurs(path,contenu)
+        if reasons:
+            problemes.append(path+" : "+", ".join(sorted(reasons))+" (contenu masqué)")
     return problemes
 
 
 def verifier_python() -> list[str]:
-    fichiers = [p for p in fichiers_suivis() if p.endswith(".py")]
-    if not fichiers:
-        return []
-    cmd = [sys.executable, "-m", "py_compile", *fichiers]
-    result = subprocess.run(
-        cmd,
-        cwd=ROOT,
-        text=True,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-        encoding="utf-8",
-        errors="replace",
-    )
-    if result.returncode == 0:
-        return []
-    return [result.stderr.strip() or result.stdout.strip() or "Erreur py_compile inconnue"]
+    errors=[]
+    for path in fichiers_suivis():
+        if not path.endswith(".py"):continue
+        try:compile((ROOT/path).read_text(encoding="utf-8-sig"),path,"exec")
+        except (OSError,UnicodeError,SyntaxError):
+            errors.append(path+" : source Python invalide (contenu masqué)")
+    return errors
 
 
 def afficher_liste(titre: str, lignes: list[str]) -> None:

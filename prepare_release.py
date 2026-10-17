@@ -7,6 +7,7 @@ lors de la publication d'une release GitHub.
 from __future__ import annotations
 
 import argparse
+import ast
 import hashlib
 import json
 import subprocess
@@ -65,10 +66,12 @@ def lire_version() -> str:
 
 
 def lister_fichiers_suivis() -> list[Path]:
-    sortie = lancer_git(["ls-files"])
+    sortie = lancer_git(["ls-files", "-z"])
     fichiers = []
-    for ligne in sortie.splitlines():
-        relatif = Path(ligne.strip())
+    for ligne in sortie.split("\0"):
+        if not ligne:
+            continue
+        relatif = Path(ligne)
         if not relatif.as_posix():
             continue
         if relatif.as_posix() in FICHIERS_EXCLUS:
@@ -89,7 +92,78 @@ def calculer_sha256(chemin: Path) -> str:
     return empreinte.hexdigest()
 
 
+def verifier_liste_archive(fichiers: list[Path]) -> None:
+    """Fail before ZIP creation on private paths or missing local Python imports."""
+    supplied = set()
+    errors = []
+    forbidden_dirs = {'_config', '_security_backups', '_user_backups', '_historique',
+                      '.git', '__pycache__', '_dist', 'discord_bot'}
+    private_suffixes = ('.db', '.db-wal', '.db-shm', '.sqlite', '.sqlite3', '.sqlite3-wal',
+                        '.sqlite3-shm', '.local.json', '.bak', '.tmp', '.lock', '.log', '.zip', '.7z', '.rar')
+    for item in fichiers:
+        relative = Path(item)
+        name = relative.as_posix()
+        if relative.is_absolute() or '..' in relative.parts or not relative.parts:
+            errors.append('chemin non relatif autorisé')
+            continue
+        lower = name.lower()
+        parts = tuple(part.lower() for part in relative.parts)
+        target = (RACINE / relative).resolve()
+        if not target.is_relative_to(RACINE.resolve()):
+            errors.append('chemin sortant du dépôt')
+            continue
+        if (any(part in forbidden_dirs for part in parts) or parts[:2] == ('_app', 'data')
+                or lower.endswith(private_suffixes) or 'archive_conservee_' in lower
+                or relative.name == '.env' or relative.name.startswith('.env.') and relative.name != '.env.example'):
+            errors.append('chemin privé ou temporaire refusé : '+name)
+            continue
+        if not target.is_file():
+            errors.append('fichier absent : '+name)
+            continue
+        supplied.add(name)
+    # Match project-local imports only; installed dependencies are checked by the installer.
+    def local_module(module, origin):
+        parts = module.split('.')
+        for base in ((RACINE/origin).parent, RACINE/'_app', RACINE):
+            candidate = base.joinpath(*parts)
+            for source in (candidate.with_suffix('.py'), candidate/'__init__.py'):
+                if source.is_file():
+                    return source.relative_to(RACINE).as_posix()
+        return None
+    for name in sorted(supplied):
+        if not name.endswith('.py'):
+            continue
+        try:
+            tree = ast.parse((RACINE/name).read_text(encoding='utf-8-sig'))
+        except (OSError, SyntaxError, UnicodeError):
+            errors.append('source Python illisible : '+name)
+            continue
+        # This helper is launched by subprocess, so import scanning cannot see it.
+        if name == '_app/interface.py' and any(
+                isinstance(node, ast.Constant) and node.value == 'restart_gruterra.py'
+                for node in ast.walk(tree)):
+            helper = '_app/restart_gruterra.py'
+            if helper not in supplied:
+                errors.append('assistant de relance absent : '+helper+' (requis par '+name+')')
+        modules = set()
+        for node in ast.walk(tree):
+            if isinstance(node, ast.Import):
+                modules.update(alias.name for alias in node.names)
+            elif isinstance(node, ast.ImportFrom) and node.level == 0 and node.module:
+                modules.add(node.module)
+                modules.update(node.module+'.'+alias.name for alias in node.names if alias.name != '*')
+        for module in modules:
+            dependency = local_module(module, name)
+            if dependency and dependency not in supplied:
+                errors.append('module local absent : '+dependency+' (requis par '+name+')')
+    if errors:
+        unique = sorted(set(errors))
+        raise RuntimeError('Archive refusée avant écriture :\n'+'\n'.join(unique[:60])
+                           + ('\nAutres erreurs non affichées.' if len(unique)>60 else ''))
+
+
 def construire_archive(version: str, fichiers: list[Path]) -> Path:
+    verifier_liste_archive(fichiers)
     DIST_DIR.mkdir(exist_ok=True)
     nom = f"gruterra-{version}.zip"
     archive = DIST_DIR / nom
@@ -251,7 +325,16 @@ def valider_sortie_release(version: str, archive: Path, sha256: str, manifest_re
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="Prépare une archive officielle Gruterra et son SHA256.")
     parser.add_argument("--allow-dirty", action="store_true", help="autorise une archive malgré des changements Git non validés")
+    parser.add_argument("--check-files", action="store_true", help="vérifie les fichiers prévus sans créer d’archive ni changer le manifeste")
     args = parser.parse_args(argv)
+
+    if args.check_files:
+        fichiers = lister_fichiers_suivis()
+        if not fichiers:
+            raise RuntimeError("Aucun fichier suivi par Git à vérifier.")
+        verifier_liste_archive(fichiers)
+        print(f"Contrôle de contenu : OK ({len(fichiers)} fichiers), aucune archive créée.")
+        return 0
 
     if not args.allow_dirty:
         verifier_arbre_propre()

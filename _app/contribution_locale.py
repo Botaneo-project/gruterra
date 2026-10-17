@@ -44,6 +44,24 @@ def preparer_identite():
     return identity
 
 
+
+def restaurer_identite(data):
+    """Restaure le couple complet sans remplacer une identité ni activer le partage."""
+    if mode_demo():
+        raise ValueError(t('contribution_demo_blocked'))
+    identity = valider_identite(data)
+    state = lire_etat()
+    if 'contributor_id' in state or 'management_key' in state:
+        current = valider_identite(state)
+        if current != identity:
+            raise ValueError(t('contribution_existing_key'))
+    state.update(identity)
+    state['sharing_enabled'] = False
+    chemin().parent.mkdir(parents=True, exist_ok=True)
+    ecrire_json(chemin(), state)
+    return identity
+
+
 def marquer_information_lue():
     if mode_demo():
         return
@@ -56,7 +74,7 @@ def marquer_information_lue():
 
 def ouvrir_information(parent):
     import tkinter as tk
-    from tkinter import ttk, filedialog, messagebox
+    from tkinter import ttk, filedialog, messagebox, simpledialog
     window = tk.Toplevel(parent)
     window.title(t('contribution_title'))
     window.geometry('700x460')
@@ -86,9 +104,16 @@ def ouvrir_information(parent):
                 return
             if Path(destination).exists():
                 raise ValueError(t('contribution_no_overwrite'))
-            identity = preparer_identite()
-            with Path(destination).open('x', encoding='utf-8') as stream:
-                json.dump(identity, stream, ensure_ascii=False, indent=2)
+            from contribution_identite import sauvegarder
+            passphrase = simpledialog.askstring(t('contribution_title'), t('contribution_password_prompt'), show='*', parent=window)
+            if passphrase is None:
+                return
+            confirmation = simpledialog.askstring(t('contribution_title'), t('contribution_password_confirm'), show='*', parent=window)
+            if confirmation is None:
+                return
+            if passphrase != confirmation:
+                raise ValueError(t('contribution_password_mismatch'))
+            sauvegarder(destination, passphrase)
             status.set(t('contribution_key_saved'))
         except (OSError, ValueError, RuntimeError) as error:
             messagebox.showerror(t('contribution_title'), str(error), parent=window)
@@ -98,14 +123,15 @@ def ouvrir_information(parent):
             source = filedialog.askopenfilename(parent=window,filetypes=[('JSON','*.json')])
             if not source:
                 return
-            identity = valider_identite(lire_json(source))
-            state = lire_etat()
-            if 'management_key' in state and state['management_key'] != identity['management_key']:
-                raise ValueError(t('contribution_existing_key'))
-            state.update(identity)
-            state['sharing_enabled'] = False
-            chemin().parent.mkdir(parents=True, exist_ok=True)
-            ecrire_json(chemin(), state)
+            data = lire_json(source)
+            if data.get('identity_version') == 2:
+                from contribution_identite import restaurer_sauvegarde
+                passphrase = simpledialog.askstring(t('contribution_title'), t('contribution_password_restore'), show='*', parent=window)
+                if passphrase is None:
+                    return
+                restaurer_sauvegarde(data, passphrase)
+            else:
+                restaurer_identite(data)
             status.set(t('contribution_key_restored'))
         except (OSError, ValueError, RuntimeError) as error:
             messagebox.showerror(t('contribution_title'), str(error), parent=window)
@@ -124,6 +150,9 @@ def ouvrir_information(parent):
         ttk.Button(controls, text=t('contribution_backup_key'), command=backup_key).pack(side='left')
         ttk.Button(controls, text=t('contribution_restore_key'), command=restore_key).pack(side='left', padx=8)
     ttk.Button(controls, text=t('close'), command=close).pack(side='right')
+    if not mode_demo():
+        from contribution_suivi import ouvrir_suivi
+        ttk.Button(footer, text=t('contribution_tracking_title'), command=lambda: ouvrir_suivi(window)).pack(anchor='w', pady=(8, 0))
     window.protocol('WM_DELETE_WINDOW', close)
     return window
 

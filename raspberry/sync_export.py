@@ -86,6 +86,34 @@ def acknowledge(db, device, request):
 if __name__ == '__main__':
     base = Path.home() / 'botaneo'
     device = json.loads((base/'config/collector.json').read_text())['device_id']
+    if sys.argv[1:] in (['lamp_get'], ['lamp_set']):
+        from light_schedule import load,save,locked,validate,profile
+        payload=sys.stdin.read(524289)
+        if len(payload)>524288:raise ValueError('Request too large')
+        request=json.loads(payload)
+        sensor=request['sensor']
+        with sqlite3.connect((base/'data/collector.sqlite3').as_uri()+'?mode=ro',uri=True) as check:
+            if not check.execute('SELECT 1 FROM sensor_status WHERE sensor_id=?',(sensor,)).fetchone():raise ValueError('Unknown sensor')
+        path=base/'config/light-schedules.json'
+        with locked(path):
+            current=load(path,sensor)
+            ok=True
+            if sys.argv[1]=='lamp_set':
+                value=profile(request['value'])
+                ok=current==request['expected']
+                if ok:current=save(path,sensor,value['start'],value['end'],_locked=True,_profile=value)
+            print(json.dumps({'device_id':device,'value':current,'ok':ok,'schedule_version':2}))
+        raise SystemExit(0)
+    if sys.argv[1:] in (['weather_export'], ['weather_ack']):
+        import os
+        os.umask(0o077)
+        from weather_outbox import command
+        try:
+            command(base, device, sys.argv[1], sys.stdin.buffer, sys.stdout.buffer)
+        except Exception:
+            print('weather_operation_failed', file=sys.stderr)
+            raise SystemExit(1)
+        raise SystemExit(0)
     db = sqlite3.connect((base/'data/collector.sqlite3').as_uri()+'?mode=rw', uri=True, timeout=20)
     db.row_factory = sqlite3.Row
     db.execute('PRAGMA synchronous=FULL')

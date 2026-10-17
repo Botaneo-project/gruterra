@@ -38,9 +38,9 @@ Copiez ce modèle vers `_config/netatmo_config.json`, puis remplacez les valeurs
 ```json
 {
   "client_id": "votre_client_id_netatmo",
-  "client_secret": "votre_client_secret_netatmo",
-  "access_token": "votre_access_token_netatmo",
-  "refresh_token": "votre_refresh_token_netatmo"
+  "client_secret": "",
+  "access_token": "",
+  "refresh_token": ""
 }
 ```
 

@@ -2,12 +2,26 @@
 
 Ce fichier sert à garder une trace claire des idées et des prochaines étapes. Les éléments déjà en place sont conservés ici uniquement pour savoir où on en est, mais ils ne doivent plus être relancés sauf bug ou amélioration ciblée.
 
+## Règle permanente — démo à maintenir avec chaque fonctionnalité
+
+Toute nouvelle fonctionnalité ou modification visible inclut la vérification et, si nécessaire, l’actualisation de la démo dans le même lot : exemples fictifs adaptés, isolement des données/configurations, FR/EN et thèmes si concernés, aucune collecte réelle ni contribution. Voir `CONTRIBUTING.md`. Ne pas considérer le lot terminé si cette vérification manque ; documenter toute limite.
+
+## Priorités consolidées — 10/10/2026
+
+La release publiée reste **0.1.6-dev**. Les corrections présentes sur main depuis cette publication seront livrées ensemble dans une prochaine release ; aucun nouvel envoi Reddit ni annonce Discord effectué par cette relecture. Un seul TODO actif à la racine ; ROADMAP en est la vue publique courte. Les sections anciennes ci-dessous gardent la trace du travail et ne constituent pas une nouvelle liste prioritaire.
+
+1. PC de secours et traductions : utilisation actuelle validée par l’utilisateur le 10/10/2026. Après la prochaine release, contrôler seulement les changements livrés depuis la 0.1.6-dev (redémarrage automatique et diagnostic de source).
+2. Documentation et Discord : guides locaux remis à jour ; recharger le bot puis actualiser les tutos existants, sans reset, et contrôler avec une vue membre normale.
+3. Relecture visuelle FR/EN, captures publiques et météo sur données réelles.
+4. Restauration complète utilisateur : export déjà disponible ; parcours de restauration et chiffrement des sauvegardes privées restent à préparer.
+5. Contributions au futur site : identité/clé locale préparées et testées, partage désactivé ; contrat, aperçu, consentement d’envoi, reçus et retrait restent à raccorder.
+
 ## Release 0.1.6-dev — 2026-10-09
 
 - [x] Regrouper les traductions, drapeaux, paramètres défilants, historique, palette claire et parcours update dans une version de test.
 - [x] Release v0.1.6-dev publiée avec archive officielle et SHA-256. Passage réel dans un dossier isolé avec l’updater 0.1.5 validé : données démo et préférences conservées.
 - [x] Test fonctionnel utilisateur 0.1.5-dev → 0.1.6-dev réussi : refus de réinstallation identique, détection de la nouvelle version, sauvegarde créée, 115 fichiers installés, relancement OK, un seul bouton et message « Gruterra est à jour ».
-- [ ] Conservation des données/préférences sur le PC de secours : confirmation utilisateur distincte à conserver ; déjà vérifiée dans le test isolé.
+- [x] PC de secours : validation globale de la version actuelle par l’utilisateur le 10/10/2026 ; aucun problème restant signalé. Conservation des données/préférences également vérifiée dans le test isolé.
 - [x] Redémarrage automatique après succès : auxiliaire attendant la fin réelle de l’ancien processus avant de lancer une seule instance dans le même mode. Test Windows avec verrou réel réussi.
 - [ ] Valider ce comportement côté utilisateur après installation de la prochaine release.
 - [x] Source explicite : GitHub, local seul ou repli local en cas d’échec réseau. Pas de confirmation « à jour » en ligne en cas de repli, ni d’installation autorisée depuis un repli local. Tests FR/EN et priorité à GitHub sur un ancien manifeste 0.1.4-dev.
@@ -41,7 +55,7 @@ Ce fichier sert à garder une trace claire des idées et des prochaines étapes.
 - [x] Catalogue JSON FR/EN commun ; les textes des nouvelles fonctionnalités doivent être ajoutés dans les deux langues avec les mêmes paramètres de formatage.
 - [x] Identifiants métier préservés : séries de mesures, filtres, état de santé et événements balcon continuent de fonctionner indépendamment de la langue affichée.
 - [x] Contrôles automatisés des clés et paramètres FR/EN, calculs des cycles inchangés, sélection des séries et fiches botaniques ; lancement isolé de la démo FR puis EN, paramètres, À propos, historique et filtres.
-- [ ] Dernière relecture visuelle utilisateur sur le PC de secours : longueur des textes anglais, fenêtres étroites et messages provenant du Raspberry réel. Les observations personnelles, noms de plantes et anciennes notes de version restent dans leur langue d'origine.
+- [x] Traductions de la version actuelle jugées satisfaisantes par l’utilisateur le 10/10/2026. Validation d’usage, sans prétendre à une relecture linguistique exhaustive ni au contrôle de tous les messages Raspberry. Les observations personnelles et anciennes notes restent dans leur langue d’origine.
 
 ## État des lieux urgent — 2026-10-05
 
@@ -50,11 +64,11 @@ Cette section sert de point d'entrée rapide après les grosses modifications r�
 ### À vérifier en priorité
 
 - [x] Auto-update : test fonctionnel principal 0.1.5-dev → 0.1.6-dev réussi côté utilisateur. Fermeture/redémarrage automatiques et source du manifeste restent à vérifier (section release).
-- [ ] Traduction : parcourir le mode démo en français puis en anglais et noter les écrans encore partiellement traduits. Priorité aux boutons, messages d'erreur, installation, update, historique et synchronisation.
+- [x] Traduction : validation d’usage utilisateur le 10/10/2026 ; corriger les nouveaux écarts s’ils sont signalés.
 - [ ] Discord : vérifier que les messages socle et tutoriels sont épinglés, qu'ils ne sont pas supprimés par les commandes de clean, que `#bot-commands`, `#admin-notes` et `#dev-follow-up` restent privés, et que les salons FR/EN ont chacun leur message adapté.
 - [ ] Raspberry : vérifier sur un cycle réel que les mesures annoncées comme rapatriées correspondent bien à des mesures nouvelles pour le PC, éventuellement collectées pendant que Gruterra était fermé.
 - [ ] Démo publique : lancer `Lancer_Demo.py`, vérifier que la première impression est propre, que les captures publiques correspondent encore à l'interface actuelle et que le README ne promet rien qui n'est pas visible en démo.
-- [ ] Installation Windows : retester `Télécharger → extraire → Installer_Gruterra.bat → Lancer_Demo.py` par double-clic sur le PC de secours, sans commande pip manuelle. Vérifier que pip upgrade non bloquant, `requests`, `bleak` et `tkinter` sont correctement contrôlés.
+- [x] Installation/utilisation sur PC de secours : validées globalement par l’utilisateur le 10/10/2026. Parcours documenté : télécharger → extraire → Installer_Gruterra.bat → Lancer_Demo.bat.
 - [ ] GitHub public : relire la fiche README après chaque gros push pour éviter les promesses dépassées, les anciens noms Botaneo visibles hors contexte, ou une confusion entre projet francophone et accueil anglophone.
 
 ### Bugs / risques à surveiller
@@ -69,10 +83,7 @@ Cette section sert de point d'entrée rapide après les grosses modifications r�
 
 ### Prochaine action recommandée
 
-1. Valider l'auto-update en conditions réelles.
-2. Faire un passage traduction complet sur la démo.
-3. Vérifier Discord avec un compte utilisateur normal ou une vue sans droits admin.
-4. Refaire un audit GitHub avant le prochain message Reddit/Discord.
+Voir les priorités consolidées du 10/10 en tête de fichier. Le test principal de l’update est réussi ; les contrôles utilisateur restants ne doivent pas être confondus avec une absence d’updater.
 
 ## État actuel déjà en place
 
@@ -547,10 +558,10 @@ La remise en attente a été effectuée uniquement sur une copie de la base Pi. 
 - [x] Améliorer le graphique historique : graduations horaires et repère sélectionnable avec heure/valeur du point le plus proche.
 ## Langue, traduction et internationalisation
 
-- [ ] Assumer Gruterra comme projet francophone tant que l'interface n'est pas traduite.
+- [x] Clarifier le statut : origine francophone, écrans principaux FR/EN ; ne pas promettre la traduction des notes personnelles et anciens changelogs.
 - [x] Ajouter une préférence de langue français/anglais dans les paramètres.
 - [x] Créer un premier module `i18n.py` pour centraliser les textes traduits.
-- [ ] Étendre progressivement la traduction écran par écran, sans dupliquer toute la logique métier.
+- [x] Traduire les écrans principaux dans le catalogue JSON commun ; validation d’usage utilisateur reçue le 10/10/2026.
 - [x] Ajouter un premier README anglais `README_EN.md` et un guide démo anglais `GUIDE_DEMO_EN.md`.
 - [ ] Identifier les prochains textes publics à traduire : aide installation, Netatmo, Raspberry, erreurs fréquentes.
 - [ ] Éviter de présenter Discord ou GitHub comme entièrement anglophones tant que l'application reste française.
@@ -586,3 +597,492 @@ Ces changements sont consolidés sur main ; aucune nouvelle release ne remplace 
 - [ ] Définir contrat commun application/site et clé de gestion avant activation réseau.
 - [ ] Finaliser notice, finalités, durée de conservation et contact de secours.
 - [ ] Intégrer l’aperçu des contributions et les reçus confirmés par le site.
+
+### Clé de contribution — préparation du site (10/10/2026)
+
+- [x] Centraliser la restauration locale et interdire son appel en mode démo.
+- [x] Vérifier le couple identifiant/clé complet ; refuser tout remplacement, même si seule une des deux valeurs change.
+- [x] Préserver un fichier existant incomplet ou illisible sans écrasement.
+- [x] Tester restauration sur installation neuve, répétition, conflit et démo sur fichiers temporaires.
+- [ ] Valider avec le site le contrat de gestion : identifiant public pseudonyme, clé privée distincte, retrait authentifié et reçu.
+- [ ] Prévoir un aperçu et un accord explicite avant chaque futur envoi ; conserver le partage désactivé en attendant.
+
+### Raccordement signé V2 — résultat transmis le 10/10/2026
+
+- [x] Résultat côté hébergement rapporté par la conversation web : signature altérée refusée, envoi accepté, défi à usage unique, reprise sans doublon, retrait et non-recréation par un ancien envoi.
+- [ ] Confirmer côté hébergement le retour de `enabled` et `enabled_v2` à false ; configuration serveur non accessible depuis cette vérification locale.
+- [ ] Terminer tests entre deux identités, concurrence et erreurs transactionnelles côté API.
+- [ ] Implémenter l’identité Ed25519 dans l’application : base64 standard avec padding, identifiant ed25519: + SHA-256 des 32 octets publics ; préserver l’ancienne identité locale.
+- [ ] Préparer les signatures et tests communs Python/PHP avant tout raccordement utilisateur.
+- [ ] Définir conservation, retraits, sauvegardes et limites anti-abus avant ouverture publique.
+
+Ces résultats concernent le client de test de l’API, pas un parcours déjà intégré à Gruterra. Partage applicatif toujours désactivé.
+
+### Identité locale Ed25519 — 10/10/2026
+
+- [x] Nouveau format privé identity_version=2 : clé publique/seed de 32 octets, base64 standard avec padding, identifiant ed25519: + SHA-256 des octets publics.
+- [x] Sauvegarde séparée chiffrée PKCS8 par mot de passe et restauration vérifiant le couple privé/public et l’identifiant.
+- [x] Préserver l’ancienne identité, refuser la création automatique en sa présence et tout remplacement d’une identité Ed25519.
+- [x] Démo bloquée ; aucune génération au lancement, aucun transport ; signature locale seulement.
+- [ ] Préparer une migration explicite des anciennes identités et les signatures du message V2 convenu avec le site.
+- [ ] Tester avec PHP les mêmes octets signés ; aucune connexion activée dans ce lot.
+
+### Chaîne de provenance des mesures — réflexion du 10/10/2026
+
+- [ ] Auditer la conservation effective des données brutes pour chaque source ; un champ donnees_brutes ne suffit pas à garantir des octets source complets.
+- [ ] Prévoir valeur source → calibration versionnée → valeur interprétée → analyse, sans remplacement destructeur des relevés.
+- [ ] Étendre le contrat communautaire au modèle de capteur et à la calibration : le V2 actuel ne contient que des valeurs interprétées et peut agréger les relevés à la même seconde par médiane. Ne pas envoyer les trames privées sans filtrage ; aucune compatibilité multi-matériel calibrée annoncée pour l’instant.
+
+### Message signé applicatif V2 — 10/10/2026
+
+- [x] Construire le message ASCII identique au vérificateur PHP et l’enveloppe signée sans réseau.
+- [x] Vérifier le vecteur public PHP : octets exacts, empreinte, signature ; refuser les variantes de contenu/opération/défi et les encodages non canoniques.
+- [x] Tester une reprise avec même request_id et mêmes octets mais nouveau défi/signature ; bloquer défi expiré et démo.
+- [ ] Rejouer le nouveau client applicatif en test privé PHP ; consommation unique et concurrence sont des garanties serveur.
+- [ ] Préparer le stockage durable des demandes/reçus et le parcours aperçu/accord avant transport réseau. Aucun jeton serveur de test dans l’application distribuée.
+
+### Demandes, reçus et retraits locaux — 10/10/2026
+
+- [x] Figer request_id et octets exacts dans un suivi SQLite privé, conservé après redémarrage.
+- [x] Vérifier les reçus du profil privé actuel et garder une réponse incohérente à vérifier sans recréer de demande.
+- [x] Conserver le reçu initial ; reprise HTTP 200 ne modifie ni réception ni échéance.
+- [x] Distinguer réception historique, retrait actif confirmé et échéance locale, sans annoncer une suppression totale vérifiée.
+- [x] Sérialiser localement les opérations par identité ; reprise d’un retrait global ne couvre pas les contributions ultérieures.
+- [x] Ajouter la consultation FR/EN depuis Contributions et confidentialité, sans création de fichier à l’ouverture si aucun suivi n’existe.
+- [ ] Brancher aperçu, accord et futur transport (validation métier v2 intégrée). Profil public, politique et règles d’expiration non négociés : aucun reçu public accepté par ce lot.
+- [ ] Gérer les codes d’erreur serveur et la reprise bornée dans le futur client ; pas de transport ni d’activation dans ce lot.
+
+- [x] Contributions : retrait préparé distinct d’une tentative, isolement de deux identités, concurrence locale et conservation du suivi dans la sauvegarde privée vérifiés (partage désactivé).
+
+- [x] Contributions : validation métier complète v2 avant enregistrement d’une demande ; aucune resérialisation du contenu signé, données privées interdites et apports fractionnés conservés.
+
+- [x] Profil privé lifecycle-test-60s : choix explicite, échéance exacte, migration du suivi historique et fins de parcours 410 sans recréation préparés localement ; transport et partage toujours désactivés.
+
+- [x] Lanceur privé application/API isolé préparé, simulation sans réseau utilisant les vrais modules.
+- [ ] Convenir de la fenêtre privée, lancer explicitement l’essai réseau fictif, confirmer nettoyage et fermeture serveur ; aucun essai réseau effectué par ce lot.
+
+- [x] Essai privé : diagnostic par étape, HTTP et codes serveur autorisés ; contrôles affichés immédiatement ; échecs simulés et absence de secrets vérifiés avant nouvel essai réseau.
+
+- [x] Synchronisation prioritaire : capteur attribué au Raspberry jamais relu automatiquement par le PC quand la collecte Pi est en attente, en cours ou en échec ; historique conservé.
+
+- [x] Synthèse météo : modules personnels extérieurs/pluie/vent inclus, source disponible la plus proche par mesure, heures publiques extraites, absence distincte de 0 mm et pictogrammes vectoriels lisibles. Aucun relevé « Jamais » sans horaire.
+
+
+## Météo — 11/10/2026
+- [x] Synthèse : station personnelle, favoris équipés, puis station proche par mesure.
+- [x] Suivi local des cumuls de pluie datés reçus, sans doublons ni addition de cumuls chevauchants. Dernier cumul positif affiché ; aucune averse exacte déduite.
+- [ ] Vérifier les relevés réels après une prochaine récupération Netatmo : aucun accès réseau effectué pour ce chantier.
+- [ ] Clarifier les fenêtres des cumuls privés Netatmo (journée/cumul glissant) avant analyse quotidienne.
+- [ ] Nappes : étudier Hub’Eau Piézométrie (stations, chroniques, chroniques_tr). Conserver unité, date, repère et aquifère ; ne pas assimiler niveau à un pourcentage de remplissage. Source : https://www.data.gouv.fr/dataservices/hubeau-piezometrie
+
+## Nappes — préparation locale 11/10/2026
+- [x] Consultation facultative Hub’Eau depuis Paramètres : département, choix de station, dernière date, 100 niveaux historiques, qualification, courbe et cache privé. Aucun appel automatique au démarrage.
+- [x] Service officiel vérifié sur un exemple public sans localisation utilisateur.
+- [ ] Valider le parcours complet sur une station choisie par l’utilisateur ; distance et recherche géographique à ajouter si utiles. Liste limitée signalée à 500 stations.
+- [ ] Lecture de la profondeur : vérifier le repère propre à la station avant comparaison ; aucune alerte sécheresse ni remplissage normalisé calculés.
+
+- [x] Nappes : accepter 92380 / 92 380 comme département 92, refuser 380 avec explication ; distinguer HTTP, délai, connexion, certificat et format sans exception brute. Département 92 testé sur API publique ; erreur initiale de la fenêtre encore à confirmer après relance.
+
+- [x] Nappes : stations avec dernier relevé dans les 365 jours par défaut, anciennes sur option, pagination jusqu’à 5000 sources avec avertissement si incomplète. Évite les choix anciens de 1992 issus de la seule première page.
+
+- Vérification réseau du 92 le 11/10/2026 : 1053 stations, pagination complète, dernière date renvoyée 1993-07-28 ; aucun relevé dans les 365 derniers jours via le catalogue interrogé. Ne pas présenter ces stations comme actives. Prochaine étude : stations voisines et catalogue temps réel.
+
+- [x] Nappes : aide FR/EN sur qualification, NGF, profondeur et nappes captives ; panneau et carte harmonisés avec le thème actif ; tableau défilant et courbe redessinée au redimensionnement.
+- [ ] Évolution future : comparer les relevés de nappe aux pluies et capteurs extérieurs, avec dates réelles, lacunes visibles et distinction entre aquifères ; aucune recommandation d’arrosage déduite directement du niveau régional.
+
+- [x] Nappes : afficher la masse d’eau déclarée et vider immédiatement les anciens relevés lors du changement de station ; empêcher un changement de sélection pendant une récupération.
+
+- [x] Nappes : conserver et afficher le statut de validation original séparément de la qualification ; anciens caches compatibles et valeurs absentes indiquées par un tiret.
+
+- [x] Bloc nappes de l’accueil : dernier niveau et date du cache correspondant à la station choisie, mention explicite de l’historique local ; aucun appel réseau automatique.
+
+### Raccordement météo Raspberry — planifié le 11/10/2026
+
+Plan détaillé : PLAN_RACCORDEMENT_METEO_RASPBERRY.md. Collecte non activée.
+
+- [ ] Valider le contrat observations/lots/accusés avec la partie Raspberry.
+- [ ] Ajouter le stockage météo PC versionné et une migration conservant l’historique existant.
+- [ ] Préparer normalisation, déduplication, révisions et import transactionnel.
+- [ ] Raccorder weather_export/weather_ack après accord sur le contrat.
+- [ ] Adapter l’affichage pluie FR/EN aux relevés importés et à leur fraîcheur réelle.
+- [ ] Valider la propriété OAuth et étendre les sauvegardes météo avec restauration testée.
+- [ ] Tester collecte manuelle, synchronisation répétée et reprises ; puis valider le timer avec PC éteint.
+
+- [x] Préparer le validateur commun météo v1 et les vecteurs fictifs : wu1_ prioritaire si module/date inconnu, filiation supersedes explicite, lots bornés non vides.
+- [ ] Confirmer le contrat côté Pi et tester la résolution des périodes enrichies, révisions et accusés dans le stockage réel sur copies avant branchement.
+
+- [x] Préparer l’import transactionnel météo sur bases fictives : accusé après commit, reçus durables, doublons et révisions conservés, exclusion des filiations de période non résolues.
+- [ ] Raccorder l’import préparé au transport Pi après accord commun ; ajouter les essais de coupure et d’export/accusé réels. Collecte toujours inactive.
+
+## Transport météo Raspberry — 11 octobre 2026
+
+- [x] Export météo borné et accusé atomique, idempotent, sans suppression.
+- [x] Protocole commun copié depuis _app/weather_protocol.py, sans version indépendante.
+- [x] 19 tests fictifs passent sur Windows et Raspberry : import PC, reprises, révisions et limites.
+- [x] Commandes weather_export/weather_ack installées ; export réel de la file vide vérifié.
+- [ ] Raccorder la collecte Netatmo et sa configuration OAuth privée.
+- [x] Étendre les sauvegardes à weather.sqlite3 avant activation (copie/restauration vérifiée le 12/10/2026).
+- [x] Raccorder l'appel automatique du transport depuis la synchronisation PC (option explicite).
+- [ ] Vérifier un relevé Netatmo réel et son import, puis la collecte horaire PC éteint.
+
+Aucun timer météo activé. Aucun token transféré. Les relevés fictifs restent dans des bases temporaires ; aucune mesure fictive insérée dans la file installée.
+
+- [x] Préparer les appels PC weather_export/weather_ack : transport SSH dédié UTF-8, lots bornés, accusé après import et reprises simulées contre l’outbox Raspberry.
+- [ ] Activer explicitement weather_import_enabled et raccorder au parcours graphique après validation réelle ; aucune bascule OAuth ni collecte Netatmo effectuée.
+
+- [x] Brancher l’import météo Pi dans la synchronisation PC avec réglage explicite désactivé par défaut, exclusions démo et bilan FR/EN. Aucun token ni timer modifié.
+- [ ] Adapter les lecteurs météo aux observations versionnées, étendre les sauvegardes et valider le premier relevé réel jusqu’à l’affichage.
+
+- [x] Secours météo PC : consultations Netatmo fraîches sans nouveaux enregistrements pluie, cache d’affichage maintenu et historique existant préservé.
+- [ ] Pi : vérifier un accès Netatmo indépendant ou définir un partage OAuth sûr ; aucun refresh token PC dupliqué.
+
+## Météo Raspberry — état consolidé du 12 octobre 2026
+
+Guide : docs/WEATHER_RASPBERRY_PREPARATION.md. Cet état précise les étapes partielles ci-dessus.
+
+- [x] Préparer et installer le collecteur météo, la gestion des erreurs et du renouvellement OAuth, et les unités horaires désactivées.
+- [x] Intégrer la sauvegarde météo au passage quotidien existant ; copier et restaurer une sauvegarde de la base réelle vide sans remplacer la base active.
+- [x] Ajouter la récupération vérifiée des sauvegardes au PC après une synchronisation complète.
+- [x] Ajouter un tableau FR/EN des observations importées dans les réglages météo Raspberry : dates source, unités, périodes et révisions ; ouverture/actualisation testées.
+- [x] Valider 37 tests météo Windows et 35 Raspberry sur données fictives. Aucun relevé fictif injecté dans les bases actives.
+- [x] Préserver le choix PC : météo fraîche directe et cache, sans nouvel archivage pluie ni modification de ses tokens.
+- [ ] Fournir et vérifier une autorisation Netatmo indépendante pour le Raspberry ; ne pas copier le refresh token PC.
+- [ ] Vérifier une collecte réelle, son import répété sans doublons et son affichage, puis renouvellement OAuth sans perturber le PC.
+- [ ] Activer ensuite le timer et vérifier un passage PC éteint et un redémarrage physique du Raspberry.
+- [ ] Étendre ultérieurement les synthèses météo de l'accueil aux observations versionnées ; le tableau dédié est disponible.
+
+Collecte toujours désactivée ; aucun appel Netatmo réel pendant cette préparation. Aucun secret transféré et aucune publication GitHub.
+- [x] Pluie Météo-France : consultation manuelle dédiée FR/EN, 5 stations proches, rr1 horaire et dates réelles, base data/meteofrance_pluie.sqlite3 distincte de plantes.db et Netatmo ; aucun timer ni token transféré.
+- [ ] Comparaison horaire Netatmo/Météo-France : afficher les périodes réelles côte à côte sans fusion ni somme ; accès Météo-France durable et sauvegarde de sa base à finaliser.
+
+- [x] Comparaison informative dans le panneau pluie : cache de la station Netatmo choisie avec cumuls 1 h / 24 h et dates, face aux relevés horaires Météo-France ; aucune fusion ni différence automatique.
+
+- [ ] AROME-PI : consultation toutes les 15 minutes aux quarts d’heure + 1 seconde, après validation d’une prévision locale, de l’accès durable et des quotas. Plan : PLAN_AROME_PI.md ; timer non activé.
+
+- [x] AROME-PI : préparer sélection du calcul récent, validation des échéances UTC et unité pluie, calendrier fixe sans dérive avec passage à minuit.
+- [ ] AROME-PI : télécharger une prévision locale, vérifier les bornes de cumul GRIB et intégrer Observé/Prévu ; renouvellement OAuth et timer restent non activés.
+
+- [x] Interface iPhone Raspberry : page /weather authentifiée, 300 dernières versions stockées, filtre station, dates source et récupération, zéro/absence distincts. Installée le 12/10/2026 ; deux tests de lecture seule passent, base réelle vide vérifiée. Collecte météo inchangée et désactivée.
+
+- [x] Préparer le gestionnaire OAuth2 Météo-France sous verrou avec expiration serveur et sauvegarde atomique, testé avec profils fictifs.
+- [ ] Valider les identifiants OAuth, droits communs et la génération réelle ; extraction locale GRIB encore non validée (refus HTTP 401 au dernier essai).
+
+- [x] Pluie Météo-France : recherche manuelle par code postal via geo.api.gouv.fr, choix des communes ambiguës, distances depuis le centre communal et localisation Netatmo inchangée.
+
+- [x] Netatmo Raspberry : formulaire privé FR/EN de saisie masquée et exemple vierge ; aucun transfert ou activation à l’enregistrement.
+- [ ] Accès Pi : applications distinctes confirmées et PC HTTP 200, mais renouvellement Pi refusé (authorization_required) au contrôle du 13/10/2026 ; corriger l’autorisation avant transfert et collecte.
+
+- [x] 13/10/2026 : historique météo mobile, écran vide explicite et filtres station/mesure/période ; base Pi vérifiée à zéro observation, collecte toujours non activée.
+
+- [x] 13/10/2026 : capteur nommé Crassula via configuration privée stable ; bilan journalier lumière moyenne/maximale, température et humidité moyennes, nombre et plage des relevés. Historique prioritaire sans mélange avec lectures ponctuelles ; limites et dates estimées signalées. Bornes de journée Paris, zéro, absence et repli testés.
+
+## Interface Raspberry — bilan consolidé du 13/10/2026
+- [x] Interface locale protégée, utilisable depuis iPhone ; lecture des capteurs à la demande.
+- [x] Nom Crassula lié au capteur via configuration privée.
+- [x] Bilan journalier lumière moyenne/maximale, température et humidité moyennes ; nombre de relevés et heures couvertes explicités.
+- [x] Courbe lumière installée : Aujourd'hui / Hier / 7 jours, valeurs au toucher et au clavier, périodes Paris, interruptions au-delà de 90 minutes. Historique prioritaire ; lectures ponctuelles utilisées seulement en son absence.
+- [x] Page météo locale avec filtres station/mesure/période et écran vide explicite.
+- [x] Sauvegarde météo et restauration sur copie vérifiées ; import PC et tableau FR/EN préparés.
+- [ ] Confirmer le confort de lecture et le toucher du graphique sur l'iPhone réel (données et syntaxe contrôlées ; 162 points réels disponibles lors du test).
+- [ ] Corriger l'autorisation Netatmo Pi : renouvellement refusé au dernier contrôle du 13/10 ; conserver l'accès PC indépendant.
+- [ ] Valider premier relevé météo réel, synchronisation répétée et affichage ; ensuite seulement activer l'horaire et tester PC éteint/redémarrage.
+- [x] Courbes température et humidité du sol installées : sélecteur de mesure, périodes conservées, unités et échelles adaptées (températures négatives et humidité 0–100 %). Valeurs nulles et négatives testées ; validation tactile iPhone restante.
+
+Aucune collecte météo activée dans ce chantier, aucune publication GitHub. Les autres chantiers météo PC ci-dessus restent inchangés.
+
+### Météo Raspberry — validation réelle du 13/10/2026
+
+- [x] Accès Netatmo indépendant autorisé et renouvelé, accès PC préservé.
+- [x] Premier passage réel Pi : 9 observations collectées, sauvegardées et importées ; correspondance des données vérifiée.
+- [x] Rejeu réel : 0 ajout / 9 doublons ; deuxième synchronisation vide.
+- [x] Activer l’import PC et le timer météo utilisateur horaire après validation complète.
+- [x] Collecte PC éteint et import au retour validés le 15/10/2026.
+- [ ] Vérifier le redémarrage matériel du Raspberry et la reprise du timer.
+
+Les états « collecte inactive » précédents sont historiques pour Netatmo Pi. AROME reste en préparation, sans timer activé.
+
+- [x] Vérifier le timer Netatmo utilisateur actif et Linger=yes ; service manuel terminé avec succès. Premier passage programmé encore non observé.
+- [x] Préparer une seule reprise OAuth Météo-France après 401, avec hôte HTTPS strict et sans redirection du secret.
+- [ ] Restaurer/valider la configuration OAuth AROME : fichier actuel en bearer et application_id vide au 13/10/2026 ; aucune prévision locale ni timer AROME activés.
+
+- [x] AROME-PI : formulaire privé FR/EN de saisie OAuth2 ou jeton temporaire dans Paramètres, secrets masqués, modèle vierge et aucune activation à l’enregistrement.
+
+
+### Météo Raspberry : validation horaire du 13/10/2026
+
+- [x] Vérifier un passage autonome du timer et importer ses observations : 18 importées, sauvegarde vérifiée, rejeu sans doublon, file vide.
+- [x] Collecte PC éteint et reprise confirmées le 15/10/2026.
+- [ ] Vérifier le redémarrage matériel du Pi et la reprise du timer.
+
+### Prévisions sur interface Raspberry — 14/10/2026
+- [x] Bloc prévisions 24 h installé : température, précipitations horaires, humidité, vent et rafales ; modèle AROME France fourni par Open-Meteo, attribution explicite.
+- [x] Localisation PC transmise avec accord utilisateur ; configuration privée sur Pi, sans token copié.
+- [x] Prévision réelle de 24 échéances vérifiée depuis le Pi ; cache horaire à la consultation, indépendant du PC. Échec réseau : copie conservée avec date et statut ancien ; nouvelle tentative espacée de 5 minutes.
+- [x] Tests panne réseau, conservation du cache, zéro/absence et réutilisation sans nouvel appel.
+- [ ] Vérifier le confort de consultation de ce bloc sur iPhone.
+Ce bloc est distinct de l'accès direct AROME-PI : aucun timer AROME-PI activé et aucune observation pluie ajoutée par les prévisions.
+
+### Historique pendant l’éclairage — 14/10/2026
+- [x] Crassula : plage 09:50–15:50 initialisée sur PC et Pi, réglable par plante/capteur ; fichiers de configuration privés distincts.
+- [x] Pi : historique dédié 7 jours, moyenne/minimum/maximum et relevés, graphique filtré par plage. PC : bouton dans Historique, fenêtre dédiée 30 jours avec tableau, courbe et observations.
+- [x] Moyenne des échantillons, zéros inclus, fin de plage exclue, passage de minuit pris en charge ; aucun calcul de durée réelle d’éclairage ni intégrale lumineuse.
+- [x] Bouton téléphone Copier les données du jour : toutes les mesures du jour (température, humidité, lumière, conductivité), sources et qualité des dates ; texte sélectionnable si presse-papiers bloqué.
+- [x] Validation bornes horaires/zéros/minuit, ouverture fenêtre PC et lecture réelle Pi. Aucun relevé modifié.
+- [ ] Confirmer la copie et le rendu sur iPhone réel.
+- [x] Horaires PC/Pi synchronisés depuis le 14/10/2026 ; les horaires actuels restent appliqués rétroactivement.
+- [ ] Traduire le nouvel écran éclairage PC en anglais et conserver des versions datées des horaires si nécessaire.
+
+### Synchronisation des horaires — 14/10/2026
+- [x] Synchronisation bidirectionnelle des horaires liée au transfert des capteurs PC/Pi ; identification par capteur BLE et plante associée, sans serveur supplémentaire.
+- [x] Référence commune conservée par appareil/capteur ; conflit si les deux côtés divergent, aucune priorité basée sur l'horloge système.
+- [x] Résolution explicite dans Historique pendant l'éclairage → Synchroniser avec le Pi : conserver PC ou Pi, possibilité d'annuler. Contrôle de modifications concurrentes avant écriture.
+- [x] Verrou partagé avec les enregistrements locaux, contrôle compare-and-set côté Pi, exclusion du mode démo et des associations ambiguës.
+- [x] Tests fictifs push/pull/conflit/résolution et premier échange réel réussi sans modification des horaires existants.
+Les mentions précédentes de réglages PC/Pi indépendants sont désormais dépassées. Une relance de Gruterra est nécessaire pour charger ce raccordement.
+
+
+### Vérifications de reprise — 14/10/2026
+- [x] Horaires : réponse perdue après enregistrement Pi puis reprise ; modification concurrente et choix de conflit obsolète refusés ; Pi indisponible sans modification locale.
+- [x] Tests conservés dans tests/test_lamp_sync.py ; message explicite si aucun capteur associé sans ambiguïté.
+- [x] Contrôle réel : service web actif, collecte Netatmo du 14/10 à 22:05 réussie.
+- [ ] Validation matérielle restante : redémarrage Pi, confort tactile et copie iPhone. Collecte PC éteint validée le 15/10.
+
+### Reprise après la nuit du 14 au 15/10/2026
+- [x] Constater les collectes Netatmo nocturnes stockées et la lecture Crassula de 06:04 (heure de Paris).
+- [x] Import réel : 14 relevés capteurs et 204 observations météo ajoutés, aucune file restante ; sauvegarde météo copiée.
+- [x] Second passage météo vide, aucun ajout, sauvegarde vérifiée ; horaires PC/Pi concordants.
+- [x] Arrêt physique nocturne du PC confirmé par l’utilisateur le 15/10 ; heures exactes non fournies.
+- [ ] Redémarrage matériel Pi toujours non testé dans ce chantier (dernier démarrage observé : 19/09/2026).
+
+### Autonomie nocturne confirmée — 15/10/2026
+- [x] L’utilisateur confirme que le PC était complètement éteint cette nuit. Les collectes nocturnes du Pi et leur import au retour sont vérifiés : 14 relevés capteurs, 204 observations météo, rejeu vide et sauvegarde contrôlée. Horaires précis d’arrêt du PC non fournis.
+- [ ] Reste à vérifier : redémarrage matériel du Raspberry et reprise des services/timers.
+
+
+### Préparation Zigbee via Home Assistant — 15/10/2026
+
+- [x] Préparer un adaptateur hors ligne des états HA : association explicite, unités, provenance, indisponibilité et datation distincte.
+- [x] Documenter les commandes dans `docs/JOURNAL_COMMANDES_TECHNIQUES.md`.
+- [ ] Vérifier les modèles et entités réels après appairage dans Home Assistant.
+- [x] Raccorder la lecture manuelle et le rattrapage historique à l’archive séparée ; coupures et reprises validées en simulation.
+- [ ] Valider le parcours de récupération sur un capteur réel après appairage et vérification de Recorder.
+- [ ] Intégrer la source et la fraîcheur dans les écrans FR/EN après validation des données réelles.
+
+- [x] Préparer la lecture REST des seules entités HA choisies : configuration désactivée, erreurs sans secret, redirections refusées, tests simulés et modèle vide.
+
+- [x] Ajouter l’écran de préparation Home Assistant FR/EN dans Paramètres : jeton masqué, associations explicites, validation toujours accessible, sauvegarde locale désactivée sans réseau.
+
+- [x] Protéger le jeton Home Assistant avec Windows DPAPI lié au compte : pas de clair sur disque, migration atomique, remplacement après perte du compte Windows.
+
+- [x] Vérifier réellement l’authentification Home Assistant (15/10/2026) : API HTTP 200, jeton DPAPI confirmé, collecte désactivée ; entités à associer après appairage.
+
+- [x] Préparer le refus des doublons Mi Flora Bluetooth/Home Assistant par identité physique et source de référence explicites ; refus avant lecture si identité non confirmée.
+- [x] Préparer la lecture historique HA bornée à six heures, dédoublonnage de rejeu et exclusion du contexte antérieur ; tests simulés.
+- [x] Raccorder la lecture du registre BLE réel aux identités physiques du formulaire et afficher les statuts de refus/autorisation.
+- [ ] Vérifier les vrais identifiants matériels après appairage, puis raccorder l’archive et le curseur préparés à l’orchestration avant activation.
+
+
+## Raspberry — référence consolidée au 15 octobre 2026
+
+Cette section est la référence actuelle pour le Raspberry. Les livraisons datées ci-dessus sont le journal des étapes ; en cas de contradiction, cet état prévaut. La fiche de conversation `outputs/TODO_RASPBERRY.md` devient un résumé sans liste de tâches indépendante.
+
+### Réalisé et vérifié
+
+- [x] Collecteur autonome, stockage local, services et minuteurs installés ; lecture manuelle mise en file pour éviter les collectes concurrentes.
+- [x] Interface mobile : mesures, dates, fraîcheur, état des capteurs, mesures en attente, progression et résultat des lectures.
+- [x] Accès protégé par authentification ; action manuelle protégée par jeton ; aucun secret ni commande d’administration exposés par la page. Utilisation locale : ce constat ne vaut pas validation d’une exposition Internet.
+- [x] Adresse domicile conservée dans la configuration privée ; historique météo : /weather. L’adresse peut changer sur un autre réseau.
+- [x] Consultation iPhone à domicile confirmée par l’utilisateur.
+- [x] Partage de connexion iPhone configuré et accès depuis l’iPhone fournisseur du partage confirmé par l’utilisateur.
+- [x] Crassula : graphiques, bilan quotidien, plage d’éclairage réglable, historique dédié et copie journalière installés.
+- [x] Synchronisation PC/Pi des relevés et des horaires, déduplication et conflits de réglages pris en charge.
+- [x] Collecte Netatmo indépendante sur Pi active ; prévisions Météo-France via Open-Meteo disponibles à la consultation, distinctes d’AROME-PI direct.
+- [x] Collecte pendant l’arrêt nocturne du PC puis import au retour validés le 15/10 : 14 relevés capteurs et 204 observations météo, rejeu vide.
+- [x] Sauvegardes SQLite, copie PC et restauration météo sur copie vérifiées.
+- [x] Alimentation : `throttled=0x0` le 15/10, aucune sous-tension signalée depuis le démarrage du 19/09. Ce constat ne garantit pas les alimentations futures.
+
+### Actions restantes
+
+- [ ] Tester un redémarrage matériel du Pi et vérifier interface, services, minuteurs et conservation des données après retour.
+- [ ] Tester un autre Wi-Fi que le domicile et le partage iPhone.
+- [ ] Formaliser puis tester la procédure pour retrouver le Pi après changement de réseau (nom local si disponible, sinon adresse attribuée par le routeur).
+- [ ] Confirmer l’ajout d’un favori/raccourci iPhone ; ne pas le considérer créé sans confirmation utilisateur.
+- [ ] Confirmer sur iPhone le confort des graphiques, des prévisions et la copie des données journalières.
+- [ ] Traduire le nouvel écran d’éclairage PC en anglais ; envisager des versions datées des horaires pour préserver les analyses passées.
+- [ ] Tester explicitement démarrage sans Internet, dates non fiables, capteur absent, arrêt du processus et reprise après perte réseau.
+- [ ] Vérifier la rétention des journaux, l’espace disque et la procédure de déploiement/retour arrière ; cloner la microSD après validation.
+- [ ] Auditer le secours Bluetooth PC coordonné, les alertes de retard et les anciennes archives historiques mentionnés dans la fiche de septembre, sans supposer ces essais terminés.
+- [ ] Accès direct AROME-PI : autorisation et prévision locale à valider avant activation de son minuteur (indépendant du bloc Open-Meteo installé).
+
+Les anciens détails de planification sont conservés dans l’archive de conversation `outputs/ARCHIVE_TODO_RASPBERRY_2026-09_2026-10-15.md`, à titre documentaire uniquement. Aucun test restant n’est coché par simple déduction.
+
+- [x] Ajouter un aperçu manuel Home Assistant sans import : contrôle anti-doublons relu avant requête, interface FR/EN et états reçus affichés uniquement en mémoire.
+
+- [x] Préparer l’archive transactionnelle Home Assistant séparée des plantes : reçu et progression dans la même transaction, reprise idempotente, révisions conservées, alias d’entités sans duplication de fait physique/datation HA.
+- [x] Raccorder le rattrapage manuel à son récapitulatif, sa confirmation et sa progression transactionnelle.
+- [ ] Vérifier la conservation Recorder et effectuer le premier essai sur un capteur Zigbee réel avant toute activation automatique.
+
+- [x] Valider le parcours manuel Home Assistant de bout en bout en simulation : 50 tests, confirmation explicite, reprise après interruption, refus en démo et collecte persistante inchangée.
+
+### Finition de l’historique d’éclairage — 15/10/2026
+- [x] Traduire en français/anglais l’écran PC dédié : accès depuis Historique, horaires, tableau, relevés, aide, boutons et bilan.
+- [x] Remplacer les exceptions brutes de cette fenêtre par des erreurs compréhensibles et traduites.
+- [x] Vérifier ouverture et chargement des relevés en FR/EN, sans modifier les préférences ni les mesures.
+- [ ] Traduire également les dialogues et bilans de synchronisation des horaires (module lamp_sync), encore en français.
+- [ ] Versions datées des horaires : décision et réalisation restent séparées de la traduction terminée.
+
+
+### Interface de l’historique pendant l’éclairage — 15/10/2026
+
+- [x] Séparer horaires, résumés, journée détaillée et comparaison des jours.
+- [x] Adapter le graphique et la palette à la fenêtre ; défilement principal et tableaux ; commandes fixes en bas.
+- [x] Relier les points au tableau, copier la journée sélectionnée et distinguer les horaires non enregistrés.
+- [x] Mettre les textes nouveaux dans les catalogues FR/EN et vérifier les vues sur données fictives sans toucher aux mesures.
+
+- [x] Compléter l’historique éclairage avec les bornes observées, l’intervalle maximal et le statut horaire sans promesse de couverture ; navigation et sélection des jours synchronisées, tests FR/EN.
+
+### Interface Raspberry bilingue — 15/10/2026
+- [x] Français / English en haut des pages ; préférence conservée un an par cookie local HttpOnly/SameSite, par navigateur, défaut français.
+- [x] Traduire les pages capteurs et météo : graphiques, plages d’éclairage, copie journalière, prévisions, états de collecte, aides et erreurs ; formats de dates/nombres adaptés à la langue, fuseaux et calculs inchangés.
+- [x] Vérifier les deux scripts dans les deux langues, les clés API/CSRF inchangées et le choix de langue ; essais HTTP réels sur Pi avec identifiants fictifs : 401 sans connexion, cookie/navigation/API corrects.
+- [x] Installer après sauvegarde ; service web actif. Module de traduction ajouté aux scripts d’installation.
+- [ ] Confirmer le rendu et le passage FR/EN sur iPhone réel ; aucune autre langue ajoutée dans cette étape.
+
+- [x] Harmoniser l’historique éclairage avec la palette principale partagée et remplacer les onglets natifs peu lisibles par des boutons texte contrastés, sans symboles dépendants de Windows.
+
+
+### Démo éclairage — 15/10/2026
+
+- [x] Isoler les horaires démo et bloquer la résolution Pi avant toute lecture de configuration réelle.
+- [x] Rafraîchir le jeu fictif après sauvegarde de l’ancienne démo : quatre plantes, 480 relevés, zéro et trou de relevés.
+- [x] Vérifier les chemins isolés dans un nouveau processus, le générateur fictif et la non-régression de la synchronisation réelle en tests.
+
+### Synchronisation des horaires FR/EN — 16/10/2026
+- [x] Traduire bilans, erreurs, reprise différée et dialogue de conflit dans la langue du PC.
+- [x] Présenter les choix sous forme d’horaires lisibles (09:50–15:50) au lieu de structures techniques ; signaler un réglage absent.
+- [x] Tests de synchronisation existants réussis ; dialogue de conflit et annulation vérifiés en français et anglais avec données fictives, sans appel réseau ni modification d’horaires.
+Cette livraison clôt le point de traduction des dialogues lamp_sync resté ouvert le 15/10. Les tests matériels et tactiles restent à confirmer.
+
+- [x] Stabiliser les accès Home Assistant en démo (16/10/2026) : tous les points de lecture refusent le mode démo avant réseau/configuration privée ; exemple fictif de quatre états dans le même écran, textes FR/EN et tests.
+
+
+### Contrôles avant prochaine archive — 16/10/2026
+
+- [x] Bloquer la construction si un module Python local requis manque ou si un chemin privé/base/sauvegarde est fourni.
+- [x] Ajouter `prepare_release.py --check-files` pour contrôler sans créer d’archive ni modifier les versions.
+- [x] Vérifier une liste candidate de 153 fichiers avec 34 dépendances locales supplémentaires nécessaires ; voir `docs/PREPARATION_ARCHIVE_CONTROLES.md`.
+- [ ] Avant prochaine release : relire et intégrer explicitement les fichiers publics validés, refaire les contrôles de secrets puis tester une extraction isolée réelle/démo. La sélection Git actuelle ne suffit pas.
+
+### Présentation météo mobile — 17/10/2026
+- [x] Remplacer la longue liste d’heures par une carte : températures min/max prévues, bande horaire horizontale avec température/pluie, courbe température et barres de pluie alignées, détails au toucher.
+- [x] Conserver dates, source, périodes de pluie et état du cache ; traductions FR/EN ajoutées.
+- [x] Syntaxe des deux langues et cas simulés vide/absence/zéro/température négative/sélection vérifiés ; installé après sauvegarde, service actif.
+- [ ] Confirmer le rendu réel et le confort tactile de cette nouvelle carte sur iPhone.
+
+
+### Validation d’extraction candidate — 17/10/2026
+
+- [x] Construire et extraire un ZIP temporaire non officiel incluant les 34 dépendances locales nécessaires.
+- [x] Vérifier depuis l’extraction : démarrage démo, isolation des fichiers, éclairage, exemple HA et cohérence VERSION ; aucune tentative réseau ni erreur GUI sur le parcours court.
+- [ ] Relecture puis intégration explicite des sources/documents/tests publics avant préparation officielle.
+- [ ] Installation et dépendances sur PC vierge, puis contrôle de mise à jour de bout en bout avant diffusion ; non couverts par ce test d’extraction.
+
+### Validation locale de préparation Windows — 17/10/2026
+- [x] Archive candidate extraite dans un dossier temporaire, environnement Python vide sans paquets hérités, installation via Installer_Gruterra.bat et cohérence des dépendances vérifiées.
+- [x] Vraie démo démarrée via Lancer_Demo.bat avec les dépendances nouvellement installées ; parcours court éclairage et exemple Home Assistant vérifiés sans réseau GUI.
+- [ ] Tester le téléchargement et l'installation automatique de Python 3.12.10 sur un PC qui ne possède pas Python.
+- [ ] Finaliser la sélection Git des fichiers publics et valider la mise à jour complète d'une ancienne version avant publication autorisée.
+
+### Repères de la carte météo — 17/10/2026
+- [x] Distinguer Aujourd’hui/Demain dans la bande horaire et les détails, en FR/EN ; dates selon le fuseau du téléphone.
+- [x] Afficher la plage horaire couverte par chaque cumul de pluie prévu.
+- [x] Signaler visuellement un cache ancien ou un échec de rafraîchissement, sans masquer les anciennes valeurs ni les présenter comme nouvelles.
+- [x] Syntaxe FR/EN et compilation Pi validées, service actif après installation.
+- [ ] Confirmation visuelle sur iPhone toujours attendue pour cette carte compacte.
+
+### Santé et stockage du Raspberry — 17/10/2026
+- [x] Contrôle réel : partition 15 Go, 3,2 Go utilisés (24 %), environ 11 Go libres ; données Gruterra 1,4 Mo et sauvegardes 8,3 Mo.
+- [x] Aucun service utilisateur en échec ; collecte capteurs 18:02, météo 18:05 et sauvegarde quotidienne 04:17 terminées avec succès.
+- [x] Alimentation : throttled=0x0 au contrôle.
+- [x] Sauvegardes : 14 fichiers capteurs quotidiens, 6 météo actuellement ; intégrité SQLite des dernières copies du 17/10 validée en lecture seule. Rotation capteurs limitée à 14 jours vérifiée dans le programme.
+- [x] Journaux : journald en stockage volatile (RAM), 16,4 Mo ; /var/log 1,1 Mo ; rsyslog inactif. Les journaux journald actuels ne persistent pas après redémarrage. Aucune limite personnalisée ajoutée, aucune purge effectuée.
+- [ ] Si un diagnostic après redémarrage devient nécessaire, décider d’une conservation persistante bornée des journaux. Pas nécessaire au fonctionnement actuel.
+Les tests matériels de redémarrage et les validations tactiles restent ouverts ; ce contrôle ne les remplace pas.
+
+- [x] 17/10 : application réelle du ZIP candidat sur copie temporaire à version fictive, contrôle de la sauvegarde et des empreintes privées, puis redémarrage de la vraie démo réussis (transport réseau simulé).
+- [ ] Compléter par une ancienne release officielle, le téléchargement GitHub et l'enchaînement automatique fermeture/relance ; le scénario fictif ne valide pas ces trois éléments.
+
+### Complément de validation du 17/10/2026
+- [x] Mise à jour depuis l'archive 0.1.5-dev conservée, SHA-256 conforme au manifeste local, conservation des fichiers privés contrôlés et relancement de la démo.
+- [x] Fermeture et relance automatiques de la vraie interface démo via le mécanisme applicatif, dans une extraction temporaire (essai distinct de l'application du ZIP).
+- [ ] Parcours unique depuis le téléchargement GitHub jusqu'à la relance après application ; installation de Python sur poste vierge ; sélection finale des fichiers Git et publication autorisée.
+
+### Redémarrage matériel validé — 17/10/2026
+- [x] Redémarrage effectué par l’utilisateur via sudo reboot ; nouvel identifiant de démarrage confirmé, retour à 19:36 heure de Paris.
+- [x] Interface web revenue automatiquement (active, accès anonyme refusé HTTP 401), aucun service utilisateur en échec.
+- [x] Minuteurs capteurs, météo et sauvegarde actifs et activés au démarrage ; prochaines échéances annoncées : météo 20:05, capteurs 23:00, sauvegarde le 18/10 vers 04:16.
+- [x] Bases capteurs et météo lisibles et intègres après redémarrage : 189 mesures ponctuelles, 826 historiques, 852 observations météo.
+- [x] Horloge NTP synchronisée, fuseau Europe/Paris ; throttled=0x0 après redémarrage.
+- [x] Collecte météo automatique après redémarrage confirmée au contrôle du 17/10 à 21:19 : minuteur à 21:06:12, service réussi et données récupérées à 21:06:21 (Paris). Voir validation ci-dessous.
+Les anciennes cases « tester un redémarrage » sont remplacées par cette validation. Les essais tactile/iPhone et autre Wi-Fi restent ouverts.
+
+### Résultat du parcours GitHub réel — 17/10/2026
+- [x] Updater de la 0.1.5-dev : téléchargement réel de la 0.1.6-dev officielle, empreinte, sauvegarde, application, conservation des deux fichiers privés contrôlés et ouverture de la démo validés.
+- [ ] PRIORITÉ prochaine release : intégrer le correctif local de relance et _app/restart_gruterra.py. Échec de la relance automatique reproduit sur la 0.1.6-dev publiée : seconde instance lancée avant fermeture de la première, puis arrêt sans interface. Correctif local déjà testé ; pas encore diffusé.
+- [ ] Vérifier ce même parcours avec la future archive corrigée avant annonce. Ne pas considérer la relance de la version publiée comme validée.
+
+### Reprise après redémarrage — contrôle complet du 17/10/2026
+- [x] Le service collecteur permanent a lancé sa lecture au démarrage : historique parcouru puis collecte terminée à 19:40 ; une nouvelle mesure importée sur le PC, file vide.
+- [x] Collecte Netatmo de contrôle déclenchée manuellement après redémarrage : service réussi à 19:39, nouvelles dates de récupération confirmées.
+- [x] Synchronisation météo : 81 observations en attente importées (stock antérieur inclus), rejeu vide sans nouvel ajout, sauvegarde existante vérifiée.
+- [x] Collecte météo automatique après redémarrage confirmée au contrôle du 17/10 à 21:19 : minuteur à 21:06:12, service réussi et données récupérées à 21:06:21 (Paris). Voir validation ci-dessous.
+Reprise du collecteur au démarrage, collecte météo manuelle et transfert PC validés ; aucune donnée supprimée.
+
+### Correctif relance prêt localement — 17/10/2026
+- [x] Protection de préparation ZIP contre l'absence du helper de relance ajouté ; sept tests de contenu passent.
+- [x] Scénario unique local : application du candidat, sauvegarde, conservation des fichiers privés contrôlés, fermeture et relance de la vraie démo réussis.
+- [ ] Diffuser le correctif dans une prochaine version autorisée et refaire le parcours depuis le téléchargement officiel. La 0.1.6-dev publiée reste inchangée.
+
+### Accès local et changement de réseau — 17/10/2026
+- [x] Documenter l’adresse par nom http://botaneo-pi.local:8765 et le recours à l’IP dans docs/ACCES_LOCAL_RASPBERRY.md.
+- [x] Vérifier avahi actif et activé au démarrage ; accès Windows au nom local répond HTTP 401 (authentification requise). La capture iPhone du 17/10 confirme l’utilisation de ce nom au domicile.
+- [x] Documenter la recherche via routeur, les réseaux invités et le raccourci Safari.
+- [ ] Tester cette procédure sur un autre Wi-Fi et confirmer la création du raccourci iPhone.
+- [x] Collecte météo automatique après redémarrage confirmée au contrôle du 17/10 à 21:19 : minuteur à 21:06:12, service réussi et données récupérées à 21:06:21 (Paris). Voir validation ci-dessous.
+
+### Corrections locales de protection des données — 17/10/2026
+- [x] Protéger toutes les bases SQLite et leurs fichiers associés, notamment `_app/plantes.db`, même si une archive les contient par erreur. Protéger aussi les configurations `.local.json`, `_user_backups` et `.venv`, indépendamment de la casse des chemins.
+- [x] Éviter l’écrasement d’une sauvegarde par une autre créée dans la même seconde : réservation atomique d’un nom unique.
+- [x] Douze tests updater réussis ; scénario intégré d’application, sauvegarde, conservation et relance automatique de la démo revérifié avec succès.
+- [ ] Inclure ces correctifs dans la prochaine version lorsque sa publication sera décidée. Aucun changement de version ni publication maintenant.
+
+### Corrections graphiques locales — 17/10/2026
+- [x] Pluie Météo-France : pied de fenêtre réservé aux actions, Actualiser et Fermer visibles à 620 × 440 ; recherche et choix de commune sur deux lignes ; textes adaptés à la largeur.
+- [x] Observations météo importées : reprise du thème principal, tableaux clair/sombre harmonisés, actions fixes et bouton Fermer.
+- [x] Harmonisation partagée des tableaux et sélecteurs ttk, styles séparés par palette pour éviter de recolorer une autre fenêtre.
+- [x] Géométrie et couleurs contrôlées FR/EN et clair/sombre ; actions Home Assistant contrôlées en fenêtre compacte ; aperçu fictif HA FR/EN et six tests nappes réussis.
+- [ ] Poursuivre la revue des autres dialogues : ces contrôles ciblés ne constituent pas une validation de toutes les interfaces, ni un contrôle à tous les niveaux de zoom Windows.
+
+
+### Horaires d’éclairage datés PC/Pi — 17/10/2026
+- [x] Conserver les anciennes plages et la date d’application des changements, en heure de Paris.
+- [x] Calculer les bilans et graphiques selon la plage du jour d’allumage ; gérer les plages passant minuit.
+- [x] Synchroniser le profil complet avec ses dates, conserver la détection des conflits et bloquer un envoi daté vers un ancien exporteur Pi.
+- [x] Déployer sur le Raspberry après sauvegarde des fichiers ; service web actif, accès anonyme refusé (401), horaires existants inchangés.
+- [x] Vérifier 17 tests ciblés, les fenêtres PC FR/EN sur données fictives et la syntaxe des scripts mobiles FR/EN.
+- [x] Vérifier une synchronisation réelle PC/Pi : zéro changement, réglages concordants.
+- [ ] Vérifier visuellement sur l’iPhone après actualisation, puis constater le premier changement réel d’horaire à la prochaine modification souhaitée.
+
+Règle : un changement enregistré prend effet à la date du jour à Paris. Plusieurs modifications le même jour remplacent la plage de ce jour. Une plage nocturne appartient au jour où elle commence. Les dates anciennes sans historique utilisent le réglage précédemment connu : aucun changement passé n’est reconstitué. Une moyenne reste celle des relevés disponibles, sans interpolation ni estimation d’exposition totale.
+
+### Collecte automatique et essai de restauration — 17/10/2026
+- [x] Confirmer le minuteur météo actif et activé, déclenchement à 21:06:12 et fin réussie à 21:06:21 après le redémarrage de 19:36.
+- [x] Confirmer dans la base une date de récupération réelle 2026-10-17T19:06:21Z ; la réussite du service seule n’a pas servi de preuve.
+- [x] Restaurer les dernières sauvegardes capteurs et météo dans un répertoire temporaire, vérifier empreintes, intégrité SQLite et nombres de lignes.
+- [x] Relire ces copies avec les fonctions actuelles de l’interface et vérifier une écriture transactionnelle annulée : 184 mesures ponctuelles, 805 historiques capteurs et 723 observations météo dans les sauvegardes du 17/10.
+- [x] Conserver l’outil réutilisable raspberry/check_backup_restore.py, également installé dans le dossier collector du Pi. Aucun minuteur ajouté.
+Les bases actives et sauvegardes sources n’ont pas été remplacées. Cet essai valide la récupération des bases à la date de la sauvegarde, pas une restauration complète du système ou des accès privés. Les données collectées après cette sauvegarde n’y figurent pas.
+
+### Sécurité de publication — 17/10/2026
+- [x] Contrôle des valeurs : modèles vides acceptés, champs privés remplis bloqués, données locales toujours exclues.
+- [x] Dix tests de sécurité réussis ; rares valeurs fictives relues limitées à l’empreinte exacte du fichier, aucune exemption permanente de contenu.

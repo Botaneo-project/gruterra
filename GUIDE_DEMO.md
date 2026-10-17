@@ -10,11 +10,11 @@ Ouvrez le dépôt GitHub :
 https://github.com/Botaneo-project/gruterra
 ```
 
-Puis utilisez **Code → Download ZIP** et décompressez le dossier où vous voulez : Téléchargements, Documents, bureau ou autre dossier local.
+Téléchargez de préférence l’archive `gruterra-<version>.zip` dans **Releases**, puis décompressez-la. **Code → Download ZIP** contient le code de développement, qui peut avancer après la dernière release.
 
 ## 2. Installer Python
 
-Installez Python pour Windows depuis :
+Lancez d’abord `Installer_Gruterra.bat` : il tente d’installer Python automatiquement si nécessaire. En cas de blocage, installez Python pour Windows depuis :
 
 ```text
 https://www.python.org/downloads/windows/
@@ -24,7 +24,7 @@ Utilisez une installation standard avec Tkinter et le lanceur `py`.
 
 ## 3. Lancer la démo
 
-Méthode simple : double-cliquez sur `Installer_Gruterra.bat`, puis lancez `Lancer_Demo.py`. Si Python manque, l’installateur tente de l’installer automatiquement.
+Méthode simple : double-cliquez sur `Installer_Gruterra.bat`, puis double-cliquez sur `Lancer_Demo.bat`. Si Python manque, l’installateur tente de l’installer automatiquement.
 
 Méthode manuelle : ouvrez PowerShell dans le dossier décompressé contenant `requirements.txt`, puis lancez :
 
@@ -58,9 +58,9 @@ Elle utilise aussi sa propre configuration de démonstration. La démo ne contie
 
 ## Tester la mise à jour depuis la démo
 
-Le mode démo ne lance pas la vérification automatique au démarrage, afin de ne pas gêner la découverte de l'application. En revanche, le test manuel reste possible : ouvrez `À propos`, cliquez sur `Vérifier les mises à jour`, puis utilisez `Tester l’update` pour lancer une simulation.
+Le mode démo ne lance pas la vérification automatique au démarrage, afin de ne pas gêner la découverte de l'application. En revanche, le test manuel reste possible dans `Paramètres` : `Vérifier les mises à jour` → `Préparer la mise à jour` → `Appliquer la mise à jour`. Si la version est déjà à jour, aucune installation n’est proposée.
 
-L'application réelle n'applique une archive que si le manifeste GitHub officiel contient une URL d'archive, un SHA256 valide et `mise_a_jour_automatique=true`.
+La démo comme l’application réelle n’applique une archive que si le manifeste GitHub officiel contient une URL d'archive, un SHA256 valide et `mise_a_jour_automatique=true`.
 
 ## 6. Réinitialiser la base de démonstration
 

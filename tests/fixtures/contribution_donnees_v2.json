@@ -1,0 +1,20 @@
+{
+  "schema_version": 2,
+  "plants": [
+    {"plant_ref": "p1"}
+  ],
+  "measurements": [
+    {"plant_ref": "p1", "elapsed_hour": 0, "elapsed_second": 0, "temperature_c": 22.5, "moisture_pct": 18, "illuminance_lux": 250},
+    {"plant_ref": "p1", "elapsed_hour": 0, "elapsed_second": 590, "moisture_pct": 18},
+    {"plant_ref": "p1", "elapsed_hour": 0, "elapsed_second": 900, "moisture_pct": 23},
+    {"plant_ref": "p1", "elapsed_hour": 0, "elapsed_second": 1199, "moisture_pct": 23},
+    {"plant_ref": "p1", "elapsed_hour": 0, "elapsed_second": 1230, "moisture_pct": 24},
+    {"plant_ref": "p1", "elapsed_hour": 1, "elapsed_second": 4200, "temperature_c": 22.8, "moisture_pct": 25, "illuminance_lux": 1200, "conductivity_us_cm": 80},
+    {"plant_ref": "p1", "elapsed_hour": 24, "elapsed_second": 87000, "moisture_pct": 22},
+    {"plant_ref": "p1", "elapsed_hour": 48, "elapsed_second": 173400, "moisture_pct": 21}
+  ],
+  "events": [
+    {"plant_ref": "p1", "elapsed_hour": 0, "elapsed_second": 600, "event_type": "watering", "water_volume_ml": 40},
+    {"plant_ref": "p1", "elapsed_hour": 0, "elapsed_second": 1200, "event_type": "watering", "water_volume_ml": 55}
+  ]
+}

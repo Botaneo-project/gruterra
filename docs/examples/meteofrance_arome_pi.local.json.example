@@ -1,0 +1,9 @@
+{
+  "schema_version": 1,
+  "enabled": false,
+  "auth_mode": "bearer",
+  "application_id": "",
+  "access_token": "",
+  "issued_at_utc": null,
+  "expires_at_utc": null
+}

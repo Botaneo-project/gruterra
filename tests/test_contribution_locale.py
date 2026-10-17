@@ -42,3 +42,41 @@ class ContributionLocaleTests(unittest.TestCase):
                 self.assertIn('_config/contribution.local.json',archive.namelist())
             with zipfile.ZipFile(shared) as archive:
                 self.assertNotIn('_config/contribution.local.json',archive.namelist())
+
+    def test_restore_on_fresh_install_and_repeat_preserve_identity(self):
+        with tempfile.TemporaryDirectory() as folder, patch.object(module, 'CONFIG_DIR', Path(folder)), patch.dict(os.environ, {'BOTANEO_DEMO': '0'}):
+            identity = {'schema_version': 1, 'contributor_id': 'a' * 43, 'management_key': 'b' * 43}
+            module.marquer_information_lue()
+            self.assertEqual(identity, module.restaurer_identite(identity))
+            self.assertEqual(identity, module.restaurer_identite(identity))
+            state = module.lire_etat()
+            self.assertTrue(state['information_seen'])
+            self.assertFalse(state['sharing_enabled'])
+
+    def test_restore_rejects_changes_to_either_part_without_writing(self):
+        with tempfile.TemporaryDirectory() as folder, patch.object(module, 'CONFIG_DIR', Path(folder)), patch.dict(os.environ, {'BOTANEO_DEMO': '0'}):
+            identity = module.preparer_identite()
+            before = module.chemin().read_bytes()
+            for field in ('contributor_id', 'management_key'):
+                with self.subTest(field=field):
+                    changed = dict(identity, **{field: 'x' * 43})
+                    with self.assertRaises(ValueError):
+                        module.restaurer_identite(changed)
+                    self.assertEqual(before, module.chemin().read_bytes())
+
+    def test_restore_preserves_incomplete_or_unreadable_existing_state(self):
+        with tempfile.TemporaryDirectory() as folder, patch.object(module, 'CONFIG_DIR', Path(folder)), patch.dict(os.environ, {'BOTANEO_DEMO': '0'}):
+            identity = {'schema_version': 1, 'contributor_id': 'a' * 43, 'management_key': 'b' * 43}
+            for content in ('{"management_key":"broken"}', '{not json'):
+                module.chemin().write_text(content, encoding='utf-8')
+                before = module.chemin().read_bytes()
+                with self.assertRaises((ValueError, RuntimeError)):
+                    module.restaurer_identite(identity)
+                self.assertEqual(before, module.chemin().read_bytes())
+
+    def test_demo_restore_cannot_import_real_identity(self):
+        with tempfile.TemporaryDirectory() as folder, patch.object(module, 'CONFIG_DIR', Path(folder)), patch.dict(os.environ, {'BOTANEO_DEMO': '1'}):
+            identity = {'schema_version': 1, 'contributor_id': 'a' * 43, 'management_key': 'b' * 43}
+            with self.assertRaises(ValueError):
+                module.restaurer_identite(identity)
+            self.assertFalse(module.chemin().exists())

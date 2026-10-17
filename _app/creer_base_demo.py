@@ -171,10 +171,14 @@ def creer_base_demo(force: bool = True) -> Path:
             return max(35, base + 165 * courbe + 22 * math.sin(date.timestamp() / 18000))
 
         def lumiere_crassula(date: datetime) -> float:
+            # Éclairage fictif pour illustrer les écrans, sans modèle horticole.
+            if date.date() == (now-timedelta(days=4)).date() and date.hour == 12:
+                return 0
             if sortie_balcon <= date <= retour_balcon:
                 progression = (date - sortie_balcon).total_seconds() / max(1, (retour_balcon - sortie_balcon).total_seconds())
                 return 8200 + 9400 * math.sin(progression * math.pi)
-            return lumiere_interieure(date, 160)
+            artificial = 1400 if '09:50' <= date.strftime('%H:%M') < '15:50' else 0
+            return lumiere_interieure(date, 160) + artificial
 
         def reponse_arrosage(date: datetime, debut: datetime, pic: float, duree_h: float) -> float:
             h = (date - debut).total_seconds() / 3600
@@ -197,10 +201,12 @@ def creer_base_demo(force: bool = True) -> Path:
             humidite = min(34, max(16, humidite))
             conductivite = 82 + 6 * math.sin(i / 17) - max(0, (date - ancien_arrosage).total_seconds() / 86400) * 0.45
 
-            executer(conn, """
-                INSERT INTO mesures (date_heure, temperature, humidite, luminosite, conductivite, donnees_brutes, capteur_id)
-                VALUES (?, ?, ?, ?, ?, ?, ?)
-            """, (date.isoformat(timespec="seconds"), round(temperature, 1), round(humidite, 1), round(lumiere_crassula(date), 0), round(conductivite, 0), "demo", capteur_crassula))
+            # Deux absences fictives pour montrer un trou de relevés dans la courbe.
+            if not (date.date() == (now-timedelta(days=2)).date() and date.hour in (11, 12)):
+                executer(conn, """
+                    INSERT INTO mesures (date_heure, temperature, humidite, luminosite, conductivite, donnees_brutes, capteur_id)
+                    VALUES (?, ?, ?, ?, ?, ?, ?)
+                """, (date.isoformat(timespec="seconds"), round(temperature, 1), round(humidite, 1), round(lumiere_crassula(date), 0), round(conductivite, 0), "demo", capteur_crassula))
 
             humidite_m = 48 + 4 * math.sin(i / 18)
             lumiere_m = lumiere_interieure(date, 520)
@@ -244,6 +250,11 @@ def creer_base_demo(force: bool = True) -> Path:
         ])
 
         conn.commit()
+        # A dedicated demo configuration; never use the installation's private file.
+        from light_schedule import save as save_light_schedule
+        demo_schedule = DEMO_DIR/'config/light-schedules.json'
+        if not demo_schedule.exists():
+            save_light_schedule(demo_schedule, crassula, '09:50', '15:50')
     finally:
         conn.close()
     return DEMO_DB

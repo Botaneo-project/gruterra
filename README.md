@@ -1,5 +1,7 @@
 # Gruterra
 
+> **Code et téléchargement :** les changements présents sur `main` peuvent être plus récents que la dernière archive publiée, actuellement **0.1.6-dev**. Les correctifs récents de relance, de protection des bases et d’interface seront inclus dans une prochaine release ; pousser du code ne met pas automatiquement à jour cette archive.
+
 English entry point: [README_EN.md](README_EN.md) · Demo guide: [GUIDE_DEMO_EN.md](GUIDE_DEMO_EN.md)
 
 
@@ -16,7 +18,7 @@ Le plus simple pour découvrir Gruterra est le mode démonstration. Il ne demand
 ```text
 1. Télécharger et extraire Gruterra.
 2. Double-cliquer sur Installer_Gruterra.bat.
-3. Double-cliquer sur Lancer_Demo.py.
+3. Double-cliquer sur `Lancer_Demo.bat` (éviter le double-clic sur le fichier Python sur un PC neuf).
 ```
 
 Le guide détaillé est ici : [GUIDE_DEMO.md](GUIDE_DEMO.md). Pour installer depuis une archive ZIP de release, voir [GUIDE_INSTALLATION.md](GUIDE_INSTALLATION.md).
@@ -24,7 +26,7 @@ Le guide détaillé est ici : [GUIDE_DEMO.md](GUIDE_DEMO.md). Pour installer dep
 ## Démo ou utilisation réelle ?
 
 - `Lancer_Demo.bat` ouvre Gruterra avec des plantes et mesures fictives. C’est le meilleur choix pour découvrir le projet sans matériel.
-- `Lancer_Gruterra.py` ouvre Gruterra pour une utilisation réelle, avec une base locale vide au départ. Vos futures données restent sur votre machine.
+- `Lancer_Gruterra.bat` ouvre Gruterra pour une utilisation réelle, avec une base locale vide au départ. Vos futures données restent sur votre machine.
 
 Les deux lanceurs `.bat` sont à la racine du dossier Gruterra et utilisent des chemins relatifs au dossier décompressé. Ils relancent automatiquement `Installer_Gruterra.bat` si l’environnement local `.venv` manque. Le double-clic sur les fichiers `.py` dépend de l’association Python de Windows et peut ne rien afficher sur un PC vierge ; les `.bat` sont les lanceurs recommandés.
 
@@ -421,3 +423,6 @@ La synthèse météo est placée sur l’accueil juste après le centre d’aler
 ### Contributions locales — préparation
 
 Une information facultative sur les futures contributions est disponible au premier lancement et dans les paramètres. Aucun envoi n’est activé. Une clé privée durable peut être préparée et sauvegardée explicitement ; sa restauration ne remplace pas une autre identité existante. La clé locale est incluse dans les sauvegardes complètes privées et exclue des exports partageables. En mode démo, aucune identité réelle n’est créée et les données fictives restent exclues du partage. La réception web et les règles de conservation/retrait restent à définir avant activation.
+
+
+Les nouvelles identités de contribution préparées sur main utilisent Ed25519. La sauvegarde séparée de la clé est chiffrée par mot de passe ; sa restauration vérifie l’identité. Les anciennes clés restent conservées en attendant une migration explicite. Le fichier local de fonctionnement et les ZIP complets restent privés, ces ZIP ne sont pas chiffrés. Aucun partage réseau n’est activé.
