@@ -2,7 +2,7 @@
   "version": "0.1.7-dev",
   "notes": "Synchronisation prioritaire, suivi après arrosage, historique et copie de lignes améliorés. Sauvegardes corrigées, démo isolée et chemins Raspberry personnalisables.",
   "url": "https://github.com/Botaneo-project/gruterra",
-  "archive_url": "",
-  "sha256": "",
-  "mise_a_jour_automatique": false
+  "archive_url": "https://github.com/Botaneo-project/gruterra/releases/download/v0.1.7-dev/gruterra-0.1.7-dev.zip",
+  "sha256": "71c89313ac3dea48fb3fcf5ef6ea5bbfa7c0705ea78caa42c430ebf5fdf9484b",
+  "mise_a_jour_automatique": true
 }
