@@ -7,6 +7,8 @@ import tkinter as tk
 from tkinter import ttk, messagebox
 import ajout_capteur
 from meteo_cache import CacheMeteo, recuperer_sources
+from botaneo_dates import vers_local_naif
+from services.alertes_temps import minutes_depuis, jours_avant, etat_prevision, trier_alertes
 from datetime import datetime, timedelta
 import threading
 import json
@@ -30,13 +32,13 @@ from capteurs import netatmo
 import previsions_meteo
 from suivi_raspberry_ui import SuiviRaspberry
 from i18n import traduire, normaliser_langue
-from botaneo_config import CONFIG_DIR
+from botaneo_config import CONFIG_DIR, DATA_DIR
 
 # ============================================================
 # CONFIGURATION
 # ============================================================
 
-APP_VERSION = "0.1.6-dev"
+APP_VERSION = "0.1.7-dev"
 
 root = tk.Tk()
 
@@ -179,44 +181,37 @@ filtre_capteur_var = FiltreLocaleVar(value="Toutes")
 filtre_attention_var = FiltreLocaleVar(value="Toutes")
 
 NETATMO_CACHE = (
-    Path(__file__).resolve().parent
-    / "data"
+    DATA_DIR
     / "netatmo_cache.json"
 )
 
 PREVISION_CACHE = (
-    Path(__file__).resolve().parent
-    / "data"
+    DATA_DIR
     / "prevision_2h_cache.json"
 )
 
 AUTO_SYNC_CONFIG = (
-    Path(__file__).resolve().parent.parent
-    / "_config"
+    CONFIG_DIR
     / "sync_auto.local.json"
 )
 
 NETATMO_UI_CONFIG = (
-    Path(__file__).resolve().parent.parent
-    / "_config"
+    CONFIG_DIR
     / "netatmo_ui.local.json"
 )
 
 INTERFACE_LAYOUT_CONFIG = (
-    Path(__file__).resolve().parent.parent
-    / "_config"
+    CONFIG_DIR
     / "interface_layout.local.json"
 )
 
 ALERTES_CONFIG = (
-    Path(__file__).resolve().parent.parent
-    / "_config"
+    CONFIG_DIR
     / "alertes.local.json"
 )
 
 HISTORIQUE_IMPORT_CONFIG = (
-    Path(__file__).resolve().parent.parent
-    / "_config"
+    CONFIG_DIR
     / "historique_import.local.json"
 )
 
@@ -634,15 +629,7 @@ def appliquer_theme_interface():
 
 
 def age_mesure_minutes(date_heure):
-    if not date_heure:
-        return None
-    try:
-        dt = datetime.fromisoformat(date_heure)
-        if dt.tzinfo:
-            dt = dt.astimezone().replace(tzinfo=None)
-        return max(0, int((datetime.now() - dt).total_seconds() // 60))
-    except Exception:
-        return None
+    return minutes_depuis(date_heure)
 
 
 def anciennete(date_heure):
@@ -676,7 +663,7 @@ def etat_fraicheur_mesure(date_heure):
     minutes = age_mesure_minutes(date_heure)
     texte_age = anciennete(date_heure)
     if minutes is None:
-        return t("fresh_no_measure"), SECONDARY, BG
+        return (t("fresh_date_unknown") if date_heure else t("fresh_no_measure")), SECONDARY, BG
     if minutes <= 90:
         return t("fresh_recent").format(age=texte_age), GREEN, LIGHT_GREEN
     if minutes <= 8 * 60:
@@ -1603,6 +1590,10 @@ def lancer_collecte_prioritaire(
                 status_var.set(message_sans_capteur)
                 return
 
+            if demande_id:
+                from watering_schedule import claim
+                if not claim(demande_id):
+                    return
             status_var.set(message_lancement)
 
             def arriere_plan():
@@ -1653,6 +1644,17 @@ def lancer_collecte_prioritaire_apres_arrosage(plante_id, demande_id=None, delai
         message_lancement=t('interface_text_1682')
     )
 
+
+
+def verifier_collectes_arrosage():
+    if os.environ.get('BOTANEO_DEMO') != '1':
+        try:
+            from watering_schedule import due_requests
+            for request_id, plant_id in due_requests():
+                lancer_collecte_prioritaire_apres_arrosage(plant_id, request_id, 1)
+        except Exception:
+            pass
+    root.after(5000, verifier_collectes_arrosage)
 
 def lancer_controle_humidite_zero(plante_id, delai_ms=10 * 60 * 1000):
     lancer_collecte_prioritaire(
@@ -1941,30 +1943,34 @@ def ouvrir_arrosage_plante(plante_id, nom_plante):
     fenetre = tk.Toplevel(root)
     fenetre.title(t("watering_title"))
     fenetre.configure(bg=CARD)
-    fenetre.resizable(False, False)
+    fenetre.geometry(f"560x{min(820, max(540, fenetre.winfo_screenheight()-100))}")
+    fenetre.minsize(460, 500)
+    fenetre.resizable(True, True)
+    from ui_scroll_form import create
+    contenu, pied = create(fenetre, {key:globals()[key] for key in ('BG','CARD','TEXT','BLUE','LIGHT_BLUE','BORDER')})
     fenetre.transient(root)
     fenetre.grab_set()
 
     tk.Label(
-        fenetre,
+        contenu,
         text=t('interface_text_1979').format(v0=nom_plante),
         font=("Segoe UI", 15, "bold"),
         fg=TEXT,
         bg=CARD
     ).pack(anchor="w", padx=20, pady=(16, 8))
 
-    tk.Label(fenetre, text=t("quantity_ml"), bg=CARD, fg=TEXT, font=("Segoe UI", 9, "bold")).pack(anchor="w", padx=20, pady=(6, 3))
-    quantite_entry = tk.Entry(fenetre, width=42, bg=BG, fg=TEXT, insertbackground=TEXT)
+    tk.Label(contenu, text=t("quantity_ml"), bg=CARD, fg=TEXT, font=("Segoe UI", 9, "bold")).pack(anchor="w", padx=20, pady=(6, 3))
+    quantite_entry = tk.Entry(contenu, width=42, bg=BG, fg=TEXT, insertbackground=TEXT)
     quantite_entry.pack(fill="x", padx=20)
 
-    tk.Label(fenetre, text=t("type"), bg=CARD, fg=TEXT, font=("Segoe UI", 9, "bold")).pack(anchor="w", padx=20, pady=(10, 3))
-    type_combo = ttk.Combobox(fenetre, state="readonly", values=[t("watering_type_normal"), t("watering_type_fertilizer")], width=39)
+    tk.Label(contenu, text=t("type"), bg=CARD, fg=TEXT, font=("Segoe UI", 9, "bold")).pack(anchor="w", padx=20, pady=(10, 3))
+    type_combo = ttk.Combobox(contenu, state="readonly", values=[t("watering_type_normal"), t("watering_type_fertilizer")], width=39)
     type_combo.pack(fill="x", padx=20)
     type_combo.current(0)
 
-    tk.Label(fenetre, text=t("water_type"), bg=CARD, fg=TEXT, font=("Segoe UI", 9, "bold")).pack(anchor="w", padx=20, pady=(10, 3))
+    tk.Label(contenu, text=t("water_type"), bg=CARD, fg=TEXT, font=("Segoe UI", 9, "bold")).pack(anchor="w", padx=20, pady=(10, 3))
     type_eau_combo = ttk.Combobox(
-        fenetre,
+        contenu,
         state="readonly",
         values=[
             t("not_specified"),
@@ -1981,9 +1987,9 @@ def ouvrir_arrosage_plante(plante_id, nom_plante):
     type_eau_combo.pack(fill="x", padx=20)
     type_eau_combo.current(0)
 
-    tk.Label(fenetre, text=t("plant_health_optional"), bg=CARD, fg=TEXT, font=("Segoe UI", 9, "bold")).pack(anchor="w", padx=20, pady=(10, 3))
+    tk.Label(contenu, text=t("plant_health_optional"), bg=CARD, fg=TEXT, font=("Segoe UI", 9, "bold")).pack(anchor="w", padx=20, pady=(10, 3))
     etat_sante_combo = ttk.Combobox(
-        fenetre,
+        contenu,
         state="readonly",
         values=[
             t("plant_health_unknown"),
@@ -1996,7 +2002,7 @@ def ouvrir_arrosage_plante(plante_id, nom_plante):
     etat_sante_combo.pack(fill="x", padx=20)
     etat_sante_combo.current(0)
 
-    contexte_frame = tk.Frame(fenetre, bg=CARD)
+    contexte_frame = tk.Frame(contenu, bg=CARD)
     contexte_frame.pack(fill="x", padx=20, pady=(10, 0))
 
     tk.Label(contexte_frame, text=t("optional_context"), bg=CARD, fg=TEXT, font=("Segoe UI", 9, "bold")).grid(row=0, column=0, columnspan=2, sticky="w", pady=(0, 3))
@@ -2010,16 +2016,6 @@ def ouvrir_arrosage_plante(plante_id, nom_plante):
     )
     repartition_combo.grid(row=2, column=0, sticky="ew", padx=(0, 8))
     repartition_combo.current(0)
-
-    tk.Label(contexte_frame, text=t("drainage"), bg=CARD, fg=SECONDARY, font=("Segoe UI", 8)).grid(row=1, column=1, sticky="w")
-    ecoulement_combo = ttk.Combobox(
-        contexte_frame,
-        state="readonly",
-        values=[t("not_specified"), t("drainage_none"), t("drainage_light"), t("drainage_clear"), t("not_checked")],
-        width=20
-    )
-    ecoulement_combo.grid(row=2, column=1, sticky="ew")
-    ecoulement_combo.current(0)
 
     tk.Label(contexte_frame, text=t("cache_pot"), bg=CARD, fg=SECONDARY, font=("Segoe UI", 8)).grid(row=3, column=0, sticky="w", pady=(6, 0))
     cachepot_combo = ttk.Combobox(
@@ -2061,21 +2057,19 @@ def ouvrir_arrosage_plante(plante_id, nom_plante):
     pot_combo.grid(row=6, column=1, sticky="ew")
     pot_combo.current(0)
 
-    tk.Label(contexte_frame, text=t("drainage_delay"), bg=CARD, fg=SECONDARY, font=("Segoe UI", 8)).grid(row=7, column=0, sticky="w", pady=(6, 0))
-    drainage_delai_entry = tk.Entry(contexte_frame, bg=BG, fg=TEXT, insertbackground=TEXT)
-    drainage_delai_entry.grid(row=8, column=0, columnspan=2, sticky="ew")
-    drainage_delai_entry.insert(0, "")
+    tk.Label(contexte_frame, text=t('watering_observation_later'), bg=CARD, fg=SECONDARY,
+             wraplength=340, justify='left').grid(row=7, column=0, columnspan=2, sticky='w', pady=(6,0))
 
     contexte_frame.columnconfigure(0, weight=1)
     contexte_frame.columnconfigure(1, weight=1)
 
-    tk.Label(fenetre, text=t("comment"), bg=CARD, fg=TEXT, font=("Segoe UI", 9, "bold")).pack(anchor="w", padx=20, pady=(10, 3))
-    commentaire_entry = tk.Entry(fenetre, width=42, bg=BG, fg=TEXT, insertbackground=TEXT)
+    tk.Label(contenu, text=t("comment"), bg=CARD, fg=TEXT, font=("Segoe UI", 9, "bold")).pack(anchor="w", padx=20, pady=(10, 3))
+    commentaire_entry = tk.Entry(contenu, width=42, bg=BG, fg=TEXT, insertbackground=TEXT)
     commentaire_entry.pack(fill="x", padx=20)
 
     rappel_var = tk.BooleanVar(value=False)
     tk.Checkbutton(
-        fenetre,
+        contenu,
         text=t("schedule_reminder"),
         variable=rappel_var,
         bg=CARD,
@@ -2085,7 +2079,7 @@ def ouvrir_arrosage_plante(plante_id, nom_plante):
         selectcolor=BG
     ).pack(anchor="w", padx=20, pady=(12, 3))
 
-    rappel_frame = tk.Frame(fenetre, bg=CARD)
+    rappel_frame = tk.Frame(contenu, bg=CARD)
     rappel_frame.pack(fill="x", padx=20)
     tk.Label(rappel_frame, text=t("in_days_prefix"), bg=CARD, fg=TEXT).pack(side="left")
     rappel_jours_entry = tk.Entry(rappel_frame, width=6, bg=BG, fg=TEXT, insertbackground=TEXT)
@@ -2094,7 +2088,7 @@ def ouvrir_arrosage_plante(plante_id, nom_plante):
     tk.Label(rappel_frame, text=t("days"), bg=CARD, fg=TEXT).pack(side="left")
 
     erreur = tk.StringVar()
-    tk.Label(fenetre, textvariable=erreur, bg=CARD, fg=RED, wraplength=390).pack(fill="x", padx=20, pady=8)
+    tk.Label(contenu, textvariable=erreur, bg=CARD, fg=RED, wraplength=390).pack(fill="x", padx=20, pady=8)
 
     def enregistrer():
         quantite_txt = quantite_entry.get().strip().replace(",", ".")
@@ -2102,7 +2096,7 @@ def ouvrir_arrosage_plante(plante_id, nom_plante):
         if quantite_txt:
             try:
                 quantite = float(quantite_txt)
-                if quantite < 0:
+                if not __import__('math').isfinite(quantite) or quantite < 0:
                     raise ValueError()
             except ValueError:
                 erreur.set(t("watering_quantity_invalid"))
@@ -2119,6 +2113,14 @@ def ouvrir_arrosage_plante(plante_id, nom_plante):
                 erreur.set(t("watering_reminder_days_invalid"))
                 return
 
+        rappel_conserve = False
+        if not rappel_var.get():
+            try:
+                rappel_date = database.rappel_a_conserver_pour_complement(database.get_dernier_arrosage(plante_id), datetime.now().isoformat(timespec='seconds'))
+                rappel_conserve = rappel_date is not None
+            except Exception:
+                pass
+
         commentaire_libre = commentaire_entry.get().strip()
         type_eau = type_eau_combo.get().strip()
         if type_eau == t("not_specified"):
@@ -2130,7 +2132,6 @@ def ouvrir_arrosage_plante(plante_id, nom_plante):
         contexte_arrosage = []
         for libelle, combo in (
                 (t("distribution"), repartition_combo),
-                (t("drainage"), ecoulement_combo),
                 (t("cache_pot"), cachepot_combo),
                 (t("substrate_session_start"), substrat_combo),
                 (t("mode"), progressif_combo),
@@ -2138,9 +2139,7 @@ def ouvrir_arrosage_plante(plante_id, nom_plante):
             valeur = combo.get().strip()
             if valeur and valeur != t("not_specified"):
                 contexte_arrosage.append(f"{libelle} : {valeur}")
-        delai_drainage = drainage_delai_entry.get().strip()
-        if delai_drainage:
-            contexte_arrosage.append(f"{t("drainage_delay")} : {delai_drainage}")
+
 
         commentaire_lignes = []
         if commentaire_libre:
@@ -2158,6 +2157,8 @@ def ouvrir_arrosage_plante(plante_id, nom_plante):
         confirmation.extend(contexte_arrosage)
         if rappel_date:
             confirmation.append(t("confirm_reminder").format(date=formater_date(rappel_date)))
+            if rappel_conserve:
+                confirmation.append(t('watering_fraction_reminder_kept'))
         if commentaire_libre:
             confirmation.append(t("confirm_comment").format(comment=commentaire_libre))
 
@@ -2180,17 +2181,30 @@ def ouvrir_arrosage_plante(plante_id, nom_plante):
                 type_eau=type_eau,
                 etat_sante=etat_sante
             )
+        except Exception:
+            erreur.set(t("watering_save_failed"))
+            return
+
+        demande_id = None
+        collecte_indisponible = False
+        try:
             demande_id = database.enregistrer_collecte_prioritaire(
                 plante_id,
                 arrosage_id=arrosage_id,
                 date_creation=date_arrosage,
                 raison="post_arrosage",
                 priorite=10,
-                commentaire=t('interface_text_2218')
+                commentaire=t('interface_text_2218'),
+                date_prevue=date_arrosage
+            )
+            demande_10min_id = database.enregistrer_collecte_prioritaire(
+                plante_id, arrosage_id=arrosage_id, date_creation=date_arrosage,
+                raison='post_arrosage_10min', priorite=10,
+                date_prevue=(datetime.fromisoformat(date_arrosage)+timedelta(minutes=10)).isoformat(timespec='seconds')
             )
         except Exception:
-            erreur.set(t("watering_save_failed"))
-            return
+            # Watering is already committed: do not invite a duplicate retry.
+            collecte_indisponible = True
 
         fenetre.destroy()
         actualiser_interface()
@@ -2200,14 +2214,23 @@ def ouvrir_arrosage_plante(plante_id, nom_plante):
             status_var.set(t("watering_saved_with_reminder").format(date=formater_date(rappel_date)) + suffixe_suivi)
         else:
             status_var.set(t("watering_saved") + suffixe_suivi + ".")
-        lancer_collecte_prioritaire_apres_arrosage(plante_id, demande_id, 1000)
-        lancer_collecte_prioritaire_apres_arrosage(plante_id, demande_id, 10 * 60 * 1000)
+        if collecte_indisponible:
+            status_var.set(status_var.get()+" "+t('watering_saved_collect_unavailable'))
+        else:
+            lancer_collecte_prioritaire_apres_arrosage(plante_id, demande_id, 1000)
+            lancer_collecte_prioritaire_apres_arrosage(plante_id, demande_10min_id, 10 * 60 * 1000)
 
-    boutons = tk.Frame(fenetre, bg=CARD)
+    boutons = tk.Frame(pied, bg=CARD)
     boutons.pack(fill="x", padx=20, pady=(0, 15))
     tk.Button(boutons, text=t("save"), command=enregistrer, bg=LIGHT_GREEN, fg=TEXT, activebackground=LIGHT_GREEN, relief="flat", cursor="hand2").pack(side="right")
     tk.Button(boutons, text=t("cancel"), command=fenetre.destroy, bg=BG, fg=TEXT, relief="flat", cursor="hand2").pack(side="left")
 
+    from meteo_nappes import harmoniser
+    def harmoniser_choix(widget):
+        if isinstance(widget,ttk.Combobox):
+            harmoniser(widget,{key:globals()[key] for key in ('BG','CARD','TEXT','BLUE','LIGHT_BLUE','BORDER')})
+        for child in widget.winfo_children():harmoniser_choix(child)
+    harmoniser_choix(contenu)
     quantite_entry.focus_set()
 
 
@@ -2565,163 +2588,169 @@ def creer_carte_plante(parent, plante):
     mesure = obtenir_derniere_mesure(plante_id)
     analyse_lumiere = analyser_lumiere_24h(plante_id)
 
-    afficher_zone_decision(
-        carte,
-        plante_id,
-        mesure,
-        analyse_lumiere
-    )
-
-    ligne_mesures = tk.Frame(
-        carte,
-        bg=CARD
-    )
-
-    ligne_mesures.pack(
-        fill="x",
-        padx=15,
-        pady=10
-    )
-
     if mesure:
-
-        date_heure = mesure[1]
-        temperature = mesure[2]
-        humidite = mesure[3]
-        luminosite = mesure[4]
-        conductivite = mesure[5]
-
-        temp_txt = (
-            f"{temperature:.1f} °C"
-            if temperature is not None
-            else "—"
+        afficher_zone_decision(
+            carte,
+            plante_id,
+            mesure,
+            analyse_lumiere
         )
 
-        humidite_txt = (
-            f"{humidite:.0f} %"
-            if humidite is not None
-            else "—"
+        ligne_mesures = tk.Frame(
+            carte,
+            bg=CARD
         )
 
-        luminosite_txt = (
-            f"{luminosite:.0f} lux"
-            if luminosite is not None
-            else "—"
+        ligne_mesures.pack(
+            fill="x",
+            padx=15,
+            pady=10
         )
 
-        conductivite_txt = (
-            f"{conductivite:.0f} µS/cm"
-            if conductivite is not None
-            else "—"
+        if mesure:
+
+            date_heure = mesure[1]
+            temperature = mesure[2]
+            humidite = mesure[3]
+            luminosite = mesure[4]
+            conductivite = mesure[5]
+
+            temp_txt = (
+                f"{temperature:.1f} °C"
+                if temperature is not None
+                else "—"
+            )
+
+            humidite_txt = (
+                f"{humidite:.0f} %"
+                if humidite is not None
+                else "—"
+            )
+
+            luminosite_txt = (
+                f"{luminosite:.0f} lux"
+                if luminosite is not None
+                else "—"
+            )
+
+            conductivite_txt = (
+                f"{conductivite:.0f} µS/cm"
+                if conductivite is not None
+                else "—"
+            )
+
+        else:
+
+            date_heure = None
+            humidite = None
+
+            temp_txt = "—"
+            humidite_txt = "—"
+            luminosite_txt = "—"
+            conductivite_txt = "—"
+
+        creer_valeur(
+            ligne_mesures,
+            t('temperature'),
+            temp_txt
+        )
+
+        creer_valeur(
+            ligne_mesures,
+            t('interface_text_2665'),
+            humidite_txt
+        )
+
+        creer_valeur(
+            ligne_mesures,
+            t('interface_text_2671'),
+            luminosite_txt
+        )
+
+        creer_valeur(
+            ligne_mesures,
+            t('interface_text_2677'),
+            conductivite_txt
+        )
+
+        # --------------------------------------------------------
+        # État humidité
+        # --------------------------------------------------------
+
+        etat, couleur, fond = determiner_etat_humidite(
+            humidite,
+            plante_id
+        )
+
+        etat_frame = tk.Frame(
+            carte,
+            bg=fond
+        )
+
+        etat_frame.pack(
+            fill="x",
+            padx=20,
+            pady=(0, 10)
+        )
+
+        tk.Label(
+            etat_frame,
+            text=etat,
+            font=("Segoe UI", 10, "bold"),
+            fg=couleur,
+            bg=fond,
+            anchor="w"
+        ).pack(
+            fill="x",
+            padx=12,
+            pady=8
+        )
+
+        # --------------------------------------------------------
+        # Lumiere sur 24 h
+        # --------------------------------------------------------
+
+        lumiere_frame = tk.Frame(
+            carte,
+            bg=analyse_lumiere["fond"]
+        )
+
+        lumiere_frame.pack(
+            fill="x",
+            padx=20,
+            pady=(0, 10)
+        )
+
+        tk.Label(
+            lumiere_frame,
+            text=f"☀️ {analyse_lumiere['message']}",
+            font=("Segoe UI", 10, "bold"),
+            fg=analyse_lumiere["couleur"],
+            bg=analyse_lumiere["fond"],
+            anchor="w"
+        ).pack(
+            fill="x",
+            padx=12,
+            pady=(8, 0)
+        )
+
+        tk.Label(
+            lumiere_frame,
+            text=analyse_lumiere["detail"],
+            font=("Segoe UI", 9),
+            fg=SECONDARY,
+            bg=analyse_lumiere["fond"],
+            anchor="w"
+        ).pack(
+            fill="x",
+            padx=12,
+            pady=(2, 8)
         )
 
     else:
-
         date_heure = None
-        humidite = None
-
-        temp_txt = "—"
-        humidite_txt = "—"
-        luminosite_txt = "—"
-        conductivite_txt = "—"
-
-    creer_valeur(
-        ligne_mesures,
-        t('temperature'),
-        temp_txt
-    )
-
-    creer_valeur(
-        ligne_mesures,
-        t('interface_text_2665'),
-        humidite_txt
-    )
-
-    creer_valeur(
-        ligne_mesures,
-        t('interface_text_2671'),
-        luminosite_txt
-    )
-
-    creer_valeur(
-        ligne_mesures,
-        t('interface_text_2677'),
-        conductivite_txt
-    )
-
-    # --------------------------------------------------------
-    # État humidité
-    # --------------------------------------------------------
-
-    etat, couleur, fond = determiner_etat_humidite(
-        humidite,
-        plante_id
-    )
-
-    etat_frame = tk.Frame(
-        carte,
-        bg=fond
-    )
-
-    etat_frame.pack(
-        fill="x",
-        padx=20,
-        pady=(0, 10)
-    )
-
-    tk.Label(
-        etat_frame,
-        text=etat,
-        font=("Segoe UI", 10, "bold"),
-        fg=couleur,
-        bg=fond,
-        anchor="w"
-    ).pack(
-        fill="x",
-        padx=12,
-        pady=8
-    )
-
-    # --------------------------------------------------------
-    # Lumiere sur 24 h
-    # --------------------------------------------------------
-
-    lumiere_frame = tk.Frame(
-        carte,
-        bg=analyse_lumiere["fond"]
-    )
-
-    lumiere_frame.pack(
-        fill="x",
-        padx=20,
-        pady=(0, 10)
-    )
-
-    tk.Label(
-        lumiere_frame,
-        text=f"☀️ {analyse_lumiere['message']}",
-        font=("Segoe UI", 10, "bold"),
-        fg=analyse_lumiere["couleur"],
-        bg=analyse_lumiere["fond"],
-        anchor="w"
-    ).pack(
-        fill="x",
-        padx=12,
-        pady=(8, 0)
-    )
-
-    tk.Label(
-        lumiere_frame,
-        text=analyse_lumiere["detail"],
-        font=("Segoe UI", 9),
-        fg=SECONDARY,
-        bg=analyse_lumiere["fond"],
-        anchor="w"
-    ).pack(
-        fill="x",
-        padx=12,
-        pady=(2, 8)
-    )
+        tk.Label(carte, text=t('plant_home_no_history'), bg=CARD, fg=SECONDARY,
+                 anchor='w', justify='left', wraplength=650).pack(fill='x', padx=20, pady=10)
 
     # --------------------------------------------------------
     # Capteur
@@ -2905,32 +2934,53 @@ def creer_carte_plante(parent, plante):
             pady=8
         )
 
+    capteur_frame.pack_forget()
+    def afficher_details():
+        if capteur_frame.winfo_manager():
+            capteur_frame.pack_forget()
+        else:
+            capteur_frame.pack(fill='x', padx=20, pady=5, after=details_capteur)
+    details_capteur = tk.Button(carte, text=t('plant_home_sensor_details'),
+                               bg=CARD, fg=BLUE, relief='flat', command=afficher_details)
+    details_capteur.pack(anchor='w', padx=20, pady=4)
+
     # --------------------------------------------------------
     # Dernière mesure
     # --------------------------------------------------------
 
-    texte_fraicheur_mesure, couleur_fraicheur_mesure, fond_fraicheur_mesure = etat_fraicheur_mesure(date_heure)
-    derniere_mesure_frame = tk.Frame(carte, bg=fond_fraicheur_mesure)
-    derniere_mesure_frame.pack(fill="x", padx=20, pady=(5, 10))
-    tk.Label(
-        derniere_mesure_frame,
-        text=(
-            f"{texte_fraicheur_mesure} · "
-            f"{formater_date(date_heure)}"
-        ),
-        font=("Segoe UI", 9, "bold"),
-        fg=couleur_fraicheur_mesure,
-        bg=fond_fraicheur_mesure,
-        anchor="w"
-    ).pack(
-        fill="x",
-        padx=10,
-        pady=6
-    )
+    if mesure:
+        texte_fraicheur_mesure, couleur_fraicheur_mesure, fond_fraicheur_mesure = etat_fraicheur_mesure(date_heure)
+        derniere_mesure_frame = tk.Frame(carte, bg=fond_fraicheur_mesure)
+        derniere_mesure_frame.pack(fill="x", padx=20, pady=(5, 10))
+        tk.Label(
+            derniere_mesure_frame,
+            text=(
+                f"{texte_fraicheur_mesure} · "
+                f"{formater_date(date_heure)}"
+            ),
+            font=("Segoe UI", 9, "bold"),
+            fg=couleur_fraicheur_mesure,
+            bg=fond_fraicheur_mesure,
+            anchor="w"
+        ).pack(
+            fill="x",
+            padx=10,
+            pady=6
+        )
 
     # --------------------------------------------------------
     # Boutons
     # --------------------------------------------------------
+
+    def ouvrir_suivi_connecte(pid=plante_id):
+        try:
+            import meteo_nappes
+            from home_assistant_dashboard import open_window
+            open_window(root, {key: globals()[key] for key in meteo_nappes.PALETTE}, plant_id=pid)
+        except Exception:
+            messagebox.showerror(t('ha_view_title'), t('ha_view_open_failed'), parent=root)
+    tk.Button(carte, text=t('ha_view_title'), bg=BG, fg=BLUE,
+              command=ouvrir_suivi_connecte).pack(anchor='w', padx=20, pady=6)
 
     boutons = tk.Frame(
         carte,
@@ -3125,6 +3175,9 @@ def creer_carte_plante(parent, plante):
 
 
 # ============================================================
+    from ui_action_flow import reflow_actions
+    reflow_actions(boutons)
+
 # CARTE METEO NETATMO
 # ============================================================
 
@@ -3195,6 +3248,13 @@ def afficher_prevision_2h(parent):
     if not prevision_2h_data:
         message = prevision_2h_error or t("forecast_not_loaded")
         tk.Label(bloc, text=message, font=("Segoe UI", 9), fg=SECONDARY, bg=LIGHT_BLUE, anchor="w", wraplength=900, justify="left").pack(fill="x", padx=12, pady=(2, 10))
+        return
+
+    etat = etat_prevision(prevision_2h_data)
+    if etat != "current":
+        message = t("alerts_forecast_expired" if etat == "expired" else "alerts_forecast_unknown")
+        tk.Label(bloc, text=message, font=("Segoe UI", 9), fg=SECONDARY, bg=LIGHT_BLUE,
+                 anchor="w", wraplength=900, justify="left").pack(fill="x", padx=12, pady=(2, 10))
         return
 
     pluie = formater_prevision_valeur(prevision_2h_data.get("pluie_2h"), " mm")
@@ -4455,14 +4515,20 @@ def afficher_synthese_netatmo(parent):
     from meteo_pluie import derniere_pluie
     import sqlite3
     try:
-        dernier = derniere_pluie(Path(__file__).resolve().parent / 'data' / 'netatmo_pluie.sqlite3')
+        dernier = derniere_pluie(DATA_DIR / 'netatmo_pluie.sqlite3')
     except sqlite3.Error:
         dernier = None
     texte_pluie = t('weather_rain_history_empty')
     if dernier:
         date, mm, source, periode = dernier
         texte_pluie = t('weather_rain_history_last').format(date=date.replace('T', ' '), mm=mm, source=source, periode='1 h' if periode == 'pluie_1h' else '24 h')
-    tk.Label(bloc, text=texte_pluie, bg=LIGHT_GREEN, fg=SECONDARY, anchor='w', justify='left', wraplength=850).pack(fill='x', padx=12, pady=(0,8))
+    pluie_resume = tk.Frame(bloc, bg=CARD, highlightbackground=BORDER, highlightthickness=1)
+    pluie_resume.pack(fill='x', padx=12, pady=(0, 10))
+    tk.Label(pluie_resume, text=t('weather_rain_history_title'), bg=CARD, fg=BLUE,
+             font=('Segoe UI', 10, 'bold'), anchor='w').pack(fill='x', padx=12, pady=(8, 3))
+    tk.Label(pluie_resume, text=texte_pluie, bg=CARD, fg=TEXT, anchor='w', justify='left', wraplength=750).pack(fill='x', padx=12)
+    tk.Label(pluie_resume, text=t('weather_rain_history_scope'), bg=CARD, fg=SECONDARY,
+             anchor='w', justify='left', wraplength=750).pack(fill='x', padx=12, pady=(3, 8))
 
 
 def creer_titre_netatmo_liste(parent, titre, sous_titre=None):
@@ -4878,6 +4944,8 @@ def synchroniser_arriere_plan():
     import weather_sync
     if os.environ.get('BOTANEO_DEMO') != '1':
         resultat_miflora['weather_result'] = weather_sync.synchronize()
+    import home_assistant_sync
+    resultat_miflora['ha_result'] = home_assistant_sync.synchronize()
     resultats_meteo = recuperer_sources(netatmo)
     root.after(0, afficher_etape_netatmo, t("sync_forecast_reading"), 70)
     recuperer_prevision_2h_avec_cache()
@@ -4890,9 +4958,11 @@ def controle_raspberry_a_programmer(resultat_miflora):
         if not raspberry_resultat:
             # Quand le Raspberry suffit, ses champs sont directement dans le résultat capteur.
             raspberry_resultat = resultat
-        if raspberry_resultat.get("collect_accepted") is not True:
+        if not raspberry_resultat.get("collection_pending") and raspberry_resultat.get("collect_accepted") is not True:
             continue
-        if (raspberry_resultat.get("current_added", 0) or 0) > 0:
+        if raspberry_resultat.get("fresh_measurement_confirmed") is True:
+            continue
+        if (raspberry_resultat.get("current_added", raspberry_resultat.get("raspberry_current_added", 0)) or 0) > 0:
             continue
         return True
     return False
@@ -5015,6 +5085,9 @@ def synchronisation_terminee(resultat_miflora, resultats_meteo):
     import weather_sync
     weather_message=weather_sync.result_message(resultat_miflora.get('weather_result',{'status':'disabled'}))
     if weather_message:lignes_detail.append(weather_message)
+    import home_assistant_sync
+    ha_message=home_assistant_sync.result_message(resultat_miflora.get('ha_result',{'status':'disabled'}))
+    if ha_message:lignes_detail.append(ha_message)
     lignes_detail.append(t("sync_display_refreshed"))
     acquisition_miflora = resume_acquisition_miflora(resultat_miflora)
     if acquisition_miflora:
@@ -5770,9 +5843,9 @@ def ouvrir_maintenance():
             ):
                 return
         try:
-            racine_gruterra = Path(__file__).resolve().parent.parent
-            archive = sauvegarde_utilisateur.creer_sauvegarde_utilisateur(racine_gruterra, mode=mode)
-            manifest = sauvegarde_utilisateur.construire_manifest_sauvegarde(racine_gruterra, mode=mode)
+            racine_gruterra = DATA_DIR if os.environ.get("BOTANEO_DEMO") == "1" else Path(__file__).resolve().parent.parent
+            archive = sauvegarde_utilisateur.creer_sauvegarde_utilisateur(racine_gruterra, mode=mode, db_path=database.DB_PATH, config_dir=CONFIG_DIR, data_dir=DATA_DIR)
+            manifest = sauvegarde_utilisateur.construire_manifest_sauvegarde(racine_gruterra, mode=mode, db_path=database.DB_PATH, config_dir=CONFIG_DIR, data_dir=DATA_DIR)
             rapport = sauvegarde_utilisateur.formater_rapport_sauvegarde(manifest)
         except Exception as erreur:
             messagebox.showerror(t("backup_error_title"), f"{t('backup_impossible')} : {erreur}", parent=fenetre)
@@ -5897,6 +5970,8 @@ def texte_sante_systeme(etat_raspberry=None):
         lignes.append(
             t('interface_text_5960').format(v0=capteur[3] or t('interface_text_5960_more'), v1=capteur[1] or t('sensor'), v2=capteur[4], v3=capteur[5] or t('capteur_infos_text_97_more'), v4=capteur[6] or 0, v5=capteur[8] or 0)
         )
+    from home_assistant_summary import health_lines
+    lignes.extend(health_lines())
     return texte_interface_utf8_sur("\n".join(lignes))
 
 
@@ -5966,6 +6041,8 @@ def ouvrir_sante_systeme():
                 capteur[6] or 0,
                 capteur[8] or 0,
             ))
+
+    fenetre.bind('<<GruterraDataChanged>>', lambda event: rafraichir())
 
     def copier():
         texte = texte_sante_systeme()
@@ -7416,17 +7493,13 @@ def capteurs_actifs_par_plante():
             if plante_id is not None and actif:
                 capteurs.setdefault(plante_id, []).append(capteur)
     except Exception:
-        pass
+        return None
     return capteurs
 
 
 def delai_rappel_arrosage(date_rappel, reference=None):
-    reference = reference or datetime.now()
-    try:
-        if isinstance(date_rappel, str):
-            date_rappel = datetime.fromisoformat(date_rappel)
-        jours = (date_rappel.date() - reference.date()).days
-    except Exception:
+    jours = jours_avant(date_rappel, reference)
+    if jours is None:
         return t('interface_text_7368')
 
     if jours < 0:
@@ -7443,8 +7516,7 @@ def rappel_mail_texte(plante_id, date_rappel, reference=None):
         return None
     reference = reference or datetime.now()
     try:
-        if isinstance(date_rappel, str):
-            date_rappel = datetime.fromisoformat(date_rappel)
+        date_rappel = vers_local_naif(date_rappel)
         date_mail = date_rappel - timedelta(days=7)
     except Exception:
         return t('interface_text_7416')
@@ -7464,9 +7536,42 @@ def ajouter_alerte(liste, niveau, titre, detail):
     liste.append({"niveau": niveau, "titre": titre, "detail": detail, "couleur": couleur, "fond": fond})
 
 
+def alerte_humidite_basse(capteur, dernier_arrosage, maintenant):
+    """Dernier relevé du capteur local actif ; aucune donnée de test HA."""
+    import math
+    mesures = database.get_mesures_capteur(capteur[0], limite=1)
+    if not mesures:
+        return None
+    mesure = mesures[0]
+    if mesure[3] is None or isinstance(mesure[3], bool):
+        return None
+    try:
+        humidite = float(mesure[3])
+        age = minutes_depuis(mesure[1], maintenant)
+        if vers_local_naif(mesure[1]) > maintenant:
+            return None
+    except (TypeError, ValueError, OverflowError):
+        return None
+    if not math.isfinite(humidite) or not 0 <= humidite < 20 or age is None or age >= 48 * 60:
+        return None
+    # Une valeur antérieure à un nouvel apport ne décrit pas sa réponse.
+    if dernier_arrosage and dernier_arrosage[2]:
+        try:
+            if vers_local_naif(dernier_arrosage[2]) >= vers_local_naif(mesure[1]):
+                return None
+        except (TypeError, ValueError, OverflowError):
+            return None
+    return t("alerts_low_soil_detail").format(
+        sensor=capteur[1], value=f"{humidite:g}", date=formater_date(mesure[1]))
+
+
 def construire_alertes(plantes):
     alertes = []
     capteurs_par_plante = capteurs_actifs_par_plante()
+    capteurs_inconnus = capteurs_par_plante is None
+    if capteurs_inconnus:
+        capteurs_par_plante = {}
+        ajouter_alerte(alertes, "info", t("alerts_sensor_list_unavailable"), t("alerts_data_unavailable_detail"))
     maintenant = datetime.now()
 
     for plante in plantes:
@@ -7474,8 +7579,25 @@ def construire_alertes(plantes):
         nom = plante[1]
         capteurs = capteurs_par_plante.get(plante_id, [])
 
-        suivi_arrosage = analyser_apres_arrosage(plante_id)
-        if suivi_arrosage and suivi_arrosage["niveau"] in ("danger", "attention"):
+        from services.suivi_arrosage_alertes import charger_contextes, dernier_signal_sante
+        try:
+            contextes_arrosage = charger_contextes(database, plante_id, capteurs, maintenant)
+            signal_sante = dernier_signal_sante(database, plante_id, maintenant)
+        except Exception:
+            contextes_arrosage = {}
+            signal_sante = None
+            ajouter_alerte(alertes, "info", t("alerts_data_unavailable_title").format(plant=nom),
+                           t("alerts_data_unavailable_detail"))
+        if signal_sante:
+            ajouter_alerte(alertes, "attention", t("watering_context_health_title").format(plant=nom), signal_sante)
+
+        try:
+            suivi_arrosage = analyser_apres_arrosage(plante_id)
+        except Exception:
+            suivi_arrosage = None
+            ajouter_alerte(alertes, "info", t("alerts_data_unavailable_title").format(plant=nom),
+                           t("alerts_data_unavailable_detail"))
+        if suivi_arrosage and (suivi_arrosage["niveau"] == "danger" or (not contextes_arrosage and suivi_arrosage["niveau"] == "attention")):
             ajouter_alerte(
                 alertes,
                 suivi_arrosage["niveau"],
@@ -7487,20 +7609,22 @@ def construire_alertes(plantes):
             rappel = database.get_rappel_arrosage_actif(plante_id)
         except Exception:
             rappel = None
+            ajouter_alerte(alertes, "info", t("alerts_reminder_unavailable").format(plant=nom),
+                           t("alerts_data_unavailable_detail"))
 
         try:
             dernier_arrosage = database.get_dernier_arrosage(plante_id)
         except Exception:
             dernier_arrosage = None
 
-        if not capteurs:
+        if not capteurs and not capteurs_inconnus:
             details_sans_capteur = [t('interface_text_7463')]
             niveau_sans_capteur = "info"
             titre_sans_capteur = t('interface_text_7465').format(v0=nom)
 
             if rappel and rappel[9]:
                 try:
-                    date_rappel = datetime.fromisoformat(rappel[9])
+                    date_rappel = vers_local_naif(rappel[9])
                     delai_txt = delai_rappel_arrosage(date_rappel, maintenant)
                     details_sans_capteur.append(t('interface_text_7471').format(v0=delai_txt, v1=formater_date(rappel[9])))
                     mail_txt = rappel_mail_texte(plante_id, date_rappel, maintenant)
@@ -7509,7 +7633,7 @@ def construire_alertes(plantes):
                     if date_rappel.date() <= maintenant.date():
                         niveau_sans_capteur = "danger"
                         titre_sans_capteur = t('interface_text_7477').format(v0=nom)
-                    elif (date_rappel - maintenant).days <= 2:
+                    elif (date_rappel.date() - maintenant.date()).days <= 2:
                         niveau_sans_capteur = "attention"
                         titre_sans_capteur = t('interface_text_7480').format(v0=nom)
                 except Exception:
@@ -7531,6 +7655,19 @@ def construire_alertes(plantes):
             for capteur in capteurs:
                 adresse = capteur[2]
                 nom_capteur = capteur[1]
+                try:
+                    detail_humidite = alerte_humidite_basse(capteur, dernier_arrosage, maintenant)
+                except Exception:
+                    detail_humidite = None
+                    ajouter_alerte(alertes, "info", t("alerts_low_soil_unavailable").format(plant=nom),
+                                   t("alerts_data_unavailable_detail"))
+                contexte_arrosage = contextes_arrosage.get(capteur[0])
+                if contexte_arrosage:
+                    ajouter_alerte(alertes, contexte_arrosage["niveau"],
+                                   t("watering_context_title").format(plant=nom), contexte_arrosage["detail"])
+                elif detail_humidite:
+                    ajouter_alerte(alertes, "attention", t("alerts_low_soil_title").format(plant=nom),
+                                   detail_humidite)
                 infos = lire_infos(adresse)
                 batterie = infos.get("batterie")
                 seuil = int(alertes_config.get("seuil_batterie", 50))
@@ -7539,37 +7676,43 @@ def construire_alertes(plantes):
                 elif batterie is not None and batterie <= min(seuil + 15, 100):
                     ajouter_alerte(alertes, "attention", t('interface_text_7506').format(v0=nom), f"{nom_capteur} : {batterie} %.")
 
-                derniere_sync = obtenir_derniere_synchronisation_capteur(capteur[0])
-                if derniere_sync:
-                    try:
-                        date_sync = datetime.fromisoformat(derniere_sync)
-                        heures = (maintenant - date_sync).total_seconds() / 3600
-                        if heures >= 48:
-                            ajouter_alerte(alertes, "attention", t('interface_text_7514').format(v0=nom), t('interface_text_7514_more').format(v0=anciennete(derniere_sync)))
-                    except Exception:
-                        pass
+                try:
+                    derniere_sync = obtenir_derniere_synchronisation_capteur(capteur[0])
+                    age_sync = minutes_depuis(derniere_sync, maintenant)
+                    if age_sync is None:
+                        ajouter_alerte(alertes, "info", t("alerts_sensor_unknown").format(plant=nom),
+                                       t("alerts_sensor_unknown_detail").format(sensor=nom_capteur))
+                    elif age_sync >= 48 * 60:
+                        ajouter_alerte(alertes, "attention", t('interface_text_7514').format(v0=nom), t('interface_text_7514_more').format(v0=anciennete(derniere_sync)))
+                except Exception:
+                    ajouter_alerte(alertes, "info", t("alerts_sensor_unknown").format(plant=nom),
+                                   t("alerts_data_unavailable_detail"))
 
-        if capteurs and rappel and rappel[9]:
+        if (capteurs or capteurs_inconnus) and rappel and rappel[9]:
             try:
-                date_rappel = datetime.fromisoformat(rappel[9])
+                date_rappel = vers_local_naif(rappel[9])
                 if date_rappel.date() <= maintenant.date():
                     detail = t('interface_text_7494').format(v0=delai_rappel_arrosage(date_rappel, maintenant), v1=formater_date(rappel[9]))
                     mail_txt = rappel_mail_texte(plante_id, date_rappel, maintenant)
                     if mail_txt:
                         detail += " " + mail_txt
                     ajouter_alerte(alertes, "danger", t('interface_text_7526').format(v0=nom), detail)
-                elif (date_rappel - maintenant).days <= 2:
+                elif (date_rappel.date() - maintenant.date()).days <= 2:
                     detail = t('interface_text_7494').format(v0=delai_rappel_arrosage(date_rappel, maintenant), v1=formater_date(rappel[9]))
                     mail_txt = rappel_mail_texte(plante_id, date_rappel, maintenant)
                     if mail_txt:
                         detail += " " + mail_txt
                     ajouter_alerte(alertes, "attention", t('interface_text_7532').format(v0=nom), detail)
-                elif plante_avec_rappel_email(plante_id) and (date_rappel - maintenant).days <= 7:
+                elif plante_avec_rappel_email(plante_id) and (date_rappel.date() - maintenant.date()).days <= 7:
                     ajouter_alerte(alertes, "info", t('interface_text_7534').format(v0=nom), t('interface_text_7534_more').format(v0=delai_rappel_arrosage(date_rappel, maintenant), v1=formater_date(rappel[9]), v2=rappel_mail_texte(plante_id, date_rappel, maintenant)))
             except Exception:
                 pass
 
-    if prevision_2h_data:
+    etat_meteo = etat_prevision(prevision_2h_data, maintenant)
+    if etat_meteo in ("expired", "unknown"):
+        ajouter_alerte(alertes, "info", t("alerts_forecast_unavailable_title"),
+                       t("alerts_forecast_expired" if etat_meteo == "expired" else "alerts_forecast_unknown"))
+    if etat_meteo == "current":
         try:
             pluie = prevision_2h_data.get("pluie_2h")
             if pluie is not None and float(pluie) > 0:
@@ -7583,7 +7726,7 @@ def construire_alertes(plantes):
         except Exception:
             pass
 
-    return alertes
+    return trier_alertes(alertes)
 
 
 def lignes_email_depuis_alertes(alertes):
@@ -7715,8 +7858,17 @@ def afficher_tuile_alerte(parent, alerte):
     tuile = tk.Frame(parent, bg=alerte["fond"], highlightbackground=BORDER, highlightthickness=1)
     tuile.pack(fill="x", padx=12, pady=(0, 6))
 
-    tk.Label(tuile, text=alerte["titre"], font=("Segoe UI", 10, "bold"), fg=alerte["couleur"], bg=alerte["fond"], anchor="w").pack(fill="x", padx=10, pady=(7, 0))
-    tk.Label(tuile, text=alerte["detail"], font=("Segoe UI", 9), fg=TEXT, bg=alerte["fond"], anchor="w", wraplength=950, justify="left").pack(fill="x", padx=10, pady=(0, 7))
+    titre = tk.Label(tuile, text=t("alerts_level_" + alerte["niveau"]) + " · " + alerte["titre"],
+                    font=("Segoe UI", 10, "bold"), fg=alerte["couleur"], bg=alerte["fond"],
+                    anchor="w", justify="left")
+    titre.pack(fill="x", padx=10, pady=(7, 0))
+    detail = tk.Label(tuile, text=alerte["detail"], font=("Segoe UI", 9), fg=TEXT,
+                     bg=alerte["fond"], anchor="w", justify="left")
+    detail.pack(fill="x", padx=10, pady=(0, 7))
+    def adapter(event):
+        titre.configure(wraplength=max(180, event.width-24))
+        detail.configure(wraplength=max(180, event.width-24))
+    tuile.bind("<Configure>", adapter, add="+")
 
 
 def afficher_centre_alertes(parent, plantes):
@@ -7741,7 +7893,7 @@ def afficher_centre_alertes(parent, plantes):
         resume = t('interface_text_7679').format(v0=len(alertes))
         couleur = BLUE
     else:
-        resume = "Aucune alerte importante"
+        resume = t("alerts_no_important")
         couleur = GREEN
 
     tk.Label(entete, text=t('interface_text_7685'), font=("Segoe UI", 13, "bold"), fg=TEXT, bg=CARD, anchor="w").pack(side="left")
@@ -7757,17 +7909,32 @@ def afficher_centre_alertes(parent, plantes):
         cursor="hand2",
         command=lambda a=alertes: ouvrir_apercu_email_alertes(a)
     ).pack(side="right", padx=(8, 0))
-    tk.Label(entete, text=resume, font=("Segoe UI", 9, "bold"), fg=couleur, bg=CARD, anchor="e").pack(side="right")
+    tk.Label(bloc, text=resume, font=("Segoe UI", 9, "bold"), fg=couleur, bg=CARD,
+             anchor="w", justify="left", wraplength=850).pack(fill="x", padx=12, pady=(0, 6))
 
     if not alertes:
         tk.Label(bloc, text=t('interface_text_7729'), font=("Segoe UI", 9), fg=SECONDARY, bg=CARD, anchor="w").pack(fill="x", padx=12, pady=(0, 10))
         return
 
-    for alerte in alertes[:6]:
-        afficher_tuile_alerte(bloc, alerte)
-
+    liste = tk.Frame(bloc, bg=CARD)
+    liste.pack(fill="x")
+    toutes = tk.BooleanVar(value=bool(getattr(parent, "alertes_depliees", False)))
+    bascule = None
+    def remplir_alertes():
+        for widget in liste.winfo_children():
+            widget.destroy()
+        for alerte in (alertes if toutes.get() else alertes[:6]):
+            afficher_tuile_alerte(liste, alerte)
+        if bascule is not None:
+            bascule.configure(text=t("alerts_show_less") if toutes.get() else t("alerts_show_all").format(count=len(alertes)-6))
+    def basculer():
+        toutes.set(not toutes.get())
+        parent.alertes_depliees = toutes.get()
+        remplir_alertes()
     if len(alertes) > 6:
-        tk.Label(bloc, text=t('interface_text_7736').format(v0=len(alertes) - 6), font=("Segoe UI", 8), fg=SECONDARY, bg=CARD, anchor="w").pack(fill="x", padx=12, pady=(0, 10))
+        bascule = tk.Button(bloc, command=basculer, bg=BG, fg=BLUE, relief="flat", cursor="hand2")
+        bascule.pack(anchor="w", padx=12, pady=(0, 10))
+    remplir_alertes()
 
 
 # ============================================================
@@ -7810,6 +7977,8 @@ def afficher_titre_section(parent, titre, detail=None):
 
 def actualiser_interface():
 
+    from ui_data_events import notifier_donnees_modifiees
+    notifier_donnees_modifiees(root)
     for widget in content_frame.winfo_children():
         if widget is not netatmo_frame:
             widget.destroy()
@@ -7843,6 +8012,8 @@ def actualiser_interface():
         t('interface_text_7806')
     )
     suivi_raspberry.card(content_frame, globals())
+    from home_assistant_summary import card as carte_capteurs_home_assistant
+    carte_capteurs_home_assistant(content_frame,{key:globals()[key] for key in (*meteo_nappes.PALETTE,'GREEN','SECONDARY')})
 
     if not plantes:
 
@@ -8514,7 +8685,7 @@ auto_sync_config = charger_config_sync_auto()
 actualiser_affichage_sync_auto()
 netatmo_preferences = charger_preferences_netatmo()
 
-suivi_raspberry = SuiviRaspberry(root, CONFIG_DIR, Path(__file__).resolve().parent / 'data')
+suivi_raspberry = SuiviRaspberry(root, CONFIG_DIR, DATA_DIR)
 actualiser_interface()
 if os.environ.get("BOTANEO_DEMO") != "1":
     root.after(1000, suivi_raspberry.start)
@@ -8525,4 +8696,8 @@ root.after(3000, verifier_update_au_demarrage)
 from contribution_locale import proposer_premier_lancement
 root.after(1800, lambda: proposer_premier_lancement(root))
 
+if os.environ.pop("GRUTERRA_RECOVERED_UPDATE", "") == "1":
+    root.after(500, lambda: messagebox.showinfo(t("update_recovered_title"), t("update_recovered_notice"), parent=root))
+
+root.after(5000, verifier_collectes_arrosage)
 root.mainloop()

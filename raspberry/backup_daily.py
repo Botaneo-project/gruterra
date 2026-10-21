@@ -1,11 +1,15 @@
 """Consistent SQLite backup, verified before rotation (14 daily snapshots)."""
+try:
+    from installation_paths import installation_root
+except ModuleNotFoundError:
+    from raspberry.installation_paths import installation_root
 import os
 import sqlite3
 from contextlib import closing
 from datetime import datetime, timezone
 from pathlib import Path
 
-base = Path.home() / 'botaneo'
+base = installation_root()
 folder = base / 'backups/daily'
 folder.mkdir(parents=True, exist_ok=True, mode=0o700)
 target = folder / ('collector-' + datetime.now(timezone.utc).strftime('%Y-%m-%d') + '.sqlite3')

@@ -1,4 +1,8 @@
 """Hourly Netatmo collector, activated only with independent private credentials."""
+try:
+    from installation_paths import installation_root
+except ModuleNotFoundError:
+    from raspberry.installation_paths import installation_root
 import json
 import math
 import os
@@ -205,7 +209,7 @@ def cycle(base,request=http):
 if __name__=='__main__':
     import fcntl
     os.umask(0o077)
-    base=Path.home()/'botaneo'
+    base=installation_root()
     with (base/'data/weather-collector.lock').open('a') as lock:
         try:fcntl.flock(lock,fcntl.LOCK_EX|fcntl.LOCK_NB)
         except BlockingIOError:raise SystemExit(0)

@@ -15,6 +15,7 @@ import shutil
 import sys
 import tempfile
 import zipfile
+import update_recovery
 from datetime import datetime
 from pathlib import Path
 from urllib.error import HTTPError, URLError
@@ -76,17 +77,7 @@ def safe_print(texte="") -> None:
 
 
 def est_chemin_preserve(relatif: Path) -> bool:
-    # Windows paths are case-insensitive. Database files remain private even
-    # when stored outside the standard data directory (including _app/plantes.db).
-    texte = relatif.as_posix().replace("\\", "/").casefold()
-    suffixes_prives = (".db", ".sqlite", ".sqlite3", ".db-wal", ".db-shm", ".db-journal",
-                       ".sqlite-wal", ".sqlite-shm", ".sqlite-journal",
-                       ".sqlite3-wal", ".sqlite3-shm", ".sqlite3-journal", ".local.json")
-    if texte.endswith(suffixes_prives):
-        return True
-    if texte in DONNEES_A_PRESERVER or texte in FICHIERS_A_NE_PAS_REMPLACER:
-        return True
-    return any(texte.startswith(prefix + "/") for prefix in DONNEES_A_PRESERVER)
+    return update_recovery.preserved(relatif)
 
 
 def construire_message_validation(diagnostic: dict) -> str:
@@ -205,17 +196,81 @@ def sauvegarder_programme(racine: Path, fichiers: list[Path]) -> Path:
     return archive
 
 
+def remplacer_fichier(source: Path, destination: Path, stage_path: Path | None = None) -> None:
+    """Stage on the destination volume, then replace without truncating the old file."""
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    if stage_path is None:
+        descriptor, name = tempfile.mkstemp(prefix=".gruterra-update-", dir=destination.parent)
+        os.close(descriptor)
+        staged = Path(name)
+    else:
+        staged = stage_path
+        with staged.open("xb"):
+            pass
+    try:
+        shutil.copy2(source, staged)
+        update_recovery.sync_file(staged)
+        os.replace(staged, destination)
+        update_recovery.sync_directory(destination.parent)
+    finally:
+        staged.unlink(missing_ok=True)
+
+
 def appliquer_fichiers(source: Path, racine: Path, fichiers: list[Path]) -> int:
     compteur = 0
     for relatif in fichiers:
-        destination = racine / relatif
-        destination.parent.mkdir(parents=True, exist_ok=True)
-        shutil.copy2(source / relatif, destination)
+        remplacer_fichier(source / relatif, racine / relatif)
         compteur += 1
     return compteur
 
 
+def appliquer_avec_retour_arriere(source: Path, racine: Path, fichiers: list[Path], backup: Path) -> dict:
+    """The caller holds the update lock; journal each intent before replacement."""
+    record = None
+    try:
+        record = update_recovery.begin(racine, source, fichiers, backup)
+        for item in record["files"]:
+            update_recovery.checkpoint(racine, record, item)
+            remplacer_fichier(source / item["path"], racine / item["path"], racine / item["stage"])
+        update_recovery.commit(racine, record)
+    except (OSError, ValueError, KeyError, zipfile.BadZipFile, update_recovery.RecoveryBlocked):
+        try:
+            recovery = update_recovery.recover_pending(racine, locked=True)
+            if recovery["status"] == "committed":
+                return {"ok": True, "applique": True, "fichiers": len(fichiers), "backup": str(backup),
+                        "message": _tr('updater_applied').format(count=len(fichiers), backup=backup)}
+            restaure = True
+        except (OSError, ValueError, update_recovery.RecoveryBlocked):
+            restaure = False
+        echecs = []
+        for item in (record or {}).get("files", []):
+            if item["path"] not in record["attempted"]:
+                continue
+            path = racine / item["path"]
+            try:
+                restored = (path.is_file() and update_recovery.checksum(path) == item["old_sha256"]) if item["existed"] else not path.exists()
+            except OSError:
+                restored = False
+            if not restored: echecs.append(item["path"])
+        return {"ok": False, "applique": False, "restaure": restaure,
+                "fichiers_a_restaurer": echecs, "backup": str(backup), "erreurs": [],
+                "message": _tr("update_rollback_ok" if restaure else "update_rollback_failed").format(backup=backup)}
+    return {"ok": True, "applique": True, "fichiers": len(fichiers), "backup": str(backup),
+            "message": _tr('updater_applied').format(count=len(fichiers), backup=backup)}
+
+
 def appliquer_mise_a_jour(diagnostic: dict, racine: Path, dry_run: bool = True, preparer: bool = False) -> dict:
+    racine = Path(racine).resolve()
+    try:
+        with update_recovery.update_lock(racine):
+            if (racine / "_security_backups" / update_recovery.MARKER).exists():
+                return {"ok": False, "applique": False, "erreurs": [], "message": _tr("update_recovery_required")}
+            return _appliquer_mise_a_jour(diagnostic, racine, dry_run, preparer)
+    except update_recovery.RecoveryBlocked:
+        return {"ok": False, "applique": False, "erreurs": [], "message": _tr("update_recovery_busy")}
+
+
+def _appliquer_mise_a_jour(diagnostic: dict, racine: Path, dry_run: bool = True, preparer: bool = False) -> dict:
     ok, erreurs = valider_manifest_applicable(diagnostic)
     if not ok:
         return {"ok": False, "applique": False, "erreurs": erreurs, "message": _tr('updater_cli_14')}
@@ -249,14 +304,7 @@ def appliquer_mise_a_jour(diagnostic: dict, racine: Path, dry_run: bool = True, 
                 "message": _tr('updater_dry_run').format(count=len(fichiers)),
             }
         backup = sauvegarder_programme(racine, fichiers)
-        copies = appliquer_fichiers(source, racine, fichiers)
-        return {
-            "ok": True,
-            "applique": True,
-            "fichiers": copies,
-            "backup": str(backup),
-            "message": _tr('updater_applied').format(count=copies, backup=backup),
-        }
+        return appliquer_avec_retour_arriere(source, racine, fichiers, backup)
 
 
 def main(argv: list[str] | None = None) -> int:

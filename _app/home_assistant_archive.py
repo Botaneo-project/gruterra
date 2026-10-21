@@ -52,12 +52,21 @@ def checkpoint(path, config, *, plant_db_path=None):
         return row[0] if row else None
 
 
+def create_read_indexes(db):
+    """Only auxiliary indexes: no facts, revisions or cursors are rewritten."""
+    db.execute('CREATE INDEX IF NOT EXISTS ha_facts_by_device_metric_time ON ha_facts_v1(physical_id, metric, ha_time DESC)')
+    db.execute('CREATE INDEX IF NOT EXISTS ha_envelopes_by_fact_observation ON ha_envelopes_v1(fact_id, observation_id)')
+    db.execute('CREATE INDEX IF NOT EXISTS ha_windows_by_start ON ha_windows_v1(start_time)')
+
+
 def commit_history(path, config, batch, *, plant_db_path=None):
     """Recheck real ownership, validate all rows, then commit rows and cursor.
 
     Cursor means HA response durably staged, never proof of physical completeness.
     Revisions remain separate and conflicting facts must not enter plant analysis.
     """
+    if __import__('os').environ.get('BOTANEO_DEMO') == '1':
+        raise ValueError('demo_disabled')
     validate_config(config)
     authorized_selection(config['entities'], db_path=plant_db_path)
     if not isinstance(batch, dict) or batch.get('ok') is not True or batch.get('http_status') != 200:
@@ -93,7 +102,7 @@ def commit_history(path, config, batch, *, plant_db_path=None):
     path = _check_path(path, plant_db_path)
     stream = scope(config)
     receipt = digest([stream, start, end, sorted(set(row[0]['observation_id'] for row in staged))])
-    counts = {'facts_added': 0, 'revisions_added': 0, 'envelopes_added': 0, 'duplicates': 0}
+    counts = {'excluded': 0, 'facts_added': 0, 'revisions_added': 0, 'envelopes_added': 0, 'duplicates': 0}
     with closing(sqlite3.connect(path, timeout=5)) as db:
         db.execute('PRAGMA synchronous=FULL')
         db.execute('BEGIN IMMEDIATE')
@@ -103,10 +112,15 @@ def commit_history(path, config, batch, *, plant_db_path=None):
             db.execute('CREATE TABLE IF NOT EXISTS ha_envelopes_v1 (physical_id TEXT NOT NULL, observation_id TEXT NOT NULL, fact_id TEXT NOT NULL, revision TEXT NOT NULL, record_json TEXT NOT NULL, PRIMARY KEY(physical_id, observation_id))')
             db.execute('CREATE TABLE IF NOT EXISTS ha_cursor_v1 (scope TEXT PRIMARY KEY, end_time TEXT NOT NULL)')
             db.execute('CREATE TABLE IF NOT EXISTS ha_windows_v1 (receipt TEXT PRIMARY KEY, scope TEXT NOT NULL, start_time TEXT NOT NULL, end_time TEXT NOT NULL)')
+            create_read_indexes(db)
             cursor = db.execute('SELECT end_time FROM ha_cursor_v1 WHERE scope=?', (stream,)).fetchone()
             if cursor and datetime.fromisoformat(start) > datetime.fromisoformat(cursor[0]):
                 raise ValueError('history_gap')
+            has_exclusions = db.execute("SELECT 1 FROM sqlite_master WHERE type='table' AND name='ha_excluded_facts_v1'").fetchone()
             for record, physical, fact, revision, semantic in staged:
+                if has_exclusions and db.execute('SELECT 1 FROM ha_excluded_facts_v1 WHERE fact_id=?', (fact,)).fetchone():
+                    counts['excluded'] += 1
+                    continue
                 counts['facts_added'] += db.execute('INSERT OR IGNORE INTO ha_facts_v1 VALUES (?, ?, ?, ?)', (fact, physical, record['metric'], record['ha_updated_at'])).rowcount
                 counts['revisions_added'] += db.execute('INSERT OR IGNORE INTO ha_fact_versions_v1 VALUES (?, ?, ?)', (fact, revision, semantic)).rowcount
                 added = db.execute('INSERT OR IGNORE INTO ha_envelopes_v1 VALUES (?, ?, ?, ?, ?)', (physical, record['observation_id'], fact, revision, canonical(record))).rowcount

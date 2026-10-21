@@ -49,18 +49,36 @@ def run_catchup(config, plan, archive_path, *, confirmed=False, received_at, pla
         if fresh != plan:
             raise ValueError('plan_changed')
         active = {**config, 'enabled': True}
-        for window in plan['windows']:
+        # Dense histories are split without advancing the cursor on a failed read.
+        # A fixed request budget keeps one application sync bounded.
+        pending = list(plan['windows'])
+        requests_left = 16
+        while pending and requests_left:
+            window = pending.pop(0)
             owners, ble = authorized_selection(active['entities'], db_path=plant_db_path)
+            requests_left -= 1
             batch = read_history(active, owners=owners, existing_ble_addresses=ble,
                                  start=window['start'], end=window['end'], received_at=received_at, requester=requester)
             if not batch.get('ok'):
+                begin = datetime.fromisoformat(window['start'])
+                end = datetime.fromisoformat(window['end'])
+                if batch.get('code') == 'history_too_large' and (end-begin).total_seconds() > 60:
+                    middle = begin + (end-begin)/2
+                    pending[0:0] = [dict(start=begin.isoformat(), end=middle.isoformat()),
+                                    dict(start=middle.isoformat(), end=end.isoformat())]
+                    continue
                 return {'ok': False, 'code': 'history_read_failed', 'http_status': batch.get('http_status'),
+                        'reason': batch.get('code') if batch.get('code') in ('history_too_large', 'history_connection_failed', 'history_http_error') else 'invalid_history',
                         'completed_windows': completed, **totals}
             result = commit_history(archive_path, active, batch, plant_db_path=plant_db_path)
             completed += 1
             for key in totals:
                 totals[key] += result[key]
-        return {'ok': True, 'code': 'more_pending' if plan['more_pending'] else 'complete',
+        more = bool(pending) or plan['more_pending']
+        # Without a single successful chunk, repeating the same plan cannot progress.
+        if pending and not completed:
+            return {'ok': False, 'code': 'history_read_failed', 'completed_windows': 0, **totals}
+        return {'ok': True, 'code': 'more_pending' if more else 'complete',
                 'completed_windows': completed, **totals, 'plant_import': False,
                 'retention_verified': False, 'checkpoint': checkpoint(archive_path, active, plant_db_path=plant_db_path)}
     except ValueError as error:

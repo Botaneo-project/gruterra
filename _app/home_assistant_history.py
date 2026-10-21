@@ -57,7 +57,8 @@ def read_history(config, *, owners, existing_ble_addresses, start, end, received
             session.trust_env = False
             requester = session.get
         response = requester(base+'/api/history/period/'+quote(utc(start), safe=''),
-                             params={'filter_entity_id': ','.join(item['entity_id'] for item in mappings), 'end_time': utc(end)},
+                             params={'filter_entity_id': ','.join(item['entity_id'] for item in mappings), 'end_time': utc(end),
+                                     'skip_initial_state': 'true', 'significant_changes_only': '0'},
                              headers={'Authorization': 'Bearer '+token, 'Accept': 'application/json'},
                              timeout=(5, 30), allow_redirects=False, stream=True)
         if response.status_code != 200:

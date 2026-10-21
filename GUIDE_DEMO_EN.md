@@ -81,3 +81,23 @@ Useful feedback includes:
 Do not send personal databases or configuration files containing credentials.
 
 French version: [GUIDE_DEMO.md](GUIDE_DEMO.md).
+# After-watering observations
+
+Use “Complete observation” in History to choose a watering and add or edit runoff
+and the time before the first drops, in minutes. The watering date and volume
+remain unchanged. Newly generated demo databases include a fictional example;
+existing demo data is not automatically regenerated.
+
+# Copy selected readings
+
+Select rows using Ctrl+click (separate rows) or Shift+click (a range), then
+right-click → “Copy selected rows”, or press Ctrl+C. Dates, headings and units
+are preserved; hidden technical columns are excluded. This also works in the
+connected-sensor table.
+
+
+## Demo isolation
+
+The demo keeps settings, caches and its lock under `_app/data/demo/`, ignoring
+configuration and data paths inherited from the real installation. Backups use
+its own database and folders. Existing demo data is not regenerated automatically.

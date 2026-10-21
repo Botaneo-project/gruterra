@@ -1,6 +1,17 @@
 # Gruterra
 
-> **Code et téléchargement :** les changements présents sur `main` peuvent être plus récents que la dernière archive publiée, actuellement **0.1.6-dev**. Les correctifs récents de relance, de protection des bases et d’interface seront inclus dans une prochaine release ; pousser du code ne met pas automatiquement à jour cette archive.
+## Télécharger la préversion 0.1.7-dev
+
+- [Installateur Windows de test](https://github.com/Botaneo-project/gruterra/releases/download/v0.1.7-dev/Gruterra-Setup-0.1.7-dev-candidate.exe)
+- [Archive ZIP du programme](https://github.com/Botaneo-project/gruterra/releases/download/v0.1.7-dev/gruterra-0.1.7-dev.zip)
+- [Notes de version](docs/RELEASE_NOTES_0.1.7-dev.md)
+
+**Préversion :** l’installateur est non signé et prépare Python et ses dépendances. Il ne contient pas Python. Le test sur un PC sans Python reste à réaliser. La [0.1.6-dev](https://github.com/Botaneo-project/gruterra/releases/tag/v0.1.6-dev) reste disponible.
+
+Cette version améliore les synchronisations, le suivi après arrosage, l’historique et la copie de lignes, les sauvegardes de la base active, l’isolation de la démo et les chemins Raspberry. Les alertes après arrosage indiquent le contexte et l’incertitude, sans déclencher d’arrosage ni apprendre automatiquement un seuil optimal.
+
+**Partage communautaire désactivé.** Les changements de `main` peuvent être plus récents que les fichiers téléchargés ; chaque téléchargement correspond à sa version publiée.
+
 
 English entry point: [README_EN.md](README_EN.md) · Demo guide: [GUIDE_DEMO_EN.md](GUIDE_DEMO_EN.md)
 
@@ -426,3 +437,13 @@ Une information facultative sur les futures contributions est disponible au prem
 
 
 Les nouvelles identités de contribution préparées sur main utilisent Ed25519. La sauvegarde séparée de la clé est chiffrée par mot de passe ; sa restauration vérifie l’identité. Les anciennes clés restent conservées en attendant une migration explicite. Le fichier local de fonctionnement et les ZIP complets restent privés, ces ZIP ne sont pas chiffrés. Aucun partage réseau n’est activé.
+
+
+### Centre d’alertes — préparation locale
+
+Les corrections en préparation distinguent les données non vérifiées des mesures récentes, donnent priorité aux alertes importantes et permettent de déplier la liste complète. Les prévisions expirées ne sont plus utilisées comme météo à venir. Voir le [guide du centre d’alertes](docs/HISTORIQUE_ECLAIRAGE_INTERFACE.md#centre-alertes). Ces changements ne constituent pas encore une nouvelle version téléchargeable.
+
+
+### Récupération d’une mise à jour interrompue — préparation locale
+
+Le mécanisme en préparation conserve un journal et une sauvegarde vérifiée. Les nouveaux lanceurs peuvent restaurer le programme précédent avant ouverture après un arrêt forcé, ou bloquer le lancement si la récupération est impossible. Voir le [guide de récupération](docs/RECUPERATION_MISE_A_JOUR.md). Les essais sur processus arrêtés ne constituent pas une validation de coupure électrique matérielle ; ce changement n’est pas encore publié.

@@ -8,7 +8,10 @@ from pathlib import Path
 from urllib.parse import urlparse, parse_qs
 
 APP_DIR = Path(__file__).resolve().parent
-CONFIG_DIR = Path(os.environ.get("BOTANEO_CONFIG_DIR", str(APP_DIR.parent / "_config")))
+DEMO_MODE = os.environ.get("BOTANEO_DEMO") == "1"
+# Demo paths never inherit the real installation's overrides.
+DATA_DIR = APP_DIR / "data" / "demo" if DEMO_MODE else Path(os.environ.get("BOTANEO_DATA_DIR", str(APP_DIR / "data")))
+CONFIG_DIR = DATA_DIR / "config" if DEMO_MODE else Path(os.environ.get("BOTANEO_CONFIG_DIR", str(APP_DIR.parent / "_config")))
 NETATMO_CONFIG = CONFIG_DIR / "netatmo_config.json"
 LOCAL_CONFIG = CONFIG_DIR / "botaneo.local.json"
 EMAIL_CONFIG = CONFIG_DIR / "email.local.json"

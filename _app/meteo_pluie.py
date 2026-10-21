@@ -43,5 +43,5 @@ def derniere_pluie(path):
     if not path.exists():
         return None
     with closing(sqlite3.connect(path.resolve().as_uri() + '?mode=ro', uri=True)) as db:
-        # 1 h en priorité : un cumul 24 h positif ne date pas précisément l'averse.
-        return db.execute("SELECT mesure,mm,source,type FROM pluie WHERE mm>0 ORDER BY CASE WHEN type='pluie_1h' THEN 0 ELSE 1 END, mesure DESC LIMIT 1").fetchone()
+        # Le relevé positif le plus récent prime ; à date égale, préférer le cumul court.
+        return db.execute("SELECT mesure,mm,source,type FROM pluie WHERE mm>0 ORDER BY mesure DESC, CASE WHEN type='pluie_1h' THEN 0 ELSE 1 END LIMIT 1").fetchone()

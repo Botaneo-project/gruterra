@@ -1,7 +1,11 @@
 """Expose only metadata for the latest daily SQLite snapshot over SSH."""
+try:
+    from installation_paths import installation_root
+except ModuleNotFoundError:
+    from raspberry.installation_paths import installation_root
 import hashlib,json
 from pathlib import Path
-folder=Path.home()/'botaneo/backups/daily'
+folder=installation_root() / 'backups/daily'
 files=sorted(folder.glob('collector-????-??-??.sqlite3'))
 if not files:
     raise SystemExit('No daily backup available')

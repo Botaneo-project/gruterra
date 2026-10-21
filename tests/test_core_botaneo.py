@@ -1192,14 +1192,18 @@ class TestSauvegardeUtilisateur(unittest.TestCase):
         sauvegarde = importlib.import_module("sauvegarde_utilisateur")
         with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as dossier:
             racine = Path(dossier)
-            (racine / "plantes.db").write_text("base fictive", encoding="utf-8")
+            (racine / "_app").mkdir()
+            import sqlite3
+            with sqlite3.connect(racine / "_app/plantes.db") as db:
+                db.execute("CREATE TABLE fictive (id INTEGER)")
+            db.close()
             (racine / "_config").mkdir()
             (racine / "_config" / "secret.local.json").write_text("secret", encoding="utf-8")
             archive = sauvegarde.creer_sauvegarde_utilisateur(racine, mode="donnees")
             with zipfile.ZipFile(archive) as zipf:
                 noms = set(zipf.namelist())
 
-        self.assertIn("plantes.db", noms)
+        self.assertIn("_app/plantes.db", noms)
         self.assertIn("MANIFEST_GRUTERRA_BACKUP.json", noms)
         self.assertNotIn("_config/secret.local.json", noms)
 
@@ -1207,7 +1211,11 @@ class TestSauvegardeUtilisateur(unittest.TestCase):
         sauvegarde = importlib.import_module("sauvegarde_utilisateur")
         with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as dossier:
             racine = Path(dossier)
-            (racine / "plantes.db").write_text("base fictive", encoding="utf-8")
+            (racine / "_app").mkdir()
+            import sqlite3
+            with sqlite3.connect(racine / "_app/plantes.db") as db:
+                db.execute("CREATE TABLE fictive (id INTEGER)")
+            db.close()
             (racine / "_config").mkdir()
             (racine / "_config" / "secret.local.json").write_text("secret", encoding="utf-8")
             archive = sauvegarde.creer_sauvegarde_utilisateur(racine, mode="complete")

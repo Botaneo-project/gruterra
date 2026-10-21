@@ -1,4 +1,8 @@
 """Consistent weather snapshots; no credentials or automatic data restoration."""
+try:
+    from installation_paths import installation_root
+except ModuleNotFoundError:
+    from raspberry.installation_paths import installation_root
 import hashlib
 import json
 import os
@@ -50,8 +54,8 @@ if __name__=='__main__':
     import sys
     os.umask(0o077)
     try:
-        if sys.argv[1:]==['manifest']:result=manifest(Path.home()/'botaneo')
-        elif not sys.argv[1:]:result=backup(Path.home()/'botaneo')
+        if sys.argv[1:]==['manifest']:result=manifest(installation_root())
+        elif not sys.argv[1:]:result=backup(installation_root())
         else:raise ValueError('weather_backup_operation')
         print(json.dumps(result))
     except Exception:

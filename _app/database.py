@@ -1,5 +1,7 @@
 import os
 import sqlite3
+import math
+from botaneo_dates import vers_local_naif
 from datetime import datetime
 from pathlib import Path
 
@@ -1317,6 +1319,18 @@ def initialiser_arrosages():
     conn.close()
 
 
+def rappel_a_conserver_pour_complement(dernier, date_heure):
+    """Carry a future reminder only within the same 90-minute session."""
+    if not dernier or len(dernier)<11 or dernier[10]:return None
+    date=vers_local_naif(date_heure)
+    avant=vers_local_naif(dernier[2])
+    rappel=vers_local_naif(dernier[9])
+    if date is None or avant is None or rappel is None:return None
+    if 0 <= (date-avant).total_seconds() <= 90*60 and rappel>date:
+        return dernier[9]
+    return None
+
+
 def enregistrer_arrosage_plante(
     plante_id,
     date_heure,
@@ -1333,6 +1347,9 @@ def enregistrer_arrosage_plante(
 
     initialiser_arrosages()
     conn = get_connection()
+    if rappel_date is None:
+        precedent=conn.execute("SELECT id,plante_id,date_heure,quantite_ml,type,fertilisant,dosage,commentaire,type_eau,rappel_date,rappel_fait,etat_sante FROM arrosages WHERE plante_id=? ORDER BY date_heure DESC,id DESC LIMIT 1",(plante_id,)).fetchone()
+        rappel_date=rappel_a_conserver_pour_complement(precedent,date_heure)
 
     conn.execute("""
         UPDATE arrosages
@@ -1429,7 +1446,7 @@ def get_arrosages_plante(plante_id, limite=20):
 
 def _date_arrosage_iso(arrosage):
     try:
-        return datetime.fromisoformat(arrosage[2])
+        return vers_local_naif(arrosage[2])
     except (TypeError, ValueError, IndexError):
         return None
 
@@ -1451,29 +1468,37 @@ def construire_sessions_arrosage(arrosages, fenetre_minutes=90):
 
     sessions = []
     fenetre_secondes = max(1, int(fenetre_minutes)) * 60
+    dernieres_par_plante = {}
     for date, arrosage in lignes:
-        if not sessions:
+        plante = arrosage[1]
+        if plante not in dernieres_par_plante:
             sessions.append({"date_debut": date, "date_fin": date, "apports": [arrosage]})
+            dernieres_par_plante[plante] = sessions[-1]
             continue
-        derniere = sessions[-1]
+        derniere = dernieres_par_plante[plante]
         ecart = (date - derniere["date_fin"]).total_seconds()
         if 0 <= ecart <= fenetre_secondes:
             derniere["apports"].append(arrosage)
             derniere["date_fin"] = date
         else:
             sessions.append({"date_debut": date, "date_fin": date, "apports": [arrosage]})
+            dernieres_par_plante[plante] = sessions[-1]
 
+    sessions.sort(key=lambda session: session["date_debut"])
     for session in sessions:
         total = 0.0
-        total_present = False
+        connus = 0
         for apport in session["apports"]:
             try:
-                if apport[3] is not None:
-                    total += float(apport[3])
-                    total_present = True
+                valeur = float(apport[3]) if apport[3] is not None else None
+                if valeur is not None and math.isfinite(valeur) and valeur >= 0:
+                    total += valeur
+                    connus += 1
             except (TypeError, ValueError, IndexError):
                 pass
-        session["quantite_totale_ml"] = total if total_present else None
+        session["quantite_connue_ml"] = total if connus else None
+        session["quantite_partielle"] = connus != len(session["apports"])
+        session["quantite_totale_ml"] = total if connus and not session["quantite_partielle"] else None
         session["premier"] = session["apports"][0]
         session["dernier"] = session["apports"][-1]
         session["fractionnee"] = len(session["apports"]) > 1
@@ -1499,6 +1524,7 @@ def initialiser_collectes_prioritaires():
     """Crée la table des demandes de collecte prioritaire."""
 
     conn = get_connection()
+    conn.execute('BEGIN IMMEDIATE')
     conn.execute("""
         CREATE TABLE IF NOT EXISTS collectes_prioritaires (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -1514,6 +1540,9 @@ def initialiser_collectes_prioritaires():
             FOREIGN KEY (arrosage_id) REFERENCES arrosages(id)
         )
     """)
+    columns = {row[1] for row in conn.execute("PRAGMA table_info(collectes_prioritaires)")}
+    if 'date_prevue' not in columns:
+        conn.execute("ALTER TABLE collectes_prioritaires ADD COLUMN date_prevue TEXT")
     conn.commit()
     conn.close()
 
@@ -1524,7 +1553,8 @@ def enregistrer_collecte_prioritaire(
     date_creation=None,
     raison="post_arrosage",
     priorite=1,
-    commentaire=None
+    commentaire=None,
+    date_prevue=None
 ):
     """Mémorise une demande de mesure prioritaire, exploitable par le PC ou le Raspberry."""
 
@@ -1534,15 +1564,16 @@ def enregistrer_collecte_prioritaire(
 
     curseur = conn.execute("""
         INSERT INTO collectes_prioritaires
-        (plante_id, arrosage_id, date_creation, raison, priorite, statut, commentaire)
-        VALUES (?, ?, ?, ?, ?, 'en_attente', ?)
+        (plante_id, arrosage_id, date_creation, raison, priorite, statut, commentaire, date_prevue)
+        VALUES (?, ?, ?, ?, ?, 'en_attente', ?, ?)
     """, (
         plante_id,
         arrosage_id,
         date_creation,
         raison,
         priorite,
-        commentaire
+        commentaire,
+        date_prevue
     ))
 
     demande_id = curseur.lastrowid

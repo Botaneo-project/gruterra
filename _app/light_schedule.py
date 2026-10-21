@@ -8,6 +8,12 @@ from datetime import datetime, timedelta
 from pathlib import Path
 from zoneinfo import ZoneInfo
 
+def date_eclairage(value):
+    """Naive local readings stay local; aware readings use the schedule's Paris zone."""
+    at = value if isinstance(value, datetime) else datetime.fromisoformat(value.replace('Z', '+00:00'))
+    return at.astimezone(ZoneInfo('Europe/Paris')).replace(tzinfo=None) if at.tzinfo else at
+
+
 def validate(start, end):
     for value in (start, end):
         if not isinstance(value, str) or not re.fullmatch(r'(?:[01]\d|2[0-3]):[0-5]\d', value):
@@ -97,8 +103,7 @@ def analyse(points, start, end):
     groups = {}
     for point in points:
         try:
-            at = datetime.fromisoformat(point['at'].replace('Z','+00:00'))
-            at = at.astimezone(ZoneInfo('Europe/Paris')) if at.tzinfo else at
+            at = date_eclairage(point['at'])
             value = float(point['lux'])
             if not math.isfinite(value) or value < 0:
                 continue
@@ -110,4 +115,4 @@ def analyse(points, start, end):
             groups.setdefault(day.isoformat(), []).append(dict(point, lux=value))
         except (ValueError, TypeError, KeyError):
             continue
-    return [dict(day=day,count=len(rows),mean=sum(p['lux'] for p in rows)/len(rows),minimum=min(p['lux'] for p in rows),maximum=max(p['lux'] for p in rows),points=sorted(rows,key=lambda p:p['at'])) for day,rows in sorted(groups.items(),reverse=True)]
+    return [dict(day=day,count=len(rows),mean=sum(p['lux'] for p in rows)/len(rows),minimum=min(p['lux'] for p in rows),maximum=max(p['lux'] for p in rows),points=sorted(rows,key=lambda p:date_eclairage(p['at']))) for day,rows in sorted(groups.items(),reverse=True)]

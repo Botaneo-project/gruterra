@@ -110,3 +110,7 @@ gruterra-cle-privee*.json
 
 # Private home network access notes
 docs/ACCES_LOCAL_RASPBERRY.md
+
+# Local candidate validation helpers
+.test-temp/
+run_isolated_tests.py

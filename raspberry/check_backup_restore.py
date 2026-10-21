@@ -1,4 +1,8 @@
 """Rehearse recovery into temporary copies; never replace live databases."""
+try:
+    from installation_paths import installation_root
+except ModuleNotFoundError:
+    from raspberry.installation_paths import installation_root
 import hashlib
 import json
 import os
@@ -19,7 +23,7 @@ def counts(path, tables):
 
 def main():
     os.umask(0o077)
-    base = Path.home() / 'botaneo'
+    base = installation_root()
     sys.path.insert(0, str(base / 'collector'))
     import web_status
     results = {}

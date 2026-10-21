@@ -499,6 +499,8 @@ async def synchroniser_tous_avec_historique(on_progress=None):
             'raspberry_added': mesure.get('added', 0) or 0,
             'raspberry_duplicates': mesure.get('duplicates', 0) or 0,
             'collect_accepted': mesure.get('collect_accepted'),
+            'collection_pending': mesure.get('collection_pending', False),
+            'fresh_measurement_confirmed': mesure.get('fresh_measurement_confirmed'),
             'pending_remaining': mesure.get('pending_remaining'),
             'capteur_id': capteur[0],
             'nom': capteur[1]

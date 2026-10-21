@@ -26,26 +26,30 @@ def open_window(parent,palette):
     import tkinter as tk
     from i18n import traduire_courant as t
     from meteo_nappes import harmoniser
-    window=tk.Toplevel(parent);window.title(t('arome_auth_title'));window.geometry('670x470');window.minsize(560,440)
+    window=tk.Toplevel(parent);window.title(t('arome_auth_title'));window.geometry('670x470');window.minsize(500,360)
+    from ui_scroll_form import create
+    body,footer=create(window,palette)
+    tk.Button(footer,text=t('close'),command=window.destroy).pack(side='right',padx=(8,0))
     try:config=load()
     except RuntimeError:config={}
-    tk.Label(window,text=t('arome_auth_note'),wraplength=610,justify='left').pack(fill='x',padx=18,pady=12)
+    tk.Label(body,text=t('arome_auth_note'),wraplength=610,justify='left').pack(fill='x',padx=18,pady=12)
     mode=tk.StringVar(value=config.get('auth_mode') if config.get('auth_mode') in ('bearer','oauth2') else 'bearer')
-    tk.Radiobutton(window,text=t('arome_auth_oauth'),variable=mode,value='oauth2').pack(anchor='w',padx=18)
-    tk.Radiobutton(window,text=t('arome_auth_manual'),variable=mode,value='bearer').pack(anchor='w',padx=18)
+    tk.Radiobutton(body,text=t('arome_auth_oauth'),variable=mode,value='oauth2').pack(anchor='w',padx=18)
+    tk.Radiobutton(body,text=t('arome_auth_manual'),variable=mode,value='bearer').pack(anchor='w',padx=18)
     fields={};entries=[]
     for field,key in (('application_id','arome_auth_application'),('access_token','arome_auth_token')):
-        tk.Label(window,text=t(key),anchor='w').pack(fill='x',padx=18,pady=(10,0))
+        tk.Label(body,text=t(key),anchor='w').pack(fill='x',padx=18,pady=(10,0))
         fields[field]=tk.StringVar(value=config.get(field,'') if isinstance(config.get(field,''),str) else '')
-        entry=tk.Entry(window,textvariable=fields[field],show='•');entry.pack(fill='x',padx=18,pady=(3,8));entries.append(entry)
+        entry=tk.Entry(body,textvariable=fields[field],show='•');entry.pack(fill='x',padx=18,pady=(3,8));entries.append(entry)
     reveal=tk.BooleanVar(value=False)
     def show():
         for entry in entries:entry.configure(show='' if reveal.get() else '•')
-    tk.Checkbutton(window,text=t('netatmo_pi_reveal'),variable=reveal,command=show).pack(anchor='w',padx=18)
-    status=tk.StringVar();tk.Label(window,textvariable=status,wraplength=610,justify='left').pack(fill='x',padx=18,pady=10)
+    tk.Checkbutton(body,text=t('netatmo_pi_reveal'),variable=reveal,command=show).pack(anchor='w',padx=18)
+    status=tk.StringVar();tk.Label(body,textvariable=status,wraplength=610,justify='left').pack(fill='x',padx=18,pady=10)
     def save():
         try:save_credentials(mode.get(),fields['application_id'].get(),fields['access_token'].get())
         except (OSError,ValueError,RuntimeError):status.set(t('arome_auth_invalid'));return
         status.set(t('arome_auth_saved'))
-    tk.Button(window,text=t('netatmo_pi_save_credentials'),command=save).pack(anchor='e',padx=18,pady=10)
+    tk.Button(footer,text=t('netatmo_pi_save_credentials'),command=save).pack(side='right')
     harmoniser(window,palette)
+    return window

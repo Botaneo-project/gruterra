@@ -12,6 +12,7 @@ if not DEMO_DB.exists():
 
 os.environ["BOTANEO_DB_PATH"] = str(DEMO_DB)
 os.environ["BOTANEO_DEMO"] = "1"
+os.environ["BOTANEO_DATA_DIR"] = str(DEMO_DB.parent)
 os.environ["BOTANEO_CONFIG_DIR"] = str(DEMO_DB.parent / "config")
 
 demo_config = DEMO_DB.parent / "config"

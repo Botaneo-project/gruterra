@@ -159,7 +159,8 @@ def creer_base_demo(force: bool = True) -> Path:
         now = datetime.now().replace(minute=0, second=0, microsecond=0)
         debut_historique = now - timedelta(days=10)
         ancien_arrosage = now - timedelta(days=8, hours=2)
-        arrosage_recent_1 = now - timedelta(days=3, hours=2)
+        # Keep a fictional split session inside the alert follow-up window.
+        arrosage_recent_1 = now - timedelta(days=1, hours=2)
         arrosage_recent_2 = arrosage_recent_1 + timedelta(minutes=35)
         sortie_balcon = now - timedelta(days=1, hours=5)
         retour_balcon = sortie_balcon + timedelta(hours=2, minutes=15)
@@ -249,6 +250,14 @@ def creer_base_demo(force: bool = True) -> Path:
             (cactus, (now - timedelta(days=3)).isoformat(timespec="seconds"), "rappel", "Contrôle balcon", "Vérifier visuellement le substrat et l'exposition.", "demo"),
         ])
 
+        # A fictional observation entered after the second watering fraction.
+        conn.execute('''CREATE TABLE IF NOT EXISTS watering_observations_v1 (
+            watering_id INTEGER PRIMARY KEY REFERENCES arrosages(id),
+            drainage TEXT NOT NULL, first_drops_minutes REAL,
+            observed_at TEXT NOT NULL, updated_at TEXT NOT NULL)''')
+        demo_watering = conn.execute('SELECT id FROM arrosages WHERE plante_id=? ORDER BY date_heure DESC,id DESC LIMIT 1',(crassula,)).fetchone()[0]
+        demo_observed = (arrosage_recent_2+timedelta(minutes=4)).isoformat(timespec='seconds')
+        conn.execute('INSERT INTO watering_observations_v1 VALUES (?,?,?,?,?)',(demo_watering,'light',4,demo_observed,demo_observed))
         conn.commit()
         # A dedicated demo configuration; never use the installation's private file.
         from light_schedule import save as save_light_schedule

@@ -183,6 +183,11 @@ class TrackingTests(unittest.TestCase):
         private.mkdir(parents=True)
         import shutil
         shutil.copy2(module.chemin(),private/'contribution_suivi.sqlite3')
+        import sqlite3
+        (install/'_app').mkdir(exist_ok=True)
+        with sqlite3.connect(install/'_app/plantes.db') as backup_fixture:
+            backup_fixture.execute('CREATE TABLE fictive (id INTEGER)')
+        backup_fixture.close()
         full=creer_sauvegarde_utilisateur(install,'complete',folder/'full')
         shared=creer_sauvegarde_utilisateur(install,'donnees',folder/'shared')
         restored=folder/'restored'

@@ -59,6 +59,8 @@ class HistoryTests(unittest.TestCase):
         self.assertTrue(result['ok'])
         self.assertEqual(calls[0]['params']['filter_entity_id'], self.mapping['entity_id'])
         self.assertNotIn('minimal_response', calls[0]['params'])
+        self.assertEqual(calls[0]['params']['skip_initial_state'],'true')
+        self.assertEqual(calls[0]['params']['significant_changes_only'],'0')
         self.assertFalse(calls[0]['allow_redirects'])
         self.assertTrue(response.closed)
     def test_empty_history_not_claimed_as_physical_data(self):

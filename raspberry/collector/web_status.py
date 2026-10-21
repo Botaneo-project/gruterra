@@ -1,4 +1,12 @@
 """Authenticated mobile dashboard with queued collection requests."""
+try:
+    from installation_paths import installation_root
+except ModuleNotFoundError:
+    # Running this utility directly from the source checkout.
+    import sys
+    from pathlib import Path
+    sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+    from installation_paths import installation_root
 import json
 import base64
 import hashlib
@@ -14,7 +22,7 @@ from zoneinfo import ZoneInfo
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 
-BASE = Path.home() / 'botaneo'
+BASE = installation_root()
 
 
 def weather_snapshot(path):

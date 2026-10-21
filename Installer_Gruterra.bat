@@ -1,5 +1,7 @@
 @echo off
 setlocal EnableExtensions
+set "GRUTERRA_NO_PAUSE="
+if /i "%~1"=="--non-interactive" set "GRUTERRA_NO_PAUSE=1"
 cd /d "%~dp0"
 
 set "MIN_PYTHON=3.10"
@@ -33,7 +35,7 @@ if errorlevel 1 (
     echo.
     echo ERREUR - Python %MIN_PYTHON% ou plus recent est necessaire.
     echo L'installation automatique peut installer Python %PYTHON_VERSION% si Python est absent,
-    echo mais elle ne remplace pas une ancienne version deja detectee.
+    echo Relancez l'installateur si la version detectee ne fonctionne plus.
     echo.
     goto :fail
 )
@@ -118,37 +120,39 @@ echo.
 echo Pour commencer une vraie utilisation locale :
 echo   double-cliquez sur Lancer_Gruterra.bat
 echo.
-pause
+if not defined GRUTERRA_NO_PAUSE pause
 exit /b 0
 
 :detect_python
+set "PYTHON_CMD="
+rem Prefer the exact interpreter installed by Gruterra, even with an older py on PATH.
+if exist "%PYTHON_EXPECTED_EXE%" (
+    "%PYTHON_EXPECTED_EXE%" -c "import sys; raise SystemExit(0 if sys.version_info >= (3,10) else 1)" >nul 2>nul
+    if not errorlevel 1 (
+        set PYTHON_CMD="%PYTHON_EXPECTED_EXE%"
+        exit /b 0
+    )
+)
 where py >nul 2>nul
 if not errorlevel 1 (
-    py -c "import sys; raise SystemExit(0)" >nul 2>nul
+    py -3 -c "import sys; raise SystemExit(0 if sys.version_info >= (3,10) else 1)" >nul 2>nul
     if not errorlevel 1 (
-        set "PYTHON_CMD=py"
+        set "PYTHON_CMD=py -3"
         exit /b 0
     )
 )
 where python >nul 2>nul
 if not errorlevel 1 (
-    python -c "import sys; raise SystemExit(0)" >nul 2>nul
+    python -c "import sys; raise SystemExit(0 if sys.version_info >= (3,10) else 1)" >nul 2>nul
     if not errorlevel 1 (
         set "PYTHON_CMD=python"
-        exit /b 0
-    )
-)
-if exist "%PYTHON_EXPECTED_EXE%" (
-    "%PYTHON_EXPECTED_EXE%" -c "import sys; raise SystemExit(0)" >nul 2>nul
-    if not errorlevel 1 (
-        set PYTHON_CMD="%PYTHON_EXPECTED_EXE%"
         exit /b 0
     )
 )
 exit /b 1
 
 :install_python
-echo Python est introuvable. Gruterra va tenter de l'installer automatiquement.
+echo Aucun Python compatible detecte. Gruterra va tenter de l'installer automatiquement.
 echo Version cible : Python %PYTHON_VERSION% pour Windows 64 bits.
 echo.
 echo Telechargement de Python depuis python.org...
@@ -186,5 +190,5 @@ goto :fail
 echo Installation arretee avant la fin.
 echo La fenetre reste ouverte : copiez son contenu si vous demandez de l'aide.
 echo.
-pause
+if not defined GRUTERRA_NO_PAUSE pause
 exit /b 1

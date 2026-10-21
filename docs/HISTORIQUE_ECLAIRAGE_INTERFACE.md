@@ -48,3 +48,32 @@ Les horaires de démo sont stockés dans `_app/data/demo/config/light-schedules.
 - [ ] Vérifier visuellement sur l’iPhone après actualisation, puis constater le premier changement réel d’horaire à la prochaine modification souhaitée.
 
 Règle : un changement enregistré prend effet à la date du jour à Paris. Plusieurs modifications le même jour remplacent la plage de ce jour. Une plage nocturne appartient au jour où elle commence. Les dates anciennes sans historique utilisent le réglage précédemment connu : aucun changement passé n’est reconstitué. Une moyenne reste celle des relevés disponibles, sans interpolation ni estimation d’exposition totale.
+
+
+## Comparer les journées et les cycles — améliorations locales du 18/10/2026
+
+Depuis l'historique, ouvrir **Comparer jours** ou **Cycles**. Les boutons Copier, Actualiser et Fermer restent en bas de la fenêtre ; le contenu peut défiler. Les tableaux possèdent aussi des barres de défilement pour accéder aux colonnes et aux lignes.
+
+Après une synchronisation, les comparaisons ouvertes se mettent à jour en conservant les journées ou cycles choisis. Un ajout fractionné conserve la sélection du même arrosage. Si une sélection n'existe plus, choisir une autre journée ou un autre cycle dans la liste : l'ancien résultat est retiré pour éviter une confusion.
+
+La mention « Source : base locale » indique que la fenêtre relit les données déjà reçues par Gruterra. Le bouton Actualiser ne déclenche pas à lui seul une collecte sur le capteur. Si la lecture échoue, l'affichage précédent reste visible avec un avertissement, également inclus dans la copie.
+
+Dans le graphique des cycles, les liaisons sont non lissées et interrompues au-delà de deux heures entre relevés. Cela n'invente aucune mesure et ne change pas les moyennes. Ces améliorations sont locales et ne sont pas encore une nouvelle version publiée.
+
+
+<a id="centre-alertes"></a>
+## Centre d’alertes — préparation locale du 18/10/2026
+
+Les éléments prioritaires apparaissent avant les informations. Si plus de six alertes existent, utiliser « Afficher les autres alertes » pour consulter la liste complète ; le choix reste conservé lors d'une actualisation. Le niveau est écrit dans chaque titre et ne dépend pas uniquement de la couleur.
+
+« Non vérifié » signifie qu'une donnée ou une lecture manque : cela ne prouve ni une mesure récente ni l'absence d'un problème. Les rappels sont calculés selon les jours locaux. Après un nouvel arrosage, l'ancien rappel en retard ne doit plus être actif.
+
+Une prévision de deux heures expirée ou sans date fiable ne déclenche plus d'alerte météo à venir. Une prévision de pluie absente n'est pas affichée comme zéro. Ces indications restent un contexte local pour les plantes, pas un dispositif officiel d'alerte météorologique. Les seuils existants n'ont pas été modifiés dans ce lot.
+
+### English
+
+Priority items appear before informational items. Use “Show the other alerts” to expand a list longer than six items; the choice is retained when the view refreshes. Each title states its level in words as well as colour.
+
+“Not verified” means that data or a reading is unavailable. It does not prove a recent reading or the absence of a problem. Reminders use local calendar days, and recording a new watering closes the old overdue reminder.
+
+Expired or undated two-hour forecasts no longer trigger upcoming weather alerts. Missing rain forecasts are distinct from zero. These messages provide plant-related context, not an official weather warning service. Existing thresholds remain unchanged. These changes are local preparation and have not been released.

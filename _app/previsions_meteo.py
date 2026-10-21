@@ -9,6 +9,8 @@ from datetime import datetime, timezone
 from urllib.parse import urlencode
 from urllib.request import urlopen, Request
 import json
+import math
+from zoneinfo import ZoneInfo
 
 from botaneo_config import lire_json, LOCAL_CONFIG
 
@@ -151,22 +153,22 @@ def recuperer_prevision_2h():
     indexes = []
     for index, heure in enumerate(heures):
         try:
-            date_heure = datetime.fromisoformat(heure).astimezone()
-        except ValueError:
+            date_heure = datetime.fromisoformat(heure)
+            if date_heure.tzinfo is None:
+                date_heure = date_heure.replace(tzinfo=ZoneInfo(params['timezone']))
+        except (ValueError, TypeError):
             continue
         delta = (date_heure - maintenant).total_seconds()
         if 0 <= delta <= 7200:
             indexes.append(index)
-
-    if not indexes and heures:
-        indexes = list(range(min(2, len(heures))))
 
     if not indexes:
         raise RuntimeError(_tr('previsions_meteo_text_163'))
 
     def valeurs(cle):
         source = hourly.get(cle, [])
-        return [source[i] for i in indexes if i < len(source) and source[i] is not None]
+        return [source[i] for i in indexes if i < len(source)
+                and type(source[i]) in (int, float) and math.isfinite(source[i])]
 
     precipitation = valeurs("precipitation")
     pluie = valeurs("rain")
@@ -178,8 +180,9 @@ def recuperer_prevision_2h():
     rayonnements = valeurs("shortwave_radiation")
     codes_meteo = valeurs("weather_code")
 
-    cumul_pluie = sum(_nombre(v) for v in pluie or precipitation)
-    intensite_max = max([_nombre(v) for v in precipitation], default=0.0)
+    pluie_complete = pluie if len(pluie) == len(indexes) else precipitation if len(precipitation) == len(indexes) else None
+    cumul_pluie = sum(pluie_complete) if pluie_complete is not None else None
+    intensite_max = max(precipitation) if len(precipitation) == len(indexes) else None
     temperature_debut = _arrondir(temperatures[0], 1) if temperatures else None
     temperature_fin = _arrondir(temperatures[-1], 1) if temperatures else None
     humidite = round(sum(_nombre(v) for v in humidites) / len(humidites)) if humidites else None
@@ -189,10 +192,12 @@ def recuperer_prevision_2h():
     rayonnement = _arrondir(sum(_nombre(v) for v in rayonnements) / len(rayonnements), 0) if rayonnements else None
     code_meteo = codes_meteo[-1] if codes_meteo else None
     ciel = _interpretation_lumiere(rayonnement, nuage)
-    if ciel == "non disponible":
+    if ciel == _tr('interface_text_5146'):
         ciel = _interpretation_code_meteo(code_meteo) or ciel
-    if ciel == "non disponible":
-        if cumul_pluie > 0.5:
+    if ciel == _tr('interface_text_5146'):
+        if cumul_pluie is None:
+            pass
+        elif cumul_pluie > 0.5:
             ciel = _tr('previsions_meteo_text_194')
         elif cumul_pluie > 0:
             ciel = _tr('previsions_meteo_text_198_more')
@@ -202,8 +207,8 @@ def recuperer_prevision_2h():
     return {
         "date": datetime.now(timezone.utc).isoformat(timespec="seconds"),
         "source": "Open-Meteo · Météo-France AROME HD",
-        "pluie_2h": round(cumul_pluie, 2),
-        "intensite_max": round(intensite_max, 2),
+        "pluie_2h": round(cumul_pluie, 2) if cumul_pluie is not None else None,
+        "intensite_max": round(intensite_max, 2) if intensite_max is not None else None,
         "temperature_debut": temperature_debut,
         "temperature_fin": temperature_fin,
         "humidite": humidite,
@@ -213,5 +218,5 @@ def recuperer_prevision_2h():
         "rayonnement": rayonnement,
         "code_meteo": code_meteo,
         "lumiere": ciel,
-        "message_pluie": _interpretation_pluie(round(cumul_pluie, 2))
+        "message_pluie": _interpretation_pluie(round(cumul_pluie, 2) if cumul_pluie is not None else None)
     }

@@ -74,5 +74,86 @@ class CatchupTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, 'requested_range_skips_checkpoint'):
             self.plan(start='2026-10-15T12:30:00Z', end='2026-10-15T13:00:00Z')
 
+    def test_long_absence_resumes_without_skipping_or_touching_plant_db(self):
+        from home_assistant_sync import synchronize
+        from datetime import datetime, timedelta
+        self.execute(self.plan(), confirmed=True, requester=lambda *a, **k:self.response())
+        first=checkpoint(self.archive,self.config,plant_db_path=self.plants)
+        before=self.plants.read_bytes()
+        cfg={**self.config,'sync_on_request':True}
+        now='2026-10-25T12:00:00+00:00'
+        cursors=[]
+        for _ in range(10):
+            result=synchronize(config=cfg,archive_path=self.archive,plant_db_path=self.plants,
+                               now=now,requester=lambda *a,**k:self.response())
+            self.assertIn(result['status'],('complete','more_pending'))
+            cursors.append(checkpoint(self.archive,cfg,plant_db_path=self.plants))
+        self.assertEqual(result['status'],'complete')
+        self.assertEqual(cursors[-1],now)
+        self.assertEqual(datetime.fromisoformat(cursors[0])-datetime.fromisoformat(first),timedelta(days=1))
+        self.assertEqual(len(set(cursors)),10)
+        self.assertEqual(before,self.plants.read_bytes())
+        result=synchronize(config=cfg,archive_path=self.archive,plant_db_path=self.plants,now=now,
+                           requester=lambda *a,**k:self.fail('already committed'))
+        self.assertEqual(result['facts_added'],0)
+
+    def test_dense_response_is_split_and_committed_in_order(self):
+        from datetime import datetime
+        seen=[]
+        def read(config,**kwargs):
+            begin=datetime.fromisoformat(kwargs['start']);end=datetime.fromisoformat(kwargs['end'])
+            seen.append((begin,end))
+            if (end-begin).total_seconds()>10800:
+                return {'ok':False,'code':'history_too_large'}
+            return {'ok':True,'http_status':200,'records':[],'start':kwargs['start'],'end':kwargs['end']}
+        with patch('home_assistant_catchup.read_history',side_effect=read):
+            result=self.execute(self.plan(),confirmed=True)
+        self.assertTrue(result['ok'])
+        self.assertEqual(result['completed_windows'],4)
+        self.assertEqual(len(seen),6)
+        self.assertEqual(checkpoint(self.archive,self.config,plant_db_path=self.plants),'2026-10-15T12:00:00+00:00')
+
+    def test_dense_history_request_budget_preserves_progress(self):
+        from datetime import datetime
+        calls=[]
+        def read(config,**kwargs):
+            calls.append(kwargs)
+            if (datetime.fromisoformat(kwargs['end'])-datetime.fromisoformat(kwargs['start'])).total_seconds()>1800:
+                return {'ok':False,'code':'history_too_large'}
+            return {'ok':True,'http_status':200,'records':[],'start':kwargs['start'],'end':kwargs['end']}
+        with patch('home_assistant_catchup.read_history',side_effect=read):
+            result=self.execute(self.plan(),confirmed=True)
+        self.assertTrue(result['ok']);self.assertEqual(result['code'],'more_pending')
+        self.assertEqual(len(calls),16)
+        self.assertGreater(result['completed_windows'],0)
+        self.assertNotEqual(checkpoint(self.archive,self.config,plant_db_path=self.plants),None)
+
+    def test_failed_dense_subwindow_resumes_from_last_durable_chunk(self):
+        from datetime import datetime
+        def read(config,**kwargs):
+            begin=datetime.fromisoformat(kwargs['start']);end=datetime.fromisoformat(kwargs['end'])
+            if (end-begin).total_seconds()>10800:return {'ok':False,'code':'history_too_large'}
+            if begin.hour>=3:return {'ok':False,'code':'history_connection_failed'}
+            return {'ok':True,'http_status':200,'records':[],'start':kwargs['start'],'end':kwargs['end']}
+        with patch('home_assistant_catchup.read_history',side_effect=read):
+            result=self.execute(self.plan(),confirmed=True)
+        self.assertFalse(result['ok']);self.assertEqual(result['completed_windows'],1)
+        plan=self.plan()
+        self.assertEqual(plan['windows'][0]['start'],'2026-10-15T03:00:00+00:00')
+        self.assertTrue(self.execute(plan,confirmed=True,requester=lambda *a,**k:self.response())['ok'])
+
+    def test_lost_commit_response_replay_does_not_duplicate_data(self):
+        from home_assistant_archive import commit_history
+        from home_assistant_sync import synchronize
+        def lost(*args,**kwargs):
+            commit_history(*args,**kwargs)
+            raise OSError('fictitious lost acknowledgement')
+        with patch('home_assistant_catchup.commit_history',side_effect=lost):
+            result=self.execute(self.plan(),confirmed=True,requester=lambda *a,**k:self.response())
+        self.assertFalse(result['ok'])
+        self.assertEqual(self.plan()['windows'][0]['start'],'2026-10-15T06:00:00+00:00')
+        result=self.execute(self.plan(),confirmed=True,requester=lambda *a,**k:self.response())
+        self.assertTrue(result['ok']);self.assertEqual(result['facts_added'],0)
+
 if __name__ == '__main__':
     unittest.main()

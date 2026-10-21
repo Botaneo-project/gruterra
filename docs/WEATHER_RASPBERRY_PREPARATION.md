@@ -78,3 +78,14 @@ Le service météo du Raspberry a été déclenché par son timer à 22:06:18 (h
 Le rejeu du lot ajoute zéro observation et reconnaît les 18 doublons. La synchronisation suivante confirme une file vide. Le timer horaire reste actif.
 
 Cette vérification ne constitue pas encore un essai avec le PC physiquement éteint ni un test de redémarrage matériel du Raspberry.
+
+
+## Lecture des observations sur le PC — amélioration locale du 18/10/2026
+
+La fenêtre des observations importées se met à jour après une synchronisation. Le bouton Actualiser relit uniquement la base météo locale : il ne lance pas une collecte sur le Raspberry ou sur Netatmo.
+
+La date d'actualisation de la fenêtre, la date de récupération et la date du relevé correspondent à des événements différents. Les dates UTC d'origine restent dans les colonnes. Une date inconnue n'est pas remplacée par l'heure de consultation.
+
+Si la lecture échoue, les anciennes lignes restent affichées avec un avertissement. Si aucune observation n'est importée, cela ne signifie pas qu'il n'a pas plu. Une mesure de 0 mm est affichée comme telle ; une valeur absente reste marquée indisponible. Les cumuls ne sont pas additionnés.
+
+Le statut Netatmo distingue également une récupération réussie sans station et une connexion impossible. En cas d'échec, les données conservées ne sont pas rajeunies. Ces changements sont locaux et ne modifient ni les accès, ni la collecte, ni le contrat météo PC/Pi.

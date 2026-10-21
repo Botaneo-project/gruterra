@@ -3,6 +3,10 @@
 Retourne un JSON lisible par le PC : température, disque, mémoire,
 uptime, état lecture/écriture et erreurs disque récentes.
 """
+try:
+    from installation_paths import installation_root
+except ModuleNotFoundError:
+    from raspberry.installation_paths import installation_root
 import json
 import os
 import shutil
@@ -109,7 +113,7 @@ def recent_disk_errors():
 
 
 def backup_count():
-    backup_dir = Path.home() / "botaneo/backups"
+    backup_dir = installation_root() / 'backups'
     if not backup_dir.exists():
         return 0
     return sum(1 for item in backup_dir.rglob("*") if item.is_file())
@@ -133,7 +137,7 @@ def status_level(payload):
 
 
 def main_payload():
-    base = Path.home() / "botaneo"
+    base = installation_root()
     payload = {
         "ok": True,
         "timestamp": int(time.time()),

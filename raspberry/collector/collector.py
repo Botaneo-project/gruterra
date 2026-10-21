@@ -1,4 +1,12 @@
 """Collecteur Mi Flora autonome. Aucun effacement du capteur, aucun envoi PC."""
+try:
+    from installation_paths import installation_root
+except ModuleNotFoundError:
+    # Running this utility directly from the source checkout.
+    import sys
+    from pathlib import Path
+    sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+    from installation_paths import installation_root
 import argparse
 import asyncio
 import fcntl
@@ -14,7 +22,7 @@ from contextlib import contextmanager
 from datetime import datetime, timezone
 from pathlib import Path
 
-BASE = Path.home() / 'botaneo'
+BASE = installation_root()
 
 
 @contextmanager
@@ -78,24 +86,49 @@ def record(path, device_id, sensor_id, values=None, error=None):
             last_error=excluded.last_error,consecutive_failures=consecutive_failures+1''', (sensor_id, at, error))
 
 
-async def cycle(config, path, reader, history_reader=None):
+async def cycle(config, path, reader, history_reader=None, *, request_path=None, on_phase=None):
+    # All current readings are stored before any potentially long history scan.
+    if on_phase:
+        on_phase('current')
     for sensor in config['sensors']:
-        if history_reader:
-            try:
-                status, count = await asyncio.wait_for(history_reader(path, config['device_id'], sensor), timeout=600)
-                logging.info('Historique %s : %s entrees lues (deduplication active)', status, count)
-            except Exception as exc:
-                logging.warning('Historique indisponible ou partiel (%s); mesure directe maintenue', type(exc).__name__)
         try:
             values = await asyncio.wait_for(reader(sensor, silencieux=True), timeout=100)
         except Exception as exc:
-            # Type uniquement : pas d’identifiant privé dans les journaux.
             record(path, config['device_id'], sensor, error=type(exc).__name__)
             logging.warning('Lecture capteur indisponible (%s)', type(exc).__name__)
         else:
-            # Une erreur de stockage doit arrêter le processus pour permettre une reprise visible.
             record(path, config['device_id'], sensor, values=values)
             logging.info('Mesure enregistree, en attente de synchronisation')
+    if not history_reader:
+        return
+    if on_phase:
+        on_phase('history')
+    for sensor in config['sensors']:
+        if request_path is not None and request_path.exists():
+            return
+        task = asyncio.create_task(asyncio.wait_for(history_reader(path, config['device_id'], sensor), timeout=600))
+        try:
+            while not task.done():
+                if request_path is not None and request_path.exists():
+                    task.cancel()
+                    try:
+                        await task
+                    except asyncio.CancelledError:
+                        pass
+                    logging.info('Historique interrompu pour une mesure prioritaire')
+                    return
+                await asyncio.sleep(0.2)
+            status, count = await task
+            logging.info('Historique %s : %s entrees lues (deduplication active)', status, count)
+        except Exception as exc:
+            logging.warning('Historique indisponible ou partiel (%s)', type(exc).__name__)
+        finally:
+            if not task.done():
+                task.cancel()
+                try:
+                    await task
+                except asyncio.CancelledError:
+                    pass
 
 
 def main():
@@ -134,7 +167,7 @@ def main():
     while True:
         publish({'running': True, 'message': 'Lecture des capteurs en cours…'})
         request.unlink(missing_ok=True)
-        asyncio.run(cycle(config, path, lire_mesure, history_reader))
+        asyncio.run(cycle(config, path, lire_mesure, history_reader, request_path=request, on_phase=lambda phase: publish({'running': True, 'phase': phase, 'message': 'Lecture des capteurs en cours…'})))
         with connect(path) as db:
             failures = db.execute('SELECT COUNT(*) FROM sensor_status WHERE last_error IS NOT NULL').fetchone()[0]
         publish({'running': False, 'message': 'Collecte terminée.' if not failures else 'Collecte terminée avec une erreur : voir le capteur.',

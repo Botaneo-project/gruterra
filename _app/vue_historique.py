@@ -1,7 +1,7 @@
 """Vue de l'historique d'une plante, en lecture seule, sans dependance externe."""
 import math
 import tkinter as tk
-from tkinter import ttk
+from tkinter import ttk, messagebox
 from datetime import datetime, timedelta
 
 import database
@@ -377,6 +377,18 @@ def formater_moyenne_stats(stats, unite):
     return f"{formater_nombre(stats['moyenne'])} {unite}"
 
 
+def identite_cycle(cycle):
+    if not cycle:
+        return None
+    arrosage = cycle.get("arrosage")
+    if isinstance(arrosage, dict):
+        apports = arrosage.get("apports") or []
+        premier = apports[0] if apports else None
+    else:
+        premier = arrosage
+    return (premier[0] if premier else None, cycle.get("date"))
+
+
 def libelle_cycle(cycle):
     arrosage = cycle.get("arrosage")
     quantite = quantite_arrosage_courte(arrosage)
@@ -618,6 +630,16 @@ def resume_moyennes_jour(mesures, jour, arrosages=None):
     return "\n".join(lignes)
 
 
+def decouper_releves(points, intervalle_max=timedelta(hours=2)):
+    """Separate visual segments; a gap does not prove missing expected readings."""
+    segments = []
+    for point in points:
+        if not segments or point[0] - segments[-1][-1][0] > intervalle_max:
+            segments.append([])
+        segments[-1].append(point)
+    return segments
+
+
 def ouvrir_historique(parent, plante_id, action_synchroniser=None):
     couleurs = theme_actuel()
     plante = database.get_plante(plante_id)
@@ -630,56 +652,51 @@ def ouvrir_historique(parent, plante_id, action_synchroniser=None):
     fenetre.minsize(860, 600)
     fenetre.configure(bg=couleurs["BG"])
 
-    tk.Label(fenetre, text=plante[1] if plante else vh_t("plant_missing"),
+    from ui_scroll_form import create as creer_formulaire
+    contenu, pied = creer_formulaire(fenetre, couleurs)
+    tk.Label(contenu, text=plante[1] if plante else vh_t("plant_missing"),
              bg=couleurs["BG"], fg=couleurs["TEXT"],
              font=("Segoe UI", 21, "bold")).pack(anchor="w", padx=24, pady=(18, 2))
-    tk.Label(fenetre, text=vh_t("history_subtitle"),
+    tk.Label(contenu, text=vh_t("history_subtitle"),
              bg=couleurs["BG"], fg=couleurs["SECONDARY"],
              font=("Segoe UI", 10)).pack(anchor="w", padx=24)
 
     from light_window_ui import open_window as open_lighting_window
-    ttk.Button(fenetre, text=vh_t("lighting_title"), command=lambda: open_lighting_window(fenetre, plante_id)).pack(anchor="w", padx=24, pady=6)
-    barre = tk.Frame(fenetre, bg=couleurs["BG"])
+    ttk.Button(contenu, text=vh_t("lighting_title"), command=lambda: open_lighting_window(fenetre, plante_id)).pack(anchor="w", padx=24, pady=6)
+    barre = tk.Frame(contenu, bg=couleurs["BG"])
     barre.pack(fill="x", padx=24, pady=12)
 
     periode = tk.StringVar(value=vh_t("period_all"))
-    serie = SerieLocaleVar(value="Humidité")
+    serie = SerieLocaleVar(value="Lumière")
     jour_selectionne = tk.StringVar(value="")
     bilan = tk.StringVar()
     tri_table = {"colonne": None}
     jours_par_libelle = {}
 
-    tk.Label(barre, text=vh_t("period"), bg=couleurs["BG"],
-             fg=couleurs["TEXT"]).pack(side="left", padx=(0, 8))
-    choix_periode = ttk.Combobox(barre, textvariable=periode,
-                                 values=(vh_t("period_day"), vh_t("period_24h"), vh_t("period_7d"), vh_t("period_all")),
-                                 state="readonly", width=14)
-    choix_periode.pack(side="left")
-
-    tk.Label(barre, text=vh_t("day"), bg=couleurs["BG"],
-             fg=couleurs["TEXT"]).pack(side="left", padx=(18, 8))
-    choix_jour = ttk.Combobox(barre, textvariable=jour_selectionne,
-                              values=(), state="disabled", width=12, height=12)
-    choix_jour.pack(side="left")
-
-    tk.Label(barre, text=vh_t("measurement"), bg=couleurs["BG"],
-             fg=couleurs["TEXT"]).pack(side="left", padx=(18, 8))
-    choix_serie = ttk.Combobox(barre, textvariable=serie,
-                               values=tuple(nom_serie_affiche(nom) for nom in SERIES),
-                               state="readonly", width=16)
-    choix_serie.pack(side="left")
-
+    barre.columnconfigure(3, weight=1)
+    def filtre(column, key, variable, values, state, width):
+        bloc = tk.Frame(barre, bg=couleurs["BG"])
+        bloc.grid(row=0, column=column, sticky="w", padx=(0, 12))
+        tk.Label(bloc, text=vh_t(key), bg=couleurs["BG"], fg=couleurs["TEXT"]).pack(side="left", padx=(0, 6))
+        choix = ttk.Combobox(bloc, textvariable=variable, values=values,
+                             state=state, width=width, height=12)
+        choix.pack(side="left", pady=(3, 0))
+        return choix
+    choix_periode = filtre(0, "period", periode,
+                           (vh_t("period_day"), vh_t("period_24h"), vh_t("period_7d"), vh_t("period_all")), "readonly", 14)
+    choix_jour = filtre(1, "day", jour_selectionne, (), "disabled", 12)
+    choix_serie = filtre(2, "measurement", serie,
+                         tuple(nom_serie_affiche(nom) for nom in ("Lumière", "Humidité", "Température", "Conductivité")), "readonly", 16)
     if action_synchroniser:
-        ttk.Button(
-            barre,
-            text=vh_t("resync"),
-            command=action_synchroniser
-        ).pack(side="left", padx=(14, 0))
+        ttk.Button(barre, text=vh_t("resync"), command=action_synchroniser).grid(
+            row=0, column=3, sticky="w", padx=(4, 0))
+    tk.Label(contenu, textvariable=bilan, bg=couleurs["BG"], fg=couleurs["TEXT"],
+             anchor="w", justify="left").pack(fill="x", padx=24, pady=(0, 6))
+    fraicheur = tk.StringVar()
+    tk.Label(contenu, textvariable=fraicheur, bg=couleurs["BG"], fg=couleurs["SECONDARY"],
+             anchor="w", justify="left").pack(fill="x", padx=24, pady=(0, 8))
 
-    tk.Label(barre, textvariable=bilan, bg=couleurs["BG"],
-             fg=couleurs["TEXT"]).pack(side="left", padx=18)
-
-    resume_frame = tk.Frame(fenetre, bg=couleurs["CARD"],
+    resume_frame = tk.Frame(contenu, bg=couleurs["CARD"],
                             highlightbackground=couleurs["BORDER"],
                             highlightthickness=1)
     resume_frame.pack(fill="x", padx=24, pady=(0, 10))
@@ -692,13 +709,14 @@ def ouvrir_historique(parent, plante_id, action_synchroniser=None):
         "tendance": tk.StringVar(value="—")
     }
 
-    for titre, variable in ((vh_t("latest"), resume_vars["dernier"]),
+    for index, (titre, variable) in enumerate(((vh_t("latest"), resume_vars["dernier"]),
                             (vh_t("average"), resume_vars["moyenne"]),
                             (vh_t("minimum"), resume_vars["minimum"]),
                             (vh_t("maximum"), resume_vars["maximum"]),
-                            (vh_t("trend"), resume_vars["tendance"])):
+                            (vh_t("trend"), resume_vars["tendance"]))):
         bloc = tk.Frame(resume_frame, bg=couleurs["CARD"])
-        bloc.pack(side="left", expand=True, fill="x", padx=8, pady=8)
+        resume_frame.columnconfigure(index, weight=1, uniform="summary")
+        bloc.grid(row=0, column=index, sticky="ew", padx=8, pady=8)
         tk.Label(bloc, textvariable=variable, bg=couleurs["CARD"],
                  fg=couleurs["TEXT"], font=("Segoe UI", 14, "bold")).pack()
         tk.Label(bloc, text=titre, bg=couleurs["CARD"],
@@ -706,7 +724,7 @@ def ouvrir_historique(parent, plante_id, action_synchroniser=None):
 
     jour_resume_var = tk.StringVar(value=vh_t("history_day_help"))
     jour_resume_label = tk.Label(
-        fenetre,
+        contenu,
         textvariable=jour_resume_var,
         bg=couleurs["CARD"],
         fg=couleurs["TEXT"],
@@ -719,7 +737,7 @@ def ouvrir_historique(parent, plante_id, action_synchroniser=None):
     )
     qualite_var = tk.StringVar(value=vh_t("data_quality_waiting"))
     qualite_label = tk.Label(
-        fenetre,
+        contenu,
         textvariable=qualite_var,
         bg=couleurs["CARD"],
         fg=couleurs["SECONDARY"],
@@ -734,7 +752,7 @@ def ouvrir_historique(parent, plante_id, action_synchroniser=None):
 
     lecture_var = tk.StringVar(value=vh_t("history_select_measure"))
     lecture_label = tk.Label(
-        fenetre,
+        contenu,
         textvariable=lecture_var,
         bg=couleurs["CARD"],
         fg=couleurs["TEXT"],
@@ -747,12 +765,12 @@ def ouvrir_historique(parent, plante_id, action_synchroniser=None):
     )
     lecture_label.pack(fill="x", padx=24, pady=(0, 10), ipady=8)
 
-    canvas = tk.Canvas(fenetre, bg=couleurs["CARD"],
+    canvas = tk.Canvas(contenu, bg=couleurs["CARD"],
                        highlightbackground=couleurs["BORDER"],
-                       highlightthickness=1, height=240)
+                       highlightthickness=1, height=260)
     canvas.pack(fill="both", expand=True, padx=24)
 
-    outils_table = tk.Frame(fenetre, bg=couleurs["BG"])
+    outils_table = tk.Frame(contenu, bg=couleurs["BG"])
     outils_table.pack(fill="x", padx=24, pady=(6, 8))
 
     tk.Label(
@@ -761,9 +779,11 @@ def ouvrir_historique(parent, plante_id, action_synchroniser=None):
         bg=couleurs["BG"],
         fg=couleurs["SECONDARY"],
         font=("Segoe UI", 9, "bold")
-    ).pack(side="left", padx=(0, 10))
+    ).pack(anchor="w", pady=(0, 4))
 
-    outils_post_arrosage = tk.Frame(fenetre, bg=couleurs["BG"])
+    boutons_reperes = tk.Frame(outils_table, bg=couleurs["BG"])
+    boutons_reperes.pack(fill="x")
+    outils_post_arrosage = tk.Frame(contenu, bg=couleurs["BG"])
 
     tk.Label(
         outils_post_arrosage,
@@ -771,9 +791,9 @@ def ouvrir_historique(parent, plante_id, action_synchroniser=None):
         bg=couleurs["BG"],
         fg=couleurs["WATER"],
         font=("Segoe UI", 9, "bold")
-    ).pack(side="left", padx=(0, 10))
+    ).pack(anchor="w", pady=(0, 4))
 
-    cadre = tk.Frame(fenetre, bg=couleurs["BG"])
+    cadre = tk.Frame(contenu, bg=couleurs["BG"])
     cadre.pack(fill="both", expand=True, padx=24, pady=(0, 18))
 
     colonnes = ("date", "humidite", "temperature", "lumiere", "conductivite", "_mesure_id")
@@ -785,11 +805,18 @@ def ouvrir_historique(parent, plante_id, action_synchroniser=None):
         table.column(nom, width=largeur, minwidth=80, anchor="center")
     table.heading("_mesure_id", text="")
     table.column("_mesure_id", width=0, minwidth=0, stretch=False)
+    from ui_table_copy import attach as attach_table_copy
+    attach_table_copy(table, colonnes[:5], couleurs)
 
     scroll = ttk.Scrollbar(cadre, orient="vertical", command=table.yview)
     table.configure(yscrollcommand=scroll.set)
-    scroll.pack(side="right", fill="y")
-    table.pack(side="left", fill="both", expand=True)
+    cadre.rowconfigure(0, weight=1)
+    cadre.columnconfigure(0, weight=1)
+    scroll.grid(row=0, column=1, sticky="ns")
+    horizontal = ttk.Scrollbar(cadre, orient="horizontal", command=table.xview)
+    horizontal.grid(row=1, column=0, sticky="ew")
+    table.configure(xscrollcommand=horizontal.set)
+    table.grid(row=0, column=0, sticky="nsew")
 
     points = []
     mesures_courantes = []
@@ -1104,14 +1131,15 @@ def ouvrir_historique(parent, plante_id, action_synchroniser=None):
             aide_graphique = vh_t("history_light_graph_help")
         else:
             aide_graphique = vh_t("history_graph_help")
-        canvas.create_text(
-            x0,
-            39,
-            text=aide_graphique,
-            anchor="w",
-            fill=couleur_secondaire,
+        segments = decouper_releves(points)
+        if len(segments) > 1:
+            aide_graphique += " · " + vh_t("history_graph_gap_help")
+        aide_id = canvas.create_text(
+            x0, 39, text=aide_graphique, anchor="nw",
+            width=max(160, x1 - x0), fill=couleur_secondaire,
             font=("Segoe UI", 8)
         )
+        y0 = max(y0, canvas.bbox(aide_id)[3] + 8)
         canvas.create_text(x1, 22, text=vh_t('vue_historique_text_1101').format(v0=len(points)),
                            anchor="e", fill=couleur_secondaire,
                            font=("Segoe UI", 9))
@@ -1222,17 +1250,19 @@ def ouvrir_historique(parent, plante_id, action_synchroniser=None):
             coords.extend((x, y))
             points_graphique_courants.append((index_point, date, valeur, x, y))
 
-        coords_ligne = simplifier_coordonnees(coords, x1 - x0)
-
-        if len(coords_ligne) >= 4:
-            zone = [coords_ligne[0], y1] + coords_ligne + [coords_ligne[-2], y1]
-            canvas.create_polygon(*zone, fill=couleur_zone, outline="")
-            canvas.create_line(*coords_ligne, fill=melanger_couleurs(couleur_ligne, couleurs["CARD"], 0.55), width=7, smooth=True)
-            canvas.create_line(*coords_ligne, fill=couleur_ligne, width=3, smooth=True)
-        elif coords_ligne:
-            x, y = coords_ligne[0], coords_ligne[1]
-            canvas.create_oval(x - 5, y - 5, x + 5, y + 5,
-                               fill=couleur_ligne, outline=couleurs["CARD"])
+        offset = 0
+        for segment in segments:
+            coords_ligne = simplifier_coordonnees(coords[offset:offset + 2 * len(segment)], x1 - x0)
+            offset += 2 * len(segment)
+            if len(coords_ligne) >= 4:
+                zone = [coords_ligne[0], y1] + coords_ligne + [coords_ligne[-2], y1]
+                canvas.create_polygon(*zone, fill=couleur_zone, outline="", tags="measurement_area")
+                canvas.create_line(*coords_ligne, fill=melanger_couleurs(couleur_ligne, couleurs["CARD"], 0.55), width=7, smooth=False, tags="measurement_halo")
+                canvas.create_line(*coords_ligne, fill=couleur_ligne, width=3, smooth=False, tags="measurement_line")
+            elif coords_ligne:
+                x, y = coords_ligne[0], coords_ligne[1]
+                canvas.create_oval(x - 5, y - 5, x + 5, y + 5,
+                                   fill=couleur_ligne, outline=couleurs["CARD"])
 
         points_marqueurs = list(zip(coords[::2], coords[1::2]))
         if len(points_marqueurs) <= 28:
@@ -1300,12 +1330,10 @@ def ouvrir_historique(parent, plante_id, action_synchroniser=None):
     def ouvrir_comparaison_jours():
         try:
             toutes_mesures = database.get_mesures(plante_id=plante_id, limite=-1)
-        except Exception:
-            toutes_mesures = []
-        try:
             tous_arrosages = database.get_arrosages_plante(plante_id, limite=200)
         except Exception:
-            tous_arrosages = []
+            messagebox.showerror(vh_t("compare_days_dialog"), vh_t("history_read_failed"), parent=fenetre)
+            return
         jours = jours_disponibles_mesures(toutes_mesures)
         if len(jours) < 2:
             messagebox.showinfo(vh_t('compare_days_dialog'), vh_t('compare_days_minimum'), parent=fenetre)
@@ -1317,27 +1345,36 @@ def ouvrir_historique(parent, plante_id, action_synchroniser=None):
         detail.configure(bg=couleurs["CARD"])
         detail.transient(fenetre)
         detail.geometry("820x520+90+90")
-        tk.Label(detail, text=vh_t('compare_days_header'), bg=couleurs["CARD"], fg=couleurs["GREEN"], font=("Segoe UI", 16, "bold")).pack(anchor="w", padx=18, pady=(16, 4))
-        choix = tk.Frame(detail, bg=couleurs["CARD"])
+        detail.minsize(640, 440)
+        contenu_detail, boutons = creer_formulaire(detail, couleurs)
+        from ui_scroll_form import create_table, create_text
+        etat_detail = tk.StringVar(value=vh_t("history_local_read").format(
+            refreshed=maintenant_local().strftime("%d/%m/%Y %H:%M:%S")))
+        statut = tk.Label(boutons, textvariable=etat_detail, bg=couleurs["BG"],
+                          fg=couleurs["SECONDARY"], justify="left", anchor="w")
+        statut.grid(row=0, column=0, columnspan=3, sticky="ew", pady=(0, 6))
+        boutons.bind("<Configure>", lambda event: statut.configure(wraplength=max(200, event.width-16)), add="+")
+        tk.Label(contenu_detail, text=vh_t('compare_days_header'), bg=couleurs["CARD"], fg=couleurs["GREEN"], font=("Segoe UI", 16, "bold")).pack(anchor="w", padx=18, pady=(16, 4))
+        choix = tk.Frame(contenu_detail, bg=couleurs["CARD"])
         choix.pack(fill="x", padx=18, pady=(6, 10))
         jour_a_var = tk.StringVar(value=libelles[0])
         jour_b_var = tk.StringVar(value=libelles[1])
-        tk.Label(choix, text=vh_t('compare_day_a'), bg=couleurs["CARD"], fg=couleurs["TEXT"]).pack(side="left", padx=(0, 6))
+        for column in range(2):
+            choix.columnconfigure(column, weight=1, uniform="days")
+        tk.Label(choix, text=vh_t('compare_day_a'), bg=couleurs["CARD"], fg=couleurs["TEXT"]).grid(row=0, column=0, sticky="w")
         combo_a = ttk.Combobox(choix, textvariable=jour_a_var, values=libelles, state="readonly", width=12)
-        combo_a.pack(side="left", padx=(0, 16))
-        tk.Label(choix, text=vh_t('compare_day_b'), bg=couleurs["CARD"], fg=couleurs["TEXT"]).pack(side="left", padx=(0, 6))
+        combo_a.grid(row=1, column=0, sticky="ew", padx=(0, 8))
+        tk.Label(choix, text=vh_t('compare_day_b'), bg=couleurs["CARD"], fg=couleurs["TEXT"]).grid(row=0, column=1, sticky="w")
         combo_b = ttk.Combobox(choix, textvariable=jour_b_var, values=libelles, state="readonly", width=12)
-        combo_b.pack(side="left")
+        combo_b.grid(row=1, column=1, sticky="ew")
 
         colonnes_cmp = ("mesure", "jour_a", "jour_b", "ecart")
-        tableau = ttk.Treeview(detail, columns=colonnes_cmp, show="headings", height=8)
+        tableau = create_table(contenu_detail, couleurs, columns=colonnes_cmp, height=8, padx=18, pady=(0, 10))
         for colonne, titre, largeur in (("mesure", vh_t('compare_measurement'), 180), ("jour_a", vh_t('compare_day_a'), 150), ("jour_b", vh_t('compare_day_b'), 150), ("ecart", vh_t('compare_difference'), 150)):
             tableau.heading(colonne, text=titre)
-            tableau.column(colonne, width=largeur, anchor="center")
-        tableau.pack(fill="x", padx=18, pady=(0, 10))
+            tableau.column(colonne, width=largeur, minwidth=largeur, anchor="center")
 
-        zone = tk.Text(detail, height=9, wrap="word", bg=couleurs["BG"], fg=couleurs["TEXT"], relief="flat", font=("Segoe UI", 9))
-        zone.pack(fill="both", expand=True, padx=18, pady=(0, 12))
+        zone = create_text(contenu_detail, couleurs, height=9, padx=18, pady=(0, 12))
         resultat_courant = {"texte": ""}
 
         def valeur_stat(stats, cle, unite):
@@ -1350,9 +1387,17 @@ def ouvrir_historique(parent, plante_id, action_synchroniser=None):
             jour_a = jours_lookup.get(jour_a_var.get())
             jour_b = jours_lookup.get(jour_b_var.get())
             if not jour_a or not jour_b:
+                resultat_courant["texte"] = ""
+                tableau.delete(*tableau.get_children())
+                zone.configure(state="normal")
+                zone.delete("1.0", "end")
+                zone.insert("1.0", vh_t("history_choose_comparison"))
+                zone.configure(state="disabled")
                 return
             resultat = comparer_deux_jours(toutes_mesures, tous_arrosages, jour_a, jour_b)
             resultat_courant["texte"] = resultat["texte"]
+            selection = tableau.selection()
+            x_table, y_table, y_texte = tableau.xview(), tableau.yview(), zone.yview()
             for item in tableau.get_children():
                 tableau.delete(item)
             lignes = [
@@ -1364,35 +1409,62 @@ def ouvrir_historique(parent, plante_id, action_synchroniser=None):
                 texte_b, valeur_b = valeur_stat(resultat['stats_b'], cle, unite)
                 ecart = "—" if valeur_a is None or valeur_b is None else f"{formater_nombre(valeur_a - valeur_b)} {unite}"
                 lignes.append((titre, texte_a, texte_b, ecart))
-            for ligne in lignes:
-                tableau.insert("", "end", values=ligne)
+            for index, ligne in enumerate(lignes):
+                tableau.insert("", "end", iid=str(index), values=ligne)
+            for item in selection:
+                if tableau.exists(item): tableau.selection_add(item)
+            if x_table: tableau.xview_moveto(x_table[0])
+            if y_table: tableau.yview_moveto(y_table[0])
             zone.configure(state="normal")
             zone.delete("1.0", "end")
             zone.insert("1.0", resultat["texte"])
             zone.configure(state="disabled")
+            if y_texte: zone.yview_moveto(y_texte[0])
 
         combo_a.bind("<<ComboboxSelected>>", rafraichir_comparaison)
         combo_b.bind("<<ComboboxSelected>>", rafraichir_comparaison)
-        boutons = tk.Frame(detail, bg=couleurs["CARD"])
-        boutons.pack(fill="x", padx=18, pady=(0, 14))
+        def recharger_comparaison(event=None):
+            nonlocal toutes_mesures, tous_arrosages, jours_lookup
+            try:
+                nouvelles_mesures = database.get_mesures(plante_id=plante_id, limite=-1)
+                nouveaux_arrosages = database.get_arrosages_plante(plante_id, limite=200)
+                nouveaux_jours = jours_disponibles_mesures(nouvelles_mesures)
+            except Exception:
+                etat_detail.set(vh_t("history_refresh_failed"))
+                return
+            toutes_mesures, tous_arrosages = nouvelles_mesures, nouveaux_arrosages
+            nouveaux_libelles = [libelle_jour(jour) for jour in nouveaux_jours]
+            jours_lookup = dict(zip(nouveaux_libelles, nouveaux_jours))
+            for combo, variable in ((combo_a, jour_a_var), (combo_b, jour_b_var)):
+                combo.configure(values=nouveaux_libelles, state="readonly" if nouveaux_libelles else "disabled")
+                if variable.get() not in jours_lookup:
+                    variable.set("")
+            rafraichir_comparaison()
+            etat_detail.set(vh_t("history_local_read").format(
+                refreshed=maintenant_local().strftime("%d/%m/%Y %H:%M:%S")))
+        detail.bind("<<GruterraDataChanged>>", recharger_comparaison, add="+")
         def copier_comparaison():
+            if not resultat_courant.get("texte"):
+                return
             detail.clipboard_clear()
-            detail.clipboard_append(resultat_courant.get("texte") or "")
+            detail.clipboard_append(etat_detail.get() + "\n\n" + resultat_courant["texte"])
             bilan.set(vh_t("compare_copied_status").format(status=bilan.get()))
-        ttk.Button(boutons, text=vh_t('compare_copy'), command=copier_comparaison).pack(side="left")
-        ttk.Button(boutons, text=vh_t('compare_close'), command=detail.destroy).pack(side="right")
+        for column in range(3):
+            boutons.columnconfigure(column, weight=1, uniform="actions")
+        ttk.Button(boutons, text=vh_t('compare_copy'), command=copier_comparaison).grid(row=1, column=0, sticky="ew", padx=3)
+        ttk.Button(boutons, text=vh_t('refresh_plain'), command=recharger_comparaison).grid(row=1, column=1, sticky="ew", padx=3)
+        ttk.Button(boutons, text=vh_t('compare_close'), command=detail.destroy).grid(row=1, column=2, sticky="ew", padx=3)
         rafraichir_comparaison()
+        harmoniser_controles(contenu_detail)
 
 
     def ouvrir_cycles_arrosage():
         try:
             toutes_mesures = database.get_mesures(plante_id=plante_id, limite=-1)
-        except Exception:
-            toutes_mesures = []
-        try:
             tous_arrosages = database.get_arrosages_plante(plante_id, limite=200)
         except Exception:
-            tous_arrosages = []
+            messagebox.showerror(vh_t('vue_historique_text_1400'), vh_t("history_read_failed"), parent=fenetre)
+            return
         cycles = calculer_cycles_arrosage(toutes_mesures, tous_arrosages)
         texte = resumer_cycles_arrosage(toutes_mesures, tous_arrosages)
         if not cycles:
@@ -1403,14 +1475,23 @@ def ouvrir_historique(parent, plante_id, action_synchroniser=None):
         detail.configure(bg=couleurs["CARD"])
         detail.transient(fenetre)
         detail.geometry("980x690+70+50")
-        tk.Label(detail, text=vh_t('vue_historique_text_1404'), bg=couleurs["CARD"], fg=couleurs["WATER"], font=("Segoe UI", 16, "bold")).pack(anchor="w", padx=18, pady=(16, 4))
-        tk.Label(detail, text=vh_t('vue_historique_text_1405'), bg=couleurs["CARD"], fg=couleurs["SECONDARY"], font=("Segoe UI", 9)).pack(anchor="w", padx=18, pady=(0, 6))
+        detail.minsize(700, 480)
+        contenu_detail, boutons = creer_formulaire(detail, couleurs)
+        from ui_scroll_form import create_table, create_text
+        etat_detail = tk.StringVar(value=vh_t("history_local_read").format(
+            refreshed=maintenant_local().strftime("%d/%m/%Y %H:%M:%S")))
+        statut = tk.Label(boutons, textvariable=etat_detail, bg=couleurs["BG"],
+                          fg=couleurs["SECONDARY"], justify="left", anchor="w")
+        statut.grid(row=0, column=0, columnspan=3, sticky="ew", pady=(0, 6))
+        boutons.bind("<Configure>", lambda event: statut.configure(wraplength=max(200, event.width-16)), add="+")
+        tk.Label(contenu_detail, text=vh_t('vue_historique_text_1404'), bg=couleurs["CARD"], fg=couleurs["WATER"], font=("Segoe UI", 16, "bold")).pack(anchor="w", padx=18, pady=(16, 4))
+        tk.Label(contenu_detail, text=vh_t('vue_historique_text_1405') + " · " + vh_t("history_graph_gap_help"), bg=couleurs["CARD"], fg=couleurs["SECONDARY"], font=("Segoe UI", 9)).pack(anchor="w", padx=18, pady=(0, 6))
         analyse_cycles_var = tk.StringVar(value=analyser_cycles_arrosage(cycles))
         fond_analyse = melanger_couleurs(couleurs["BLUE"], couleurs["CARD"], 0.88)
-        tk.Label(detail, textvariable=analyse_cycles_var, bg=fond_analyse, fg=couleurs["BLUE"], font=("Segoe UI", 9, "bold"), anchor="w", justify="left", wraplength=860, padx=10, pady=7).pack(fill="x", padx=18, pady=(0, 10))
+        tk.Label(contenu_detail, textvariable=analyse_cycles_var, bg=fond_analyse, fg=couleurs["BLUE"], font=("Segoe UI", 9, "bold"), anchor="w", justify="left", wraplength=860, padx=10, pady=7).pack(fill="x", padx=18, pady=(0, 10))
 
         colonnes_cycles = ("date", "quantite", "mesures", "avant", "depart", "pic", "fin", "sechage", "vitesse24", "trou", "qualite", "suivi")
-        tableau = ttk.Treeview(detail, columns=colonnes_cycles, show="headings", height=6)
+        tableau = create_table(contenu_detail, couleurs, columns=colonnes_cycles, height=6, padx=18, pady=(0, 10))
         titres_cycles = {
             "date": vh_t('watering_title'),
             "quantite": vh_t('vue_historique_text_1414'),
@@ -1441,30 +1522,39 @@ def ouvrir_historique(parent, plante_id, action_synchroniser=None):
         }
         for colonne in colonnes_cycles:
             tableau.heading(colonne, text=titres_cycles[colonne])
-            tableau.column(colonne, width=largeurs_cycles[colonne], anchor="center")
-        tableau.pack(fill="x", padx=18, pady=(0, 10))
+            tableau.column(colonne, width=largeurs_cycles[colonne], minwidth=largeurs_cycles[colonne], anchor="center")
 
         cycles_affiches = list(reversed(cycles))
-        for cycle in cycles_affiches:
-            arrosage = cycle.get("arrosage")
-            quantite = quantite_arrosage_courte(arrosage)
-            suivi = f"→ {formater_date_courte(cycle.get('fin'))}" if cycle.get("fin") else vh_t('vue_historique_text_1464')
-            tableau.insert("", "end", values=(
-                formater_date_courte(cycle.get("date")),
-                quantite,
-                len(cycle.get("mesures") or []),
-                formater_nombre(cycle.get("humidite_avant")) if cycle.get("humidite_avant") is not None else "—",
-                formater_nombre(cycle.get("premiere_humidite")) if cycle.get("premiere_humidite") is not None else "—",
-                formater_nombre(cycle.get("pic_humidite")) if cycle.get("pic_humidite") is not None else "—",
-                formater_nombre(cycle.get("derniere_humidite")) if cycle.get("derniere_humidite") is not None else "—",
-                f"{formater_nombre(cycle.get('sechage'))} pt/j" if cycle.get("sechage") is not None else "—",
-                f"{formater_nombre(cycle.get('vitesse_24h'))} pt/j" if cycle.get("vitesse_24h") is not None else "—",
-                f"{formater_nombre(cycle.get('plus_grand_trou_h'))} h" if cycle.get("plus_grand_trou_h") is not None else "—",
-                cycle.get("qualite") or "—",
-                suivi,
-            ))
+        def remplir_cycles():
+            selection = tableau.selection()
+            x, y = tableau.xview(), tableau.yview()
+            tableau.delete(*tableau.get_children())
+            for cycle in cycles_affiches:
+                arrosage = cycle.get("arrosage")
+                quantite = quantite_arrosage_courte(arrosage)
+                suivi = f"→ {formater_date_courte(cycle.get('fin'))}" if cycle.get("fin") else vh_t('vue_historique_text_1464')
+                tableau.insert("", "end", iid=str(identite_cycle(cycle)), values=(
+                    formater_date_courte(cycle.get("date")),
+                    quantite,
+                    len(cycle.get("mesures") or []),
+                    formater_nombre(cycle.get("humidite_avant")) if cycle.get("humidite_avant") is not None else "—",
+                    formater_nombre(cycle.get("premiere_humidite")) if cycle.get("premiere_humidite") is not None else "—",
+                    formater_nombre(cycle.get("pic_humidite")) if cycle.get("pic_humidite") is not None else "—",
+                    formater_nombre(cycle.get("derniere_humidite")) if cycle.get("derniere_humidite") is not None else "—",
+                    f"{formater_nombre(cycle.get('sechage'))} pt/j" if cycle.get("sechage") is not None else "—",
+                    f"{formater_nombre(cycle.get('vitesse_24h'))} pt/j" if cycle.get("vitesse_24h") is not None else "—",
+                    f"{formater_nombre(cycle.get('plus_grand_trou_h'))} h" if cycle.get("plus_grand_trou_h") is not None else "—",
+                    cycle.get("qualite") or "—",
+                    suivi,
+                ))
+            for item in selection:
+                if tableau.exists(item):
+                    tableau.selection_add(item)
+            if x: tableau.xview_moveto(x[0])
+            if y: tableau.yview_moveto(y[0])
+        remplir_cycles()
 
-        comparaison_frame = tk.Frame(detail, bg=couleurs["CARD"])
+        comparaison_frame = tk.Frame(contenu_detail, bg=couleurs["CARD"])
         comparaison_frame.pack(fill="x", padx=18, pady=(0, 8))
         tk.Label(comparaison_frame, text=vh_t('vue_historique_text_1462'), bg=couleurs["CARD"], fg=couleurs["TEXT"], font=("Segoe UI", 10, "bold")).pack(anchor="w")
         choix_cycles = tk.Frame(comparaison_frame, bg=couleurs["CARD"])
@@ -1473,23 +1563,23 @@ def ouvrir_historique(parent, plante_id, action_synchroniser=None):
         cycles_lookup = dict(zip(libelles_cycles, cycles_affiches))
         cycle_a_var = tk.StringVar(value=libelles_cycles[0] if libelles_cycles else "")
         cycle_b_var = tk.StringVar(value=libelles_cycles[1] if len(libelles_cycles) > 1 else (libelles_cycles[0] if libelles_cycles else ""))
-        tk.Label(choix_cycles, text=vh_t('vue_historique_text_1469'), bg=couleurs["CARD"], fg=couleurs["TEXT"]).pack(side="left", padx=(0, 6))
-        combo_cycle_a = ttk.Combobox(choix_cycles, textvariable=cycle_a_var, values=libelles_cycles, state="readonly", width=28)
-        combo_cycle_a.pack(side="left", padx=(0, 12))
-        tk.Label(choix_cycles, text=vh_t('vue_historique_text_1472'), bg=couleurs["CARD"], fg=couleurs["TEXT"]).pack(side="left", padx=(0, 6))
-        combo_cycle_b = ttk.Combobox(choix_cycles, textvariable=cycle_b_var, values=libelles_cycles, state="readonly", width=28)
-        combo_cycle_b.pack(side="left", padx=(0, 12))
         serie_cycle_var = SerieLocaleVar(value="Humidité")
-        tk.Label(choix_cycles, text=vh_t('vue_historique_text_1476'), bg=couleurs["CARD"], fg=couleurs["TEXT"]).pack(side="left", padx=(0, 6))
-        combo_serie_cycle = ttk.Combobox(choix_cycles, textvariable=serie_cycle_var, values=tuple(nom_serie_affiche(nom) for nom in SERIES), state="readonly", width=13)
-        combo_serie_cycle.pack(side="left")
+        def choix_cycle(row, key, variable, values, width):
+            choix_cycles.columnconfigure(1, weight=1)
+            tk.Label(choix_cycles, text=vh_t(key), bg=couleurs["CARD"], fg=couleurs["TEXT"]).grid(row=row, column=0, sticky="w", padx=(0, 10), pady=3)
+            combo = ttk.Combobox(choix_cycles, textvariable=variable, values=values, state="readonly", width=width)
+            combo.grid(row=row, column=1, sticky="ew", pady=3)
+            return combo
+        combo_cycle_a = choix_cycle(0, 'vue_historique_text_1469', cycle_a_var, libelles_cycles, 28)
+        combo_cycle_b = choix_cycle(1, 'vue_historique_text_1472', cycle_b_var, libelles_cycles, 28)
+        combo_serie_cycle = choix_cycle(2, 'vue_historique_text_1476', serie_cycle_var,
+                                       tuple(nom_serie_affiche(nom) for nom in SERIES), 13)
 
         colonnes_cmp_cycles = ("indicateur", "cycle_a", "cycle_b", "ecart")
-        tableau_cmp = ttk.Treeview(comparaison_frame, columns=colonnes_cmp_cycles, show="headings", height=8)
+        tableau_cmp = create_table(comparaison_frame, couleurs, columns=colonnes_cmp_cycles, height=8)
         for colonne, titre, largeur in (("indicateur", vh_t('canonical_indicator'), 155), ("cycle_a", vh_t('vue_historique_text_1469'), 130), ("cycle_b", vh_t('vue_historique_text_1472'), 130), ("ecart", vh_t('compare_difference'), 130)):
             tableau_cmp.heading(colonne, text=titre)
-            tableau_cmp.column(colonne, width=largeur, anchor="center")
-        tableau_cmp.pack(fill="x")
+            tableau_cmp.column(colonne, width=largeur, minwidth=largeur, anchor="center")
 
         graphique_cycles = tk.Canvas(comparaison_frame, height=250, bg=couleurs["BG"], highlightbackground=couleurs["BORDER"], highlightthickness=1)
         graphique_cycles.pack(fill="x", pady=(8, 0))
@@ -1534,8 +1624,6 @@ def ouvrir_historique(parent, plante_id, action_synchroniser=None):
                 return y1 - (y1 - y0) * (valeur - bas) / (haut - bas)
 
             graphique_cycles.create_text(x0, 17, text=vh_t('vue_historique_text_1534').format(v0=_texte(config_serie['titre']), v1=config_serie['unite']), anchor="w", fill=couleurs["TEXT"], font=("Segoe UI", 10, "bold"))
-            graphique_cycles.create_rectangle(x0, y0, x1, y1, outline=couleurs["BORDER"])
-
             legendes = [
                 (couleurs["GREEN"], vh_t('vue_historique_text_1469')),
                 (couleurs["BLUE"], vh_t('vue_historique_text_1472')),
@@ -1543,11 +1631,22 @@ def ouvrir_historique(parent, plante_id, action_synchroniser=None):
                 (couleurs["ORANGE"], vh_t('canonical_peak')),
                 (couleurs["PURPLE"], "24 h / 48 h"),
             ]
-            x_legende = x0
+            from tkinter.font import Font
+            police_legende = Font(family="Segoe UI", size=8, weight="bold")
+            hauteur_ligne = police_legende.metrics("linespace") + 10
+            x_legende, y_legende = x0, 35
             for couleur, libelle in legendes:
-                graphique_cycles.create_oval(x_legende, 34, x_legende + 9, 43, fill=couleur, outline=couleur)
-                graphique_cycles.create_text(x_legende + 14, 38, text=libelle, anchor="w", fill=couleurs["SECONDARY"], font=("Segoe UI", 8, "bold"))
-                x_legende += max(76, len(libelle) * 7 + 24)
+                largeur_legende = police_legende.measure(libelle) + 32
+                if x_legende > x0 and x_legende + largeur_legende > x1:
+                    x_legende, y_legende = x0, y_legende + hauteur_ligne
+                centre_y = y_legende + hauteur_ligne / 2
+                graphique_cycles.create_oval(x_legende, centre_y - 4, x_legende + 9, centre_y + 5,
+                                             fill=couleur, outline=couleur, tags="cycle_legend")
+                graphique_cycles.create_text(x_legende + 14, centre_y, text=libelle, anchor="w",
+                                             fill=couleurs["SECONDARY"], font=("Segoe UI", 8, "bold"), tags="cycle_legend")
+                x_legende += largeur_legende
+            y0 = max(y0, y_legende + hauteur_ligne + 8)
+            graphique_cycles.create_rectangle(x0, y0, x1, y1, outline=couleurs["BORDER"], tags="cycle_plot")
 
             couleur_grille = melanger_couleurs(couleurs["GRID"], couleurs["CARD"], 0.25)
             for i in range(4):
@@ -1599,8 +1698,17 @@ def ouvrir_historique(parent, plante_id, action_synchroniser=None):
                     x = x_depuis_heures(heures)
                     y = y_depuis_valeur(valeur)
                     coords.extend((x, y))
-                if len(coords) >= 4:
-                    graphique_cycles.create_line(*coords, fill=couleur, width=3, smooth=True)
+                segment = []
+                previous_hour = None
+                for heures, valeur in points:
+                    if previous_hour is not None and heures - previous_hour > 2:
+                        if len(segment) >= 4:
+                            graphique_cycles.create_line(*segment, fill=couleur, width=3, smooth=False)
+                        segment = []
+                    segment.extend((x_depuis_heures(heures), y_depuis_valeur(valeur)))
+                    previous_hour = heures
+                if len(segment) >= 4:
+                    graphique_cycles.create_line(*segment, fill=couleur, width=3, smooth=False)
                 for heures, valeur in points:
                     x = x_depuis_heures(heures)
                     y = y_depuis_valeur(valeur)
@@ -1620,8 +1728,7 @@ def ouvrir_historique(parent, plante_id, action_synchroniser=None):
             dessiner_ligne(points_a, couleurs["GREEN"], "A", cycle_a)
             dessiner_ligne(points_b, couleurs["BLUE"], "B", cycle_b)
 
-        zone = tk.Text(detail, height=6, wrap="word", bg=couleurs["BG"], fg=couleurs["TEXT"], relief="flat", font=("Segoe UI", 9))
-        zone.pack(fill="both", expand=True, padx=18, pady=(0, 12))
+        zone = create_text(contenu_detail, couleurs, height=6, padx=18, pady=(0, 12))
         zone.insert("1.0", texte)
         zone.configure(state="disabled")
         comparaison_texte = {"texte": ""}
@@ -1629,35 +1736,81 @@ def ouvrir_historique(parent, plante_id, action_synchroniser=None):
         def rafraichir_comparaison_cycles(_event=None):
             cycle_a = cycles_lookup.get(cycle_a_var.get())
             cycle_b = cycles_lookup.get(cycle_b_var.get())
+            selection = tableau_cmp.selection()
+            x_table, y_table, y_texte = tableau_cmp.xview(), tableau_cmp.yview(), zone.yview()
             for item in tableau_cmp.get_children():
                 tableau_cmp.delete(item)
             if not cycle_a or not cycle_b:
                 comparaison_texte["texte"] = ""
+                graphique_cycles.delete("all")
+                zone.configure(state="normal")
+                zone.delete("1.0", "end")
+                zone.insert("1.0", texte + "\n\n" + vh_t("history_choose_comparison"))
+                zone.configure(state="disabled")
                 return
             resultat = comparer_deux_cycles(cycle_a, cycle_b)
             comparaison_texte["texte"] = resultat["texte"]
             dessiner_comparaison_cycles(cycle_a, cycle_b)
-            for ligne in resultat["lignes_tableau"]:
-                tableau_cmp.insert("", "end", values=ligne)
+            for index, ligne in enumerate(resultat["lignes_tableau"]):
+                tableau_cmp.insert("", "end", iid=str(index), values=ligne)
+            for item in selection:
+                if tableau_cmp.exists(item): tableau_cmp.selection_add(item)
+            if x_table: tableau_cmp.xview_moveto(x_table[0])
+            if y_table: tableau_cmp.yview_moveto(y_table[0])
             zone.configure(state="normal")
             zone.delete("1.0", "end")
             zone.insert("1.0", texte + "\n\n" + resultat["texte"])
             zone.configure(state="disabled")
+            if y_texte: zone.yview_moveto(y_texte[0])
 
         combo_cycle_a.bind("<<ComboboxSelected>>", rafraichir_comparaison_cycles)
         combo_cycle_b.bind("<<ComboboxSelected>>", rafraichir_comparaison_cycles)
         combo_serie_cycle.bind("<<ComboboxSelected>>", rafraichir_comparaison_cycles)
-        graphique_cycles.bind("<Configure>", lambda _event: rafraichir_comparaison_cycles())
+        def redessiner_cycles(event=None):
+            cycle_a, cycle_b = cycles_lookup.get(cycle_a_var.get()), cycles_lookup.get(cycle_b_var.get())
+            if cycle_a and cycle_b:
+                dessiner_comparaison_cycles(cycle_a, cycle_b)
+            else:
+                graphique_cycles.delete("all")
+        graphique_cycles.bind("<Configure>", redessiner_cycles)
         rafraichir_comparaison_cycles()
 
-        boutons = tk.Frame(detail, bg=couleurs["CARD"])
-        boutons.pack(fill="x", padx=18, pady=(0, 14))
+        def recharger_cycles(event=None):
+            nonlocal toutes_mesures, tous_arrosages, cycles, texte, cycles_affiches, cycles_lookup
+            cle_a = identite_cycle(cycles_lookup.get(cycle_a_var.get()))
+            cle_b = identite_cycle(cycles_lookup.get(cycle_b_var.get()))
+            try:
+                nouvelles_mesures = database.get_mesures(plante_id=plante_id, limite=-1)
+                nouveaux_arrosages = database.get_arrosages_plante(plante_id, limite=200)
+                nouveaux_cycles = calculer_cycles_arrosage(nouvelles_mesures, nouveaux_arrosages)
+                nouveau_texte = resumer_cycles_arrosage(nouvelles_mesures, nouveaux_arrosages)
+            except Exception:
+                etat_detail.set(vh_t("history_refresh_failed"))
+                return
+            toutes_mesures, tous_arrosages = nouvelles_mesures, nouveaux_arrosages
+            cycles, texte = nouveaux_cycles, nouveau_texte
+            cycles_affiches = list(reversed(cycles))
+            nouveaux_libelles = [libelle_cycle(item) for item in cycles_affiches]
+            cycles_lookup = dict(zip(nouveaux_libelles, cycles_affiches))
+            for combo, variable, cle in ((combo_cycle_a, cycle_a_var, cle_a), (combo_cycle_b, cycle_b_var, cle_b)):
+                combo.configure(values=nouveaux_libelles, state="readonly" if nouveaux_libelles else "disabled")
+                variable.set(next((libelle_cycle(item) for item in cycles_affiches if identite_cycle(item) == cle), ""))
+            remplir_cycles()
+            analyse_cycles_var.set(analyser_cycles_arrosage(cycles))
+            rafraichir_comparaison_cycles()
+            etat_detail.set(vh_t("history_local_read").format(
+                refreshed=maintenant_local().strftime("%d/%m/%Y %H:%M:%S")))
+        detail.bind("<<GruterraDataChanged>>", recharger_cycles, add="+")
         def copier_cycles():
             detail.clipboard_clear()
-            detail.clipboard_append((texte + "\n\n" + comparaison_texte.get("texte", "")).strip())
+            detail.clipboard_append((etat_detail.get() + "\n\n" + texte + "\n\n" + comparaison_texte.get("texte", "")).strip())
             bilan.set(vh_t('vue_historique_text_1656').format(v0=bilan.get()))
-        ttk.Button(boutons, text=vh_t('compare_copy'), command=copier_cycles).pack(side="left")
-        ttk.Button(boutons, text=vh_t('compare_close'), command=detail.destroy).pack(side="right")
+        for column in range(3):
+            boutons.columnconfigure(column, weight=1, uniform="actions")
+        ttk.Button(boutons, text=vh_t('compare_copy'), command=copier_cycles).grid(row=1, column=0, sticky="ew", padx=3)
+        ttk.Button(boutons, text=vh_t('refresh_plain'), command=recharger_cycles).grid(row=1, column=1, sticky="ew", padx=3)
+        ttk.Button(boutons, text=vh_t('compare_close'), command=detail.destroy).grid(row=1, column=2, sticky="ew", padx=3)
+        harmoniser_controles(contenu_detail)
 
 
     def copier_journee():
@@ -1725,23 +1878,34 @@ def ouvrir_historique(parent, plante_id, action_synchroniser=None):
     def actualiser(event=None):
         nonlocal points, mesures_courantes, arrosages_courants, expositions_courantes, jours_par_libelle
 
+        selection_date = None
+        index_selection = repere_graphique.get("index")
+        if isinstance(index_selection, int) and 0 <= index_selection < len(points):
+            selection_date = points[index_selection][0]
+        selection_ids = [table.item(item, "values")[-1] for item in table.selection()]
+        position_table = table.yview()
         try:
             mesures = database.get_mesures(plante_id=plante_id, limite=-1)
         except Exception:
             bilan.set(vh_t('vue_historique_text_1729'))
+            fraicheur.set(vh_t("history_refresh_failed"))
             return
 
         try:
             arrosages = database.get_arrosages_plante(plante_id, limite=200)
         except Exception:
-            arrosages = []
+            fraicheur.set(vh_t("history_refresh_failed"))
+            return
 
         try:
             evenements = database.get_journal_plante(plante_id, limite=500)
         except Exception:
-            evenements = []
+            fraicheur.set(vh_t("history_refresh_failed"))
+            return
         expositions = construire_expositions_balcon(evenements)
 
+        dates_importees=[d for row in mesures if (d:=vers_local_naif(row[1])) is not None]
+        dernier_import=max(dates_importees) if dates_importees else None
         jours_disponibles = jours_disponibles_mesures(mesures)
         jours_par_libelle = {libelle_jour(jour): jour for jour in jours_disponibles}
         libelles_jours = tuple(jours_par_libelle.keys())
@@ -1818,8 +1982,23 @@ def ouvrir_historique(parent, plante_id, action_synchroniser=None):
 
         mesures_stats, mesures_suspectes_ids = filtrer_mesures_pour_serie(mesures, serie.get())
         points = extraire_points(mesures_stats, serie.get())
-        if repere_graphique.get("index") is not None and repere_graphique["index"] >= len(points):
+        if selection_date is not None:
+            repere_graphique["index"] = next((i for i, point in enumerate(points) if point[0] == selection_date), None)
+        elif repere_graphique.get("index") is not None and repere_graphique["index"] >= len(points):
             repere_graphique["index"] = None
+        for item in table.get_children():
+            if table.item(item, "values")[-1] in selection_ids:
+                table.selection_add(item)
+        if position_table:
+            table.yview_moveto(position_table[0])
+        dates = [date for row in mesures for date in [vers_local_naif(row[1])] if date is not None]
+        fraicheur.set(vh_t("history_freshness").format(
+            refreshed=maintenant_local().strftime("%d/%m/%Y %H:%M:%S"),
+            latest=max(dates).strftime("%d/%m/%Y %H:%M") if dates else vh_t("history_no_measure_period")))
+        if dernier_import:
+            anciennete=(maintenant_local().replace(tzinfo=None)-dernier_import).total_seconds()
+            if anciennete>7200:
+                fraicheur.set(fraicheur.get()+'\n'+vh_t('history_import_old').format(date=dernier_import.strftime('%d/%m/%Y %H:%M')))
         config = SERIES[serie.get()]
 
         analyse = analyser_points(points, serie.get())
@@ -1860,37 +2039,51 @@ def ouvrir_historique(parent, plante_id, action_synchroniser=None):
             bilan.set(vh_t('vue_historique_text_1859').format(v0=len(mesures), v1=suffixe_arrosage, v2=suffixe_exposition))
         dessiner()
 
-    for texte, repere in (
+    for index, (texte, repere) in enumerate((
             (vh_t("history_marker_max"), "max"),
             (vh_t("history_marker_min"), "min"),
             (vh_t("history_marker_average"), "moyenne"),
-            (vh_t("history_marker_latest"), "derniere")):
+            (vh_t("history_marker_latest"), "derniere"))):
         ttk.Button(
-            outils_table,
+            boutons_reperes,
             text=texte,
             command=lambda r=repere: selectionner_repere(r)
-        ).pack(side="left", padx=(0, 6))
+        ).grid(row=0, column=index, sticky="w", padx=(0, 6), pady=2)
+        boutons_reperes.columnconfigure(index, weight=0)
 
     try:
         reperes_analyse = database.get_reperes_analyse_actifs()
     except Exception:
         reperes_analyse = []
 
-    for repere in reperes_analyse:
-        if repere[3] != "apres_arrosage":
-            continue
-        ttk.Button(
-            outils_post_arrosage,
-            text=repere[2],
-            command=lambda r=repere: selectionner_apres_arrosage(r)
-        ).pack(side="left", padx=(0, 6))
+    boutons_arrosage = tk.Frame(outils_post_arrosage, bg=couleurs["BG"])
+    boutons_arrosage.pack(fill="x")
+    for index, repere in enumerate(r for r in reperes_analyse if r[3] == "apres_arrosage"):
+        boutons_arrosage.columnconfigure(index % 2, weight=1)
+        ttk.Button(boutons_arrosage, text=repere[2],
+                   command=lambda r=repere: selectionner_apres_arrosage(r)).grid(
+            row=index // 2, column=index % 2, sticky="ew", padx=(0, 6), pady=2)
 
-    ttk.Button(barre, text=vh_t("normal_order"), command=remettre_ordre_normal).pack(side="right", padx=(8, 0))
-    ttk.Button(barre, text=vh_t("copy_summary"), command=copier_resume_historique).pack(side="right", padx=(8, 0))
-    ttk.Button(barre, text=vh_t("compare_days"), command=ouvrir_comparaison_jours).pack(side="right", padx=(8, 0))
-    ttk.Button(barre, text=vh_t("cycles"), command=ouvrir_cycles_arrosage).pack(side="right", padx=(8, 0))
-    ttk.Button(barre, text=vh_t("copy_day"), command=copier_journee).pack(side="right", padx=(8, 0))
-    ttk.Button(barre, text=vh_t("refresh_plain"), command=actualiser).pack(side="right")
+    actions = (
+        ("refresh_plain", lambda: actualiser()),
+        ("copy_day", copier_journee),
+        ("copy_summary", copier_resume_historique),
+        ("compare_days", ouvrir_comparaison_jours),
+        ("cycles", ouvrir_cycles_arrosage),
+        ("normal_order", remettre_ordre_normal),
+    )
+    for index, (key, command) in enumerate(actions):
+        pied.columnconfigure(index % 3, weight=1, uniform="actions")
+        ttk.Button(pied, text=vh_t(key), command=command).grid(
+            row=index // 3, column=index % 3, sticky="ew", padx=3, pady=3)
+    def completer_observation_arrosage():
+        from watering_observations import open_editor
+        open_editor(fenetre, plante_id, couleurs, on_saved=actualiser)
+    ttk.Button(pied, text=vh_t('watering_observation_edit'), command=completer_observation_arrosage).grid(
+        row=2, column=0, columnspan=2, sticky='ew', padx=3, pady=3)
+    ttk.Button(pied, text=vh_t("lighting_close"), command=fenetre.destroy).grid(
+        row=2, column=2, sticky="e", padx=3, pady=3)
+
     def selectionner_periode(_event=None):
         if periode.get() == vh_t("period_day"):
             serie.set("Lumière")
@@ -1916,6 +2109,26 @@ def ouvrir_historique(parent, plante_id, action_synchroniser=None):
     canvas.bind("<Configure>", dessiner)
     canvas.bind("<Button-1>", lambda event: selectionner_point_graphique_depuis_x(event.x))
     canvas.bind("<B1-Motion>", lambda event: selectionner_point_graphique_depuis_x(event.x))
+    def donnees_importees(event=None):
+        if fenetre.winfo_exists():
+            actualiser()
+    fenetre.bind("<<GruterraDataChanged>>", donnees_importees, add="+")
     actualiser()
+    from meteo_nappes import harmoniser
+    def harmoniser_controles(widget):
+        if isinstance(widget, (ttk.Treeview, ttk.Combobox)):
+            harmoniser(widget, couleurs)
+        if isinstance(widget, ttk.Treeview):
+            from tkinter.font import Font
+            style = ttk.Style(widget)
+            heading_font = Font(font=style.lookup(widget.cget("style") + ".Heading", "font") or "TkHeadingFont")
+            for column in widget.cget("columns"):
+                title = widget.heading(column, "text")
+                if title:
+                    minimum = max(widget.column(column, "minwidth"), heading_font.measure(title) + 22)
+                    widget.column(column, minwidth=minimum, width=max(minimum, widget.column(column, "width")))
+        for child in widget.winfo_children():
+            harmoniser_controles(child)
+    harmoniser_controles(contenu)
 
     return fenetre

@@ -1,4 +1,5 @@
 """Fetch verified daily snapshots; never replace the live PC database."""
+from raspberry_paths import remote_command, remote_backup
 
 from i18n import traduire_courant as _tr
 import hashlib,json,os,re,sqlite3,subprocess,tempfile
@@ -58,7 +59,7 @@ def retrieve(config, folder):
              '-o','StrictHostKeyChecking=yes','-o','ConnectTimeout=8']
     host=config['user']+'@'+config['host']
     flags=getattr(subprocess,'CREATE_NO_WINDOW',0)
-    result=subprocess.run(['ssh',*options,host,'python3 ~/botaneo/collector/backup_manifest.py'],
+    result=subprocess.run(['ssh',*options,host,remote_command(config, 'backup_manifest.py')],
                           capture_output=True,text=True,timeout=30,creationflags=flags,check=True)
     metadata=json.loads(result.stdout)
     if not re.fullmatch(r'collector-\d{4}-\d{2}-\d{2}\.sqlite3',metadata['name']) or not 0 < metadata['size'] <= 100*1024*1024 or not re.fullmatch('[0-9a-f]{64}',metadata['sha256']):
@@ -74,7 +75,7 @@ def retrieve(config, folder):
     os.close(fd)
     temporary=Path(tmp)
     try:
-        subprocess.run(['scp',*options,host+':botaneo/backups/daily/'+metadata['name'],str(temporary)],
+        subprocess.run(['scp',*options,host+':'+remote_backup(config, 'daily', metadata['name']),str(temporary)],
                        capture_output=True,timeout=120,creationflags=flags,check=True)
         verify(temporary,metadata)
         with temporary.open('r+b') as stream: os.fsync(stream.fileno())

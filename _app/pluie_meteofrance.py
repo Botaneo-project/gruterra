@@ -1,4 +1,5 @@
 """Pluie Météo-France indépendante des plantes et de l'authentification Netatmo."""
+from botaneo_config import DATA_DIR
 import csv,io,json,math,sqlite3,hashlib,threading
 from contextlib import closing
 from datetime import datetime,timezone
@@ -9,7 +10,7 @@ from botaneo_config import CONFIG_DIR,lire_json,parametres_netatmo
 from i18n import traduire_courant as t
 
 BASE='https://public-api.meteofrance.fr/public/DPObs/v2'
-DB=Path(__file__).resolve().parent/'data/meteofrance_pluie.sqlite3'
+DB=DATA_DIR/'meteofrance_pluie.sqlite3'
 
 def utc(value):
     if not isinstance(value,str):raise ValueError('rain_invalid_date')
@@ -93,7 +94,7 @@ def collect(point=None):
 def netatmo_snapshot(path=None, station_id=None):
     """Consultation du cache existant uniquement : aucune requête ni archive."""
     from meteo_synthese import choisir_mesure
-    path=Path(path) if path is not None else Path(__file__).resolve().parent/'data/netatmo_cache.json'
+    path=Path(path) if path is not None else DATA_DIR/'netatmo_cache.json'
     try:cache=lire_json(path)
     except RuntimeError:return []
     stations=cache.get('stations_publiques',[])

@@ -271,7 +271,7 @@ def lister_demandes():
     return [{**dict(row),**etat_local(row['request_id'])} for row in rows]
 
 
-def ouvrir_suivi(parent):
+def ouvrir_suivi(parent, palette=None):
     """Consultation seulement : ni envoi ni import de reçus arbitraires."""
     import tkinter as tk
     from tkinter import ttk,messagebox
@@ -279,24 +279,23 @@ def ouvrir_suivi(parent):
     window.title(t('contribution_tracking_title'))
     window.geometry('820x460')
     window.minsize(460,300)
-    footer=ttk.Frame(window,padding=10)
-    footer.pack(side='bottom',fill='x')
-    ttk.Label(footer,text=t('contribution_tracking_notice'),wraplength=740).pack(fill='x')
-    ttk.Button(footer,text=t('close'),command=window.destroy).pack(side='right')
-    area=ttk.Frame(window,padding=10)
-    area.pack(fill='both',expand=True)
-    tree=ttk.Treeview(area,columns=('operation','state','request'),show='headings')
+    from ui_palette import THEME_CLAIR, THEME_SOMBRE
+    from ui_scroll_form import create, create_table
+    from meteo_nappes import harmoniser
+    palette = palette or (THEME_SOMBRE if parent.cget('background') == THEME_SOMBRE['BG'] else THEME_CLAIR)
+    body, footer = create(window, palette)
+    tk.Button(footer,text=t('close'),command=window.destroy).pack(side='right')
+    tk.Label(body,text=t('contribution_tracking_notice'),wraplength=400,justify='left').pack(fill='x',padx=12,pady=8)
+    tree=create_table(body,palette,columns=('operation','state','request'),height=7,padx=12,pady=8)
     for column,label,width in [('operation','contribution_tracking_operation',120),('state','contribution_tracking_state',260),('request','contribution_tracking_request',300)]:
-        tree.heading(column,text=t(label));tree.column(column,width=width)
-    scroll=ttk.Scrollbar(area,command=tree.yview)
-    tree.configure(yscrollcommand=scroll.set)
-    scroll.pack(side='right',fill='y');tree.pack(fill='both',expand=True)
+        tree.heading(column,text=t(label));tree.column(column,width=width,stretch=False)
     try:
         rows=lister_demandes()
         for row in rows:
             tree.insert('', 'end',values=(t('contribution_tracking_'+row['operation']),row['label'],row['request_id']))
         if not rows:
-            ttk.Label(footer,text=t('contribution_tracking_empty')).pack(fill='x')
+            tk.Label(body,text=t('contribution_tracking_empty'),wraplength=400).pack(fill='x',padx=12)
     except (ValueError,sqlite3.Error,OSError):
         messagebox.showerror(t('contribution_title'),t('contribution_tracking_unreadable'),parent=window)
+    harmoniser(window, palette)
     return window

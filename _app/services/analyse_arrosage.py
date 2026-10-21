@@ -32,7 +32,7 @@ def formater_date_courte(date):
 
 def date_debut_arrosage(arrosage):
     if isinstance(arrosage, dict):
-        return arrosage.get("date_debut")
+        return vers_local_naif(arrosage.get("date_debut"))
     return vers_local_naif(arrosage[2])
 
 
@@ -154,12 +154,12 @@ def analyser_qualite_cycle(humidites, pic_date=None, derniere_date=None):
             ecarts.append({"debut": avant[0], "fin": apres[0], "heures": heures})
     plus_grand_trou = max((ecart["heures"] for ecart in ecarts), default=0)
 
-    if len(humidites) < 4:
-        niveau = "prudence"
-        libelle = _tr('analyse_arrosage_text_157')
-    elif plus_grand_trou > 24:
+    if plus_grand_trou > 24:
         niveau = "interruption longue"
         libelle = _tr("quality_gap_long").format(hours=formater_nombre(plus_grand_trou))
+    elif len(humidites) < 4:
+        niveau = "prudence"
+        libelle = _tr('analyse_arrosage_text_157')
     elif plus_grand_trou > 8:
         niveau = "prudence"
         libelle = _tr('analyse_arrosage_text_165').format(v0=formater_nombre(plus_grand_trou))
@@ -237,9 +237,10 @@ def resumer_indicateurs_cycle(cycle):
         "reponse_arrosage": cycle.get("lecture_courte") or _tr('analyse_arrosage_text_235'),
         "sechage_apres_pic": qualifier_vitesse_sechage(cycle.get("sechage")),
         "tendance_24h": (
-            _tr('analyse_arrosage_text_238').format(v0=formater_nombre(cycle.get('vitesse_24h')))
-            if cycle.get("vitesse_24h") is not None
-            else _tr('analyse_arrosage_text_240')
+            _tr('watering_observed_rate').format(value=formater_nombre(cycle['vitesse_24h']),hours=formater_nombre(cycle['duree_tendance_h']))
+            if cycle.get('vitesse_24h') is not None and cycle.get('duree_tendance_h') is not None
+            else (_tr('analyse_arrosage_text_238').format(v0=formater_nombre(cycle.get('vitesse_24h')))
+                  if cycle.get('vitesse_24h') is not None else _tr('analyse_arrosage_text_240'))
         ),
     }
 
@@ -287,13 +288,13 @@ def mesurer_cycle_arrosage(arrosage, prochain_arrosage, mesures):
         except (TypeError, ValueError):
             humidite = None
         if date_mesure < date_arrosage:
-            if humidite is not None and math.isfinite(humidite):
+            if humidite is not None and math.isfinite(humidite) and 0 <= humidite <= 100:
                 humidites_avant.append((date_mesure, humidite))
             continue
         if date_fin and date_mesure >= date_fin:
             continue
         mesures_cycle.append(mesure)
-    mesures_cycle.sort(key=lambda mesure: mesure[1] or "")
+    mesures_cycle.sort(key=lambda mesure: vers_local_naif(mesure[1]))
     humidites_avant.sort(key=lambda item: item[0])
     avant_date, avant_humidite = humidites_avant[-1] if humidites_avant else (None, None)
     delai_avant_h = (date_arrosage - avant_date).total_seconds() / 3600 if avant_date else None
@@ -309,8 +310,14 @@ def mesurer_cycle_arrosage(arrosage, prochain_arrosage, mesures):
             "texte": _tr('analyse_arrosage_text_307').format(v0=formater_date_courte(date_arrosage)),
         }
 
-    humidites = [(vers_local_naif(m[1]), float(m[3])) for m in mesures_cycle if m[3] is not None]
-    humidites = [(date, valeur) for date, valeur in humidites if date is not None and math.isfinite(valeur)]
+    humidites = []
+    for mesure in mesures_cycle:
+        try:
+            valeur = float(mesure[3]) if mesure[3] is not None else None
+            if valeur is not None and math.isfinite(valeur) and 0 <= valeur <= 100:
+                humidites.append((vers_local_naif(mesure[1]), valeur))
+        except (TypeError, ValueError):
+            continue
     if not humidites:
         return {
             "date": date_arrosage,
@@ -346,8 +353,12 @@ def mesurer_cycle_arrosage(arrosage, prochain_arrosage, mesures):
         texte += _tr('analyse_arrosage_text_346').format(v0=formater_nombre(baisse_apres_pic), v1=formater_nombre(sechage), v2=lecture_sechage)
     else:
         texte += f" · {lecture_sechage}"
+    duree_tendance_h = None
     if vitesse_24h is not None:
-        texte += _tr('analyse_arrosage_text_350').format(v0=formater_nombre(vitesse_24h))
+        references = [h for h in humidites[:-1] if (derniere_date-h[0]).total_seconds() >= 86400]
+        if references:
+            duree_tendance_h = (derniere_date-references[-1][0]).total_seconds()/3600
+        texte += _tr('watering_observed_rate').format(value=formater_nombre(vitesse_24h), hours=formater_nombre(duree_tendance_h))
     if qualite_detail["avertissements"]:
         texte += " · " + "; ".join(qualite_detail["avertissements"])
     if date_fin:
@@ -362,6 +373,7 @@ def mesurer_cycle_arrosage(arrosage, prochain_arrosage, mesures):
         "texte": texte,
         "sechage": sechage,
         "vitesse_24h": vitesse_24h,
+        "duree_tendance_h": duree_tendance_h,
         "baisse_apres_pic": baisse_apres_pic,
         "qualite_niveau": qualite_detail["niveau"],
         "plus_grand_trou_h": qualite_detail["plus_grand_trou_h"],
@@ -420,7 +432,7 @@ def analyser_cycles_arrosage(cycles):
         _tr('analyse_arrosage_text_420').format(v0=formater_nombre(hausse)),
         _tr('analyse_arrosage_text_421').format(v0=formater_nombre(retour)),
         _tr('analyse_arrosage_text_422') + indicateurs["sechage_apres_pic"],
-        _tr('analyse_arrosage_text_423') + indicateurs["tendance_24h"],
+        (_tr('watering_recent_trend_label') if recent.get('duree_tendance_h') is not None else _tr('analyse_arrosage_text_423')) + indicateurs["tendance_24h"],
         _tr('analyse_arrosage_text_424').format(v0=qualite),
     ]
     if baisse is not None:
@@ -430,7 +442,10 @@ def analyser_cycles_arrosage(cycles):
     if recent.get("sechage") is not None:
         morceaux.append(_tr('analyse_arrosage_text_431').format(v0=formater_nombre(recent['sechage'])))
     if recent.get("vitesse_24h") is not None:
-        morceaux.append(_tr('analyse_arrosage_text_433').format(v0=formater_nombre(recent['vitesse_24h'])))
+        if recent.get('duree_tendance_h') is not None:
+            morceaux.append(_tr('watering_observed_rate').format(value=formater_nombre(recent['vitesse_24h']),hours=formater_nombre(recent['duree_tendance_h'])))
+        else:
+            morceaux.append(_tr('analyse_arrosage_text_433').format(v0=formater_nombre(recent['vitesse_24h'])))
     if recent.get("avertissements_qualite"):
         morceaux.append(_tr('analyse_arrosage_text_435') + ", ".join(recent["avertissements_qualite"]))
 
@@ -442,14 +457,17 @@ def analyser_cycles_arrosage(cycles):
         hausse_precedente = precedent["pic_humidite"] - depart_precedent
         morceaux.append(_tr('analyse_arrosage_text_443').format(v0=formater_nombre(hausse_precedente)))
 
-    return "; ".join(morceaux) + _tr('analyse_arrosage_text_445')
+    from services.comparaison_sechage import resume as resume_comparaison_sechage
+    return "; ".join(morceaux) + _tr('analyse_arrosage_text_445') + "\n\n" + resume_comparaison_sechage(cycles)
 
 
 def resumer_cycles_arrosage(mesures, arrosages, limite=6):
     cycles = calculer_cycles_arrosage(mesures, arrosages, limite=limite)
     if not cycles:
         return _tr('analyse_arrosage_text_451')
-    lignes = [_tr('analyse_arrosage_text_452'), "", analyser_cycles_arrosage(cycles), ""]
+    lignes = [_tr('analyse_arrosage_text_452'), "",
+              _tr('watering_cycles_context').format(count=len(cycles), closed=sum(c.get('fin') is not None for c in cycles)),
+              _tr('watering_cycles_limits'), "", analyser_cycles_arrosage(cycles), ""]
     for cycle in reversed(cycles):
         lignes.append("- " + cycle["texte"])
     lignes.extend([

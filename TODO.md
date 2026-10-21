@@ -1,12 +1,54 @@
 # TODO Gruterra
 
+## Correctifs de l’audit Codex Security — 20/10/2026
+
+- Sauvegarde : base active transmise explicitement, instantanés SQLite vérifiés,
+  refus d’une sauvegarde trompeuse si la base manque, dossiers personnalisés pris en compte.
+- Démo : réglages, caches météo et verrou séparés des dossiers réels, sans
+  régénération des essais déjà présents.
+- Raspberry : racine commune aux utilitaires, services et transferts du PC,
+  avec conservation du chemin historique par défaut.
+- Intégration recalée sur les corrections déjà installées : synchronisation
+  prioritaire, contrôle d’arrosage à +10 min, observations après coup et copie de lignes.
+- Installé sur PC et Pi le 20/10/2026 : 524 tests réussis en mode silencieux,
+  sauvegarde réelle et démo vérifiées, services Pi actifs. Aucune release ou publication.
+- Prochain jalon proposé : préparer une 0.1.7-dev candidate ; le test sur PC sans
+  Python reste en attente avant une validation générale de la distribution.
+
+
+## Copie de lignes — 20/10/2026
+
+- Menu au clic droit et Ctrl+C dans l’historique principal et le suivi des capteurs
+  connectés : une ou plusieurs lignes, ordre affiché, en-têtes et unités, sans
+  identifiants techniques cachés. Ctrl+clic / Maj+clic pour sélectionner plusieurs lignes.
+- Composant commun réel/démo, français/anglais et clair/sombre, testé sur données fictives.
+- À charger au prochain démarrage de Gruterra ; ne pas interrompre une synchronisation
+  ou une saisie en cours uniquement pour cette amélioration.
+
+## Synchronisation et observations après arrosage — 20/10/2026
+
+- Préparé et testé : mesure actuelle avant historique sur le Pi ; interruption
+  propre de l’historique lorsqu’une demande prioritaire arrive ; récupération PC
+  de la mesure fraîche, y compris quand la collecte était déjà en cours.
+- Préparé et testé : demandes distinctes pour lecture immédiate et contrôle à
+  +10 minutes, avec échéance persistante, reprise après réouverture et absence de
+  succès annoncé pour un simple import historique.
+- Préparé et testé : bouton « Compléter l’observation » dans l’historique pour
+  ajouter/modifier l’écoulement et le temps avant les premières gouttes après
+  l’apport, sans modifier l’heure ni le volume de l’arrosage.
+- Installé localement sur PC/Pi le 20/10 : 507 tests réussis et actualisation
+  réelle confirmée en 23,4 secondes. Le contrôle d’un prochain arrosage à +10 min
+  reste à vérifier en situation réelle. Le PC doit fonctionner à l’échéance pour
+  déclencher le contrôle à +10 minutes ; sinon la demande est reprise plus tard,
+  sans antidater la mesure.
+
 Ce fichier sert à garder une trace claire des idées et des prochaines étapes. Les éléments déjà en place sont conservés ici uniquement pour savoir où on en est, mais ils ne doivent plus être relancés sauf bug ou amélioration ciblée.
 
 ## Règle permanente — démo à maintenir avec chaque fonctionnalité
 
 Toute nouvelle fonctionnalité ou modification visible inclut la vérification et, si nécessaire, l’actualisation de la démo dans le même lot : exemples fictifs adaptés, isolement des données/configurations, FR/EN et thèmes si concernés, aucune collecte réelle ni contribution. Voir `CONTRIBUTING.md`. Ne pas considérer le lot terminé si cette vérification manque ; documenter toute limite.
 
-## Priorités consolidées — 10/10/2026
+## Priorités consolidées — 10/10/2026 (historique ; ordre actif ci-dessous)
 
 La release publiée reste **0.1.6-dev**. Les corrections présentes sur main depuis cette publication seront livrées ensemble dans une prochaine release ; aucun nouvel envoi Reddit ni annonce Discord effectué par cette relecture. Un seul TODO actif à la racine ; ROADMAP en est la vue publique courte. Les sections anciennes ci-dessous gardent la trace du travail et ne constituent pas une nouvelle liste prioritaire.
 
@@ -1086,3 +1128,222 @@ Les bases actives et sauvegardes sources n’ont pas été remplacées. Cet essa
 ### Sécurité de publication — 17/10/2026
 - [x] Contrôle des valeurs : modèles vides acceptés, champs privés remplis bloqués, données locales toujours exclues.
 - [x] Dix tests de sécurité réussis ; rares valeurs fictives relues limitées à l’empreinte exacte du fichier, aucune exemption permanente de contenu.
+
+### Installation Windows sans Python — 17/10/2026
+- [x] Détecteur corrigé : chemin installé prioritaire, sélection de Python 3 via py, version minimale contrôlée avant sélection.
+- [x] Cinq tests Windows passent, dont installation simulée suivie de redétection et arrêt si cette étape échoue.
+- [ ] Installation réelle de Python 3.12.10 sur un PC sans Python ; protocole dans docs/TEST_INSTALLATION_PC_VIERGE.md. Lot local de deux fichiers préparé, pas de nouvelle release.
+
+### Fenêtres secondaires — 17/10/2026
+- [x] AROME et accès Netatmo Pi : boutons Enregistrer masqués avec texte agrandi reproduits puis corrigés ; corps défilant et actions fixes Enregistrer/Fermer.
+- [x] Boutons de mode radio aux couleurs clair/sombre ; contrôles de géométrie FR/EN dans les deux palettes avec facteur Tk 2.0, secrets masqués et bas du formulaire accessible.
+- [ ] Inclure le module ui_scroll_form.py dans la prochaine sélection de version ; l’EXE de préparation a depuis été construit et testé, voir la section EXE ci-dessous.
+
+### EXE de test — 17/10/2026
+- [x] Premier EXE Windows de préparation construit localement, non signé et sans publication ; choix du dossier, raccourcis et préparation des dépendances.
+- [x] Variante isolée réellement installée, démo ouverte, réinstallée puis désinstallée ; code/raccourcis retirés et données fictives conservées.
+- [ ] Installation de Python sur poste vierge, revue visuelle du wizard/menu Démarrer, version définitive, fermeture de l’application en cours et signature Windows avant diffusion. Détails : docs/INSTALLATEUR_EXE_TEST.md.
+
+- [x] 17/10/2026 — Utilisateur : installation réelle de l’EXE et ouverture de la démo confirmées sur PC avec Python déjà installé.
+- [ ] Installation automatique de Python sur poste qui n’en possède pas : toujours à confirmer.
+
+
+### Chantier issu de l’audit — 18/10/2026
+
+Ordre de référence validé par l’utilisateur. Les cases conservent les validations et les limites déjà constatées.
+
+#### 1. Sécuriser les mises à jour
+
+- [x] Remplacement par fichier temporaire sur le même volume ; ancien fichier non tronqué en cas d'échec de copie.
+- [x] Retour arrière après échec signalé : restaurer les fichiers déjà remplacés et retirer les nouveaux fichiers ajoutés. Signaler explicitement une restauration incomplète et conserver le ZIP.
+- [x] Installateur : prendre le même verrou que l'application avant remplacement ; refuser si le dossier est utilisé ; libérer avant l'ouverture facultative de la démo.
+- [x] Compiler et tester ce verrou sur une installation fictive : refus avec fichiers inchangés, réussite après libération, verrou disponible ensuite.
+- [x] Arrêt brutal du processus : journal d'intention durable, moteur autonome conservé hors fichiers remplacés, récupération avant lancement réel/démo et verrou interprocessus.
+- [x] Essais avec véritables arrêts forcés : remplacement, préparation temporaire, restauration interrompue, validation avant nettoyage ; sauvegarde corrompue et chemins privés interdits bloquent le démarrage.
+- [x] Installateur : refus pendant une mise à jour active ou en présence d'une récupération inachevée ; tests avec le vrai script Inno sur fichiers fictifs.
+- [ ] Coupure électrique matérielle et panne de disque : pas testées ; le mécanisme ne garantit pas une récupération si la sauvegarde elle-même est perdue ou corrompue. Voir docs/RECUPERATION_MISE_A_JOUR.md.
+
+#### 2. Corriger l’historique
+
+- [x] Historique : notifier les fenêtres ouvertes après actualisation des données ; conserver jour, série, ligne et repère sélectionnés.
+- [x] Historique à 860 × 600 : filtres répartis, actions fixes, contenu défilant, tableau avec défilement horizontal ; contrôles FR/EN et clair/sombre à facteur Tk 2.0.
+
+#### 3. Fiabiliser les dates
+
+- [x] Éclairage : fuseau de Paris commun aux bilans, graphiques, phase et sélection des 30 derniers jours ; contrôles hiver, UTC et limites de journée.
+
+#### 4. Améliorer la lecture
+
+- [x] Historique : indiquer date d'actualisation et dernier relevé de la sélection ; conserver et signaler l'affichage précédent si une lecture échoue.
+- [x] Courbe principale sans lissage ; segments et surface interrompus quand deux relevés sont séparés de plus de deux heures, seuil expliqué. Aucun changement des données ni des moyennes.
+- [x] Observations météo importées : actualisation après import, sélection conservée, source locale et date de consultation explicites ; dernière récupération distincte de la date du relevé.
+- [x] Lecture météo impossible ou ligne mal formée : conserver tout l'affichage précédent et le signaler ; aucune observation importée ne signifie pas zéro pluie. Zéro et valeur absente restent distincts.
+- [x] Cache Netatmo : libellé de récupération explicite, date inconnue si absente, réponse vide distincte d'une erreur ; réponse mal formée refusée sans rajeunir ni effacer les données précédentes.
+- [x] Centre d'alertes : dates UTC correctement prises en compte, rappels évalués en jours calendaires locaux, données non vérifiées explicitement signalées.
+- [x] Urgences affichées avant les informations ; bouton pour afficher toutes les alertes et conserver ce choix après actualisation ; niveau écrit en toutes lettres et titres/détails adaptés à la largeur.
+- [x] Prévisions de deux heures : cache expiré ou non daté exclu des alertes à venir ; refus du repli sur les premières heures passées ; pluie absente/partielle distincte de zéro. Seuil de rafale inchangé.
+- [x] Nouvel arrosage : intégration testée sur base temporaire, l'ancien rappel en retard disparaît bien. Liste de capteurs illisible distincte d'une absence de capteurs.
+
+#### 5. Harmoniser les fenêtres
+
+- [x] Fenêtres locales de contribution : commandes accessibles, fermeture fixe, explications et tableau défilables, palettes FR/EN clair/sombre vérifiées sur données fictives ; démo sans actions de clé. Suite complète : 376 tests réussis.
+
+- [x] Tableaux et sélecteurs de l'historique harmonisés avec le thème ; repères rapides répartis sur plusieurs lignes.
+- [x] Comparaisons de journées et cycles : corps défilant, pied fixe Copier/Actualiser/Fermer, tableaux défilables sur deux axes, palettes harmonisées et légendes adaptées à la largeur.
+- [x] Comparaisons actualisées après import : conserver les journées/cycles, la série et la ligne sélectionnées ; identité du cycle indépendante du volume et des fractions ajoutées.
+- [x] Lecture impossible : conserver l'ancienne vue avec avertissement repris dans la copie. Sélection retirée : effacer l'ancienne comparaison au lieu d'afficher un résultat périmé. Aucun accès à la base réelle pour les essais.
+- [x] Rapport et lignes sélectionnées conservés lors du redimensionnement du graphique ; cas d'ouverture sans données et d'erreur de lecture vérifiés.
+- [ ] Poursuivre la revue visuelle générale sur écran réel. Les contrôles programmatiques comparaisons/cycles passent en FR/EN, clair/sombre et facteur Tk 2.0 ; ils ne constituent pas une validation visuelle de toutes les fenêtres. Paramètres possède déjà un corps défilant et un pied fixe.
+- [ ] Revue visuelle générale des autres dialogues sur écran réel ; vérification terrain des alertes après une prochaine synchronisation réelle. Aucun nouveau seuil horticole ou météorologique fixé dans ce lot.
+
+#### 6. Préparer la publication
+
+- [x] 371 tests réussis après le lot récupération ; contrôle des sources publiques, y compris nouveaux fichiers, réussi ; installateur local de préparation avec les nouveaux modules graphiques, alertes et update_recovery.py, ainsi que le guide de récupération (234 fichiers).
+- [ ] Installation automatique de Python sur poste vierge et revue visuelle de l'assistant : en attente du matériel disponible.
+- [ ] Avant publication décidée : sélectionner tous les nouveaux modules, aligner version et nom définitifs, puis vérifier le parcours depuis la release officielle.
+
+Suivi détaillé : docs/AUDIT_GLOBAL_2026-10-18.md. Aucun push ni nouvelle release ; version interne conservée à 0.1.6-dev.
+
+#### Validation intégrée — 18/10/2026
+- [x] Candidat de 234 fichiers : application réelle sur copie isolée, sauvegarde précédente vérifiée, données privées fictives et démo conservées, relance automatique depuis BAT réussie.
+- [ ] À conserver avant diffusion : test sur PC sans Python, validation visuelle native et contrôle du téléchargement officiel après préparation de la release. Le téléchargement de ce test était simulé.
+
+- [x] 18/10/2026 : vraie démo relancée après arrêt brutal d'une mise à jour sur copie isolée ; récupération et conservation de la base/configuration vérifiées hors réseau.
+
+- [x] Rattrapage Home Assistant : rapport défilable/copiable, actions fixes, contrôles FR/EN clair/sombre à texte agrandi.
+- [x] EXE de préparation reconstruit le 18/10 avec les corrections de rattrapage et réglages Home Assistant ; non signé, non publié.
+
+## Objectif capteurs Zigbee — 18/10/2026
+
+- [ ] Analyser les échanges Zigbee réels des Arteco ZS-304Z : cadence par mesure, réveils, messages Tuya séparés, valeurs nulles/zéro, effet confirmé du réglage soil_sampling et commandes réellement acceptées. Commencer par les journaux existants, sans modification du firmware, ouverture ni extraction matérielle.
+- [ ] Comparer avec le capteur lumineux identifié ZG-106Z et tester sa demande de lecture documentée ; distinguer nouvelle acquisition, réception et restitution d’une valeur mémorisée. Conserver les valeurs originales et les horodatages disponibles sans inventer une date de mesure.
+- [ ] Confirmer physiquement les deux Arteco avant association : suffixe 3498 provisoirement « Crassula ? », suffixe 0946 hors pot avec piles retirées selon utilisateur. Ne pas conclure sur la seule valeur affichée.
+- [ ] Définir l’intégration Gruterra sans doublons : identité propre à chaque capteur, provenance conservée et prévention de réimport ; prévoir une purge ciblée des mesures de test par capteur/période, aperçu, confirmation et sauvegarde, sans toucher au Mi Flora ni aux événements de la plante.
+- [ ] Documenter les résultats confirmés et les limites ; étudier l’analyse du firmware seulement si une image exacte et licitement accessible est obtenue. Toute ouverture, extraction, écriture ou flash matériel sera un chantier distinct à convenir.
+
+- [x] 18/10 — Premier lot de profils Zigbee : contrôle modèle/quantité/transport, identité matérielle dans les observations, marqueur de test dans le formulaire et la démo ; tests hors réseau. Voir docs/INTEGRATION_CAPTEURS_ZIGBEE.md. Raccordement des entités réelles, aperçu/import puis purge ciblée restent à faire.
+
+- [x] 18/10 — Quatre entités réelles du capteur 0946 raccordées : aperçu HTTP 200 validé, association privée en mode test sauvegardée avec copie de sécurité. Lux ancien signalé ; aucun import automatique ni écriture dans l’historique des plantes. Purge ciblée et import historique test restent à préparer.
+
+- [x] 18/10 — Premier archivage réel séparé du capteur test : 32 états HA, rejeu zéro ajout/32 doublons. Moteur de retrait ciblé avec sauvegarde, recontrôle et exclusions de réimport testé ; aucune suppression réelle. Reste : interface d’aperçu/confirmation du retrait et tests visuels.
+
+- [x] 18/10 — Écran Gérer les données de test intégré aux réglages Home Assistant : capteur/période, aperçu, confirmation, sauvegarde et résultat, FR/EN, thèmes et petite fenêtre ; mode démo sans accès privé. Aperçu réel 32 états, aucune suppression réelle.
+
+- [x] 18/10 — Non-régression Zigbee/archives : 403 tests complets réussis ; échec de sauvegarde, rollback de retrait, faits mixtes et rejeu avec alias/révision testés. Sources locales uniquement, installeur antérieur non reconstruit.
+
+- [ ] 18/10 — Demande utilisateur : à l’intégration d’un capteur, prévoir l’exclusion des premières températures potentiellement faussées par la prise en main (une ou deux mesures proposées, durée/nombre réglable). Garder les états d’origine traçables dans l’archive de test ; définir le début de stabilisation par capteur, pas par synchronisation. Ne pas masquer les premières mesures d’humidité après mise dans le pot.
+
+- [x] 18/10 — Parcours Zigbee Crassula-test terminé dans les sources locales : association plante, tableau et graphique séparés, récupération manuelle et à la synchronisation existante avec option activée pour 0946, actualisation après commit/retrait, démo isolée, FR/EN/thèmes. Vérification réelle 37 états ; 415 tests complets réussis. Pas de publication ni nouveau build.
+
+## Arteco — résultats de recherche du 18/10
+- [x] Analyse du protocole, comparaison converters 26.115.1/master, PR 13445 (lux x10), 13447 (DP110 asymétrique), 13524 (corrections signées), recherche firmware et index OTA. Aucun binaire exact trouvé, aucun flash/étalonnage modifié. Voir docs/ANALYSE_ARTECO_ZS304Z_2026-10-18.md.
+- [ ] Prioritaire : vérifier le décodeur effectivement chargé et l’absence de convertisseur externe avant de choisir une mise à jour compatible de la passerelle.
+- [ ] Prioritaire : traiter les états HA de départ reconstruits exactement à la borne de reprise ; ne pas les compter comme événements nouveaux ni rajeunir les données. Cas réel repéré au curseur 22h39.
+- [ ] Capturer de façon bornée la trame déclenchant true/0,1 et reproduire le datapoint exact hors ligne ; aucun correctif générique booléen à appliquer à l’aveugle.
+
+- [x] 18/10 — Capteur lumineux ZG-106Z 52dd raccordé à Crassula en test ; aperçu 5 lx, 499 états archivés, rejeu sans ajout. Source indépendante, Mi Flora inchangé.
+- [ ] Simplifier l’onboarding Home Assistant : bouton de connexion, découverte guidée des capteurs et quantités, identification matérielle, choix de la plante, protection Mi Flora et aperçu avant activation. Les réglages actuels restent manuels ; pas de connexion MQTT directe nécessaire pour ce parcours.
+
+- [x] 19/10 — Bilan après nuit : Arteco 0946 produit désormais des lux (94 à09h04) ; température21°C/sol8%/air55% à09h14. Écart avec capteur indépendant (5lx à6,69s près) à analyser sous éclairage stable, aucune calibration appliquée. Voir docs/BILAN_CAPTEURS_2026-10-19.md.
+
+- [x] 19/10 — Datation séparée par quantité : heure d’état HA et récupération Gruterra visibles, états initiaux/mises à jour d’attributs signalés et exclus des points de courbe. Requête skip_initial_state + tous changements, archives préservées. Vérification réelle 62 états/heure sans faux état de départ ; quatre anciens états suspects identifiés sans suppression.
+- [ ] Réception exhaustive des messages identiques : nécessite une capture dédiée ou une intégration source adaptée ; l’historique HA actuel ne prouve pas chaque acquisition radio. Ne pas réétiqueter last_reported ou un champ MQTT mémorisé comme nouvelle mesure physique.
+
+- [x] 19/10 — Capteurs HA visibles sur l’accueil et dans le texte/copieur d’État Gruterra, statut Test, plante/modèle/identité, valeurs et ancienneté par quantité ; pas de fusion Mi Flora. Rafraîchissement local minute et événement après import/retrait, démo FR/EN et thèmes. Vérification réelle des deux capteurs réussie ; suite complète 429 tests.
+
+### 19/10/2026 — Accueil : cartes et pluie
+- Cartes sans mesures : suppression des panneaux vides répétés, détails capteur repliables, actions sur plusieurs lignes.
+- Pluie : dernier cumul positif connu mis en avant avec source et période ; priorité chronologique corrigée (sans addition des cumuls glissants).
+- Validation : 429 tests réussis ; contrôle du retour à la ligne à 420 et 900 pixels. Pas de publication.
+
+### 19/10/2026 — Graphique des capteurs connectés
+- Axes gradués, unités par grandeur, heures locales et dates, légende par appareil et valeur exacte au survol.
+- Humidité du sol et humidité de l’air distinguées ; échelle 0–100 %, luminosité à partir de zéro, température avec marge.
+- Points sans interpolation ; états incertains, conflits et simples mises à jour d’attribut exclus.
+- Vérification : 99 tests Home Assistant OK, échelles et rendu Tk à 500/950 pixels vérifiés sur données fictives.
+
+### 19/10/2026 — Décodeur ZS-304Z
+- Correctif ciblé 26.122.0 activé après accord sur Zigbee2MQTT 2.14.2 / convertisseurs 26.115.1. Sauvegarde et empreinte vérifiées ; premier relevé réel …3498 OK.
+- À suivre : prochains cycles du capteur Crassula …0946 ; doubles DP3 non corrigés par ce rétroportage. Comparaisons lux avant/après 13:17:27 à distinguer. Retirer le décodeur externe lorsque la version officielle installée intégrera les corrections et aura été vérifiée.
+
+- 19/10 : historique compact rétabli, contraste des sélecteurs corrigé sous Windows, lumière en premier et à l’ouverture ; tests de disposition et de palette FR/EN effectués.
+
+### 19/10/2026 — Traçabilité et fraîcheur des relevés
+- Suivi HA : notice FR/EN et repère temporel du changement de conversion des lux, limités aux appareils concernés. Pas de remise à l’échelle des archives ; mode démo sans accès au marqueur privé.
+- Historique principal : avertissement si le dernier relevé importé a plus de 2 h, basé sur l’ensemble des mesures disponibles et pas seulement la journée sélectionnée. Un affichage rafraîchi n’est pas une preuve de collecte.
+- Essai côte à côte reporté par l’utilisateur. Arrosage envisagé le 20/10, pas enregistré comme réalisé.
+
+### 19/10/2026 — Audit des cycles d’arrosage terminé
+- Regroupement isolé par plante, dates ISO normalisées ; fractions conservées et total déclaré incomplet si une quantité manque ou est invalide.
+- Humidités non numériques/non finies/hors 0–100 exclues des calculs sans supprimer les relevés ; longue interruption prioritaire même avec peu de points.
+- Durée réellement observée affichée avec le taux ramené à 24 h ; contexte séances/cycles clos et limites de personnalisation ajoutés FR/EN.
+- Vérification en lecture seule : trois séances existantes, dont celle à deux apports correctement regroupée. Aucun quatrième arrosage créé.
+
+- 19/10 : comparaison du séchage Mi Flora sur fenêtre commune intégrée aux cycles ; périodes insuffisantes exclues avec raison, messages FR/EN observation/référence/incertitude. Quatrième cycle prêt après saisie d’un arrosage confirmé, aucun arrosage créé en avance.
+
+### 19/10/2026 — Parcours d’arrosage de bout en bout
+- Test des vrais callbacks sur SQLite fictif : confirmation annulée sans écriture, apport de 40 ml puis complément de 55 ml, quatrième séance 95 ml, historique actualisé et ancienne alerte de retard retirée.
+- Rappel futur conservé sur un complément dans la fenêtre de séance de 90 minutes ; conservation annoncée dans la confirmation.
+- Un échec de préparation de collecte ne devient plus un faux échec d’enregistrement ; pas d’incitation à ressaisir l’arrosage.
+- NaN/inf et volumes négatifs refusés ; formulaire défilant et actions fixes, contrôle 460×500 FR/EN clair/sombre.
+- Aucun arrosage réel enregistré, aucune collecte réseau déclenchée par les tests.
+
+
+### 20/10/2026 — Alerte humidité basse
+Centre d’alerte : contrôle indépendant du dernier relevé de chaque capteur local actif, sous 20 %, daté de moins de 48 h. Source/date et vérification du substrat explicites en français/anglais ; aucun conseil automatique de volume. Relevés invalides, futurs et antérieurs au dernier arrosage exclus ; archives HA de test non utilisées. Tests sur données fictives ; aucune donnée réelle modifiée.
+
+
+### 20/10/2026 — Reprise Home Assistant et démo
+Correction du blocage après plus de sept jours : cible bornée sans saut de curseur, synchronisation et fenêtre de suivi. Réponses volumineuses subdivisées jusqu’à une minute, seize requêtes maximum par passage ; reprise au dernier enregistrement. Tests dix jours d’absence, sous-fenêtre échouée, budget et accusé perdu. Démo enrichie d’une chronologie fictive et cas zéro/indisponible/valeurs rapprochées. Guide docs/HOME_ASSISTANT_REPRISE_ET_SUIVI.md ; aucune collecte réelle ou modification des mesures du PC.
+
+
+### 20/10/2026 — Associations et diagnostic Home Assistant
+Ajout colonne plante dans les réglages, noms indisponibles signalés. Diagnostic traduit sur liste fermée : accès refusé, débit limité, serveur indisponible, connexion interrompue, association bloquée et historique trop volumineux. Statut HTTP numérique uniquement ; aucune exception, corps ou valeur privée affichés. Progrès partiel conservé et affichage réactualisé après échec. Correction complémentaire du rattrapage manuel après longue absence ; tests interface FR/EN clair/sombre et absence de fuite dans les messages.
+
+
+### 20/10/2026 — Filtres du suivi connecté
+Le choix de quantité recharge sa propre sélection : les états fréquents de luminosité ne masquent plus l’humidité du sol. Ajout filtre par capteur physique et indication quand les 2 000 états affichables sont dépassés. Dates filtrées avant la limite de lecture, y compris bornes sous-seconde et décalages de fuseau. Tests sur archive fictive et interactions réelles du sélecteur de démo en FR/EN clair/sombre ; aucune modification des archives réelles.
+
+
+### 20/10/2026 — Isolation Home Assistant en démo
+Réglages alimentés exclusivement par quatre associations fictives ; aucun chargement de configuration privée ou inventaire réel. Champs de connexion et sauvegarde désactivés, protection directe de load/save_config et commit_history. Rattrapage manuel bloqué avant chargement des identifiants, y compris si un bouton est artificiellement réactivé. Tests de non-lecture/non-écriture avec fichier sentinelle, fonctions privées interdites et interface FR/EN clair/sombre.
+
+
+### 20/10/2026 — Navigation par plante du suivi connecté
+Ajout d’un filtre de plante dans la vue globale et d’une sélection explicite des capteurs sans plante. La liste des capteurs suit la plante choisie, une sélection incompatible est réinitialisée. Depuis une fiche plante, le périmètre reste fixe. Les plantes homonymes sont distinguées par leur identifiant. Tests de navigation FR/EN clair/sombre en petite fenêtre, sans accès à la base réelle.
+
+
+### 20/10/2026 — Actualisation des associations ouvertes
+Après sauvegarde réussie des réglages, notification dédiée aux fenêtres et à la synthèse d’accueil. Les associations et noms de plantes sont relus ; les filtres valides sont conservés et les sélections supprimées réinitialisées. Une fenêtre liée à une plante perd les capteurs qui lui ont été retirés. Configuration relue avant récupération ; en cas d’erreur, les anciens réglages ne sont pas réutilisés. Suppression des liaisons d’événements et minuteurs à la fermeture de la synthèse. Tests de sauvegarde vers deux fenêtres, configuration illisible et minuterie unique sur données fictives.
+
+
+### 20/10/2026 — Contrôle avant activation Home Assistant
+La sauvegarde avec synchronisation cochée exige une connexion renseignée, au moins une mesure, les identités physiques confirmées, un inventaire Gruterra lisible et aucune mesure en doublon ou déjà enregistrée en Bluetooth. Contrôles locaux sans connexion ; refus avant écriture privée. Les préparations incomplètes restent enregistrables avec synchronisation décochée. Tests sur fichiers sentinelles et registre fictif : identité conservée, doublons, ancienne synchronisation active et absence de réseau.
+
+
+### 20/10/2026 — Disponibilité et récupération du suivi connecté
+Colonnes distinctes disponibilité, ancienneté et type d’état : zéro conservé, indisponible/inconnu/conflit explicités, étiquette test conservée en cas de conflit. Une mise à jour d’attributs utilise la date du dernier changement de valeur pour l’ancienneté ; dates futures et états initiaux incertains signalés. Filtres verrouillés pendant récupération et restaurés après réussite/échec. Rappel d’interface annulé à la fermeture sans interrompre l’enregistrement. Tests UI FR/EN clair/sombre et trois scénarios de récupération entièrement simulés.
+
+
+### 20/10/2026 — Lecture des archives volumineuses
+Index de lecture ajoutés transactionnellement au prochain archivage : appareil/quantité/date, contenu par état et bornes de fenêtres. La vue limite les états avant de charger les contenus et évite le filtrage temporel quand aucune borne n’est demandée. Ouverture toujours en lecture seule, compatible avec les anciennes archives. Résultats avant/après identiques, conflits conservés ; rollback des index si la transaction échoue. Mesure sur 6 000 états fictifs, 2 000 affichés, médiane de trois essais : 5.9699 s avant, 0.0287 s après. Aucune archive réelle modifiée pendant cet essai.
+
+
+### 20/10/2026 — Limite globale avant décodage des archives
+La lecture applique la limite à toute la sélection avant de décoder les états, au lieu de charger jusqu’à cette limite pour chaque capteur. Ordre des dates et égalités déterministe conservé, filtres plante/quantité/date inchangés. Tests sur douze capteurs : seuls les contenus affichés sont décodés, archive strictement inchangée. Comparaison avant/après sur vingt capteurs fictifs et 20 000 états, 2 000 affichés : 0.3541 s puis 0.0421 s, médianes de trois essais, résultats complets identiques.
+
+
+### 20/10/2026 — Préparation de distribution
+Contrôle des dépendances sans créer d’archive : sélection Git incomplète, seize modules locaux nécessaires identifiés ; sélection explicite complète sur 245 fichiers. Vérificateur de valeurs signale trois fichiers à relire ; aucune exception modifiée. Protection ajoutée pour les catalogues FR/EN manquants, invalides ou incohérents. Option de fichiers supplémentaires limitée au contrôle, interdite pour créer une archive officielle. Compte rendu docs/CONTROLE_DISTRIBUTION_2026-10-20.md. Test PC sans Python toujours en attente ; aucun manifeste ou numéro de version changé.
+
+
+### 20/10/2026 — Affichages en échec et longues légendes
+Échec de lecture après changement de filtre : anciens états retirés du tableau et du graphique, erreur persistante au redimensionnement, reprise possible au prochain essai. Les valeurs archivées ne sont jamais effacées par ce traitement. Légendes multi-capteurs réparties en colonnes, hauteur adaptée pour conserver au moins 160 px de tracé et retour au format compact avec un seul capteur. Tests UI FR/EN clair/sombre : erreur simulée avec détail privé non affiché, récupération, soixante capteurs fictifs et points toujours sous les légendes. Comparaison physique des capteurs laissée en attente.
+
+
+### 20/10/2026 — Résultats asynchrones et notification des vues
+Module ui_async_result : résultats transmis sur le fil Tk principal, rappel supprimé après résultat ou fermeture d’un aperçu. Une récupération déjà lancée garde un suivi sur la racine pour notifier les vues restantes même si la fenêtre d’origine est fermée. Notifications diffusées depuis toute sous-fenêtre à l’accueil et aux autres fenêtres, y compris imbriquées. La fenêtre d’origine conserve son récapitulatif (notamment une période restant à récupérer). Synthèse d’accueil actualisée après import sans multiplier les minuteurs. Tests de livraison unique, aperçu fermé, récupération après fermeture et exclusion de l’origine ; données fictives uniquement. Ajouter _app/ui_async_result.py à la prochaine sélection de distribution.
+
+## Préversion 0.1.7-dev — 21/10/2026
+
+Sources, documentation FR/EN et fichiers de distribution préparés pour la préversion. 539 tests réussis. Restent : test PC sans Python, comparaison approfondie des cycles et marquage des anciens tests manuels. Le partage reste désactivé.

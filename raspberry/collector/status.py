@@ -1,8 +1,16 @@
+try:
+    from installation_paths import installation_root
+except ModuleNotFoundError:
+    # Running this utility directly from the source checkout.
+    import sys
+    from pathlib import Path
+    sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+    from installation_paths import installation_root
 import json
 import sqlite3
 from pathlib import Path
 
-db = sqlite3.connect(Path.home() / 'botaneo/data/collector.sqlite3')
+db = sqlite3.connect(installation_root() / 'data/collector.sqlite3')
 db.row_factory = sqlite3.Row
 result = {'integrity': db.execute('PRAGMA integrity_check').fetchone()[0],
           'count': db.execute('SELECT COUNT(*) FROM measurements').fetchone()[0],

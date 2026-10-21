@@ -1,4 +1,5 @@
 """Copy weather snapshots over existing SSH; never replace a live database."""
+from raspberry_paths import remote_command, remote_backup
 import hashlib
 import json
 import os
@@ -25,7 +26,7 @@ def retrieve(config,folder=None):
     host=config['user']+'@'+config['host']
     opts=['-i',config['key'],'-o','BatchMode=yes','-o','IdentitiesOnly=yes','-o','StrictHostKeyChecking=yes','-o','ConnectTimeout=8']
     flags=getattr(subprocess,'CREATE_NO_WINDOW',0)
-    meta=json.loads(subprocess.run(['ssh',*opts,host,'python3 ~/botaneo/collector/weather_backup.py manifest'],capture_output=True,text=True,timeout=30,check=True,creationflags=flags).stdout)
+    meta=json.loads(subprocess.run(['ssh',*opts,host,remote_command(config, 'weather_backup.py', 'manifest')],capture_output=True,text=True,timeout=30,check=True,creationflags=flags).stdout)
     if not isinstance(meta,dict) or set(meta)!= {'name','size','sha256'}:raise ValueError('weather_backup_metadata')
     if not isinstance(meta['name'],str) or not re.fullmatch(r'weather-[0-9]{4}-[0-9]{2}-[0-9]{2}\.sqlite3',meta['name']):raise ValueError('weather_backup_metadata')
     if type(meta['size']) is not int or not 0<meta['size']<=100*1024*1024:raise ValueError('weather_backup_metadata')
@@ -36,7 +37,7 @@ def retrieve(config,folder=None):
         except (ValueError,sqlite3.Error):pass
     fd,tmp=tempfile.mkstemp(dir=folder,suffix='.part');os.close(fd)
     try:
-        subprocess.run(['scp',*opts,host+':botaneo/backups/weather/'+meta['name'],tmp],capture_output=True,timeout=120,check=True,creationflags=flags)
+        subprocess.run(['scp',*opts,host+':'+remote_backup(config, 'weather', meta['name']),tmp],capture_output=True,timeout=120,check=True,creationflags=flags)
         verify(tmp,meta)
         with open(tmp,'r+b') as stream:os.fsync(stream.fileno())
         os.replace(tmp,target)

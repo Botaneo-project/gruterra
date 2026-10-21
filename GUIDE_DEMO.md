@@ -2,6 +2,18 @@
 
 Ce guide permet de découvrir l’interface avec des données fictives, sans capteur Mi Flora, Raspberry Pi ni compte Netatmo.
 
+Pour copier quelques relevés, sélectionnez leurs lignes dans le tableau avec
+Ctrl+clic (lignes séparées) ou Maj+clic (plage), puis utilisez le clic droit →
+« Copier les lignes sélectionnées », ou Ctrl+C. Les dates, en-têtes et unités
+sont conservés ; les colonnes techniques cachées sont exclues. Le même geste
+fonctionne dans le tableau des capteurs connectés.
+
+Dans l’historique, « Compléter l’observation » permet de choisir un arrosage et de
+renseigner après coup son écoulement ainsi que le temps avant les premières gouttes,
+en minutes. La date et le volume de l’arrosage restent inchangés. Les nouvelles
+bases de démonstration comprennent une observation fictive de ce parcours ; une
+démo existante n’est pas régénérée automatiquement.
+
 ## 1. Télécharger le projet
 
 Ouvrez le dépôt GitHub :
@@ -83,3 +95,10 @@ Un retour utile indique :
 Ne transmettez aucune base personnelle ni configuration contenant des identifiants.
 
 Version anglaise : [GUIDE_DEMO_EN.md](GUIDE_DEMO_EN.md).
+
+## Isolation de la démonstration
+
+La démonstration conserve ses réglages, caches et verrou dans `_app/data/demo/`.
+Elle ignore les dossiers de configuration et données hérités de l’installation
+réelle. Ses sauvegardes portent uniquement sur sa base et ses dossiers propres.
+Les essais déjà présents ne sont pas régénérés automatiquement.

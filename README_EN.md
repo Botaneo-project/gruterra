@@ -1,6 +1,17 @@
 # Gruterra
 
-> **Source code and downloads:** changes on `main` may be newer than the latest published archive, currently **0.1.6-dev**. Recent restart, database protection and interface fixes will be included in a future release; pushing source changes does not update the downloadable archive automatically.
+## Download prerelease 0.1.7-dev
+
+- [Windows test installer](https://github.com/Botaneo-project/gruterra/releases/download/v0.1.7-dev/Gruterra-Setup-0.1.7-dev-candidate.exe)
+- [Program ZIP archive](https://github.com/Botaneo-project/gruterra/releases/download/v0.1.7-dev/gruterra-0.1.7-dev.zip)
+- [Release notes](docs/RELEASE_NOTES_0.1.7-dev.md)
+
+**Prerelease:** the unsigned installer prepares Python and dependencies; it does not bundle Python. Testing on a computer without Python remains pending. [0.1.6-dev](https://github.com/Botaneo-project/gruterra/releases/tag/v0.1.6-dev) remains available.
+
+This version improves synchronization, post-watering follow-up, history and row copying, active-database backups, demo isolation and Raspberry paths. Contextual watering alerts explain uncertainty, without automatic irrigation or an automatically learned optimal threshold.
+
+**Community sharing remains disabled.** Changes on `main` may be newer than downloadable files; each download corresponds to its published version.
+
 
 Gruterra is a local plant monitoring app. It brings together plants, Mi Flora / Flower Care readings, sensor history, watering logs, reminders, local weather context and early watering-cycle analysis.
 
@@ -139,3 +150,13 @@ Please never share private tokens, passwords, refresh tokens, real configuration
 ### Contribution identity preparation on main
 
 New contribution identities use Ed25519. Separate key backups are password-encrypted and restoration verifies the identity. Legacy identities are preserved pending explicit migration. The local working file and full ZIP backups remain private; full ZIP backups are not encrypted. No contribution network sharing is enabled.
+
+
+### Alert centre — local preparation
+
+The changes in preparation distinguish unverified data from recent readings, show priority alerts first and let you expand the full list. Expired forecasts are no longer used as upcoming weather. See the [alert centre guide](docs/HISTORIQUE_ECLAIRAGE_INTERFACE.md#centre-alertes). These changes are not yet a new downloadable release.
+
+
+### Interrupted update recovery — local preparation
+
+The mechanism in preparation keeps a journal and verified backup. New launchers can restore the previous program before startup after a forced process exit, or block startup if recovery fails. See the [recovery guide](docs/RECUPERATION_MISE_A_JOUR.md). Process termination tests do not validate physical power cuts; this change has not been released.

@@ -77,7 +77,7 @@ SENSITIVE_FILE_PATTERNS = [
 
 TEXT_EXTENSIONS = {
     ".py", ".md", ".txt", ".json", ".toml", ".yml", ".yaml",
-    ".ps1", ".bat", ".cmd", ".ini", ".cfg", ".gitignore", ".svg", ".example", ".sh", ".service", ".timer"
+    ".ps1", ".bat", ".cmd", ".ini", ".cfg", ".gitignore", ".svg", ".example", ".sh", ".service", ".timer", ".iss"
 }
 
 def exception_fictive_valide(path, contenu):

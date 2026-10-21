@@ -72,28 +72,25 @@ def marquer_information_lue():
     ecrire_json(chemin(), state)
 
 
-def ouvrir_information(parent):
+def ouvrir_information(parent, palette=None):
     import tkinter as tk
     from tkinter import ttk, filedialog, messagebox, simpledialog
     window = tk.Toplevel(parent)
     window.title(t('contribution_title'))
     window.geometry('700x460')
     window.minsize(440, 320)
-    footer = ttk.Frame(window, padding=12)
-    footer.pack(side='bottom', fill='x')
-    area = ttk.Frame(window, padding=12)
-    area.pack(fill='both', expand=True)
-    text = tk.Text(area, wrap='word', height=12)
-    scroll = ttk.Scrollbar(area, command=text.yview)
-    text.configure(yscrollcommand=scroll.set)
-    scroll.pack(side='right', fill='y')
-    text.pack(fill='both', expand=True)
+    from ui_palette import THEME_CLAIR, THEME_SOMBRE
+    from ui_scroll_form import create, create_text
+    from meteo_nappes import harmoniser
+    palette = palette or (THEME_SOMBRE if parent.cget('background') == THEME_SOMBRE['BG'] else THEME_CLAIR)
+    body, footer = create(window, palette)
+    text = create_text(body, palette, height=10, padx=12, pady=12)
     text.insert('1.0', t('contribution_explanation'))
     if mode_demo():
         text.insert('end', '\n\n' + t('contribution_demo_blocked'))
     text.configure(state='disabled')
     status = tk.StringVar(value=t('contribution_offline'))
-    ttk.Label(footer, textvariable=status, wraplength=650).pack(fill='x', pady=(0,8))
+    tk.Label(body, textvariable=status, wraplength=380, justify='left').pack(fill='x', padx=12, pady=8)
 
     def backup_key():
         try:
@@ -144,15 +141,19 @@ def ouvrir_information(parent):
             return
         window.destroy()
 
-    controls = ttk.Frame(footer)
-    controls.pack(fill='x')
+    controls = tk.Frame(body)
+    controls.pack(fill='x', padx=12, pady=8)
     if not mode_demo():
-        ttk.Button(controls, text=t('contribution_backup_key'), command=backup_key).pack(side='left')
-        ttk.Button(controls, text=t('contribution_restore_key'), command=restore_key).pack(side='left', padx=8)
-    ttk.Button(controls, text=t('close'), command=close).pack(side='right')
-    if not mode_demo():
+        tk.Button(controls, text=t('contribution_backup_key'), command=backup_key).pack(fill='x', pady=3)
+        tk.Button(controls, text=t('contribution_restore_key'), command=restore_key).pack(fill='x', pady=3)
         from contribution_suivi import ouvrir_suivi
-        ttk.Button(footer, text=t('contribution_tracking_title'), command=lambda: ouvrir_suivi(window)).pack(anchor='w', pady=(8, 0))
+        tk.Button(controls, text=t('contribution_tracking_title'), command=lambda: ouvrir_suivi(window, palette)).pack(fill='x', pady=3)
+    tk.Button(footer, text=t('close'), command=close).pack(side='right')
+    def resize_controls(event):
+        for child in controls.winfo_children():
+            child.configure(wraplength=max(160,event.width-24))
+    controls.bind('<Configure>', resize_controls)
+    harmoniser(window, palette)
     window.protocol('WM_DELETE_WINDOW', close)
     return window
 

@@ -13,6 +13,26 @@ from decimal import Decimal, InvalidOperation
 
 UNITS = {'soil_moisture': '%', 'air_humidity': '%', 'temperature': '°C', 'illuminance': 'lx'}
 
+# Capabilities describe supported quantities, never an accuracy guarantee.
+ZIGBEE_PROFILES = {
+    'ZS-304Z': frozenset(UNITS),
+    'ZG-106Z': frozenset(('illuminance',)),
+}
+
+
+def validate_device_profile(mapping):
+    model = mapping.get('model', '').strip()
+    if model in ZIGBEE_PROFILES:
+        if mapping.get('metric') not in ZIGBEE_PROFILES[model]:
+            raise ValueError('unsupported_device_metric')
+        if mapping.get('hardware_id'):
+            from sensor_source_policy import hardware_id
+            if not hardware_id(mapping['hardware_id']).startswith('zigbee:'):
+                raise ValueError('device_transport_mismatch')
+    if 'test_data' in mapping and type(mapping['test_data']) is not bool:
+        raise ValueError('invalid_test_marker')
+
+
 
 def utc(value):
     if not isinstance(value, str):
@@ -44,6 +64,7 @@ def prepare(state, mapping, *, instance_id, received_at, max_age_seconds=7200):
     for field in ('device_id', 'model'):
         if not isinstance(mapping.get(field), str) or not mapping[field].strip():
             raise ValueError('device_mapping_required')
+    validate_device_profile(mapping)
     metric = mapping.get('metric')
     if metric not in UNITS:
         raise ValueError('unsupported_metric')
@@ -93,6 +114,11 @@ def prepare(state, mapping, *, instance_id, received_at, max_age_seconds=7200):
         'calibration': None, 'raw_level': 'home_assistant_state', 'raw_state': json.loads(raw),
         'eligible_for_plant_history': False,
     }
+    if mapping.get('hardware_id'):
+        from sensor_source_policy import hardware_id
+        record['hardware_id'] = hardware_id(mapping['hardware_id'])
+    if 'test_data' in mapping:
+        record['test_data'] = mapping['test_data']
     # Receipt time is not identity: polling a cached state must not add measurements.
     identity = {k: v for k, v in record.items() if k not in ('received_at', 'state_time_quality')}
     record['observation_id'] = 'ha1_' + hashlib.sha256(json.dumps(identity, ensure_ascii=False, sort_keys=True, allow_nan=False, separators=(',', ':')).encode()).hexdigest()

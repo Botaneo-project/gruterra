@@ -1,5 +1,13 @@
 # Développement de Gruterra
 
+## Tests graphiques discrets
+
+Sur le poste utilisateur, faire tourner les essais Tkinter sur un bureau Windows
+de test isolé, sans y basculer l’écran, afin d’éviter les fenêtres qui clignotent.
+Conserver les journaux et le résultat des essais. Seule l’application réellement
+relancée à la fin d’une installation doit être présentée à l’utilisateur.
+Ne pas masquer ou réduire les vérifications pour obtenir ce mode silencieux.
+
 
 ## Règle permanente : faire évoluer la démo avec les fonctionnalités
 

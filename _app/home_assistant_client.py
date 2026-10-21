@@ -1,4 +1,4 @@
-"""Opt-in read-only Home Assistant client. Not wired into the running app."""
+"""Opt-in read-only Home Assistant client for previews and separate archive synchronization."""
 import ipaddress
 import json
 import re

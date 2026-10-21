@@ -4,13 +4,17 @@ This script is intended for systemd timers. It uses the same request file as
 PC-triggered collect_now, so the existing collector remains the only process
 that talks to Bluetooth.
 """
+try:
+    from installation_paths import installation_root
+except ModuleNotFoundError:
+    from raspberry.installation_paths import installation_root
 import json
 from datetime import datetime, timezone
 from pathlib import Path
 
 
 def main():
-    base = Path.home() / 'botaneo'
+    base = installation_root()
     data = base / 'data'
     data.mkdir(parents=True, exist_ok=True)
     state_path = data / 'collect-state.json'

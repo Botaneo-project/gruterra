@@ -1,4 +1,8 @@
 """Bounded SQLite outbox over authenticated SSH; never deletes readings."""
+try:
+    from installation_paths import installation_root
+except ModuleNotFoundError:
+    from raspberry.installation_paths import installation_root
 import hashlib
 import json
 import sqlite3
@@ -59,7 +63,7 @@ def collect_now(base, request):
     # The existing collector reads all configured sensors, just like the mobile button.
     data = base / 'data'
     state = json.loads((data/'collect-state.json').read_text())
-    if state.get('running'):
+    if state.get('running') and state.get('phase') == 'current':
         return {'accepted': False, 'status': 'running', 'message': 'Collecte déjà en cours. Les nouvelles mesures seront récupérées à la prochaine synchronisation.'}
     try:
         with (data/'collect.request').open('x') as stream:
@@ -84,7 +88,7 @@ def acknowledge(db, device, request):
 
 
 if __name__ == '__main__':
-    base = Path.home() / 'botaneo'
+    base = installation_root()
     device = json.loads((base/'config/collector.json').read_text())['device_id']
     if sys.argv[1:] in (['lamp_get'], ['lamp_set']):
         from light_schedule import load,save,locked,validate,profile

@@ -1,3 +1,5 @@
+from raspberry_paths import remote_command, remote_backup
+from botaneo_config import DATA_DIR
 """Raccordement SSH météo dédié, sans collecte Netatmo ni gestion OAuth."""
 import subprocess
 import threading
@@ -13,7 +15,7 @@ def transport(config,operation,request=None):
     if operation not in ('weather_export','weather_ack'):raise ValueError('weather_unknown_operation')
     if operation=='weather_ack':validate_ack(request,config['device_id'])
     elif request is not None:raise ValueError('weather_unexpected_request')
-    args=['ssh','-i',config['key'],'-o','BatchMode=yes','-o','IdentitiesOnly=yes','-o','StrictHostKeyChecking=yes','-o','ConnectTimeout=8','-o','ServerAliveInterval=5','-o','ServerAliveCountMax=2',config['user']+'@'+config['host'],'python3 ~/botaneo/collector/sync_export.py '+operation]
+    args=['ssh','-i',config['key'],'-o','BatchMode=yes','-o','IdentitiesOnly=yes','-o','StrictHostKeyChecking=yes','-o','ConnectTimeout=8','-o','ServerAliveInterval=5','-o','ServerAliveCountMax=2',config['user']+'@'+config['host'],remote_command(config, 'sync_export.py', operation)]
     try:
         result=subprocess.run(args,input=canonical(request) if request is not None else None,capture_output=True,timeout=60,creationflags=getattr(subprocess,'CREATE_NO_WINDOW',0))
     except (OSError,subprocess.TimeoutExpired):raise ConnectionError('weather_transport_unavailable') from None
@@ -40,7 +42,7 @@ def synchronize(config=None,sender=None,db_path=None,max_batches=20):
                 result['backup_status']='failed'
         return result
     sender=sender or transport
-    path=Path(db_path) if db_path is not None else Path(__file__).resolve().parent/'data/netatmo_pluie.sqlite3'
+    path=Path(db_path) if db_path is not None else DATA_DIR/'netatmo_pluie.sqlite3'
     stage='export';pending=None
     with LOCK:
         try:

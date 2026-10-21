@@ -111,6 +111,11 @@ class IdentityTests(unittest.TestCase):
 
     def test_private_identity_in_full_backup_only(self):
         module.preparer_identite()
+        import sqlite3
+        (self.root/'_app').mkdir(exist_ok=True)
+        with sqlite3.connect(self.root/'_app/plantes.db') as backup_fixture:
+            backup_fixture.execute('CREATE TABLE fictive (id INTEGER)')
+        backup_fixture.close()
         full = creer_sauvegarde_utilisateur(self.root, 'complete', self.root/'full')
         shared = creer_sauvegarde_utilisateur(self.root, 'donnees', self.root/'shared')
         import zipfile

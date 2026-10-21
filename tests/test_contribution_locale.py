@@ -36,6 +36,11 @@ class ContributionLocaleTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as folder:
             root=Path(folder);(root/'_config').mkdir()
             (root/'_config/contribution.local.json').write_text('{}')
+            import sqlite3
+            (root/'_app').mkdir(exist_ok=True)
+            with sqlite3.connect(root/'_app/plantes.db') as backup_fixture:
+                backup_fixture.execute('CREATE TABLE fictive (id INTEGER)')
+            backup_fixture.close()
             full=creer_sauvegarde_utilisateur(root,'complete',root/'full')
             shared=creer_sauvegarde_utilisateur(root,'donnees',root/'shared')
             with zipfile.ZipFile(full) as archive:

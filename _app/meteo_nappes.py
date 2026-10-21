@@ -135,16 +135,25 @@ def harmoniser(widget, palette):
             widget.configure(style=name)
         elif isinstance(widget,ttk.Combobox):
             name=prefix+'.TCombobox'
+            # Windows native field ignores fieldbackground: use a clam field only
+            # for this style, without changing the application's global theme.
+            field=prefix+'.Combobox.field'
+            if field not in style.element_names():
+                style.element_create(field,'from','clam','Combobox.field')
+            style.layout(name,[(field,{'sticky':'nswe','children':[
+                ('Combobox.downarrow',{'side':'right','sticky':'ns'}),
+                ('Combobox.padding',{'sticky':'nswe','children':[
+                    ('Combobox.textarea',{'sticky':'nswe'})]})]})])
             style.configure(name,foreground=palette['TEXT'],fieldbackground=palette['CARD'],background=palette['BG'])
-            style.map(name,fieldbackground=[('readonly',palette['CARD'])],foreground=[('readonly',palette['TEXT'])],selectbackground=[('readonly',palette['LIGHT_BLUE'])],selectforeground=[('readonly',palette['BLUE'])])
+            style.map(name,fieldbackground=[('disabled',palette['CARD']),('readonly',palette['CARD'])],foreground=[('disabled',palette['TEXT']),('readonly',palette['TEXT'])],selectbackground=[('readonly',palette['LIGHT_BLUE'])],selectforeground=[('readonly',palette['BLUE'])])
             widget.configure(style=name)
         for child in widget.winfo_children():harmoniser(child,palette)
         return
-    if isinstance(widget, (tk.Toplevel, tk.Frame, tk.LabelFrame, tk.Label, tk.Checkbutton)):
+    if isinstance(widget, (tk.Toplevel, tk.Frame, tk.LabelFrame, tk.Label, tk.Checkbutton, tk.Radiobutton)):
         widget.configure(bg=palette['BG'])
-        if isinstance(widget, (tk.LabelFrame, tk.Label, tk.Checkbutton)):
+        if isinstance(widget, (tk.LabelFrame, tk.Label, tk.Checkbutton, tk.Radiobutton)):
             widget.configure(fg=palette['TEXT'])
-        if isinstance(widget, tk.Checkbutton):
+        if isinstance(widget, (tk.Checkbutton,tk.Radiobutton)):
             widget.configure(selectcolor=palette['CARD'], activebackground=palette['BG'], activeforeground=palette['TEXT'])
     elif isinstance(widget, tk.Button):
         widget.configure(bg=palette['LIGHT_BLUE'], fg=palette['BLUE'], activebackground=palette['CARD'], activeforeground=palette['TEXT'])
@@ -173,7 +182,7 @@ def ouvrir(parent, palette=None):
     current=config.get('station')
     style=ttk.Style(window)
     style.configure('Groundwater.TCombobox',foreground=palette['TEXT'],fieldbackground=palette['CARD'],background=palette['BG'])
-    style.map('Groundwater.TCombobox',fieldbackground=[('readonly',palette['CARD'])],foreground=[('readonly',palette['TEXT'])],selectbackground=[('readonly',palette['LIGHT_BLUE'])],selectforeground=[('readonly',palette['BLUE'])])
+    style.map('Groundwater.TCombobox',fieldbackground=[('disabled',palette['CARD']),('readonly',palette['CARD'])],foreground=[('disabled',palette['TEXT']),('readonly',palette['TEXT'])],selectbackground=[('readonly',palette['LIGHT_BLUE'])],selectforeground=[('readonly',palette['BLUE'])])
     select=ttk.Combobox(window,state='readonly',width=100,style='Groundwater.TCombobox')
     detail=tk.StringVar()
     def station_details():

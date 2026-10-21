@@ -121,6 +121,30 @@ def verifier_liste_archive(fichiers: list[Path]) -> None:
             errors.append('fichier absent : '+name)
             continue
         supplied.add(name)
+    # These runtime resources are loaded by file path, so Python import scanning
+    # cannot detect their omission. Never ship an interface full of fallback keys.
+    if '_app/i18n.py' in supplied:
+        locales = {}
+        for language in ('fr','en'):
+            name = '_app/locales/'+language+'.json'
+            if name not in supplied:
+                errors.append('catalogue de langue absent : '+name)
+                continue
+            try:
+                def unique(pairs):
+                    values = {}
+                    for key,value in pairs:
+                        if key in values:raise ValueError('duplicate_translation')
+                        values[key]=value
+                    return values
+                data=json.loads((RACINE/name).read_text(encoding='utf-8-sig'),object_pairs_hook=unique)
+                if not isinstance(data,dict) or not data or any(not isinstance(value,str) or not value for value in data.values()):
+                    raise ValueError('invalid_translations')
+                locales[language]=data
+            except (OSError,ValueError,UnicodeError):
+                errors.append('catalogue de langue invalide : '+name)
+        if len(locales)==2 and locales['fr'].keys()!=locales['en'].keys():
+            errors.append('catalogues français/anglais incomplets : clés différentes')
     # Match project-local imports only; installed dependencies are checked by the installer.
     def local_module(module, origin):
         parts = module.split('.')
@@ -326,10 +350,14 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="Prépare une archive officielle Gruterra et son SHA256.")
     parser.add_argument("--allow-dirty", action="store_true", help="autorise une archive malgré des changements Git non validés")
     parser.add_argument("--check-files", action="store_true", help="vérifie les fichiers prévus sans créer d’archive ni changer le manifeste")
+    parser.add_argument('--additional-file',action='append',default=[],
+                        help='fichier local public ajouté au contrôle uniquement ; exige --check-files')
     args = parser.parse_args(argv)
+    if args.additional_file and not args.check_files:
+        parser.error('--additional-file exige --check-files ; aucune archive officielle créée')
 
     if args.check_files:
-        fichiers = lister_fichiers_suivis()
+        fichiers = sorted(set(lister_fichiers_suivis()) | {Path(name) for name in args.additional_file},key=lambda path:path.as_posix())
         if not fichiers:
             raise RuntimeError("Aucun fichier suivi par Git à vérifier.")
         verifier_liste_archive(fichiers)

@@ -4,6 +4,7 @@ from i18n import traduire_courant as _tr
 import atexit
 import os
 from pathlib import Path
+from botaneo_config import CONFIG_DIR
 
 
 class InstanceOccupee(RuntimeError):
@@ -12,7 +13,10 @@ class InstanceOccupee(RuntimeError):
 
 class VerrouInstance:
     def __init__(self, path=None):
-        self.path = Path(path) if path else Path(__file__).resolve().parent.parent / '_config' / 'botaneo.instance.lock'
+        # The updater coordinates the real app through the historical root lock.
+        # Only the demo gets its own lock; custom settings must not bypass it.
+        default_dir = CONFIG_DIR if os.environ.get('BOTANEO_DEMO') == '1' else Path(__file__).resolve().parent.parent / '_config'
+        self.path = Path(path) if path else default_dir / 'botaneo.instance.lock'
         self.file = None
 
     def acquerir(self):
@@ -48,6 +52,8 @@ atexit.register(_verrou.liberer)
 
 def exiger_instance_unique(graphique=False):
     try:
+        if (Path(__file__).resolve().parent.parent / '_security_backups' / 'update-pending.json').exists():
+            raise InstanceOccupee(_tr('update_recovery_required'))
         _verrou.acquerir()
     except (InstanceOccupee, OSError) as erreur:
         message = str(erreur) if isinstance(erreur, InstanceOccupee) else _tr('instance_botaneo_text_51')

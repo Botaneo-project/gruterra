@@ -5,7 +5,8 @@ import tkinter as tk
 from tkinter import ttk
 import database
 from ui_palette import readable_text
-from botaneo_dates import vers_local_naif
+from light_schedule import date_eclairage
+from zoneinfo import ZoneInfo
 from i18n import traduire_courant as t
 from light_schedule import load, save, analyse, validate, analyse_profile
 
@@ -25,7 +26,7 @@ def graph_layout(group, start, end, width, height):
     span = (stop-begin).total_seconds()
     points = []
     for row in group['points']:
-        at = vers_local_naif(row['at'])
+        at = date_eclairage(row['at'])
         if at is not None and begin <= at < stop:
             points.append({'at': at, 'lux': row['lux'], 'source': row['at'],
                            'x': left+(at-begin).total_seconds()/span*(right-left),
@@ -39,7 +40,7 @@ def observation_summary(group, start, end, now=None):
     points = layout['points']
     if not points:
         return None
-    current = vers_local_naif(now) if now is not None else datetime.now()
+    current = date_eclairage(now) if now is not None else datetime.now(ZoneInfo('Europe/Paris')).replace(tzinfo=None)
     phase = 'before' if current < layout['begin'] else 'ongoing' if current < layout['end'] else 'ended'
     gaps = [(right['at']-left['at']).total_seconds() for left, right in zip(points, points[1:])]
     return {'first': points[0]['at'], 'last': points[-1]['at'],
@@ -54,6 +55,7 @@ def open_window(parent, plant_id, palette=None):
     win.geometry('1020x800')
     win.minsize(620, 460)
     win.configure(bg=colors['BG'])
+    win.bind("<<GruterraDataChanged>>", lambda event: refresh(), add="+")
     settings = load(CONFIG, plant_id) or {'start': '09:50', 'end': '15:50'}
     start, end = tk.StringVar(value=settings['start']), tk.StringVar(value=settings['end'])
     groups, plotted, selected_point = [], [], [None]
@@ -301,14 +303,14 @@ def open_window(parent, plant_id, palette=None):
                 save(CONFIG, plant_id, start.get(), end.get())
             conn = database.get_connection()
             try:
-                raw = conn.execute('SELECT m.date_heure,m.luminosite FROM mesures m JOIN capteurs c ON c.id=m.capteur_id WHERE c.plante_id=? AND m.date_heure>=? ORDER BY m.date_heure', (plant_id, (datetime.now()-timedelta(days=30)).date().isoformat())).fetchall()
+                raw = conn.execute('SELECT m.date_heure,m.luminosite FROM mesures m JOIN capteurs c ON c.id=m.capteur_id WHERE c.plante_id=? AND m.date_heure>=? ORDER BY m.date_heure', (plant_id, (datetime.now(ZoneInfo('Europe/Paris'))-timedelta(days=30)).date().isoformat())).fetchall()
             finally:
                 conn.close()
             stored=load(CONFIG, plant_id)
             selected=stored if stored and stored['start']==start.get() and stored['end']==end.get() else validate(start.get(),end.get())
             groups = analyse_profile([{'at': row[0], 'lux': row[1]} for row in raw], selected)
-            first_day = (datetime.now()-timedelta(days=29)).date().isoformat()
-            last_day = datetime.now().date().isoformat()
+            first_day = (datetime.now(ZoneInfo('Europe/Paris'))-timedelta(days=29)).date().isoformat()
+            last_day = datetime.now(ZoneInfo('Europe/Paris')).date().isoformat()
             groups = [group for group in groups if first_day <= group['day'] <= last_day]
             displayed_schedule.update(start=start.get(), end=end.get())
             day.configure(values=[datetime.fromisoformat(group['day']).strftime('%d/%m/%Y') for group in groups])

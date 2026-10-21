@@ -21,7 +21,7 @@ def chemin(adresse):
 def lire_infos(adresse):
     try:
         info = lire_json(chemin(adresse))
-        if info.get('schema') != 1:
+        if not isinstance(info, dict) or info.get('schema') != 1:
             return {}
         for key in ('batterie_lue_le', 'firmware', 'firmware_lu_le', 'derniere_tentative', 'nom_ble'):
             if key in info and not isinstance(info[key], str):

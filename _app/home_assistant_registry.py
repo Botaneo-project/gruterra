@@ -4,6 +4,7 @@ from contextlib import closing
 from pathlib import Path
 import sqlite3
 from sensor_source_policy import hardware_id, authorize_ha_mappings
+from home_assistant_sensors import validate_device_profile
 
 
 def read_ble_inventory(db_path=None):
@@ -44,7 +45,12 @@ def assess_mappings(mappings, *, db_path=None):
         elif row.get('hardware_confirmed') is not True:
             status = 'identity_pending'
         else:
-            status = 'authorized'
+            try:
+                validate_device_profile(row)
+            except ValueError:
+                status = 'identity_pending'
+            else:
+                status = 'authorized'
         statuses.append(status)
     return statuses
 

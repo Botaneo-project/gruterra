@@ -23,6 +23,7 @@ class DemoLightingTests(unittest.TestCase):
                 self.assertEqual(db.execute('SELECT count(*) FROM plantes').fetchone()[0], 4)
                 self.assertEqual(db.execute("SELECT count(*) FROM mesures WHERE donnees_brutes!='demo'").fetchone()[0], 0)
                 self.assertGreater(db.execute('SELECT count(*) FROM mesures WHERE luminosite=0').fetchone()[0], 0)
+                self.assertEqual(db.execute('SELECT drainage,first_drops_minutes FROM watering_observations_v1').fetchall(), [('light',4)])
                 missing_day = (datetime.now()-timedelta(days=2)).date().isoformat()
                 self.assertEqual(db.execute('SELECT count(*) FROM mesures WHERE capteur_id=1 AND date_heure LIKE ?', (missing_day+'T11:%',)).fetchone()[0], 0)
             self.assertTrue((folder/'config/light-schedules.json').is_file())
@@ -30,13 +31,13 @@ class DemoLightingTests(unittest.TestCase):
         with patch.dict(os.environ, {'BOTANEO_DEMO': '1'}), patch('tkinter.messagebox.showinfo') as info, patch('suivi_raspberry.load_config', side_effect=AssertionError('real config')):
             lamp_sync.resolve_window(None, 1)
             info.assert_called_once()
-    def test_demo_paths_follow_config_environment_in_fresh_process(self):
+    def test_demo_paths_ignore_inherited_real_config_in_fresh_process(self):
         with tempfile.TemporaryDirectory() as directory:
             config = Path(directory)/'demo-config'
-            code = "import sys;sys.path.insert(0,sys.argv[1]);import light_window_ui,lamp_sync;from pathlib import Path;assert light_window_ui.CONFIG==Path(sys.argv[2])/'light-schedules.json';assert lamp_sync.ROOT==Path(sys.argv[2])"
+            code = "import sys;sys.path.insert(0,sys.argv[1]);import light_window_ui,lamp_sync;from pathlib import Path;expected=Path(sys.argv[1])/'data/demo/config';assert light_window_ui.CONFIG==expected/'light-schedules.json';assert lamp_sync.ROOT==expected;assert not Path(sys.argv[2]).exists()"
             env = {**os.environ, 'BOTANEO_DEMO': '1', 'BOTANEO_CONFIG_DIR': str(config)}
             result = subprocess.run([sys.executable, '-B', '-c', code, str(Path(demo.__file__).parent), str(config)], env=env, capture_output=True, timeout=15)
-            self.assertEqual(result.returncode, 0, 'Demo paths must use the isolated config directory')
+            self.assertEqual(result.returncode, 0, 'Demo paths must ignore inherited real configuration')
 
 if __name__ == '__main__':
     unittest.main()

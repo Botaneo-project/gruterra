@@ -1,4 +1,5 @@
 """Pi first: durable receipts, replay-safe import, acknowledgement after commit."""
+from raspberry_paths import remote_command, remote_backup
 
 from i18n import traduire_courant as _tr
 import hashlib
@@ -9,6 +10,7 @@ import subprocess
 import threading
 import time
 from pathlib import Path
+from datetime import datetime, timezone, timedelta
 
 from botaneo_dates import iso_utc, iso_depuis_local, vers_utc
 
@@ -46,7 +48,7 @@ def transport(config, operation, request=None):
             '-o', 'StrictHostKeyChecking=yes', '-o', 'ConnectTimeout=8',
             '-o', 'ServerAliveInterval=5', '-o', 'ServerAliveCountMax=2',
             config['user']+'@'+config['host'],
-            'python3 ~/botaneo/collector/sync_export.py '+operation]
+            remote_command(config, 'sync_export.py', operation)]
     result = subprocess.run(args, input=json.dumps(request) if request is not None else None,
                             capture_output=True, text=True, timeout=60,
                             creationflags=getattr(subprocess, 'CREATE_NO_WINDOW', 0))
@@ -160,7 +162,11 @@ def synchronize(config=None, sender=transport, db_path=None, collect_now=False, 
     with LOCK:
         totals = {'added': 0, 'duplicates': 0, 'undated': 0, 'history_added': 0, 'history_duplicates': 0, 'history_undated': 0, 'current_added': 0, 'current_duplicates': 0, 'current_undated': 0}
         pending_remaining = None
-        waited_after_collect = False
+        wait_deadline = time.monotonic() + 120
+        fresh_after = datetime.now(timezone.utc) - timedelta(seconds=5)
+        fresh_sensors = set()
+        wanted_sensors = {str(v).upper() for v in config.get('sensors', [])}
+        imported_batches = 0
         wait_message = ''
         collect_message = ''
         collect_status = None
@@ -186,22 +192,35 @@ def synchronize(config=None, sender=transport, db_path=None, collect_now=False, 
                     collect_accepted = False
                     collect_message = _tr('raspberry_sync_text_185').format(v0=collect_error)
             # Bounded work: remaining batches resume at the next retry.
-            for _ in range(20):
+            for _ in range(81):
                 batch = sender(config, 'export')
                 pending_remaining = max(int(batch.get('pending', 0)) - len(batch.get('rows', [])), 0)
                 counts, ack = import_batch(db_path or database.DB_PATH, batch, config)
                 for key in totals:
                     totals[key] += counts[key]
+                if batch['rows']:
+                    imported_batches += 1
+                for row in batch['rows']:
+                    if row.get('kind') == 'current' and row.get('time_quality') == 'ntp':
+                        measured = vers_utc(row.get('measured_at'))
+                        if measured and fresh_after <= measured <= datetime.now(timezone.utc) + timedelta(seconds=5):
+                            fresh_sensors.add(str(row.get('sensor_id', '')).upper())
                 if ack['rows']:
                     response = sender(config, 'ack', ack)
                     if response.get('confirmed') != len(ack['rows']):
                         raise ValueError(_tr('raspberry_sync_text_241'))
                 if batch['pending'] <= len(batch['rows']):
-                    if collect_now and collect_accepted is True and totals.get('current_added', 0) <= 0 and not waited_after_collect:
-                        waited_after_collect = True
+                    fresh_confirmed = bool(wanted_sensors) and wanted_sensors <= fresh_sensors
+                    collection_pending = collect_now and not fresh_confirmed and collect_status in ('pending', 'running')
+                    if collection_pending and time.monotonic() < wait_deadline:
                         wait_message = _tr('raspberry_sync_text_200')
-                        time.sleep(25)
+                        time.sleep(2)
                         continue
+                    if collect_now and not fresh_confirmed:
+                        return {'ok': False, 'message': _tr('sync_fresh_still_pending'),
+                                'collection_pending': collection_pending, 'fresh_measurement_confirmed': False,
+                                'collect_status': collect_status, 'collect_accepted': collect_accepted,
+                                'pending_remaining': pending_remaining or 0, **totals}
 
                     backup_message = ''
                     if sender is transport and db_path is None:
@@ -222,7 +241,9 @@ def synchronize(config=None, sender=transport, db_path=None, collect_now=False, 
                     history_message = (
                         _tr('raspberry_sync_text_215').format(v0=totals['history_added'], v1=totals['history_duplicates'], v2=totals['history_undated'])
                     )
-                    return {'backup_message': backup_message, 'ok': True, 'message': collect_message + wait_message + backup_message + ' ' + _tr('raspberry_sync_text_219').format(v0=totals['added'], v1=totals['duplicates'], v2=totals['undated']) + history_message + attente_message, 'collect_status': collect_status, 'collect_accepted': collect_accepted, 'pending_remaining': pending_remaining or 0, **totals}
+                    return {'backup_message': backup_message, 'ok': True, 'fresh_measurement_confirmed': fresh_confirmed if collect_now else None, 'collection_pending': False, 'message': collect_message + wait_message + backup_message + ' ' + _tr('raspberry_sync_text_219').format(v0=totals['added'], v1=totals['duplicates'], v2=totals['undated']) + history_message + attente_message, 'collect_status': collect_status, 'collect_accepted': collect_accepted, 'pending_remaining': pending_remaining or 0, **totals}
+                if imported_batches >= 20:
+                    break
             raise RuntimeError(_tr('raspberry_sync_text_220'))
         except Exception as error:
             message = str(error) if isinstance(error, (ValueError, ConnectionError, RuntimeError)) else _tr('raspberry_sync_text_222')

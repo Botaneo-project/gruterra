@@ -36,6 +36,8 @@ def validate(config):
         raise ValueError(_tr('suivi_raspberry_text_34'))
     if not isinstance(config.get('key'), str) or not config['key']:
         raise ValueError(_tr('suivi_raspberry_text_36'))
+    from raspberry_paths import validate_home
+    validate_home(config)
     return config
 
 

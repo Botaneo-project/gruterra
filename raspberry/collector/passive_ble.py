@@ -5,6 +5,14 @@ Le capteur diffuse les objets un par un dans les service data FE95. Ce module é
 ces annonces, agrège les dernières valeurs reçues et peut enregistrer une mesure
 complète dans la table `measurements` existante.
 """
+try:
+    from installation_paths import installation_root
+except ModuleNotFoundError:
+    # Running this utility directly from the source checkout.
+    import sys
+    from pathlib import Path
+    sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+    from installation_paths import installation_root
 import argparse
 import asyncio
 import json
@@ -14,7 +22,7 @@ from pathlib import Path
 
 from bleak import BleakScanner
 
-BASE = Path.home() / "botaneo"
+BASE = installation_root()
 
 SERVICE_MIBEACON = "0000fe95-0000-1000-8000-00805f9b34fb"
 SERVICE_MIBEACON_SHORT = "0000fe95"
